@@ -588,6 +588,13 @@ type RecoveryState = {
     lastScaleCheckoutAt?: Date;
 };
 
+// Alert Tier
+type AlertState = {
+    lastSlackOperationsAt?: Date;
+    lastSlackSupportAt?: Date;
+    lastOncallPageAt?: Date;
+};
+
 async function planCacheWarmUp(
     endpointId: string,
     sharedMetricsId: string,
@@ -655,6 +662,112 @@ async function planScaleCheckoutWorkers(
         });
 
         state.lastScaleCheckoutAt = now;
+    }
+}
+
+// Alert Tier
+async function planSlackOperations(
+    endpointId: string,
+    sharedMetricsId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+    state: AlertState,
+) {
+    const latest = metrics.latest(sharedMetricsId);
+    if (!latest) return;
+
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+    const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+    // Cooldown: 10 minutes
+    const cooldownMs = 10 * 60_000;
+    const onCooldown = state.lastSlackOperationsAt && (now.getTime() - state.lastSlackOperationsAt.getTime()) < cooldownMs;
+
+    // Trigger: pageLoad crosses 3000ms threshold (strain begins)
+    if (latest.pageLoadMs >= 3000 && !onCooldown && isPaused) {
+        await callTool(tools, "pause_until", { untilIso: null, reason: "Alerting operations team" });
+        await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 2, reason: "Send Slack operations alert" });
+
+        // Re-pause long-term after alert sent
+        const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+        await callTool(tools, "pause_until", {
+            untilIso: rePauseAt.toISOString(),
+            reason: "Alert sent, cooldown active",
+        });
+
+        state.lastSlackOperationsAt = now;
+    }
+}
+
+async function planSlackCustomerSupport(
+    endpointId: string,
+    sharedMetricsId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+    state: AlertState,
+) {
+    const latest = metrics.latest(sharedMetricsId);
+    if (!latest) return;
+
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+    const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+    // Cooldown: 15 minutes
+    const cooldownMs = 15 * 60_000;
+    const onCooldown = state.lastSlackSupportAt && (now.getTime() - state.lastSlackSupportAt.getTime()) < cooldownMs;
+
+    // Trigger: orders drop below 130 during critical phase (escalation from operations)
+    if (latest.ordersPerMin < 130 && latest.traffic >= 5500 && !onCooldown && isPaused) {
+        await callTool(tools, "pause_until", { untilIso: null, reason: "Alerting customer support team" });
+        await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 2, reason: "Send customer support escalation" });
+
+        // Re-pause long-term after alert sent
+        const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+        await callTool(tools, "pause_until", {
+            untilIso: rePauseAt.toISOString(),
+            reason: "Support alert sent, cooldown active",
+        });
+
+        state.lastSlackSupportAt = now;
+    }
+}
+
+async function planEmergencyOncallPage(
+    endpointId: string,
+    sharedMetricsId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+    state: AlertState,
+) {
+    const latest = metrics.latest(sharedMetricsId);
+    if (!latest) return;
+
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+    const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+    // Cooldown: 2 hours (very long - oncall pages are serious)
+    const cooldownMs = 2 * 60 * 60_000;
+    const onCooldown = state.lastOncallPageAt && (now.getTime() - state.lastOncallPageAt.getTime()) < cooldownMs;
+
+    // Trigger: Critical sustained issue - pageLoad > 4000ms AND orders < 125 (final escalation)
+    if (latest.pageLoadMs >= 4000 && latest.ordersPerMin < 125 && !onCooldown && isPaused) {
+        await callTool(tools, "pause_until", { untilIso: null, reason: "EMERGENCY: Paging oncall engineer" });
+        await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 2, reason: "Send emergency oncall page" });
+
+        // Re-pause long-term after page sent
+        const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+        await callTool(tools, "pause_until", {
+            untilIso: rePauseAt.toISOString(),
+            reason: "Oncall paged, long cooldown active",
+        });
+
+        state.lastOncallPageAt = now;
     }
 }
 
@@ -745,6 +858,11 @@ export async function scenario_flash_sale() {
     // Recovery Tier endpoint IDs
     const cacheWarmUpId = "cache_warm_up#prod";
     const scaleCheckoutId = "scale_checkout_workers#prod";
+
+    // Alert Tier endpoint IDs
+    const slackOperationsId = "slack_operations#prod";
+    const slackSupportId = "slack_customer_support#prod";
+    const oncallPageId = "emergency_oncall_page#prod";
 
     // Seed Health Tier endpoints
     jobs.add({
@@ -837,6 +955,46 @@ export async function scenario_flash_sale() {
         failureCount: 0,
     });
 
+    // Seed Alert Tier endpoints (escalation alerts with cooldowns)
+    jobs.add({
+        id: slackOperationsId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Slack Operations Alert",
+        baselineIntervalMs: 60_000,
+        minIntervalMs: 5_000,
+        maxIntervalMs: 10 * 60_000,
+        nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+        pausedUntil: new Date("2099-01-01T00:00:00Z"),
+        failureCount: 0,
+    });
+
+    jobs.add({
+        id: slackSupportId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Slack Customer Support Alert",
+        baselineIntervalMs: 60_000,
+        minIntervalMs: 5_000,
+        maxIntervalMs: 15 * 60_000,
+        nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+        pausedUntil: new Date("2099-01-01T00:00:00Z"),
+        failureCount: 0,
+    });
+
+    jobs.add({
+        id: oncallPageId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Emergency Oncall Page",
+        baselineIntervalMs: 60_000,
+        minIntervalMs: 5_000,
+        maxIntervalMs: 2 * 60 * 60_000,
+        nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+        pausedUntil: new Date("2099-01-01T00:00:00Z"),
+        failureCount: 0,
+    });
+
     // Shared metrics: All endpoints see the same timeline
     const sharedMetricsId = "shared#metrics";
 
@@ -861,6 +1019,9 @@ export async function scenario_flash_sale() {
     // Recovery Tier state (tracks cooldowns across simulation)
     const recoveryState: RecoveryState = {};
 
+    // Alert Tier state (tracks cooldowns across simulation)
+    const alertState: AlertState = {};
+
     // Planning orchestration
     const planAllTiers = async (now: Date) => {
         // Health Tier
@@ -875,6 +1036,11 @@ export async function scenario_flash_sale() {
         // Recovery Tier (one-shot actions with cooldowns)
         await planCacheWarmUp(cacheWarmUpId, sharedMetricsId, metrics, jobs, now, recoveryState);
         await planScaleCheckoutWorkers(scaleCheckoutId, sharedMetricsId, metrics, jobs, now, recoveryState);
+
+        // Alert Tier (escalation alerts with cooldowns)
+        await planSlackOperations(slackOperationsId, sharedMetricsId, metrics, jobs, now, alertState);
+        await planSlackCustomerSupport(slackSupportId, sharedMetricsId, metrics, jobs, now, alertState);
+        await planEmergencyOncallPage(oncallPageId, sharedMetricsId, metrics, jobs, now, alertState);
     };
 
     for (let minute = 0; minute < 40; minute++) {

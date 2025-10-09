@@ -33,6 +33,9 @@ function renderSnapshots(label: string, snapshots: ScenarioSnapshot[]) {
     const dbTraceRuns = runs.runs.filter(r => r.endpointId.startsWith("database_query_trace")).length;
     const cacheWarmupRuns = runs.runs.filter(r => r.endpointId.startsWith("cache_warm_up")).length;
     const scaleCheckoutRuns = runs.runs.filter(r => r.endpointId.startsWith("scale_checkout_workers")).length;
+    const slackOpsRuns = runs.runs.filter(r => r.endpointId.startsWith("slack_operations")).length;
+    const slackSupportRuns = runs.runs.filter(r => r.endpointId.startsWith("slack_customer_support")).length;
+    const oncallPageRuns = runs.runs.filter(r => r.endpointId.startsWith("emergency_oncall_page")).length;
 
     const nextInDurations = snapshots.map(s => Math.max(0, s.nextCpuAt.getTime() - s.timestamp.getTime()));
     const minNextIn = Math.min(...nextInDurations);
@@ -51,6 +54,7 @@ function renderSnapshots(label: string, snapshots: ScenarioSnapshot[]) {
     console.log(`Health Tier: Traffic=${trafficRuns}, Orders=${orderRuns}, Inventory=${inventoryRuns}`);
     console.log(`Investigation Tier: SlowPage=${slowPageRuns}, DBTrace=${dbTraceRuns}`);
     console.log(`Recovery Tier: CacheWarmup=${cacheWarmupRuns}, ScaleCheckout=${scaleCheckoutRuns}`);
+    console.log(`Alert Tier: SlackOps=${slackOpsRuns}, SlackSupport=${slackSupportRuns}, OncallPage=${oncallPageRuns}`);
 
     renderSnapshots("Baseline (0-4m)", snapshots.slice(0, 5));
     renderSnapshots("Surge (5-8m)", snapshots.slice(5, 9));
