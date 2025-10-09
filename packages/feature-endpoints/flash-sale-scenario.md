@@ -27,82 +27,86 @@ Your e-commerce store is about to launch a major flash sale. At exactly minute 5
 Think of these as different "workers" watching different parts of your system, each with its own job:
 
 #### **🩺 Health Check Tier** (Always Running)
+
 These three endpoints are your basic vitals — they always run, but speed up when things get busy:
 
 1. **`traffic_monitor`** — Tracks how many visitors per minute and page load times
-   - *Baseline*: Checks every 5 minutes during normal hours
-   - *Surge behavior*: Tightens to every 30 seconds when traffic spikes
+   - _Baseline_: Checks every 5 minutes during normal hours
+   - _Surge behavior_: Tightens to every 30 seconds when traffic spikes
 
 2. **`order_processor_health`** — Monitors checkout system performance
-   - *Baseline*: Checks every 3 minutes
-   - *Strain behavior*: Tightens to every 45 seconds when orders slow down
+   - _Baseline_: Checks every 3 minutes
+   - _Strain behavior_: Tightens to every 45 seconds when orders slow down
 
 3. **`inventory_sync_check`** — Ensures stock counts stay accurate
-   - *Baseline*: Checks every 10 minutes (inventory doesn't change that fast)
-   - *Lag behavior*: Tightens to every 2 minutes if sync falls behind
+   - _Baseline_: Checks every 10 minutes (inventory doesn't change that fast)
+   - _Lag behavior_: Tightens to every 2 minutes if sync falls behind
 
 **Technical note:** These use `propose_interval` hints to dynamically adjust cadence while respecting min/max clamps (20s minimum, 15m maximum). The scheduler's governor picks the tightest active interval.
 
 ---
 
 #### **🔍 Investigation Tier** (Conditional)
+
 These only wake up when the health checks detect problems:
 
 4. **`slow_page_analyzer`** — Identifies which pages are lagging
-   - *Default*: Asleep (paused)
-   - *Activation*: Wakes and runs every 2 minutes when traffic is high AND pages are slow
-   - *Dependencies*: Only runs if `traffic_monitor` shows issues
+   - _Default_: Asleep (paused)
+   - _Activation_: Wakes and runs every 2 minutes when traffic is high AND pages are slow
+   - _Dependencies_: Only runs if `traffic_monitor` shows issues
 
 5. **`database_query_trace`** — Finds slow database operations
-   - *Default*: Asleep (paused)
-   - *Activation*: Fires a one-shot investigation when orders are struggling AND slow pages detected
-   - *Dependencies*: Requires both order processor issues AND page analyzer findings
+   - _Default_: Asleep (paused)
+   - _Activation_: Fires a one-shot investigation when orders are struggling AND slow pages detected
+   - _Dependencies_: Requires both order processor issues AND page analyzer findings
 
 **Technical note:** These use `pause_until` to stay dormant, then combine `propose_next_time` (one-shots) with `propose_interval` for ongoing investigation. This demonstrates conditional activation based on other endpoint results.
 
 ---
 
 #### **🔧 Recovery Tier** (Automatic Fixes)
+
 These try to solve problems before bothering humans:
 
 6. **`cache_warm_up`** — Pre-loads popular products into fast memory
-   - *Default*: Asleep
-   - *Trigger*: One-shot execution when page analyzer identifies slow product pages
-   - *Effect*: Speeds up subsequent page loads by 60-80%
-   - *Cooldown*: 15 minutes (caching is expensive)
+   - _Default_: Asleep
+   - _Trigger_: One-shot execution when page analyzer identifies slow product pages
+   - _Effect_: Speeds up subsequent page loads by 60-80%
+   - _Cooldown_: 15 minutes (caching is expensive)
 
 7. **`scale_checkout_workers`** — Adds more checkout processing capacity
-   - *Default*: Asleep
-   - *Trigger*: One-shot when order backlog forms OR database is overloaded
-   - *Effect*: Increases throughput, reduces queue time
-   - *Cooldown*: 20 minutes (infrastructure changes take time)
+   - _Default_: Asleep
+   - _Trigger_: One-shot when order backlog forms OR database is overloaded
+   - _Effect_: Increases throughput, reduces queue time
+   - _Cooldown_: 20 minutes (infrastructure changes take time)
 
 **Technical note:** Recovery actions use one-shot scheduling to avoid repeated expensive operations. Success/failure is tracked in metrics to inform alert priority. This showcases the scheduler's ability to coordinate complex dependencies: "Only scale if investigation found the cause."
 
 ---
 
 #### **📢 Alert Tier** (Human Communication)
+
 Smart escalation — only tell humans what they need to know, when they need to know it:
 
 8. **`slack_operations`** — Quick heads-up to the tech team
-   - *Default*: Asleep
-   - *Trigger*: One-shot when traffic surge first detected
-   - *Message*: "🚨 Flash sale traffic up 5×, monitoring tightened"
-   - *Cooldown*: 10 minutes (don't spam the channel)
+   - _Default_: Asleep
+   - _Trigger_: One-shot when traffic surge first detected
+   - _Message_: "🚨 Flash sale traffic up 5×, monitoring tightened"
+   - _Cooldown_: 10 minutes (don't spam the channel)
 
 9. **`slack_customer_support`** — Alerts support team about user-facing issues
-   - *Default*: Asleep
-   - *Trigger*: One-shot if problems persist for 15+ minutes without recovery
-   - *Message*: "⚠️ Checkout delays detected. Auto-scaling attempted. Be ready for customer questions."
-   - *Cooldown*: 15 minutes
-   - *Smart logic*: Doesn't fire if recovery succeeds within first 15 minutes
+   - _Default_: Asleep
+   - _Trigger_: One-shot if problems persist for 15+ minutes without recovery
+   - _Message_: "⚠️ Checkout delays detected. Auto-scaling attempted. Be ready for customer questions."
+   - _Cooldown_: 15 minutes
+   - _Smart logic_: Doesn't fire if recovery succeeds within first 15 minutes
 
 10. **`emergency_oncall_page`** — Wakes up the on-call engineer
-    - *Default*: Asleep
-    - *Trigger*: One-shot if recovery attempts fail OR checkout is completely broken
-    - *Message*: "🔴 URGENT: Checkout critical. Auto-recovery failed. Manual intervention needed."
-    - *Cooldown*: 2 hours (this is serious — only for real emergencies)
-    - *Smart logic*: Only fires after cache_warm_up AND scale_workers both attempted
+    - _Default_: Asleep
+    - _Trigger_: One-shot if recovery attempts fail OR checkout is completely broken
+    - _Message_: "🔴 URGENT: Checkout critical. Auto-recovery failed. Manual intervention needed."
+    - _Cooldown_: 2 hours (this is serious — only for real emergencies)
+    - _Smart logic_: Only fires after cache_warm_up AND scale_workers both attempted
 
 **Technical note:** Alerts demonstrate hierarchical cooldowns and cross-endpoint dependencies. Emergency page checks recovery attempt history before firing. This prevents alert fatigue while ensuring critical issues reach humans.
 
@@ -111,7 +115,8 @@ Smart escalation — only tell humans what they need to know, when they need to 
 ## The Timeline: What Happens When
 
 ### **Minutes 0-4: Baseline** 🟢
-*Everything is calm. Normal monitoring.*
+
+_Everything is calm. Normal monitoring._
 
 - Traffic: 1,000 visitors/min
 - Page load: 800ms average
@@ -123,12 +128,13 @@ Smart escalation — only tell humans what they need to know, when they need to 
 ---
 
 ### **Minutes 5-8: Surge Begins** ⚠️
-*Sale announced! Traffic spikes 5×.*
+
+_Sale announced! Traffic spikes 5×._
 
 - Traffic: 5,000 visitors/min (5× increase)
 - Page load: 1,800ms (starting to slow)
 - Orders: 180/min (4.5× increase)
-- **Behavior**: 
+- **Behavior**:
   - `traffic_monitor` tightens to 30s intervals
   - `order_processor_health` tightens to 45s
   - `slack_operations` fires first alert: "Traffic surge detected"
@@ -139,7 +145,8 @@ Smart escalation — only tell humans what they need to know, when they need to 
 ---
 
 ### **Minutes 9-12: System Strain** 🟡
-*Pages slowing significantly. Database struggling.*
+
+_Pages slowing significantly. Database struggling._
 
 - Traffic: 5,500 visitors/min (still climbing)
 - Page load: 3,200ms (slow)
@@ -157,7 +164,8 @@ Smart escalation — only tell humans what they need to know, when they need to 
 ---
 
 ### **Minutes 13-20: Critical Period** 🔴
-*Checkout degraded. Recovery attempts in progress.*
+
+_Checkout degraded. Recovery attempts in progress._
 
 - Traffic: 6,000 visitors/min (peak)
 - Page load: 4,500ms (very slow despite cache warm-up)
@@ -168,9 +176,10 @@ Smart escalation — only tell humans what they need to know, when they need to 
   - `slack_customer_support` fires after 15 minutes of sustained issues
   - `database_query_trace` continues finding slow queries
   - Health checks remain aggressive
-  - Emergency page is *considered* but not fired yet (recovery in progress)
+  - Emergency page is _considered_ but not fired yet (recovery in progress)
 
-**Scheduler demonstrates:** 
+**Scheduler demonstrates:**
+
 - Recovery attempts before emergency escalation
 - Alert hierarchy (ops → support → emergency)
 - Cooldowns preventing alert spam
@@ -179,7 +188,8 @@ Smart escalation — only tell humans what they need to know, when they need to 
 ---
 
 ### **Minutes 21-25: Recovery Begins** 🟡
-*Scale-up taking effect. Metrics improving.*
+
+_Scale-up taking effect. Metrics improving._
 
 - Traffic: 5,200 visitors/min (stabilizing)
 - Page load: 2,800ms (improving thanks to cache + scale-up)
@@ -196,7 +206,8 @@ Smart escalation — only tell humans what they need to know, when they need to 
 ---
 
 ### **Minutes 26-40: Back to Normal** 🟢
-*Traffic normalizing. Monitoring relaxing.*
+
+_Traffic normalizing. Monitoring relaxing._
 
 - Traffic: 1,500 visitors/min (declining)
 - Page load: 1,100ms (nearly normal)
@@ -240,14 +251,16 @@ Smart escalation — only tell humans what they need to know, when they need to 
 ### Why This Is Hard (And Why Our Scheduler Solves It)
 
 **The Traditional Approach:**
+
 ```yaml
 # cron-style configuration
-traffic_monitor: "*/5 * * * *"  # every 5 minutes, always
-page_analyzer: "*/10 * * * *"   # every 10 minutes, always
-alert_ops: "*/30 * * * *"       # every 30 minutes, always
+traffic_monitor: "*/5 * * * *" # every 5 minutes, always
+page_analyzer: "*/10 * * * *" # every 10 minutes, always
+alert_ops: "*/30 * * * *" # every 30 minutes, always
 ```
 
 **Problems:**
+
 - Wastes resources during quiet times
 - Too slow during crises
 - No coordination between checks
@@ -255,6 +268,7 @@ alert_ops: "*/30 * * * *"       # every 30 minutes, always
 - Manual intervention required to change timing
 
 **Our Adaptive Approach:**
+
 ```typescript
 // AI hints + governor coordination
 if (traffic > threshold && pageLoad > 2000) {
@@ -294,6 +308,7 @@ if (traffic > threshold && pageLoad > 2000) {
 ```
 
 Each tier:
+
 1. Reads metrics/state from previous tier
 2. Makes autonomous scheduling decisions via tools
 3. Writes results that next tier can consume
@@ -311,6 +326,7 @@ pnpm sim
 ```
 
 **Output includes:**
+
 - Per-minute snapshots showing traffic, orders, page load, active investigations
 - Phase breakdowns (Baseline → Surge → Strain → Critical → Recovery)
 - Alert timeline with cooldown tracking
@@ -318,6 +334,7 @@ pnpm sim
 - Assertions verifying expected behaviors
 
 **Expected results:**
+
 - 10 total endpoints
 - ~150-200 total runs (health checks dominate)
 - 3-5 investigation runs (only during strain)
@@ -352,6 +369,7 @@ This flash sale scenario demonstrates a fundamental shift in how we think about 
 The AI-driven scheduler isn't just "cron with extra steps" — it's a coordination layer that lets your monitoring system make intelligent decisions in real time, without hardcoded logic or manual intervention.
 
 **And it all happens through three simple tools:**
+
 1. `propose_interval` — "Run every N ms until I tell you otherwise"
 2. `propose_next_time` — "Run once at time T"
 3. `pause_until` — "Stay quiet until condition X"

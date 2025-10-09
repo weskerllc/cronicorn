@@ -360,6 +360,7 @@ Per minute:
 4. **Snapshot** with full flash sale metrics.
 
 **Output example (strain phase, minute 9-12):**
+
 ```
 minute │  traffic   │  orders   │ pageLoad │ nextCheck
   9m   │ 5500/min   │ 160/min   │ 3200ms   │   15s
