@@ -501,3 +501,202 @@ export async function scenario_system_resources() {
 
     return { runs, jobs, metrics, snapshots };
 }
+
+/* =========================
+   Flash Sale Scenario Planning Helpers
+   ========================= */
+
+async function planTrafficMonitor(
+    endpointId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+) {
+    const latest = metrics.latest(endpointId);
+    if (!latest) return;
+
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+
+    // Baseline: 1 minute checks
+    // Surge (traffic >= 4000): tighten to 30s
+    // Critical (traffic >= 6000): tighten to 20s
+    // Recovery (traffic < 2000): widen back to 1m
+
+    if (latest.traffic >= 6000) {
+        await maybeProposeInterval(tools, ep, 20_000, now, "Critical traffic load");
+    } else if (latest.traffic >= 4000) {
+        await maybeProposeInterval(tools, ep, 30_000, now, "Surge traffic detected");
+    } else if (latest.traffic < 2000) {
+        await maybeProposeInterval(tools, ep, 60_000, now, "Traffic normalized");
+    }
+}
+
+async function planOrderProcessorHealth(
+    endpointId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+) {
+    const latest = metrics.latest(endpointId);
+    if (!latest) return;
+
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+
+    // Baseline: 2 minute checks
+    // During critical (orders < 130): widen to 5m (system is overwhelmed, don't add load)
+    // During recovery (orders > 130): return to 2m
+
+    if (latest.ordersPerMin < 130) {
+        await maybeProposeInterval(tools, ep, 5 * 60_000, now, "Order processing strained, reducing check frequency");
+    } else if (latest.ordersPerMin >= 130 && effectiveIntervalMs(ep, now) > 2 * 60_000) {
+        await maybeProposeInterval(tools, ep, 2 * 60_000, now, "Order processing recovered");
+    }
+}
+
+async function planInventorySyncCheck(
+    endpointId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+) {
+    const latest = metrics.latest(endpointId);
+    if (!latest) return;
+
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+
+    // Baseline: 3 minute checks
+    // Lagging (lag >= 400ms): tighten to 1m
+    // Severe lag (lag >= 600ms): tighten to 30s
+    // Normal (lag < 200ms): return to 3m
+
+    if (latest.inventoryLagMs >= 600) {
+        await maybeProposeInterval(tools, ep, 30_000, now, "Severe inventory lag detected");
+    } else if (latest.inventoryLagMs >= 400) {
+        await maybeProposeInterval(tools, ep, 60_000, now, "Inventory lag increasing");
+    } else if (latest.inventoryLagMs < 200) {
+        await maybeProposeInterval(tools, ep, 3 * 60_000, now, "Inventory sync healthy");
+    }
+}
+
+/* =========================
+   Scenario: Flash Sale (E-Commerce)
+   ========================= */
+export async function scenario_flash_sale() {
+    const clock = new FakeClock("2025-01-01T00:00:00Z");
+
+    const jobs = new InMemoryJobsRepo(() => clock.now());
+    const runs = new InMemoryRunsRepo();
+    const metrics = new FlashSaleMetricsRepo();
+    const cron: Cron = {
+        next() {
+            throw new Error("Cron expressions are not supported in this simulation; use baselineIntervalMs.");
+        },
+    };
+
+    // Health Tier endpoint IDs
+    const trafficMonitorId = "traffic_monitor#prod";
+    const orderProcessorId = "order_processor_health#prod";
+    const inventorySyncId = "inventory_sync_check#prod";
+
+    // Seed Health Tier endpoints
+    jobs.add({
+        id: trafficMonitorId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Traffic Monitor",
+        baselineIntervalMs: 60_000, // 1 minute baseline
+        minIntervalMs: 20_000,
+        maxIntervalMs: 5 * 60_000,
+        nextRunAt: clock.now(),
+        failureCount: 0,
+    });
+
+    jobs.add({
+        id: orderProcessorId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Order Processor Health",
+        baselineIntervalMs: 2 * 60_000, // 2 minutes baseline
+        minIntervalMs: 60_000,
+        maxIntervalMs: 5 * 60_000,
+        nextRunAt: clock.now(),
+        failureCount: 0,
+    });
+
+    jobs.add({
+        id: inventorySyncId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Inventory Sync Check",
+        baselineIntervalMs: 3 * 60_000, // 3 minutes baseline
+        minIntervalMs: 30_000,
+        maxIntervalMs: 10 * 60_000,
+        nextRunAt: clock.now(),
+        failureCount: 0,
+    });
+
+    // Dispatcher: Each health check records flash sale metrics
+    const dispatcher = new FakeDispatcher((ep) => {
+        const elapsedMin = Math.floor(
+            (clock.now().getTime() - new Date("2025-01-01T00:00:00Z").getTime()) / 60_000,
+        );
+
+        const sample = getFlashSaleMetricsForMinute(elapsedMin);
+        metrics.push(ep.id, { ...sample, at: clock.now() });
+
+        return { status: "success", durationMs: 150 };
+    });
+
+    const scheduler = new Scheduler({ clock, jobs, runs, dispatcher, cron });
+
+    const snapshots: ScenarioSnapshot[] = [];
+
+    // Planning orchestration for Health Tier
+    const planHealthTier = async (now: Date) => {
+        await planTrafficMonitor(trafficMonitorId, metrics, jobs, now);
+        await planOrderProcessorHealth(orderProcessorId, metrics, jobs, now);
+        await planInventorySyncCheck(inventorySyncId, metrics, jobs, now);
+    };
+
+    for (let minute = 0; minute < 40; minute++) {
+        // 1) MEASURE: run scheduler tick to process any due endpoints
+        await scheduler.tick(50, 10_000);
+
+        // 2) PLAN: Health Tier adjusts based on latest metrics
+        const now = clock.now();
+        await planHealthTier(now);
+
+        // 3) DRAIN: execute everything that became due during planning
+        while (true) {
+            const due = await jobs.claimDueEndpoints(50, 10_000);
+            if (due.length === 0) break;
+            for (const _id of due) {
+                await scheduler.tick(50, 10_000);
+            }
+        }
+
+        // Advance time in 5s increments within the minute to allow sub-minute cadences
+        const minuteEnd = new Date(clock.now().getTime() + 60_000);
+        while (clock.now() < minuteEnd) {
+            await clock.sleep(5_000);
+            await scheduler.tick(50, 10_000);
+        }
+
+        // 4) SNAPSHOT: Capture state for this minute
+        const latest = metrics.latest(trafficMonitorId);
+        const trafficEp = await jobs.getEndpoint(trafficMonitorId);
+
+        snapshots.push({
+            minute,
+            timestamp: new Date(clock.now().getTime()),
+            cpu: latest?.traffic ?? 0, // Temporarily using cpu field for traffic
+            nextCpuAt: new Date(trafficEp.nextRunAt.getTime()),
+            discordPaused: false, // Not applicable for flash sale
+        });
+    }
+
+    return { runs, jobs, metrics, snapshots };
+}
