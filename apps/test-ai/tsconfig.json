@@ -10,13 +10,5 @@
   "exclude": [
     "dist",
     "node_modules"
-  ],
-  "references": [
-    {
-      "path": "../../packages/scheduler"
-    },
-    {
-      "path": "../../packages/feature-ai-vercel-sdk"
-    }
   ]
 }

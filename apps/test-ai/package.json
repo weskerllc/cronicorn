@@ -6,6 +6,7 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --max-warnings 0 --fix",
     "clean": "rm -rf node_modules .turbo dist"
@@ -15,7 +16,7 @@
     "@cronicorn/feature-ai-vercel-sdk": "workspace:*",
     "ai": "^5.0.0",
     "@ai-sdk/openai": "^2.0.46",
-    "zod": "^3.23.8"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
