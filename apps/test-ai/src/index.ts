@@ -8,7 +8,7 @@
 
 import { openai } from "@ai-sdk/openai";
 import { createVercelAiClient } from "@cronicorn/feature-ai-vercel-sdk";
-import { defineTools } from "@cronicorn/scheduler";
+import { defineTools, tool } from "@cronicorn/scheduler";
 import { z } from "zod";
 
 async function main() {
@@ -34,34 +34,30 @@ async function main() {
 
     // Define some test tools with Zod schemas
     const tools = defineTools({
-        tellJoke: {
+        tellJoke: tool({
             description: "When user asks you to tell a joke, you must call this tool.",
+            schema: z.object({}), // No parameters needed
             execute: async () => {
                 return "Why do programmers prefer dark mode? Because light attracts bugs! 🐛";
             },
-            meta: {
-                schema: z.object({}), // No parameters needed
-            },
-        },
-        calculateSum: {
+        }),
+        calculateSum: tool({
             description: "Calculate the sum of two numbers",
-            execute: async (args: { a: number; b: number }) => {
+            schema: z.object({
+                a: z.number().describe("First number"),
+                b: z.number().describe("Second number"),
+            }),
+            execute: async (args) => {
+                // args is now properly typed as { a: number; b: number } thanks to schema inference!
                 return `The sum of ${args.a} and ${args.b} is ${args.a + args.b}`;
             },
-            meta: {
-                schema: z.object({
-                    a: z.number().describe("First number"),
-                    b: z.number().describe("Second number"),
-                }),
-            },
-        },
+        }),
     });
 
     try {
         console.log("\\n📝 Testing basic AI generation...");
 
         const result = await aiClient.planWithTools({
-            model: "gpt-3.5-turbo", // Required by interface
             input: "Hello! Please tell me a short joke about programming.",
             tools,
             maxTokens: 200,
