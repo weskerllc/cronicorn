@@ -22,9 +22,13 @@
     "test": "vitest run && pnpm sim",
     "typecheck": "tsc --noEmit",
     "sim": "tsx src/sim/simulate.ts",
+    "clean": "rm -rf node_modules .turbo dist",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --max-warnings 0 --fix"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
   }
 }
