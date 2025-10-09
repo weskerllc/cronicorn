@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1.4
+
+ARG NODE_VERSION=24.5.0
+ARG PNPM_VERSION=10.17.1
+
+# -------- Base (tiny init + sane defaults) --------
+FROM node:${NODE_VERSION}-alpine AS base
+ENV CI=1 NODE_ENV=production NODE_OPTIONS="--enable-source-maps"
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini","--"]
+
+# -------- Deps (install full workspace deps for building) --------
+FROM base AS deps
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+WORKDIR /repo
+COPY pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml ./
+COPY packages/ packages/
+COPY apps/ apps/
+
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# -------- Builder --------
+FROM deps AS builder
+# Copy application source code
+COPY . .
+
+# Build all workspace packages first
+RUN pnpm run --filter="./packages/*" build
+
+# Build the application
+WORKDIR /repo/apps/scheduler
+RUN pnpm run build
+
+# Create a pruned node_modules for the Scheduler with all dependencies
+RUN pnpm deploy --filter=scheduler --legacy /tmp/scheduler-deploy
+
+# Stage 2: Final Production Image
+FROM node:lts-alpine AS runner
+
+WORKDIR /app
+
+# -------- Runtime image: Scheduler --------
+FROM node:${NODE_VERSION}-alpine AS scheduler
+ENV NODE_ENV=production
+USER node
+WORKDIR /app
+# copy compiled dist + package.json + pruned node_modules
+COPY --chown=node:node --from=builder   /repo/apps/scheduler/dist ./dist
+COPY --chown=node:node --from=builder   /repo/apps/scheduler/package.json ./package.json
+COPY --chown=node:node --from=builder   /tmp/scheduler-deploy/node_modules ./node_modules
+EXPOSE 3333
+CMD ["node","dist/index.js"]

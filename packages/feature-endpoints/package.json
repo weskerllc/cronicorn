@@ -1,0 +1,18 @@
+{
+  "name": "@cronicorn/scheduler",
+  "type": "module",
+  "version": "0.0.0",
+  "main": "dist/index.ts",
+  "scripts": {
+    "watch": "tsc -w ",
+    "build": "tsc ",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --max-warnings 0 --fix"
+  },
+  "devDependencies": {
+    "@cronicorn/config-eslint": "workspace:*"
+  }
+}

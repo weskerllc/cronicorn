@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    // ESM in Node — matches runtime behavior
+    "target": "ES2022",
+
+    // Paths/aliases for the monorepo (adjust as you add packages)
+    "baseUrl": ".",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "paths": {
+      "@cronicorn/config-eslint/*": ["packages/config-eslint/src/*"],
+      "@cronicorn/contracts/*": ["packages/contracts/src/*"],
+      "@cronicorn/core-observability/*": ["packages/core-observability/src/*"],
+      "@cronicorn/core-schemas/*": ["packages/core-schemas/src/*"],
+      "@cronicorn/db-core/*": ["packages/db-core/src/*"],
+      "@cronicorn/feature-auth/*": ["packages/feature-auth/src/*"],
+      "@cronicorn/feature-endpoints/*": ["packages/feature-endpoints/src/*"],
+      "@cronicorn/feature-execution/*": ["packages/feature-execution/src/*"],
+      "@cronicorn/feature-job-endpoints/*": ["packages/feature-job-endpoints/src/*"],
+      "@cronicorn/feature-jobs/*": ["packages/feature-jobs/src/*"],
+      "@cronicorn/feature-scheduler/*": ["packages/feature-scheduler/src/*"],
+      "@cronicorn/test-utils/*": ["packages/test-utils/src/*"],
+    },
+    // Useful extras
+    "resolveJsonModule": true,
+    // Node types available for Pool, process.env, etc.
+    "types": ["node"],
+    // Strict, modern TS
+    "strict": true,
+
+    // Declarations for libs you might publish (packages override outDir)
+    "declaration": true,
+    "declarationMap": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": false, // keep ESM semantics tidy
+    "forceConsistentCasingInFileNames": true,
+
+    // Keep `import`/`export` as written (no downleveling),
+    // and make TS respect your explicit .js extensions.
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  }
+}
