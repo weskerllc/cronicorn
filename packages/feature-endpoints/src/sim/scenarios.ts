@@ -219,6 +219,17 @@ export type ScenarioSnapshot = {
     discordPaused: boolean;
 };
 
+export type FlashSaleSnapshot = {
+    minute: number;
+    timestamp: Date;
+    traffic: number;
+    ordersPerMin: number;
+    pageLoadMs: number;
+    inventoryLagMs: number;
+    dbQueryMs: number;
+    nextTrafficCheckAt: Date;
+};
+
 /* =========================
    Endpoint-bound tool bag
    (object-shaped, SDK-compatible)
@@ -1015,6 +1026,7 @@ export async function scenario_flash_sale() {
     const scheduler = new Scheduler({ clock, jobs, runs, dispatcher, cron });
 
     const snapshots: ScenarioSnapshot[] = [];
+    const flashSaleSnapshots: FlashSaleSnapshot[] = [];
 
     // Recovery Tier state (tracks cooldowns across simulation)
     const recoveryState: RecoveryState = {};
@@ -1068,17 +1080,32 @@ export async function scenario_flash_sale() {
         }
 
         // 4) SNAPSHOT: Capture state for this minute
-        const latest = metrics.latest(trafficMonitorId);
+        const latest = metrics.latest(sharedMetricsId);
         const trafficEp = await jobs.getEndpoint(trafficMonitorId);
 
+        // Legacy snapshot format
         snapshots.push({
             minute,
             timestamp: new Date(clock.now().getTime()),
-            cpu: latest?.traffic ?? 0, // Temporarily using cpu field for traffic
+            cpu: latest?.traffic ?? 0,
             nextCpuAt: new Date(trafficEp.nextRunAt.getTime()),
-            discordPaused: false, // Not applicable for flash sale
+            discordPaused: false,
         });
+
+        // Flash sale snapshot format with full metrics
+        if (latest) {
+            flashSaleSnapshots.push({
+                minute,
+                timestamp: latest.at,
+                traffic: latest.traffic,
+                ordersPerMin: latest.ordersPerMin,
+                pageLoadMs: latest.pageLoadMs,
+                inventoryLagMs: latest.inventoryLagMs,
+                dbQueryMs: latest.dbQueryMs,
+                nextTrafficCheckAt: trafficEp.nextRunAt,
+            });
+        }
     }
 
-    return { runs, jobs, metrics, snapshots };
+    return { runs, jobs, metrics, snapshots, flashSaleSnapshots };
 }
