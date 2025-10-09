@@ -17,166 +17,166 @@ import { AIClientFatalError, AIClientTransientError } from "./errors.js";
  * explicit 'any' usage. The key is to use conditional schema extraction and proper typing.
  */
 function createVercelTool(
-    name: string,
-    schedulerTool: Tool<unknown, unknown>,
-    logger?: VercelAiClientConfig["logger"],
+  name: string,
+  schedulerTool: Tool<unknown, unknown>,
+  logger?: VercelAiClientConfig["logger"],
 ) {
-    // Handle ToolObj case (has execute method)
-    if (typeof schedulerTool === "object" && schedulerTool && "execute" in schedulerTool) {
-        const toolObj = schedulerTool;
+  // Handle ToolObj case (has execute method)
+  if (typeof schedulerTool === "object" && schedulerTool && "execute" in schedulerTool) {
+    const toolObj = schedulerTool;
 
-        // Extract description safely
-        const description = ("description" in toolObj && typeof toolObj.description === "string")
-            ? toolObj.description
-            : `Execute ${name}`;
+    // Extract description safely
+    const description = ("description" in toolObj && typeof toolObj.description === "string")
+      ? toolObj.description
+      : `Execute ${name}`;
 
-        // Build the tool based on whether we have a schema or not
-        if ("meta" in toolObj
-            && toolObj.meta
-            && "schema" in toolObj.meta
-            && toolObj.meta.schema) {
-            // We have a schema - use it directly
-            const zodSchema = toolObj.meta.schema;
+    // Build the tool based on whether we have a schema or not
+    if ("meta" in toolObj
+      && toolObj.meta
+      && "schema" in toolObj.meta
+      && toolObj.meta.schema) {
+      // We have a schema - use it directly
+      const zodSchema = toolObj.meta.schema;
 
-            return tool({
-                description,
-                inputSchema: zodSchema,
-                execute: async (params: unknown) => {
-                    logger?.info(`Executing tool: ${name}`, { params });
+      return tool({
+        description,
+        inputSchema: zodSchema,
+        execute: async (params: unknown) => {
+          logger?.info(`Executing tool: ${name}`, { params });
 
-                    try {
-                        const result = await toolObj.execute(params);
-                        logger?.info(`Tool ${name} executed successfully`);
-                        return result;
-                    }
-                    catch (toolError) {
-                        const errorMsg = toolError instanceof Error ? toolError.message : String(toolError);
-                        logger?.error(`Tool ${name} execution failed:`, { error: errorMsg });
-                        throw new Error(`Tool execution failed: ${errorMsg}`);
-                    }
-                },
-            });
-        }
-        else {
-            // No schema available - use empty object schema
-            return tool({
-                description,
-                inputSchema: z.object({}),
-                execute: async () => {
-                    logger?.info(`Executing tool: ${name}`, { params: {} });
-
-                    try {
-                        const result = await toolObj.execute({});
-                        logger?.info(`Tool ${name} executed successfully`);
-                        return result;
-                    }
-                    catch (toolError) {
-                        const errorMsg = toolError instanceof Error ? toolError.message : String(toolError);
-                        logger?.error(`Tool ${name} execution failed:`, { error: errorMsg });
-                        throw new Error(`Tool execution failed: ${errorMsg}`);
-                    }
-                },
-            });
-        }
+          try {
+            const result = await toolObj.execute(params);
+            logger?.info(`Tool ${name} executed successfully`);
+            return result;
+          }
+          catch (toolError) {
+            const errorMsg = toolError instanceof Error ? toolError.message : String(toolError);
+            logger?.error(`Tool ${name} execution failed:`, { error: errorMsg });
+            throw new Error(`Tool execution failed: ${errorMsg}`);
+          }
+        },
+      });
     }
+    else {
+      // No schema available - use empty object schema
+      return tool({
+        description,
+        inputSchema: z.object({}),
+        execute: async () => {
+          logger?.info(`Executing tool: ${name}`, { params: {} });
 
-    // Handle ToolFn case - not supported yet but we can add it later
-    logger?.warn(`Function-style tool ${name} not yet supported`);
-    return null;
+          try {
+            const result = await toolObj.execute({});
+            logger?.info(`Tool ${name} executed successfully`);
+            return result;
+          }
+          catch (toolError) {
+            const errorMsg = toolError instanceof Error ? toolError.message : String(toolError);
+            logger?.error(`Tool ${name} execution failed:`, { error: errorMsg });
+            throw new Error(`Tool execution failed: ${errorMsg}`);
+          }
+        },
+      });
+    }
+  }
+
+  // Handle ToolFn case - not supported yet but we can add it later
+  logger?.warn(`Function-style tool ${name} not yet supported`);
+  return null;
 }
 
 /** Create Vercel AI SDK client that implements our AIClient port */
 export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
-    return {
-        async planWithTools({ input, tools, maxTokens }: Parameters<AIClient["planWithTools"]>[0]) {
+  return {
+    async planWithTools({ input, tools, maxTokens }: Parameters<AIClient["planWithTools"]>[0]) {
+      try {
+        // Note: _modelName parameter from interface is ignored for now
+        // We use the pre-configured model from config instead
+        // TODO: Consider using modelName to support per-call model selection
+
+        const vercelTools: Record<string, unknown> = {};
+
+        // Step 1: Convert tools to Vercel AI SDK format using our adapter
+        if (tools && Object.keys(tools).length > 0) {
+          config.logger?.info("Converting tools to Vercel format:", {
+            toolNames: Object.keys(tools),
+          });
+
+          for (const [toolName, toolDef] of Object.entries(tools)) {
             try {
-                // Note: _modelName parameter from interface is ignored for now
-                // We use the pre-configured model from config instead
-                // TODO: Consider using modelName to support per-call model selection
-
-                const vercelTools: Record<string, unknown> = {};
-
-                // Step 1: Convert tools to Vercel AI SDK format using our adapter
-                if (tools && Object.keys(tools).length > 0) {
-                    config.logger?.info("Converting tools to Vercel format:", {
-                        toolNames: Object.keys(tools),
-                    });
-
-                    for (const [toolName, toolDef] of Object.entries(tools)) {
-                        try {
-                            const vercelTool = createVercelTool(toolName, toolDef, config.logger);
-                            if (vercelTool) {
-                                vercelTools[toolName] = vercelTool;
-                            }
-                        }
-                        catch (conversionError) {
-                            const errorMsg = conversionError instanceof Error ? conversionError.message : String(conversionError);
-                            config.logger?.warn(`Failed to convert tool ${toolName}:`, { error: errorMsg });
-                            config.logger?.warn(`Stack trace:`, { stack: conversionError instanceof Error ? conversionError.stack : "N/A" });
-                        }
-                    }
-                }
-
-                // Step 3: Call AI with tools and handle responses
-                // TypeScript struggles with the complex tool generics, but runtime behavior is correct
-                // This single type assertion is safer than scattering 'any' throughout the codebase
-                const cleanTools = Object.keys(vercelTools).length > 0
-                    // eslint-disable-next-line ts/consistent-type-assertions
-                    ? vercelTools as Parameters<typeof generateText>[0]["tools"]
-                    : undefined;
-
-                const result = await generateText({
-                    model: config.model,
-                    prompt: input,
-                    tools: cleanTools,
-                    maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
-                    temperature: config.temperature || 0,
-                });
-
-                // Emit telemetry if configured
-                config.logger?.info("AI client execution completed", {
-                    textLength: result.text.length,
-                    hasUsage: !!result.usage,
-                    toolCalls: result.toolCalls?.length || 0,
-                });
-
-                return {
-                    text: result.text,
-                    usage: undefined,
-                };
+              const vercelTool = createVercelTool(toolName, toolDef, config.logger);
+              if (vercelTool) {
+                vercelTools[toolName] = vercelTool;
+              }
             }
-            catch (error) {
-                config.logger?.error("AI client execution failed", { error });
-
-                // Classify errors for retry logic
-                if (error instanceof Error) {
-                    // Network/timeout errors - retryable
-                    if (error.message.includes("timeout")
-                        || error.message.includes("network")
-                        || error.message.includes("429")) {
-                        throw new AIClientTransientError(
-                            `Transient AI client error: ${error.message}`,
-                            error,
-                        );
-                    }
-
-                    // Auth/quota errors - fatal
-                    if (error.message.includes("401")
-                        || error.message.includes("403")
-                        || error.message.includes("quota")) {
-                        throw new AIClientFatalError(
-                            `Fatal AI client error: ${error.message}`,
-                            error,
-                        );
-                    }
-                }
-
-                // Default to transient for unknown errors
-                throw new AIClientTransientError(
-                    `Unknown AI client error: ${String(error)}`,
-                    error,
-                );
+            catch (conversionError) {
+              const errorMsg = conversionError instanceof Error ? conversionError.message : String(conversionError);
+              config.logger?.warn(`Failed to convert tool ${toolName}:`, { error: errorMsg });
+              config.logger?.warn(`Stack trace:`, { stack: conversionError instanceof Error ? conversionError.stack : "N/A" });
             }
-        },
-    };
+          }
+        }
+
+        // Step 3: Call AI with tools and handle responses
+        // TypeScript struggles with the complex tool generics, but runtime behavior is correct
+        // This single type assertion is safer than scattering 'any' throughout the codebase
+        const cleanTools = Object.keys(vercelTools).length > 0
+        // eslint-disable-next-line ts/consistent-type-assertions
+          ? vercelTools as Parameters<typeof generateText>[0]["tools"]
+          : undefined;
+
+        const result = await generateText({
+          model: config.model,
+          prompt: input,
+          tools: cleanTools,
+          maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
+          temperature: config.temperature || 0,
+        });
+
+        // Emit telemetry if configured
+        config.logger?.info("AI client execution completed", {
+          textLength: result.text.length,
+          hasUsage: !!result.usage,
+          toolCalls: result.toolCalls?.length || 0,
+        });
+
+        return {
+          text: result.text,
+          usage: undefined,
+        };
+      }
+      catch (error) {
+        config.logger?.error("AI client execution failed", { error });
+
+        // Classify errors for retry logic
+        if (error instanceof Error) {
+          // Network/timeout errors - retryable
+          if (error.message.includes("timeout")
+            || error.message.includes("network")
+            || error.message.includes("429")) {
+            throw new AIClientTransientError(
+              `Transient AI client error: ${error.message}`,
+              error,
+            );
+          }
+
+          // Auth/quota errors - fatal
+          if (error.message.includes("401")
+            || error.message.includes("403")
+            || error.message.includes("quota")) {
+            throw new AIClientFatalError(
+              `Fatal AI client error: ${error.message}`,
+              error,
+            );
+          }
+        }
+
+        // Default to transient for unknown errors
+        throw new AIClientTransientError(
+          `Unknown AI client error: ${String(error)}`,
+          error,
+        );
+      }
+    },
+  };
 }
