@@ -25,7 +25,7 @@
 - Update `pnpm-workspace.yaml`, root `tsconfig` references, and `turbo.json` targets if present.
 
 ### 2. Evolve core ports for schema metadata
-- Update `ToolObj` in `packages/feature-endpoints/src/domain/ports.ts` to add optional `meta?: { jsonSchema?: JsonSchema7; validate?: (args: unknown) => asserts args is P }`.
+- Update `ToolObj` in `packages/scheduler/src/domain/ports.ts` to add optional `meta?: { jsonSchema?: JsonSchema7; validate?: (args: unknown) => asserts args is P }`.
 - Adjust `callTool` helper to invoke `validate` when supplied before executing the tool.
 - Keep metadata optional to avoid breaking existing callers; provide default no-op behaviour.
 
