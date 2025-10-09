@@ -41,6 +41,14 @@ export class InMemoryMetricsRepo {
     }
 }
 
+export type ScenarioSnapshot = {
+    minute: number;
+    timestamp: Date;
+    cpu: number;
+    nextCpuAt: Date;
+    discordPaused: boolean;
+};
+
 /* =========================
    Endpoint-bound tool bag
    (object-shaped, SDK-compatible)
@@ -196,8 +204,6 @@ export async function scenario_system_resources() {
     ];
 
     // Sim-only: Discord cooldown state
-    const discordState: { cooldownUntil: Date | undefined } = { cooldownUntil: undefined };
-
     // Dispatcher: CPU endpoint records a metric when it runs
     const dispatcher = new FakeDispatcher((ep) => {
         if (ep.id === cpuEndpointId) {
@@ -215,26 +221,18 @@ export async function scenario_system_resources() {
 
     const scheduler = new Scheduler({ clock, jobs, runs, dispatcher, cron });
 
-    const events: string[] = [];
+    const snapshots: ScenarioSnapshot[] = [];
 
-    for (let minute = 0; minute < 40; minute++) {
-        // 1) MEASURE once for this minute (collects a fresh CPU metric if due)
-        await scheduler.tick(50, 10_000);
-
-        // 2) PLAN (CPU + Discord) based on latest metrics
-        const now = clock.now();
+    const planCpu = async (now: Date) => {
         const latest = metrics.latest(cpuEndpointId);
         const highForMins = metrics.consecutiveHighMinutes(cpuEndpointId, 80);
         const lowForMins = consecutiveLowMinutes(metrics.all(cpuEndpointId), 65);
 
-        // CPU planning
         const cpuEp = await jobs.getEndpoint(cpuEndpointId);
         const cpuTools = makeToolsForEndpoint(cpuEndpointId, { jobs, now: () => clock.now() });
 
         if (latest && latest.cpu >= 80) {
-            // tighten to 30s if not already
             await maybeProposeInterval(cpuTools, cpuEp, 30_000, now, `High CPU ${latest.cpu}%`);
-            // Optional: one-shot when spike first starts
             if (highForMins === 1) {
                 await callTool(cpuTools, "propose_next_time", {
                     nextRunInMs: 5_000,
@@ -242,50 +240,62 @@ export async function scenario_system_resources() {
                     reason: "Spike start",
                 });
             }
+            return { latest, highForMins, lowForMins };
         }
-        else if (latest && lowForMins >= 5) {
-            // recovered for a few minutes -> relax to 3m
+
+        if (latest && lowForMins >= 5) {
             await maybeProposeInterval(cpuTools, cpuEp, 180_000, now, "Recovered < 65% (5m)");
         }
 
-        // Discord planning with cooldown (one-shot window)
+        return { latest, highForMins, lowForMins };
+    };
+
+    // Sim-only: track cooldown so Discord alerts do not chatter
+    const discordState: { cooldownUntil: Date | undefined } = { cooldownUntil: undefined };
+
+    const planDiscord = async (now: Date, summary: { latest?: MetricSample | undefined; highForMins: number; lowForMins: number }) => {
+        const { latest, highForMins } = summary;
         const discTools = makeToolsForEndpoint(discordEndpointId, { jobs, now: () => clock.now() });
         const discEp = await jobs.getEndpoint(discordEndpointId);
 
-        // Only trigger if: high CPU, cooldown expired, and endpoint is currently paused
         const onCooldown = discordState.cooldownUntil && discordState.cooldownUntil > now;
         const isPaused = !!(discEp.pausedUntil && discEp.pausedUntil > now);
 
         if (!onCooldown && latest && latest.cpu >= 80 && isPaused) {
-            // 1) Unpause
             await callTool(discTools, "pause_until", { untilIso: null, reason: "Unpause for alert" });
-
-            // 2) Schedule a single one-shot in 5s
             await callTool(discTools, "propose_next_time", {
                 nextRunInMs: 5_000,
                 ttlMinutes: 2,
                 reason: highForMins >= 5 ? "High CPU sustained" : "High CPU start",
             });
 
-            // 3) Re-pause shortly after the one-shot time to prevent chatter
-            const rePauseAt = new Date(now.getTime() + 15_000); // 15s > 5s
+            const rePauseAt = new Date(now.getTime() + 15_000);
             await callTool(discTools, "pause_until", {
                 untilIso: rePauseAt.toISOString(),
                 reason: "Post-alert short pause window",
             });
 
-            // 4) Start cooldown
             discordState.cooldownUntil = new Date(now.getTime() + 10 * 60_000);
+            return;
         }
-        else if (latest && latest.cpu < 65 && isPaused === false) {
-            // Optional: if we detect recovery and it's currently unpaused (rare with short window),
-            // push it back to a long pause.
+
+        if (latest && latest.cpu < 65 && isPaused === false) {
             await callTool(discTools, "pause_until", {
                 untilIso: new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString(),
                 reason: "Recovered",
             });
             discordState.cooldownUntil = undefined;
         }
+    };
+
+    for (let minute = 0; minute < 40; minute++) {
+        // 1) MEASURE once for this minute (collects a fresh CPU metric if due)
+        await scheduler.tick(50, 10_000);
+
+        // 2) PLAN (CPU + Discord) based on latest metrics
+        const now = clock.now();
+        const cpuSummary = await planCpu(now);
+        await planDiscord(now, cpuSummary);
 
         // 3) DRAIN: run everything due right now (no time advance)
         while (true) {
@@ -307,12 +317,17 @@ export async function scenario_system_resources() {
         // 4) Snapshot (ISO for clarity)
         const cpuEpSnap = await jobs.getEndpoint(cpuEndpointId);
         const discEpSnap = await jobs.getEndpoint(discordEndpointId);
-        const cpuVal = latest?.cpu ?? 0;
+        const latest = metrics.latest(cpuEndpointId);
+        const snapshotTimestamp = new Date(clock.now().getTime());
 
-        events.push(
-            `${minute}m: cpu=${cpuVal}%, next(cpu)=${cpuEpSnap.nextRunAt.toISOString()}, discordPaused=${!!discEpSnap.pausedUntil}`,
-        );
+        snapshots.push({
+            minute,
+            timestamp: snapshotTimestamp,
+            cpu: latest?.cpu ?? 0,
+            nextCpuAt: new Date(cpuEpSnap.nextRunAt.getTime()),
+            discordPaused: !!discEpSnap.pausedUntil,
+        });
     }
 
-    return { runs, jobs, metrics, events };
+    return { runs, jobs, metrics, snapshots };
 }
