@@ -139,6 +139,78 @@ export function getFlashSaleMetricsForMinute(minute: number): FlashSaleMetricSam
     };
 }
 
+export class FlashSaleMetricsRepo {
+    private map = new Map<string, FlashSaleMetricSample[]>();
+
+    push(endpointId: string, sample: FlashSaleMetricSample) {
+        const arr = this.map.get(endpointId) ?? [];
+        arr.push(sample);
+        this.map.set(endpointId, arr);
+    }
+
+    latest(endpointId: string): FlashSaleMetricSample | undefined {
+        const arr = this.map.get(endpointId) ?? [];
+        return arr[arr.length - 1];
+    }
+
+    all(endpointId: string): FlashSaleMetricSample[] {
+        return this.map.get(endpointId) ?? [];
+    }
+
+    /**
+     * Count consecutive minutes where traffic exceeded threshold
+     */
+    consecutiveHighTraffic(endpointId: string, threshold: number): number {
+        const arr = (this.map.get(endpointId) ?? []).slice().reverse();
+        let count = 0;
+        for (const s of arr) {
+            if (s.traffic >= threshold) count++;
+            else break;
+        }
+        return count;
+    }
+
+    /**
+     * Count consecutive minutes where orders per minute fell below threshold
+     */
+    consecutiveSlowOrders(endpointId: string, threshold: number): number {
+        const arr = (this.map.get(endpointId) ?? []).slice().reverse();
+        let count = 0;
+        for (const s of arr) {
+            if (s.ordersPerMin < threshold) count++;
+            else break;
+        }
+        return count;
+    }
+
+    /**
+     * Average page load time over last N minutes
+     */
+    averagePageLoadLast(endpointId: string, n: number): number {
+        const arr = this.map.get(endpointId) ?? [];
+        const recent = arr.slice(-n);
+        if (recent.length === 0) return 0;
+        const sum = recent.reduce((acc, s) => acc + s.pageLoadMs, 0);
+        return sum / recent.length;
+    }
+
+    /**
+     * Check if inventory lag exceeds threshold in latest sample
+     */
+    isInventoryLagging(endpointId: string, thresholdMs: number): boolean {
+        const latest = this.latest(endpointId);
+        return latest ? latest.inventoryLagMs >= thresholdMs : false;
+    }
+
+    /**
+     * Check if database queries are slow in latest sample
+     */
+    isDatabaseSlow(endpointId: string, thresholdMs: number): boolean {
+        const latest = this.latest(endpointId);
+        return latest ? latest.dbQueryMs >= thresholdMs : false;
+    }
+}
+
 export type ScenarioSnapshot = {
     minute: number;
     timestamp: Date;
