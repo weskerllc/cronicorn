@@ -48,10 +48,25 @@ export type AIClient = {
 
 export type ToolFn<P, R> = (args: P) => Promise<R>;
 
+/** JSON Schema definition for tool input validation */
+export type JsonSchema7 = {
+    type: string;
+    properties?: Record<string, unknown>;
+    required?: string[];
+    [key: string]: unknown;
+};
+
+/** Tool metadata for schema validation and introspection */
+export type ToolMeta<P> = {
+    jsonSchema?: JsonSchema7;
+    validate?: (args: unknown) => asserts args is P;
+};
+
 /** Object-shaped tool (SDK-style) */
 export type ToolObj<P, R> = {
     description?: string;
     execute: (args: P) => Promise<R>;
+    meta?: ToolMeta<P>;
 };
 
 /** A tool can be either shape */
@@ -96,6 +111,11 @@ export async function callTool<
         return tool(args) as Promise<ToolResult<TTools[K]>>;
     }
     if (isToolObj(tool)) {
+        // Validate args if meta.validate is provided
+        if (tool.meta?.validate) {
+            // eslint-disable-next-line ts/consistent-type-assertions
+            (tool.meta.validate as (args: unknown) => void)(args);
+        }
         // eslint-disable-next-line ts/consistent-type-assertions
         return tool.execute(args) as Promise<ToolResult<TTools[K]>>;
     }
