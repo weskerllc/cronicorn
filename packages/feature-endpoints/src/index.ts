@@ -27,7 +27,7 @@ export type {
 } from "./domain/ports.js";
 
 // Tool utilities (for building custom AI tool integrations)
-export { callTool, defineTools, jobEndpointSchema } from "./domain/ports.js";
+export { callTool, defineTools } from "./domain/ports.js";
 
 // Core scheduler class (composition root)
 export { Scheduler } from "./domain/scheduler.js";

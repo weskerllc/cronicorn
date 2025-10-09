@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 export type Clock = {
     now: () => Date;
     sleep: (ms: number) => Promise<void>; // in tests: fast-forward
@@ -53,7 +51,6 @@ export type ToolFn<P, R> = (args: P) => Promise<R>;
 /** Object-shaped tool (SDK-style) */
 export type ToolObj<P, R> = {
     description?: string;
-    parameters?: z.ZodType<P>;
     execute: (args: P) => Promise<R>;
 };
 
@@ -99,9 +96,8 @@ export async function callTool<
         return tool(args) as Promise<ToolResult<TTools[K]>>;
     }
     if (isToolObj(tool)) {
-        const parsed = tool.parameters ? tool.parameters.parse(args) : args;
         // eslint-disable-next-line ts/consistent-type-assertions
-        return tool.execute(parsed) as Promise<ToolResult<TTools[K]>>;
+        return tool.execute(args) as Promise<ToolResult<TTools[K]>>;
     }
     throw new TypeError(`Tool "${String(key)}" is not callable`);
 }
@@ -113,53 +109,28 @@ export function defineTools<
     return t;
 }
 
-export const jobEndpointSchema = z.object({
-    id: z.string().min(1),
-    jobId: z.string().min(1),
-    tenantId: z.string().min(1),
-    name: z.string().min(1),
-    // baseline
-    baselineCron: z.string().min(1).optional(),
-    baselineIntervalMs: z.coerce.number().optional(),
-    // hints
-    aiHintNextRunAt: z.coerce.date().optional(),
-    aiHintIntervalMs: z.coerce.number().optional(),
-    aiHintExpiresAt: z.coerce.date().optional(),
-    aiHintReason: z.string().min(1).optional(),
-    // guardrails/ops
-    minIntervalMs: z.coerce.number().optional(),
-    maxIntervalMs: z.coerce.number().optional(),
-    pausedUntil: z.coerce.date().optional(),
-    lockedUntil: z.coerce.date().optional(),
-    // state
-    nextRunAt: z.coerce.date(),
-    lastRunAt: z.coerce.date().optional(),
-    failureCount: z.coerce.number().min(0).default(0),
-    lastStatus: z.enum(["success", "failed", "running", "canceled"]).optional(),
-});
-export type JobEndpoint = z.infer<typeof jobEndpointSchema>;
 // Core data
-// export type JobEndpoint = {
-//     id: string;
-//     jobId: string;
-//     tenantId: string;
-//     name: string;
-//     // baseline
-//     baselineCron?: string;
-//     baselineIntervalMs?: number;
-//     // hints
-//     aiHintNextRunAt?: Date;
-//     aiHintIntervalMs?: number;
-//     aiHintExpiresAt?: Date;
-//     aiHintReason?: string;
-//     // guardrails/ops
-//     minIntervalMs: number;
-//     maxIntervalMs?: number;
-//     pausedUntil?: Date;
-//     lockedUntil?: Date;
-//     // state
-//     nextRunAt: Date;
-//     lastRunAt?: Date;
-//     failureCount: number;
-//     lastStatus?: "success" | "failed" | "running" | "canceled";
-// };
+export type JobEndpoint = {
+    id: string;
+    jobId: string;
+    tenantId: string;
+    name: string;
+    // baseline
+    baselineCron?: string;
+    baselineIntervalMs?: number;
+    // hints
+    aiHintNextRunAt?: Date;
+    aiHintIntervalMs?: number;
+    aiHintExpiresAt?: Date;
+    aiHintReason?: string;
+    // guardrails/ops
+    minIntervalMs: number;
+    maxIntervalMs?: number;
+    pausedUntil?: Date;
+    lockedUntil?: Date;
+    // state
+    nextRunAt: Date;
+    lastRunAt?: Date;
+    failureCount: number;
+    lastStatus?: "success" | "failed" | "running" | "canceled";
+};
