@@ -1,0 +1,28 @@
+{
+    "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+    "changelog": "@changesets/cli/changelog",
+    "commit": false,
+    "fixed": [
+        [
+            "@cronicorn/api",
+            "@cronicorn/scheduler",
+            "@cronicorn/config-eslint",
+            "@cronicorn/contracts",
+            "@cronicorn/core-observability",
+            "@cronicorn/core-schemas",
+            "@cronicorn/db-core",
+            "@cronicorn/feature-auth",
+            "@cronicorn/feature-endpoints",
+            "@cronicorn/feature-execution",
+            "@cronicorn/feature-job-endpoints",
+            "@cronicorn/feature-jobs",
+            "@cronicorn/feature-scheduler",
+            "@cronicorn/test-utils"
+        ]
+    ],
+    "linked": [],
+    "access": "restricted",
+    "baseBranch": "main",
+    "updateInternalDependencies": "patch",
+    "ignore": []
+}

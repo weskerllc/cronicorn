@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:17
+    container_name: myapp-db
+    restart: unless-stopped
+    networks: [cronicorn]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "6666:5432" # expose DB to host (optionally remove this)
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    networks: [cronicorn]
+    container_name: api
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      AUTH_SECRET: ${AUTH_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      CRONICORN_API_URL: ${CRONICORN_API_URL}
+    ports:
+      - "3333:3333" # expose API to host
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
+    networks: [cronicorn]
+    container_name: scheduler
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_MODEL: ${AI_MODEL}
+      NODE_ENV: production
+
+volumes:
+  db_data:
+
+networks:
+  cronicorn:
+    driver: bridge

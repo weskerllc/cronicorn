@@ -1,0 +1,10 @@
+.git
+node_modules
+pnpm-store
+**/dist
+**/coverage
+**/.next
+**/.turbo
+**/*.log
+Dockerfile*
+docker-compose*
