@@ -1,22 +1,22 @@
 {
-    "extends": "../../tsconfig.base.json",
-    "compilerOptions": {
-        "outDir": "./dist",
-        "rootDir": "./src"
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "../../packages/scheduler"
     },
-    "include": [
-        "src/**/*"
-    ],
-    "exclude": [
-        "dist",
-        "node_modules"
-    ],
-    "references": [
-        {
-            "path": "../../packages/scheduler"
-        },
-        {
-            "path": "../../packages/feature-ai-vercel-sdk"
-        }
-    ]
+    {
+      "path": "../../packages/feature-ai-vercel-sdk"
+    }
+  ]
 }

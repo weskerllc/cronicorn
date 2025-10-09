@@ -1,30 +1,133 @@
 // Vercel AI SDK client implementation
 
-import type { AIClient } from "@cronicorn/scheduler/domain/ports.js";
+import type { AIClient, Tool } from "@cronicorn/scheduler/domain/ports.js";
 
-import { generateText } from "ai";
+import { generateText, tool } from "ai";
+import { z } from "zod";
 
 import type { VercelAiClientConfig } from "./types.js";
 
 import { AIClientFatalError, AIClientTransientError } from "./errors.js";
+
+/**
+ * Creates a Vercel AI SDK tool from a scheduler tool definition
+ * This function handles the adaptation between our port interface and Vercel's requirements
+ *
+ * We use a type-safe approach that works within TypeScript's constraints while avoiding
+ * explicit 'any' usage. The key is to use conditional schema extraction and proper typing.
+ */
+function createVercelTool(
+    name: string,
+    schedulerTool: Tool<unknown, unknown>,
+    logger?: VercelAiClientConfig["logger"],
+) {
+    // Handle ToolObj case (has execute method)
+    if (typeof schedulerTool === "object" && schedulerTool && "execute" in schedulerTool) {
+        const toolObj = schedulerTool;
+
+        // Extract description safely
+        const description = ("description" in toolObj && typeof toolObj.description === "string")
+            ? toolObj.description
+            : `Execute ${name}`;
+
+        // Build the tool based on whether we have a schema or not
+        if ("meta" in toolObj
+            && toolObj.meta
+            && "schema" in toolObj.meta
+            && toolObj.meta.schema) {
+            // We have a schema - use it directly
+            const zodSchema = toolObj.meta.schema;
+
+            return tool({
+                description,
+                inputSchema: zodSchema,
+                execute: async (params: unknown) => {
+                    logger?.info(`Executing tool: ${name}`, { params });
+
+                    try {
+                        const result = await toolObj.execute(params);
+                        logger?.info(`Tool ${name} executed successfully`);
+                        return result;
+                    }
+                    catch (toolError) {
+                        const errorMsg = toolError instanceof Error ? toolError.message : String(toolError);
+                        logger?.error(`Tool ${name} execution failed:`, { error: errorMsg });
+                        throw new Error(`Tool execution failed: ${errorMsg}`);
+                    }
+                },
+            });
+        }
+        else {
+            // No schema available - use empty object schema
+            return tool({
+                description,
+                inputSchema: z.object({}),
+                execute: async () => {
+                    logger?.info(`Executing tool: ${name}`, { params: {} });
+
+                    try {
+                        const result = await toolObj.execute({});
+                        logger?.info(`Tool ${name} executed successfully`);
+                        return result;
+                    }
+                    catch (toolError) {
+                        const errorMsg = toolError instanceof Error ? toolError.message : String(toolError);
+                        logger?.error(`Tool ${name} execution failed:`, { error: errorMsg });
+                        throw new Error(`Tool execution failed: ${errorMsg}`);
+                    }
+                },
+            });
+        }
+    }
+
+    // Handle ToolFn case - not supported yet but we can add it later
+    logger?.warn(`Function-style tool ${name} not yet supported`);
+    return null;
+}
 
 /** Create Vercel AI SDK client that implements our AIClient port */
 export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
     return {
         async planWithTools({ input, tools, maxTokens }) {
             try {
-                // Log tools for debugging, but don't implement them yet
-                // TODO: Implement tool calling in next iteration
+                // Note: _modelName parameter from interface is ignored for now
+                // We use the pre-configured model from config instead
+                // TODO: Consider using modelName to support per-call model selection
+
+                const vercelTools: Record<string, unknown> = {};
+
+                // Step 1: Convert tools to Vercel AI SDK format using our adapter
                 if (tools && Object.keys(tools).length > 0) {
-                    config.logger?.info("Tools provided but not yet implemented", {
+                    config.logger?.info("Converting tools to Vercel format:", {
                         toolNames: Object.keys(tools),
                     });
+
+                    for (const [toolName, toolDef] of Object.entries(tools)) {
+                        try {
+                            const vercelTool = createVercelTool(toolName, toolDef, config.logger);
+                            if (vercelTool) {
+                                vercelTools[toolName] = vercelTool;
+                            }
+                        }
+                        catch (conversionError) {
+                            const errorMsg = conversionError instanceof Error ? conversionError.message : String(conversionError);
+                            config.logger?.warn(`Failed to convert tool ${toolName}:`, { error: errorMsg });
+                        }
+                    }
                 }
 
-                // Generate response using Vercel AI SDK
+                // Step 3: Call AI with tools and handle responses
+                // TypeScript struggles with the complex tool generics, but runtime behavior is correct
+                // This single type assertion is safer than scattering 'any' throughout the codebase
+                const cleanTools = Object.keys(vercelTools).length > 0
+                    // eslint-disable-next-line ts/consistent-type-assertions
+                    ? vercelTools as Parameters<typeof generateText>[0]["tools"]
+                    : undefined;
+
                 const result = await generateText({
                     model: config.model,
                     prompt: input,
+                    tools: cleanTools,
                     maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
                     temperature: config.temperature || 0,
                 });
@@ -33,11 +136,11 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
                 config.logger?.info("AI client execution completed", {
                     textLength: result.text.length,
                     hasUsage: !!result.usage,
+                    toolCalls: result.toolCalls?.length || 0,
                 });
 
                 return {
                     text: result.text,
-                    // Usage will be implemented once we determine correct property names
                     usage: undefined,
                 };
             }

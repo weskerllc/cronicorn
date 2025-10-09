@@ -2,6 +2,7 @@
 
 import { generateText } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 
 import { createVercelAiClient } from "../client.js";
 
@@ -50,7 +51,6 @@ describe("createVercelAiClient", () => {
         const client = createVercelAiClient(mockConfig);
 
         const result = await client.planWithTools({
-            model: "test-model", // Required by AIClient interface
             input: "Test prompt",
             tools: {}, // Required by AIClient interface
             maxTokens: 500,
@@ -75,7 +75,6 @@ describe("createVercelAiClient", () => {
         const mockToolExecute = vi.fn().mockResolvedValue("tool result");
 
         await client.planWithTools({
-            model: "test-model",
             input: "Use the test tool",
             tools: {
                 testTool: {
@@ -116,21 +115,16 @@ describe("createVercelAiClient", () => {
         const mockValidator = vi.fn(); // Mock validation function
 
         await client.planWithTools({
-            model: "test-model",
             input: "Use the schema tool",
             tools: {
                 schemaTool: {
                     description: "A tool with JSON schema",
                     execute: mockToolExecute,
                     meta: {
-                        jsonSchema: {
-                            type: "object",
-                            properties: {
-                                name: { type: "string" },
-                                age: { type: "number" },
-                            },
-                            required: ["name"],
-                        },
+                        schema: z.object({
+                            name: z.string(),
+                            age: z.number().optional(),
+                        }),
                         validate: mockValidator,
                     },
                 },

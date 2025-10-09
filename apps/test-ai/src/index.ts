@@ -6,6 +6,7 @@
 import { openai } from "@ai-sdk/openai";
 import { createVercelAiClient } from "@cronicorn/feature-ai-vercel-sdk";
 import { defineTools } from "@cronicorn/scheduler/domain/ports.js";
+import { z } from "zod";
 
 async function main() {
     console.log("🚀 Testing AI Scheduler + Vercel AI SDK Integration");
@@ -28,17 +29,28 @@ async function main() {
         },
     });
 
-    // Define some test tools
+    // Define some test tools with Zod schemas
     const tools = defineTools({
         tellJoke: {
             description: "When user asks you to tell a joke, you must call this tool.",
             execute: async () => {
-                return "Yo Mama";
+                return "Why do programmers prefer dark mode? Because light attracts bugs! 🐛";
+            },
+            meta: {
+                schema: z.object({}), // No parameters needed
             },
         },
-        calculateSum: async (args: unknown) => {
-            const { a, b } = args as { a: number; b: number };
-            return a + b;
+        calculateSum: {
+            description: "Calculate the sum of two numbers",
+            execute: async (args: { a: number; b: number }) => {
+                return `The sum of ${args.a} and ${args.b} is ${args.a + args.b}`;
+            },
+            meta: {
+                schema: z.object({
+                    a: z.number().describe("First number"),
+                    b: z.number().describe("Second number"),
+                }),
+            },
         },
     });
 
