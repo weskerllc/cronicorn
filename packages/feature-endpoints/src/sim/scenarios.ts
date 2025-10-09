@@ -41,6 +41,104 @@ export class InMemoryMetricsRepo {
     }
 }
 
+/* =========================
+   Flash Sale Metrics
+   ========================= */
+export type FlashSaleMetricSample = {
+    at: Date;
+    traffic: number; // visitors per minute
+    ordersPerMin: number;
+    pageLoadMs: number;
+    inventoryLagMs: number;
+    dbQueryMs: number;
+};
+
+export type FlashSalePhase = "baseline" | "surge" | "strain" | "critical" | "recovery";
+
+export type FlashSaleTimeline = {
+    phase: FlashSalePhase;
+    minutes: number[];
+    traffic: number;
+    ordersPerMin: number;
+    pageLoadMs: number;
+    inventoryLagMs: number;
+    dbQueryMs: number;
+};
+
+// 40-minute flash sale timeline with 5 distinct phases
+export const FLASH_SALE_TIMELINE: FlashSaleTimeline[] = [
+    {
+        phase: "baseline",
+        minutes: [0, 1, 2, 3, 4],
+        traffic: 1000,
+        ordersPerMin: 40,
+        pageLoadMs: 800,
+        inventoryLagMs: 100,
+        dbQueryMs: 120,
+    },
+    {
+        phase: "surge",
+        minutes: [5, 6, 7, 8],
+        traffic: 5000,
+        ordersPerMin: 180,
+        pageLoadMs: 1800,
+        inventoryLagMs: 250,
+        dbQueryMs: 280,
+    },
+    {
+        phase: "strain",
+        minutes: [9, 10, 11, 12],
+        traffic: 5500,
+        ordersPerMin: 160,
+        pageLoadMs: 3200,
+        inventoryLagMs: 450,
+        dbQueryMs: 850,
+    },
+    {
+        phase: "critical",
+        minutes: [13, 14, 15, 16, 17, 18, 19, 20],
+        traffic: 6000,
+        ordersPerMin: 120,
+        pageLoadMs: 4500,
+        inventoryLagMs: 600,
+        dbQueryMs: 1200,
+    },
+    {
+        phase: "recovery",
+        minutes: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
+        traffic: 1500,
+        ordersPerMin: 50,
+        pageLoadMs: 1100,
+        inventoryLagMs: 150,
+        dbQueryMs: 180,
+    },
+];
+
+export function getFlashSaleMetricsForMinute(minute: number): FlashSaleMetricSample {
+    const timeline = FLASH_SALE_TIMELINE.find(t => t.minutes.includes(minute));
+    if (!timeline) {
+        // Default to recovery phase for any minutes beyond 40
+        const recovery = FLASH_SALE_TIMELINE.find(t => t.phase === "recovery")!;
+        return {
+            at: new Date(),
+            traffic: recovery.traffic,
+            ordersPerMin: recovery.ordersPerMin,
+            pageLoadMs: recovery.pageLoadMs,
+            inventoryLagMs: recovery.inventoryLagMs,
+            dbQueryMs: recovery.dbQueryMs,
+        };
+    }
+
+    return {
+        at: new Date(),
+        traffic: timeline.traffic,
+        ordersPerMin: timeline.ordersPerMin,
+        pageLoadMs: timeline.pageLoadMs,
+        inventoryLagMs: timeline.inventoryLagMs,
+        dbQueryMs: timeline.dbQueryMs,
+    };
+}
+
 export type ScenarioSnapshot = {
     minute: number;
     timestamp: Date;
