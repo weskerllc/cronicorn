@@ -335,6 +335,13 @@ function consecutiveLowMinutes(samples: MetricSample[], threshold = 65): number 
 
 /* =========================
    Scenario: System Resources (CPU + Discord)
+   
+   LEGACY SCENARIO: Kept for comparison and simplicity.
+   - 2 endpoints (CPU monitoring + Discord alerts)
+   - Demonstrates basic adaptive intervals and one-shot alerts with cooldowns
+   - Simpler than flash sale, good for understanding core mechanics
+   
+   PRIMARY SCENARIO: Use scenario_flash_sale() for comprehensive demonstration
    ========================= */
 export async function scenario_system_resources() {
     const clock = new FakeClock("2025-01-01T00:00:00Z");
