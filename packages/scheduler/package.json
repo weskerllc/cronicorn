@@ -26,8 +26,5 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --max-warnings 0 --fix"
-  },
-  "devDependencies": {
-    "@cronicorn/config-eslint": "workspace:*"
   }
 }
