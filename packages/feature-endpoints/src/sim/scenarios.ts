@@ -506,6 +506,7 @@ export async function scenario_system_resources() {
    Flash Sale Scenario Planning Helpers
    ========================= */
 
+// Health Tier
 async function planTrafficMonitor(
     endpointId: string,
     metrics: FlashSaleMetricsRepo,
@@ -581,6 +582,66 @@ async function planInventorySyncCheck(
     }
 }
 
+// Investigation Tier
+async function planSlowPageAnalyzer(
+    endpointId: string,
+    sharedMetricsId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+) {
+    // Use shared metrics for conditional activation
+    const avgPageLoad = metrics.averagePageLoadLast(sharedMetricsId, 2);
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+    const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+    // Activate: avgPageLoad > 2000ms for 2 minutes
+    // Deactivate: avgPageLoad < 1500ms
+
+    if (avgPageLoad > 2000 && isPaused) {
+        await callTool(tools, "pause_until", { untilIso: null, reason: "Activating page performance analysis" });
+        await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 30, reason: "Begin deep page analysis" });
+        await maybeProposeInterval(tools, ep, 90_000, now, "Analyzing slow page loads");
+    } else if (avgPageLoad < 1500 && !isPaused) {
+        await callTool(tools, "pause_until", {
+            untilIso: new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString(),
+            reason: "Page performance recovered",
+        });
+    }
+}
+
+async function planDatabaseQueryTrace(
+    endpointId: string,
+    sharedMetricsId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+) {
+    // Use shared metrics for conditional activation
+    const isDatabaseSlow = metrics.isDatabaseSlow(sharedMetricsId, 500);
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+    const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+    // Activate: dbQueryMs > 500ms
+    // Deactivate: dbQueryMs < 300ms
+
+    if (isDatabaseSlow && isPaused) {
+        await callTool(tools, "pause_until", { untilIso: null, reason: "Activating database query tracing" });
+        await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 30, reason: "Begin query analysis" });
+        await maybeProposeInterval(tools, ep, 2 * 60_000, now, "Tracing slow database queries");
+    } else if (!isDatabaseSlow && !isPaused) {
+        const latest = metrics.latest(sharedMetricsId);
+        if (latest && latest.dbQueryMs < 300) {
+            await callTool(tools, "pause_until", {
+                untilIso: new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString(),
+                reason: "Database performance recovered",
+            });
+        }
+    }
+}
+
 /* =========================
    Scenario: Flash Sale (E-Commerce)
    ========================= */
@@ -600,6 +661,10 @@ export async function scenario_flash_sale() {
     const trafficMonitorId = "traffic_monitor#prod";
     const orderProcessorId = "order_processor_health#prod";
     const inventorySyncId = "inventory_sync_check#prod";
+
+    // Investigation Tier endpoint IDs
+    const slowPageAnalyzerId = "slow_page_analyzer#prod";
+    const dbQueryTraceId = "database_query_trace#prod";
 
     // Seed Health Tier endpoints
     jobs.add({
@@ -638,14 +703,46 @@ export async function scenario_flash_sale() {
         failureCount: 0,
     });
 
-    // Dispatcher: Each health check records flash sale metrics
+    // Seed Investigation Tier endpoints (start paused, activate conditionally)
+    jobs.add({
+        id: slowPageAnalyzerId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Slow Page Analyzer",
+        baselineIntervalMs: 90_000, // 90s when active
+        minIntervalMs: 60_000,
+        maxIntervalMs: 5 * 60_000,
+        nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+        pausedUntil: new Date("2099-01-01T00:00:00Z"),
+        failureCount: 0,
+    });
+
+    jobs.add({
+        id: dbQueryTraceId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Database Query Trace",
+        baselineIntervalMs: 2 * 60_000, // 2m when active
+        minIntervalMs: 60_000,
+        maxIntervalMs: 5 * 60_000,
+        nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+        pausedUntil: new Date("2099-01-01T00:00:00Z"),
+        failureCount: 0,
+    });
+
+    // Shared metrics: All endpoints see the same timeline
+    const sharedMetricsId = "shared#metrics";
+
+    // Dispatcher: Each endpoint run records flash sale metrics
     const dispatcher = new FakeDispatcher((ep) => {
         const elapsedMin = Math.floor(
             (clock.now().getTime() - new Date("2025-01-01T00:00:00Z").getTime()) / 60_000,
         );
 
         const sample = getFlashSaleMetricsForMinute(elapsedMin);
+        // Push to both endpoint-specific and shared location
         metrics.push(ep.id, { ...sample, at: clock.now() });
+        metrics.push(sharedMetricsId, { ...sample, at: clock.now() });
 
         return { status: "success", durationMs: 150 };
     });
@@ -654,20 +751,25 @@ export async function scenario_flash_sale() {
 
     const snapshots: ScenarioSnapshot[] = [];
 
-    // Planning orchestration for Health Tier
-    const planHealthTier = async (now: Date) => {
+    // Planning orchestration
+    const planAllTiers = async (now: Date) => {
+        // Health Tier
         await planTrafficMonitor(trafficMonitorId, metrics, jobs, now);
         await planOrderProcessorHealth(orderProcessorId, metrics, jobs, now);
         await planInventorySyncCheck(inventorySyncId, metrics, jobs, now);
+
+        // Investigation Tier (uses shared metrics for conditional activation)
+        await planSlowPageAnalyzer(slowPageAnalyzerId, sharedMetricsId, metrics, jobs, now);
+        await planDatabaseQueryTrace(dbQueryTraceId, sharedMetricsId, metrics, jobs, now);
     };
 
     for (let minute = 0; minute < 40; minute++) {
         // 1) MEASURE: run scheduler tick to process any due endpoints
         await scheduler.tick(50, 10_000);
 
-        // 2) PLAN: Health Tier adjusts based on latest metrics
+        // 2) PLAN: All tiers adjust based on latest metrics
         const now = clock.now();
-        await planHealthTier(now);
+        await planAllTiers(now);
 
         // 3) DRAIN: execute everything that became due during planning
         while (true) {

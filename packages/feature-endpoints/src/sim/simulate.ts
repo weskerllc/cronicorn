@@ -29,6 +29,8 @@ function renderSnapshots(label: string, snapshots: ScenarioSnapshot[]) {
     const trafficRuns = runs.runs.filter(r => r.endpointId.startsWith("traffic_monitor")).length;
     const orderRuns = runs.runs.filter(r => r.endpointId.startsWith("order_processor")).length;
     const inventoryRuns = runs.runs.filter(r => r.endpointId.startsWith("inventory_sync")).length;
+    const slowPageRuns = runs.runs.filter(r => r.endpointId.startsWith("slow_page_analyzer")).length;
+    const dbTraceRuns = runs.runs.filter(r => r.endpointId.startsWith("database_query_trace")).length;
 
     const nextInDurations = snapshots.map(s => Math.max(0, s.nextCpuAt.getTime() - s.timestamp.getTime()));
     const minNextIn = Math.min(...nextInDurations);
@@ -43,7 +45,9 @@ function renderSnapshots(label: string, snapshots: ScenarioSnapshot[]) {
         throw new Error("Expected cadence to widen during recovery phase");
 
     console.log("Assertions passed ✔️");
-    console.log(`Total runs: ${runs.runs.length} (Traffic=${trafficRuns}, Orders=${orderRuns}, Inventory=${inventoryRuns})`);
+    console.log(`Total runs: ${runs.runs.length}`);
+    console.log(`Health Tier: Traffic=${trafficRuns}, Orders=${orderRuns}, Inventory=${inventoryRuns}`);
+    console.log(`Investigation Tier: SlowPage=${slowPageRuns}, DBTrace=${dbTraceRuns}`);
 
     renderSnapshots("Baseline (0-4m)", snapshots.slice(0, 5));
     renderSnapshots("Surge (5-8m)", snapshots.slice(5, 9));
