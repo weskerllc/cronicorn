@@ -10,6 +10,9 @@
       "@cronicorn/config-eslint/*": [
         "packages/config-eslint/src/*"
       ],
+      "@cronicorn/test-ai/*": [
+        "apps/feature-ai-vercel-sdk/src/*"
+      ],
       "@cronicorn/feature-ai-vercel-sdk/*": [
         "packages/feature-ai-vercel-sdk/src/*"
       ],
