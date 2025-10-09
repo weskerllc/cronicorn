@@ -1,9 +1,5 @@
 // governor.ts
-import type { JobEndpoint } from "./ports.js";
-
-export function nextCronFire(cron: string, from: Date): Date {
-    throw new Error("impl for tests: inject fn or use adapter");
-}
+import type { Cron, JobEndpoint } from "./ports.js";
 
 type Source =
     | "paused"
@@ -14,14 +10,14 @@ type Source =
     | "clamped-min"
     | "clamped-max";
 
-export function planNextRun(now: Date, j: JobEndpoint): { nextRunAt: Date; source: Source } {
+export function planNextRun(now: Date, j: JobEndpoint, cron: Cron): { nextRunAt: Date; source: Source } {
     const nowMs = now.getTime();
     const last = j.lastRunAt ?? now;
     const lastMs = last.getTime();
 
     // --- candidates ---
     const baseline = j.baselineCron
-        ? { at: nextCronFire(j.baselineCron, now), src: "baseline-cron" as const }
+        ? { at: cron.next(j.baselineCron, now), src: "baseline-cron" as const }
         : { at: new Date(lastMs + (j.baselineIntervalMs ?? 60_000)), src: "baseline-interval" as const };
 
     const freshHint = !!(j.aiHintExpiresAt && j.aiHintExpiresAt.getTime() > nowMs);
@@ -34,10 +30,16 @@ export function planNextRun(now: Date, j: JobEndpoint): { nextRunAt: Date; sourc
         ? { at: j.aiHintNextRunAt, src: "ai-oneshot" as const }
         : undefined;
 
-    const candidates = [baseline, aiInterval, aiOneShot].filter(Boolean) as Array<{ at: Date; src: Source }>;
-    let chosen = candidates.length
-        ? candidates.sort((a, b) => a.at.getTime() - b.at.getTime())[0]
-        : baseline;
+    const candidates: Array<{ at: Date; src: Source }> = [baseline];
+    if (aiInterval)
+        candidates.push(aiInterval);
+    if (aiOneShot)
+        candidates.push(aiOneShot);
+
+    let chosen = candidates[0];
+    if (candidates.length > 1) {
+        chosen = [...candidates].sort((a, b) => a.at.getTime() - b.at.getTime())[0];
+    }
 
     if (chosen.at.getTime() < nowMs)
         chosen = { at: new Date(nowMs), src: chosen.src };

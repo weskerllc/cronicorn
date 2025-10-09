@@ -1,7 +1,15 @@
-
 # AI-Driven Adaptive Scheduler — Architecture & Intent
 
+## At a glance
+
+- **Mission:** Keep every `JobEndpoint` on the right cadence by blending a baseline schedule with short-lived AI “hints” that can tighten, relax, or pause runs in real time.
+- **Loop:** AI tooling (rule-based or model-driven) writes hints through ports → the scheduler claims due endpoints, executes them, records the run, and asks the governor for the next slot → the governor reconciles baseline cadence, AI hints, clamps, and pauses to produce the next run time.
+- **Building blocks:** Domain files (`ports`, `governor`, `scheduler`) hold pure logic; adapters (`memory-store`, fake clock/dispatcher/quota) provide infrastructure for tests and sims; the simulator demonstrates the full loop without touching a real DB or external APIs.
+- **You can explore it today:** Run the deterministic simulator to watch CPU and Discord endpoints speed up, alert, and cool down while the logs explain every decision.
+
 > **Purpose:** This document explains the complete intent and mechanics of the AI-driven scheduler prototype so another AI/engineer can confidently extend, test, or port it. It covers file structure, domain concepts, ports, tools, scheduling logic, simulator design, testability, and integration guidance (e.g., Vercel AI SDK).
+
+If you are brand new, read the quick outcomes (Section 0), map the folders (Section 1), then dive into the core circuitry (Sections 2–7). Everything below is self-contained—no other docs required.
 
 ---
 
@@ -41,6 +49,7 @@ This project intentionally separates **domain** (pure logic & types) from **adap
 ## 2) Domain Concepts
 
 ### 2.1 JobEndpoint (key state per endpoint)
+
 - `id`, `jobId`, `tenantId`, `name`
 - **Baseline cadence**: `baselineCron?` or `baselineIntervalMs`
 - **AI hints**: `aiHintIntervalMs?`, `aiHintNextRunAt?`, `aiHintExpiresAt?`
@@ -49,14 +58,17 @@ This project intentionally separates **domain** (pure logic & types) from **adap
 - **Run tracking**: `lastRunAt?`, `nextRunAt`, `failureCount`
 
 ### 2.2 AI Hints (how AI steers schedule)
+
 - **Interval hint**: “run every N milliseconds until expiry” → converts to `lastRunAt + aiHintIntervalMs` candidate.
 - **One-shot hint**: “run at time T exactly” → absolute candidate.
 - **TTL/expiry**: hints ignored after `aiHintExpiresAt`.
 
 ### 2.3 Governor (planner of `nextRunAt`)
+
 Given `(now, endpoint)` returns `{ nextRunAt, source }` where `source ∈ { "baseline-*", "ai-interval", "ai-oneshot", "clamped-*", "paused" }`.
 
 Algorithm:
+
 1. Build candidates:
    - Baseline (cron or `lastRunAt + baselineIntervalMs`).
    - AI interval (if hint fresh): `lastRunAt + aiHintIntervalMs`.
@@ -74,8 +86,9 @@ This makes AI intervals truly win **after a run** (critical for adaptive cadence
 > Keep domain testable and adapter-agnostic. A minimal set:
 
 ### 3.1 Core types
+
 ```ts
-export interface JobEndpoint {
+export type JobEndpoint = {
   id: string;
   jobId: string;
   tenantId: string;
@@ -96,15 +109,16 @@ export interface JobEndpoint {
   lastRunAt?: Date;
   nextRunAt: Date;
   failureCount: number;
-}
+};
 ```
 
 ### 3.2 Repos & Services
+
 ```ts
-export interface JobsRepo {
-  add(ep: Partial<JobEndpoint> & { id: string; name: string; nextRunAt: Date }): Promise<void>;
-  getEndpoint(id: string): Promise<JobEndpoint>;
-  updateAfterRun(
+export type JobsRepo = {
+  add: (ep: Partial<JobEndpoint> & { id: string; name: string; nextRunAt: Date }) => Promise<void>;
+  getEndpoint: (id: string) => Promise<JobEndpoint>;
+  updateAfterRun: (
     id: string,
     update: {
       lastRunAt: Date;
@@ -113,41 +127,53 @@ export interface JobsRepo {
       failureCountDelta: -1 | 1;
       clearExpiredHints?: boolean;
     }
-  ): Promise<void>;
+  ) => Promise<void>;
 
   // AI steering
-  writeAIHint(id: string, hint: { intervalMs?: number; nextRunAt?: Date; expiresAt: Date; reason?: string }): Promise<void>;
-  setNextRunAtIfEarlier(id: string, when: Date): Promise<void>;
-  setPausedUntil(id: string, until: Date | null): Promise<void>;
+  writeAIHint: (
+    id: string,
+    hint: { intervalMs?: number; nextRunAt?: Date; expiresAt: Date; reason?: string }
+  ) => Promise<void>;
+  setNextRunAtIfEarlier: (id: string, when: Date) => Promise<void>;
+  setPausedUntil: (id: string, until: Date | null) => Promise<void>;
 
   // Scheduling
-  claimDueEndpoints(limit: number, withinMs: number): Promise<string[]>;
-}
+  claimDueEndpoints: (limit: number, withinMs: number) => Promise<string[]>;
+};
 
-export interface RunsRepo {
-  recordRun(epId: string, at: Date, status: { status: "success" | "failure"; durationMs: number }): Promise<void>;
-}
+export type RunsRepo = {
+  recordRun: (
+    epId: string,
+    at: Date,
+    status: { status: "success" | "failure"; durationMs: number }
+  ) => Promise<void>;
+};
 
-export interface Dispatcher {
-  execute(ep: JobEndpoint): Promise<{ status: "success" | "failure"; durationMs: number }>;
-}
+export type Dispatcher = {
+  execute: (ep: JobEndpoint) => Promise<{ status: "success" | "failure"; durationMs: number }>;
+};
 
-export interface Clock {
-  now(): Date;
-  sleep(ms: number): Promise<void>;
-}
+export type Clock = {
+  now: () => Date;
+  sleep: (ms: number) => Promise<void>;
+};
 ```
 
 ### 3.3 Tool calling helper
+
 ```ts
-export async function callTool<TTools, TName extends keyof TTools & string>(
+export async function callTool<
+  TTools extends Record<string, { execute: (payload: unknown) => Promise<unknown> | unknown }>,
+  TName extends keyof TTools & string,
+>(
   tools: TTools,
   name: TName,
-  args: TTools[TName] extends { execute: (p: infer P) => any } ? P : never
-) {
-  const t = (tools as any)[name];
-  if (!t?.execute) throw new Error(`tool not found: ${String(name)}`);
-  return t.execute(args as any);
+  args: Parameters<TTools[TName]["execute"]>[0]
+): Promise<ReturnType<TTools[TName]["execute"]>> {
+  const tool = tools[name];
+  if (!tool?.execute)
+    throw new Error(`tool not found: ${String(name)}`);
+  return Promise.resolve(tool.execute(args));
 }
 ```
 
@@ -158,37 +184,53 @@ This keeps tool calls **typed** without `any` in your app surface.
 ## 4) Adapters
 
 ### 4.1 FakeClock — `adapters/fake-clock.ts`
+
 Deterministic clock with `now()` and async `sleep(ms)` that advances time.
 
 ### 4.2 FakeDispatcher — `adapters/fake-dispatcher.ts`
+
 - For CPU endpoint: push a metric sample so the planner has data.
 - For Discord endpoint: pretend to send and succeed.
 
 ### 4.3 InMemoryJobsRepo — `adapters/memory-store.ts`
+
 - Stores endpoints in a `Map<string, JobEndpoint>`.
 - Implements **AI hint writes** and **nudging** (immediate `nextRunAt` set if earlier).
 
 **Critical helper (nudging):**
-```ts
-async setNextRunAtIfEarlier(id: string, when: Date) {
-  const e = this.map.get(id)!;
-  const now = this.now();
-  if (e.pausedUntil && e.pausedUntil > now) return;
 
-  const minAt = e.minIntervalMs ? new Date(now.getTime() + e.minIntervalMs) : undefined;
-  const maxAt = e.maxIntervalMs ? new Date(now.getTime() + e.maxIntervalMs) : undefined;
+```ts
+async function setNextRunAtIfEarlier({
+  endpoint,
+  now,
+  when,
+}: {
+  endpoint: JobEndpoint;
+  now: Date;
+  when: Date;
+}) {
+  if (endpoint.pausedUntil && endpoint.pausedUntil > now)
+    return;
+
+  const minAt = endpoint.minIntervalMs ? new Date(now.getTime() + endpoint.minIntervalMs) : undefined;
+  const maxAt = endpoint.maxIntervalMs ? new Date(now.getTime() + endpoint.maxIntervalMs) : undefined;
 
   let candidate = when;
-  if (minAt && candidate < minAt) candidate = minAt;
-  if (maxAt && candidate > maxAt) candidate = maxAt;
+  if (minAt && candidate < minAt)
+    candidate = minAt;
+  if (maxAt && candidate > maxAt)
+    candidate = maxAt;
 
-  if (candidate < e.nextRunAt) e.nextRunAt = candidate;
+  if (candidate < endpoint.nextRunAt) {
+    endpoint.nextRunAt = candidate;
+  }
 }
 ```
 
 This is how tool proposals take effect immediately.
 
 ### 4.4 FakeQuota — `adapters/fake-quota.ts`
+
 - Placeholder for AI token checking; can be injected into the planner or dispatcher policies.
 - Keep it out of the governor so scheduling math stays pure.
 
@@ -196,16 +238,30 @@ This is how tool proposals take effect immediately.
 
 ## 5) Scheduler — `domain/scheduler.ts`
 
+Think of the scheduler as the traffic cop that keeps the loop moving:
+
+```
+AI policy/tools ──▶ JobsRepo hints ──▶ scheduler.tick()
+      ▲                              │
+      │                              ▼
+  telemetry + runs ◀── RunsRepo ◀── Dispatcher
+      │
+      └────── governor.planNextRun (baseline ⊕ hints ⊕ clamps)
+```
+
 Responsibilities per **tick**:
 
-1. **Scan due endpoints**: `claimDueEndpoints(limit, withinMs)`.
-2. For each due endpoint:
-   - **Dispatch** (`Dispatcher.execute`) and **record run** (`RunsRepo.recordRun`).
-   - Update `lastRunAt`, compute `nextRunAt = planNextRun(now, ep)` using **governor**.
-   - Persist with `JobsRepo.updateAfterRun`.
-3. Optionally **log** `source` from governor for debugging.
+1. **Scan and lease due work**: call `claimDueEndpoints(limit, withinMs)` so only this scheduler instance touches the endpoints scheduled in the next horizon.
+2. **Execute each endpoint atomically**:
 
-The scheduler never “does AI” — it only executes and reschedules based on domain rules and hints written elsewhere.
+- Load the fresh endpoint via `JobsRepo.getEndpoint`.
+- **Dispatch** the work (`Dispatcher.execute`) and mirror the result into the **RunsRepo** (`recordRun`).
+- Hand the endpoint plus the current time to the **governor** to compute the next run (`planNextRun(now, ep)`).
+- Persist everything back with `JobsRepo.updateAfterRun`, including failure counters and clearing expired hints.
+
+3. **Optional observability**: log the governor source (`baseline-cron`, `ai-interval`, etc.) to make behavior easy to audit.
+
+The scheduler never “does AI” itself — it simply honours whatever hints were written before the tick, applies the deterministic planning rules, and writes the next appointment.
 
 ---
 
@@ -223,6 +279,8 @@ type Source =
   | "clamped-min"
   | "clamped-max";
 
+type Candidate = { at: Date; src: Source };
+
 export function planNextRun(now: Date, j: JobEndpoint): { nextRunAt: Date; source: Source } {
   const nowMs = now.getTime();
   const last = j.lastRunAt ?? now;
@@ -236,17 +294,21 @@ export function planNextRun(now: Date, j: JobEndpoint): { nextRunAt: Date; sourc
   const aiInterval = fresh && j.aiHintIntervalMs ? { at: new Date(lastMs + j.aiHintIntervalMs), src: "ai-interval" as const } : undefined;
   const aiOneShot = fresh && j.aiHintNextRunAt ? { at: j.aiHintNextRunAt, src: "ai-oneshot" as const } : undefined;
 
-  const candidates = [baseline, aiInterval, aiOneShot].filter(Boolean) as Array<{ at: Date; src: Source }>;
+  const candidates = [baseline, aiInterval, aiOneShot].filter((candidate): candidate is Candidate => Boolean(candidate));
   let chosen = candidates.sort((a, b) => a.at.getTime() - b.at.getTime())[0];
 
-  if (chosen.at.getTime() < nowMs) chosen = { at: new Date(nowMs), src: chosen.src };
+  if (chosen.at.getTime() < nowMs)
+    chosen = { at: new Date(nowMs), src: chosen.src };
 
   const minAt = j.minIntervalMs ? new Date(lastMs + j.minIntervalMs) : undefined;
   const maxAt = j.maxIntervalMs ? new Date(lastMs + j.maxIntervalMs) : undefined;
-  if (minAt && chosen.at < minAt) chosen = { at: minAt, src: "clamped-min" };
-  if (maxAt && chosen.at > maxAt) chosen = { at: maxAt, src: "clamped-max" };
+  if (minAt && chosen.at < minAt)
+    chosen = { at: minAt, src: "clamped-min" };
+  if (maxAt && chosen.at > maxAt)
+    chosen = { at: maxAt, src: "clamped-max" };
 
-  if (j.pausedUntil && j.pausedUntil > now) return { nextRunAt: j.pausedUntil, source: "paused" };
+  if (j.pausedUntil && j.pausedUntil > now)
+    return { nextRunAt: j.pausedUntil, source: "paused" };
 
   return { nextRunAt: chosen.at, source: chosen.src };
 }
@@ -259,6 +321,7 @@ export function planNextRun(now: Date, j: JobEndpoint): { nextRunAt: Date; sourc
 ## 7) Scenario & Simulator — `sim/scenarios.ts` + `sim/simulate.ts`
 
 ### 7.1 Tools (endpoint-scoped, SDK compatible)
+
 We expose three tools per endpoint:
 
 - `propose_interval { intervalMs, ttlMinutes?, reason? }`
@@ -268,6 +331,7 @@ We expose three tools per endpoint:
 All three write AI hints to `JobsRepo` and use `setNextRunAtIfEarlier` to **nudge** `nextRunAt` immediately.
 
 ### 7.2 Planning policy for the CPU/Discord use-case
+
 - **Metrics**: a CPU timeline (40%, then 90% for 15 minutes, then 50%). CPU endpoint runs record samples in `InMemoryMetricsRepo`.
 - **CPU policy**:
   - When CPU ≥ 80% (entering “high”), propose 30s interval (and optionally a one-shot in 5s at spike start).
@@ -280,17 +344,21 @@ All three write AI hints to `JobsRepo` and use `setNextRunAtIfEarlier` to **nudg
   - On recovery, push to far-future pause.
 
 ### 7.3 Sim loop: Measure → Plan → Drain
+
 Per minute:
+
 1. **Measure** once via `scheduler.tick()` (collect metrics if due).
 2. **Plan**: run AI “policy” that calls tools (writes hints + nudges).
 3. **Drain**: claim & execute due endpoints until empty; then advance inside the minute with 5s sleeps + short ticks so 30s cadence can actually run multiple times.
 4. **Snapshot** logs (ISO).
 
 This is what produced the healthy logs:
+
 - CPU: many `source=ai-interval` entries during high window; widening after recovery.
 - Discord: one `ai-oneshot` + short clamped-min staircase, then silence until cooldown.
 
 ### 7.4 `simulate.ts`
+
 Simple entry: imports `scenario_system_resources()` and prints counts/logs.
 
 ---
@@ -305,6 +373,7 @@ Simple entry: imports `scenario_system_resources()` and prints counts/logs.
 - The tools + repos + governor are pure or side-effected through in-memory adapters, making unit and integration tests easy.
 
 **Example assertions gist (pseudo):**
+
 ```ts
 expect(cpuAiDuringHigh).toBeGreaterThanOrEqual(20);
 expect(cpuAiAfterHigh).toBe(0);
@@ -330,16 +399,19 @@ The `FakeQuota` adapter and a small gate in the planner are sufficient to valida
 You don’t need a DB for the sim, but if/when you do:
 
 **Tables:**
+
 - `jobs` (job id, tenant id, name, metadata)
 - `endpoints` (FK job, baseline cadence, min/max, pause fields, last/next run, failure count)
 - `ai_hints` (endpoint id, interval_ms?, next_run_at?, expires_at, reason, created_at)
 - `runs` (endpoint id, at, duration_ms, status, error?)
 
 **Indexes:**
+
 - `endpoints(next_run_at)` for “claim due” queries.
 - `ai_hints(endpoint_id, expires_at DESC)`
 
 **Claim strategy:**
+
 - `UPDATE ... WHERE next_run_at <= now + withinMs LIMIT N RETURNING id` with a lease column if needed.
 
 ---
@@ -395,6 +467,7 @@ npm run sim
 ```
 
 Expected behaviors:
+
 - Many `ai-interval` entries for CPU between ~00:05–00:20.
 - Few Discord runs (one per cooldown window), mostly `ai-oneshot` with brief `clamped-min` entries.
 - Snapshots show `discordPaused=true` except near alert.

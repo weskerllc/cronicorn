@@ -7,16 +7,17 @@
     "watch": "tsc -w ",
     "build": "tsc ",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "sim": "tsx src/sim/simulate.ts",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --max-warnings 0 --fix"
   },
-  "devDependencies": {
-    "@cronicorn/config-eslint": "workspace:*"
-  },
   "dependencies": {
     "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@cronicorn/config-eslint": "workspace:*"
   }
 }
