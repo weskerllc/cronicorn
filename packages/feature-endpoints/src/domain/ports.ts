@@ -5,16 +5,22 @@ export type Clock = {
     sleep: (ms: number) => Promise<void>; // in tests: fast-forward
 };
 
+export type Cron = {
+    next: (expr: string, from: Date) => Date;
+};
+
 export type JobsRepo = {
-    claimDueEndpoints: (limit: number, lockTtlMs: number) => Promise<string[]>;
+    add: (ep: JobEndpoint) => void;
+    claimDueEndpoints: (limit: number, withinMs: number) => Promise<string[]>;
     getEndpoint: (id: string) => Promise<JobEndpoint>;
     setLock: (id: string, until: Date) => Promise<void>;
     clearLock: (id: string) => Promise<void>;
+    setNextRunAtIfEarlier: (id: string, when: Date) => Promise<void>;
     updateAfterRun: (id: string, patch: {
         lastRunAt: Date;
         nextRunAt: Date;
-        status: "success" | "failed" | "canceled";
-        failureCountDelta: number;
+        status: { status: "success" | "failed" | "canceled"; durationMs: number };
+        failureCountPolicy: "increment" | "reset";
         clearExpiredHints: boolean;
     }) => Promise<void>;
     writeAIHint: (id: string, hint: { nextRunAt?: Date; intervalMs?: number; expiresAt: Date; reason?: string }) => Promise<void>;
@@ -36,11 +42,12 @@ export type QuotaGuard = {
     release: (resId: string) => Promise<void>;
 };
 
+type AnyTools = Record<string, Tool<unknown, unknown>>;
+
 export type AIClient = {
-    planWithTools: (args: { model: string; input: string; tools: Tools; maxTokens: number }) => Promise<{ text: string; usage?: { promptTokens: number; completionTokens: number } }>;
+    planWithTools: (args: { model: string; input: string; tools: Tools<AnyTools>; maxTokens: number }) => Promise<{ text: string; usage?: { promptTokens: number; completionTokens: number } }>;
 };
 
-/** Function-shaped tool */
 export type ToolFn<P, R> = (args: P) => Promise<R>;
 
 /** Object-shaped tool (SDK-style) */
@@ -58,7 +65,6 @@ export type Tools<T extends Record<string, Tool<unknown, unknown>>> = {
     [K in keyof T]: T[K];
 };
 
-/** Extract args/result types per-tool */
 export type ToolArgs<T> =
     T extends ToolFn<infer P, unknown> ? P :
     T extends ToolObj<infer P, unknown> ? P :
@@ -69,6 +75,7 @@ export type ToolResult<T> =
     T extends ToolObj<unknown, infer R> ? R :
     never;
 
+/** Extract args/result types per-tool */
 /** Type guards (no `any`) */
 function isToolFn<P, R>(t: Tool<P, R>): t is ToolFn<P, R> {
     return typeof t === "function";
@@ -77,7 +84,7 @@ function isToolObj<P, R>(t: Tool<P, R>): t is ToolObj<P, R> {
     return typeof t === "object" && t !== null && "execute" in t;
 }
 
-/** Type-safe invocation helper (no `any`) */
+/** Type-safe invocation helper */
 export async function callTool<
     TTools extends Record<string, Tool<unknown, unknown>>,
     K extends keyof TTools,
@@ -86,15 +93,15 @@ export async function callTool<
     key: K,
     args: ToolArgs<TTools[K]>,
 ): Promise<ToolResult<TTools[K]>> {
-    const t = tools[key];
-    if (isToolFn(t as Tool<unknown, unknown>)) {
-        // Args/return are inferred for this key K
-        return (t as ToolFn<ToolArgs<TTools[K]>, ToolResult<TTools[K]>>)(args);
+    const tool = tools[key];
+    if (isToolFn(tool)) {
+        // eslint-disable-next-line ts/consistent-type-assertions
+        return tool(args) as Promise<ToolResult<TTools[K]>>;
     }
-    if (isToolObj(t as Tool<unknown, unknown>)) {
-        const obj = t as ToolObj<ToolArgs<TTools[K]>, ToolResult<TTools[K]>>;
-        const parsed = obj.parameters ? obj.parameters.parse(args) : args;
-        return obj.execute(parsed);
+    if (isToolObj(tool)) {
+        const parsed = tool.parameters ? tool.parameters.parse(args) : args;
+        // eslint-disable-next-line ts/consistent-type-assertions
+        return tool.execute(parsed) as Promise<ToolResult<TTools[K]>>;
     }
     throw new TypeError(`Tool "${String(key)}" is not callable`);
 }
@@ -120,7 +127,7 @@ export const jobEndpointSchema = z.object({
     aiHintExpiresAt: z.coerce.date().optional(),
     aiHintReason: z.string().min(1).optional(),
     // guardrails/ops
-    minIntervalMs: z.coerce.number(),
+    minIntervalMs: z.coerce.number().optional(),
     maxIntervalMs: z.coerce.number().optional(),
     pausedUntil: z.coerce.date().optional(),
     lockedUntil: z.coerce.date().optional(),

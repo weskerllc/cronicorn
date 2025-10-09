@@ -6,20 +6,25 @@ export class InMemoryJobsRepo {
 
     add(ep: JobEndpoint) { this.map.set(ep.id, ep); }
 
-    async claimDueEndpoints(limit: number, lockTtlMs: number) {
-        const nowMs = this.now().getTime(); // <-- use fake clock
+    async claimDueEndpoints(limit: number, withinMs: number) {
+        const now = this.now();
+        const nowMs = now.getTime();
+        const horizonMs = nowMs + withinMs;
+
+        // Claim endpoints that are due now or will be due within the horizon
         const due = [...this.map.values()]
             .filter(e =>
-                e.nextRunAt.getTime() <= nowMs
+                e.nextRunAt.getTime() <= horizonMs
                 && (!e.pausedUntil || e.pausedUntil.getTime() <= nowMs)
                 && (!e.lockedUntil || e.lockedUntil.getTime() <= nowMs),
             )
             .sort((a, b) => a.nextRunAt.getTime() - b.nextRunAt.getTime())
             .slice(0, limit);
 
-        const until = new Date(nowMs + lockTtlMs);
+        // Lock for the duration of the horizon to prevent double-claiming
+        const lockUntil = new Date(horizonMs);
         due.forEach((d) => {
-            d.lockedUntil = until;
+            d.lockedUntil = lockUntil;
         });
         return due.map(d => d.id);
     }
@@ -80,8 +85,8 @@ export class InMemoryJobsRepo {
     async updateAfterRun(id: string, p: {
         lastRunAt: Date;
         nextRunAt: Date;
-        status: any;
-        failureCountDelta: number;
+        status: { status: "success" | "failed" | "canceled"; durationMs: number };
+        failureCountPolicy: "increment" | "reset";
         clearExpiredHints: boolean;
     }) {
         const e = this.map.get(id);
@@ -89,10 +94,22 @@ export class InMemoryJobsRepo {
             throw new Error(`JobsRepo.updateAfterRun: not found: ${id}`);
         e.lastRunAt = p.lastRunAt;
         e.nextRunAt = p.nextRunAt;
-        e.lastStatus = p.status;
-        e.failureCount = Math.max(0, e.failureCount + p.failureCountDelta);
+        e.lastStatus = p.status.status;
+
+        // Apply failure count policy
+        if (p.failureCountPolicy === "increment") {
+            e.failureCount = e.failureCount + 1;
+        }
+        else if (p.failureCountPolicy === "reset") {
+            e.failureCount = 0;
+        }
+
         e.lockedUntil = undefined;
-        if (p.clearExpiredHints && e.aiHintExpiresAt && e.aiHintExpiresAt <= p.lastRunAt) {
+
+        // Clear hints based on current time (now), not lastRunAt
+        // This ensures hints that expire between runs are cleared immediately
+        const now = this.now();
+        if (p.clearExpiredHints && e.aiHintExpiresAt && e.aiHintExpiresAt <= now) {
             e.aiHintNextRunAt = undefined;
             e.aiHintIntervalMs = undefined;
             e.aiHintExpiresAt = undefined;
@@ -118,9 +135,30 @@ export class InMemoryJobsRepo {
     }
 }
 
+type Run = {
+    id: string;
+    endpointId: string;
+    status: "running" | "success" | "failed" | "canceled";
+    attempt: number;
+    startedAt: number;
+    durationMs?: number;
+    err?: unknown;
+};
+
 export class InMemoryRunsRepo implements RunsRepo {
     private seq = 0;
-    runs: any[] = [];
-    async create(r: any) { const id = `run_${this.seq++}`; this.runs.push({ id, ...r, startedAt: Date.now() }); return id; }
-    async finish(id: string, patch: any) { Object.assign(this.runs.find(r => r.id === id)!, patch); }
+    runs: Run[] = [];
+
+    async create(r: { endpointId: string; status: "running"; attempt: number }) {
+        const id = `run_${this.seq++}`;
+        this.runs.push({ id, ...r, startedAt: Date.now() });
+        return id;
+    }
+
+    async finish(id: string, patch: { status: "success" | "failed" | "canceled"; durationMs: number; err?: unknown }) {
+        const run = this.runs.find(r => r.id === id);
+        if (!run)
+            throw new Error(`Run not found: ${id}`);
+        Object.assign(run, patch);
+    }
 }

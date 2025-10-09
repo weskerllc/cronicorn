@@ -2,9 +2,8 @@
 
 import { FakeClock } from "../adapters/fake-clock.js";
 import { FakeDispatcher } from "../adapters/fake-dispatcher.js";
-import { FakeQuota } from "../adapters/fake-quota.js";
 import { InMemoryJobsRepo, InMemoryRunsRepo } from "../adapters/memory-store.js";
-import { callTool } from "../domain/ports.js";
+import { callTool, type Cron, type Tool } from "../domain/ports.js";
 import { Scheduler } from "../domain/scheduler.js";
 
 /* =========================
@@ -49,8 +48,8 @@ export class InMemoryMetricsRepo {
 function makeToolsForEndpoint(
     endpointId: string,
     deps: { jobs: InMemoryJobsRepo; now: () => Date },
-) {
-    return {
+): Record<string, Tool<unknown, unknown>> {
+    const tools = {
         propose_interval: {
             description: "Suggest a temporary interval",
             async execute(p: { intervalMs: number; ttlMinutes?: number; reason?: string }) {
@@ -101,7 +100,9 @@ function makeToolsForEndpoint(
                 return { ok: true as const };
             },
         },
-    } as const;
+    };
+    // eslint-disable-next-line ts/consistent-type-assertions
+    return tools as Record<string, Tool<unknown, unknown>>;
 }
 
 /* =========================
@@ -152,7 +153,11 @@ export async function scenario_system_resources() {
     const jobs = new InMemoryJobsRepo(() => clock.now()); // uses fake clock
     const runs = new InMemoryRunsRepo();
     const metrics = new InMemoryMetricsRepo();
-    const quota = new FakeQuota(); // not used in this sim but keeps shape
+    const cron: Cron = {
+        next() {
+            throw new Error("Cron expressions are not supported in this simulation; use baselineIntervalMs.");
+        },
+    };
 
     const cpuEndpointId = "cpu_check#hostA";
     const discordEndpointId = "discord_notify#hostA";
@@ -184,14 +189,14 @@ export async function scenario_system_resources() {
     });
 
     // CPU timeline: 0–4m normal (40%), 5–19m high (90%), 20–39m recover (50%)
-    const cpuTimeline = [
-        ...Array.from({ length: 5 }).fill(40),
-        ...Array.from({ length: 15 }).fill(90),
-        ...Array.from({ length: 20 }).fill(50),
+    const cpuTimeline: number[] = [
+        ...Array.from({ length: 5 }, () => 40),
+        ...Array.from({ length: 15 }, () => 90),
+        ...Array.from({ length: 20 }, () => 50),
     ];
 
     // Sim-only: Discord cooldown state
-    const discordState = { cooldownUntil: undefined as Date | undefined };
+    const discordState: { cooldownUntil: Date | undefined } = { cooldownUntil: undefined };
 
     // Dispatcher: CPU endpoint records a metric when it runs
     const dispatcher = new FakeDispatcher((ep) => {
@@ -201,14 +206,14 @@ export async function scenario_system_resources() {
             const elapsedMin
                 = Math.floor((clock.now().getTime() - new Date("2025-01-01T00:00:00Z").getTime()) / 60_000);
             const idx = Math.min(elapsedMin, cpuTimeline.length - 1);
-            const cpu = cpuTimeline[idx];
+            const cpu = cpuTimeline[idx] ?? 40;
             metrics.push(cpuEndpointId, { at: clock.now(), cpu, mem: 60, disk: 40 });
         }
         // Discord "runs" just succeed (pretend we posted)
         return { status: "success", durationMs: 200 };
     });
 
-    const scheduler = new Scheduler({ clock, jobs, runs, dispatcher });
+    const scheduler = new Scheduler({ clock, jobs, runs, dispatcher, cron });
 
     const events: string[] = [];
 
@@ -287,10 +292,8 @@ export async function scenario_system_resources() {
             const due = await jobs.claimDueEndpoints(50, 10_000);
             if (due.length === 0)
                 break;
-            for (const id of due) {
-                // If your Scheduler exposes a public handle method, use it.
-                // Otherwise, one more tick is fine to process them.
-                await (scheduler as any).handleEndpoint?.(id) ?? scheduler.tick(50, 10_000);
+            for (const _id of due) {
+                await scheduler.tick(50, 10_000);
             }
         }
 

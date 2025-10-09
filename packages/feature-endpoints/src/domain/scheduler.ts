@@ -1,10 +1,10 @@
-import type { Clock, Dispatcher, JobsRepo, RunsRepo } from "./ports.js";
+import type { Clock, Cron, Dispatcher, JobsRepo, RunsRepo } from "./ports.js";
 
 import { planNextRun } from "./governor.js";
 
 export class Scheduler {
     constructor(
-        private deps: { clock: Clock; jobs: JobsRepo; runs: RunsRepo; dispatcher: Dispatcher },
+        private deps: { clock: Clock; jobs: JobsRepo; runs: RunsRepo; dispatcher: Dispatcher; cron: Cron },
     ) { }
 
     // poller entrypoint
@@ -24,14 +24,12 @@ export class Scheduler {
 
         // re-read to include any AI hint the planner may have written while running
         const fresh = await this.deps.jobs.getEndpoint(endpointId);
-        const plan = planNextRun(now, fresh);
-        console.log(`[governor] ${ep.id}: next=${plan.nextRunAt.toISOString()} source=${plan.source}`);
-
+        const plan = planNextRun(now, fresh, this.deps.cron);
         await this.deps.jobs.updateAfterRun(endpointId, {
             lastRunAt: now,
             nextRunAt: plan.nextRunAt,
-            status: result.status,
-            failureCountDelta: result.status === "success" ? -fresh.failureCount : +1,
+            status: { status: result.status, durationMs: result.durationMs },
+            failureCountPolicy: result.status === "success" ? "reset" : "increment",
             clearExpiredHints: true,
         });
     }
