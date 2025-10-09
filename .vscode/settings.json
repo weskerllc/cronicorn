@@ -1,8 +1,8 @@
 {
   // Disable the default formatter, use eslint instead
   "prettier.enable": false,
-  "editor.formatOnSave": true,
-  "eslint.format.enable": true,
+  "editor.formatOnSave": false,
+  "eslint.format.enable": false,
   // Auto fix
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",

@@ -1,6 +1,6 @@
 // Vercel AI SDK client implementation
 
-import type { AIClient, Tool } from "@cronicorn/scheduler/domain/ports.js";
+import type { AIClient, Tool } from "@cronicorn/scheduler";
 
 import { generateText, tool } from "ai";
 import { z } from "zod";
@@ -88,7 +88,7 @@ function createVercelTool(
 /** Create Vercel AI SDK client that implements our AIClient port */
 export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
     return {
-        async planWithTools({ input, tools, maxTokens }) {
+        async planWithTools({ input, tools, maxTokens }: Parameters<AIClient["planWithTools"]>[0]) {
             try {
                 // Note: _modelName parameter from interface is ignored for now
                 // We use the pre-configured model from config instead
