@@ -2,10 +2,10 @@
 
 ## At a glance
 
-- **Mission:** Keep every `JobEndpoint` on the right cadence by blending a baseline schedule with short-lived AI “hints” that can tighten, relax, or pause runs in real time.
+- **Mission:** Keep every `JobEndpoint` on the right cadence by blending a baseline schedule with short-lived AI "hints" that can tighten, relax, or pause runs in real time.
 - **Loop:** AI tooling (rule-based or model-driven) writes hints through ports → the scheduler claims due endpoints, executes them, records the run, and asks the governor for the next slot → the governor reconciles baseline cadence, AI hints, clamps, and pauses to produce the next run time.
 - **Building blocks:** Domain files (`ports`, `governor`, `scheduler`) hold pure logic; adapters (`memory-store`, fake clock/dispatcher/quota) provide infrastructure for tests and sims; the simulator demonstrates the full loop without touching a real DB or external APIs.
-- **You can explore it today:** Run the deterministic simulator to watch CPU and Discord endpoints speed up, alert, and cool down while the logs explain every decision.
+- **You can explore it today:** Run `pnpm sim` to watch a complete **e-commerce flash sale scenario** with 10 endpoints orchestrating across 4 coordination tiers—traffic monitoring tightens from 1m→20s, investigation tools activate conditionally, recovery actions fire with cooldowns, and alerts escalate from Slack→oncall.
 
 > **Purpose:** This document explains the complete intent and mechanics of the AI-driven scheduler prototype so another AI/engineer can confidently extend, test, or port it. It covers file structure, domain concepts, ports, tools, scheduling logic, simulator design, testability, and integration guidance (e.g., Vercel AI SDK).
 
@@ -15,11 +15,14 @@ If you are brand new, read the quick outcomes (Section 0), map the folders (Sect
 
 ## 0) Outcomes to Validate
 
-- **Adaptive cadence**: endpoints speed up when conditions are “high” and relax when “recovered”.
+- **Adaptive cadence**: endpoints speed up when conditions deteriorate (surge→strain→critical) and relax during recovery.
+- **Multi-tier coordination**: 10 endpoints across 4 tiers (Health, Investigation, Recovery, Alert) work together using shared metrics.
+- **Conditional activation**: Investigation tier endpoints (slow page analyzer, database trace) activate only when thresholds crossed.
+- **One-shot actions**: Recovery actions (cache warm-up, scaling) fire once with cooldowns, not repeatedly.
+- **Alert escalation**: Slack ops → Slack support → oncall page, each with appropriate cooldown windows.
 - **Nudging works**: AI tool proposals immediately bring runs forward (without waiting for the next cycle).
 - **Governor chooses the right source**: baseline vs AI (interval or one-shot) vs clamps vs pause.
-- **Alert control**: Discord alerts are one-shot + cooldown (no chatter).
-- **DB-optional simulation**: Full behavior validated without a database or external services.
+- **DB-optional simulation**: Full behavior validated without a database or external services—467 runs across 40 simulated minutes.
 
 ---
 
@@ -330,18 +333,50 @@ We expose three tools per endpoint:
 
 All three write AI hints to `JobsRepo` and use `setNextRunAtIfEarlier` to **nudge** `nextRunAt` immediately.
 
-### 7.2 Planning policy for the CPU/Discord use-case
+### 7.2 Flash Sale Scenario (Primary Example)
 
-- **Metrics**: a CPU timeline (40%, then 90% for 15 minutes, then 50%). CPU endpoint runs record samples in `InMemoryMetricsRepo`.
-- **CPU policy**:
-  - When CPU ≥ 80% (entering “high”), propose 30s interval (and optionally a one-shot in 5s at spike start).
-  - When recovered (e.g., `< 65%` for ≥5 consecutive minutes), relax to 3m.
-  - Use `maybeProposeInterval` to avoid re-writing the same interval when unchanged.
-- **Discord policy**:
-  - One-shot alert when high **and** cooldown expired **and** endpoint is currently paused.
-  - Immediately re-pause for a **short window** (e.g., 15s) to prevent chatter.
-  - Start a **10-minute cooldown**.
-  - On recovery, push to far-future pause.
+> 📖 **Deep dive:** [`flash-sale-scenario.md`](./flash-sale-scenario.md) — Complete walkthrough with minute-by-minute timeline, all 10 endpoints explained, and coordination patterns.
+
+**Context:** E-commerce flash sale event spanning 40 minutes with 5 phases (baseline → surge → strain → critical → recovery).
+
+**Metrics:** `traffic` (visitors/min), `ordersPerMin`, `pageLoadMs`, `inventoryLagMs`, `dbQueryMs`.
+
+**4-Tier Architecture:**
+
+- **Tier 1: Health (Continuous)** — traffic_monitor (1m→20s→1m), order_processor_health (2m→5m), inventory_sync_check (3m→30s)
+- **Tier 2: Investigation (Conditional)** — slow_page_analyzer, database_query_trace (activate when thresholds crossed)
+- **Tier 3: Recovery (One-Shot)** — cache_warm_up (10m cooldown), scale_checkout_workers (15m cooldown)
+- **Tier 4: Alert (Escalation)** — slack_operations → slack_customer_support → emergency_oncall_page
+
+**Coordination:** Shared metrics enable conditional activation; cooldown state prevents duplicate actions; 467 total runs across 40 minutes.
+
+### 7.3 Legacy Scenario: CPU/Discord
+
+Still available as `scenario_system_resources()` for comparison:
+- **CPU policy**: 30s interval during high CPU (≥80%), relax to 3m after recovery.
+- **Discord policy**: One-shot alert with 10-minute cooldown.
+
+### 7.4 Sim loop: Measure → Plan → Drain
+
+Per minute:
+
+1. **Measure** once via `scheduler.tick()` (collect metrics if due).
+2. **Plan**: run all tier policies that call tools (writes hints + nudges) based on shared metrics.
+3. **Drain**: claim & execute due endpoints until empty; then advance inside the minute with 5s sleeps + short ticks so sub-minute cadences can fire.
+4. **Snapshot** with full flash sale metrics.
+
+**Output example (strain phase, minute 9-12):**
+```
+minute │  traffic   │  orders   │ pageLoad │ nextCheck
+  9m   │ 5500/min   │ 160/min   │ 3200ms   │   15s
+ 10m   │ 5500/min   │ 160/min   │ 3200ms   │   15s
+```
+
+Traffic monitor adapts to 15s checks; page load degrading triggers Investigation/Recovery/Alert tiers.
+
+### 7.5 `simulate.ts`
+
+Entry point: imports `scenario_flash_sale()`, validates 18 assertions across all tiers, renders phase-separated tables.
 
 ### 7.3 Sim loop: Measure → Plan → Drain
 
@@ -462,15 +497,21 @@ You don’t need a DB for the sim, but if/when you do:
 
 ```bash
 pnpm --filter @cronicorn/scheduler run sim
-# or
-npm run sim
+# or from packages/feature-endpoints:
+pnpm sim
 ```
 
-Expected behaviors:
+Expected output:
 
-- Many `ai-interval` entries for CPU between ~00:05–00:20.
-- Few Discord runs (one per cooldown window), mostly `ai-oneshot` with brief `clamped-min` entries.
-- Snapshots show `discordPaused=true` except near alert.
+- **467 total runs** across 10 endpoints over 40 simulated minutes
+- **Health Tier:** ~311 runs (traffic=201, orders=43, inventory=67)
+- **Investigation Tier:** ~54 runs (activates during strain, deactivates during recovery)
+- **Recovery Tier:** ~51 runs (cache warm-up and scaling with cooldowns)
+- **Alert Tier:** ~51 runs (ops→support escalation)
+- **Phase tables:** Beautiful formatted output showing traffic, orders, pageLoad, inventoryLag, dbQuery for each phase
+- **18 assertions passing:** Validates adaptive intervals, conditional activation, cooldowns, escalation, cross-tier coordination
+
+See [`flash-sale-scenario.md`](./flash-sale-scenario.md) for complete explanation.
 
 ---
 
