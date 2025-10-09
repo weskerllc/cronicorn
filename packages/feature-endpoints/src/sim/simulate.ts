@@ -31,6 +31,8 @@ function renderSnapshots(label: string, snapshots: ScenarioSnapshot[]) {
     const inventoryRuns = runs.runs.filter(r => r.endpointId.startsWith("inventory_sync")).length;
     const slowPageRuns = runs.runs.filter(r => r.endpointId.startsWith("slow_page_analyzer")).length;
     const dbTraceRuns = runs.runs.filter(r => r.endpointId.startsWith("database_query_trace")).length;
+    const cacheWarmupRuns = runs.runs.filter(r => r.endpointId.startsWith("cache_warm_up")).length;
+    const scaleCheckoutRuns = runs.runs.filter(r => r.endpointId.startsWith("scale_checkout_workers")).length;
 
     const nextInDurations = snapshots.map(s => Math.max(0, s.nextCpuAt.getTime() - s.timestamp.getTime()));
     const minNextIn = Math.min(...nextInDurations);
@@ -48,6 +50,7 @@ function renderSnapshots(label: string, snapshots: ScenarioSnapshot[]) {
     console.log(`Total runs: ${runs.runs.length}`);
     console.log(`Health Tier: Traffic=${trafficRuns}, Orders=${orderRuns}, Inventory=${inventoryRuns}`);
     console.log(`Investigation Tier: SlowPage=${slowPageRuns}, DBTrace=${dbTraceRuns}`);
+    console.log(`Recovery Tier: CacheWarmup=${cacheWarmupRuns}, ScaleCheckout=${scaleCheckoutRuns}`);
 
     renderSnapshots("Baseline (0-4m)", snapshots.slice(0, 5));
     renderSnapshots("Surge (5-8m)", snapshots.slice(5, 9));

@@ -582,6 +582,82 @@ async function planInventorySyncCheck(
     }
 }
 
+// Recovery Tier
+type RecoveryState = {
+    lastCacheWarmupAt?: Date;
+    lastScaleCheckoutAt?: Date;
+};
+
+async function planCacheWarmUp(
+    endpointId: string,
+    sharedMetricsId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+    state: RecoveryState,
+) {
+    const latest = metrics.latest(sharedMetricsId);
+    if (!latest) return;
+
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+    const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+    // Cooldown: 10 minutes
+    const cooldownMs = 10 * 60_000;
+    const onCooldown = state.lastCacheWarmupAt && (now.getTime() - state.lastCacheWarmupAt.getTime()) < cooldownMs;
+
+    // Trigger: pageLoad > 3000ms, not on cooldown, currently paused
+    if (latest.pageLoadMs > 3000 && !onCooldown && isPaused) {
+        await callTool(tools, "pause_until", { untilIso: null, reason: "Cache warm-up triggered" });
+        await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 5, reason: "Execute cache warm-up" });
+
+        // Re-pause long-term after execution
+        const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+        await callTool(tools, "pause_until", {
+            untilIso: rePauseAt.toISOString(),
+            reason: "One-shot complete, cooldown active",
+        });
+
+        state.lastCacheWarmupAt = now;
+    }
+}
+
+async function planScaleCheckoutWorkers(
+    endpointId: string,
+    sharedMetricsId: string,
+    metrics: FlashSaleMetricsRepo,
+    jobs: InMemoryJobsRepo,
+    now: Date,
+    state: RecoveryState,
+) {
+    const latest = metrics.latest(sharedMetricsId);
+    if (!latest) return;
+
+    const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+    const ep = await jobs.getEndpoint(endpointId);
+    const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+    // Cooldown: 15 minutes
+    const cooldownMs = 15 * 60_000;
+    const onCooldown = state.lastScaleCheckoutAt && (now.getTime() - state.lastScaleCheckoutAt.getTime()) < cooldownMs;
+
+    // Trigger: orders < 150 AND traffic >= 5000 (strain phase), not on cooldown, currently paused
+    if (latest.ordersPerMin < 150 && latest.traffic >= 5000 && !onCooldown && isPaused) {
+        await callTool(tools, "pause_until", { untilIso: null, reason: "Scaling checkout workers" });
+        await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 5, reason: "Execute worker scaling" });
+
+        // Re-pause long-term after execution
+        const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+        await callTool(tools, "pause_until", {
+            untilIso: rePauseAt.toISOString(),
+            reason: "One-shot complete, cooldown active",
+        });
+
+        state.lastScaleCheckoutAt = now;
+    }
+}
+
 // Investigation Tier
 async function planSlowPageAnalyzer(
     endpointId: string,
@@ -666,6 +742,10 @@ export async function scenario_flash_sale() {
     const slowPageAnalyzerId = "slow_page_analyzer#prod";
     const dbQueryTraceId = "database_query_trace#prod";
 
+    // Recovery Tier endpoint IDs
+    const cacheWarmUpId = "cache_warm_up#prod";
+    const scaleCheckoutId = "scale_checkout_workers#prod";
+
     // Seed Health Tier endpoints
     jobs.add({
         id: trafficMonitorId,
@@ -730,6 +810,33 @@ export async function scenario_flash_sale() {
         failureCount: 0,
     });
 
+    // Seed Recovery Tier endpoints (one-shot actions with cooldowns)
+    jobs.add({
+        id: cacheWarmUpId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Cache Warm Up",
+        baselineIntervalMs: 60_000,
+        minIntervalMs: 5_000,
+        maxIntervalMs: 10 * 60_000,
+        nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+        pausedUntil: new Date("2099-01-01T00:00:00Z"),
+        failureCount: 0,
+    });
+
+    jobs.add({
+        id: scaleCheckoutId,
+        jobId: "job#flash-sale",
+        tenantId: "tenant#ecommerce",
+        name: "Scale Checkout Workers",
+        baselineIntervalMs: 60_000,
+        minIntervalMs: 5_000,
+        maxIntervalMs: 15 * 60_000,
+        nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+        pausedUntil: new Date("2099-01-01T00:00:00Z"),
+        failureCount: 0,
+    });
+
     // Shared metrics: All endpoints see the same timeline
     const sharedMetricsId = "shared#metrics";
 
@@ -751,6 +858,9 @@ export async function scenario_flash_sale() {
 
     const snapshots: ScenarioSnapshot[] = [];
 
+    // Recovery Tier state (tracks cooldowns across simulation)
+    const recoveryState: RecoveryState = {};
+
     // Planning orchestration
     const planAllTiers = async (now: Date) => {
         // Health Tier
@@ -761,6 +871,10 @@ export async function scenario_flash_sale() {
         // Investigation Tier (uses shared metrics for conditional activation)
         await planSlowPageAnalyzer(slowPageAnalyzerId, sharedMetricsId, metrics, jobs, now);
         await planDatabaseQueryTrace(dbQueryTraceId, sharedMetricsId, metrics, jobs, now);
+
+        // Recovery Tier (one-shot actions with cooldowns)
+        await planCacheWarmUp(cacheWarmUpId, sharedMetricsId, metrics, jobs, now, recoveryState);
+        await planScaleCheckoutWorkers(scaleCheckoutId, sharedMetricsId, metrics, jobs, now, recoveryState);
     };
 
     for (let minute = 0; minute < 40; minute++) {
