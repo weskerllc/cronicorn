@@ -112,6 +112,7 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
                         catch (conversionError) {
                             const errorMsg = conversionError instanceof Error ? conversionError.message : String(conversionError);
                             config.logger?.warn(`Failed to convert tool ${toolName}:`, { error: errorMsg });
+                            config.logger?.warn(`Stack trace:`, { stack: conversionError instanceof Error ? conversionError.stack : "N/A" });
                         }
                     }
                 }
