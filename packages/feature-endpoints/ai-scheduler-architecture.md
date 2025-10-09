@@ -350,13 +350,7 @@ All three write AI hints to `JobsRepo` and use `setNextRunAtIfEarlier` to **nudg
 
 **Coordination:** Shared metrics enable conditional activation; cooldown state prevents duplicate actions; 467 total runs across 40 minutes.
 
-### 7.3 Legacy Scenario: CPU/Discord
-
-Still available as `scenario_system_resources()` for comparison:
-- **CPU policy**: 30s interval during high CPU (≥80%), relax to 3m after recovery.
-- **Discord policy**: One-shot alert with 10-minute cooldown.
-
-### 7.4 Sim loop: Measure → Plan → Drain
+### 7.3 Sim loop: Measure → Plan → Drain
 
 Per minute:
 
@@ -374,7 +368,7 @@ minute │  traffic   │  orders   │ pageLoad │ nextCheck
 
 Traffic monitor adapts to 15s checks; page load degrading triggers Investigation/Recovery/Alert tiers.
 
-### 7.5 `simulate.ts`
+### 7.4 `simulate.ts`
 
 Entry point: imports `scenario_flash_sale()`, validates 18 assertions across all tiers, renders phase-separated tables.
 
