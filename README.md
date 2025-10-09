@@ -167,6 +167,25 @@ Verify deployment:
 4. Create ADRs for big decisions
 5. Run tests: `pnpm test`
 
+## 🎯 AI Scheduler Simulator
+
+Explore the AI-driven scheduler's adaptive capabilities with a full e-commerce flash sale simulation:
+
+```bash
+cd packages/feature-endpoints
+pnpm sim
+```
+
+**What you'll see:**
+- **10 endpoints** orchestrating across 4 coordination tiers (Health, Investigation, Recovery, Alert)
+- **40 minutes simulated** showing traffic surge → strain → critical → recovery phases
+- **467 total runs** with adaptive intervals (1m→20s→1m), conditional activation, cooldowns, and alert escalation
+- **18 assertions validating** all coordination patterns
+
+**Learn more:**
+- 📖 [Flash Sale Scenario Guide](./packages/feature-endpoints/flash-sale-scenario.md) - Complete walkthrough with minute-by-minute timeline
+- 🏗️ [Architecture Documentation](./packages/feature-endpoints/ai-scheduler-architecture.md) - Deep dive into scheduler mechanics
+
 ## 📄 Documentation
 
 - [Architecture Decisions](./.adr/) - Why we built things this way
