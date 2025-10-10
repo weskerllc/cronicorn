@@ -25,12 +25,14 @@ pnpm add @cronicorn/scheduler zod
 ### Tools
 
 Tools define actions that AI can take. Two formats supported:
+
 - **Function tools**: Simple async functions
 - **Object tools**: With metadata, descriptions, and schema validation
 
 ### Type-Safe Tool Definition
 
 Use the `tool()` helper for automatic type inference from Zod schemas:
+
 - Define schema with Zod
 - Execute function gets properly typed parameters
 - Runtime validation included
@@ -65,6 +67,7 @@ Application → Ports → Domain Logic → Adapters → Infrastructure
 ## Tool Validation
 
 Supports both:
+
 - **Zod Schema**: Automatic validation and type inference
 - **Custom Validation**: Manual validation functions for complex cases
 
@@ -77,12 +80,14 @@ Supports both:
 ## Integration
 
 Works with any AI provider through adapters:
+
 - **@cronicorn/feature-ai-vercel-sdk**: For Vercel AI SDK
 - **Custom implementations**: Implement the `AIClient` interface
 
 ## Migration
 
 Migrating from JSON Schema to Zod provides:
+
 - Better TypeScript integration
 - Automatic type inference
 - Runtime validation

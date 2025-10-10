@@ -29,6 +29,7 @@ pnpm add @cronicorn/feature-ai-vercel-sdk
 ## Configuration
 
 The client accepts:
+
 - `model`: Any Vercel AI SDK language model
 - `maxOutputTokens`: Default token limit
 - `temperature`: Default randomness (0-1)
@@ -42,6 +43,7 @@ The client accepts:
 ## Environment Variables
 
 Set API keys for your chosen provider:
+
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
@@ -49,6 +51,7 @@ Set API keys for your chosen provider:
 ## Architecture
 
 Follows hexagonal architecture:
+
 ```
 Your App → Adapter → Scheduler Domain → Vercel AI SDK
 ```

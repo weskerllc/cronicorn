@@ -7,5 +7,5 @@
  * Helper for readable test fixtures.
  */
 export function at(iso: string): Date {
-    return new Date(iso);
+  return new Date(iso);
 }

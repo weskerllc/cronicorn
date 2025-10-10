@@ -8,7 +8,7 @@ export type RunStatus = "success" | "failed" | "canceled" | "running";
  * Result of executing a job endpoint.
  */
 export type ExecutionResult = {
-    status: "success" | "failed";
-    durationMs: number;
-    errorMessage?: string;
+  status: "success" | "failed";
+  durationMs: number;
+  errorMessage?: string;
 };
