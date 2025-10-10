@@ -1,6 +1,7 @@
 # Core Domain Package Implementation Tasks
 
 > Planning checklist to extract the pure scheduler domain into a dedicated `@cronicorn/domain` workspace package. Each task includes an owner placeholder and recommended acceptance criteria. Update status columns as work progresses.
+>Full details are located in `domain-package-plan.md`
 
 ## 1. Decision Record & Planning
 
