@@ -3,10 +3,10 @@
  */
 
 export type Clock = {
-    now: () => Date;
-    sleep: (ms: number) => Promise<void>;
+  now: () => Date;
+  sleep: (ms: number) => Promise<void>;
 };
 
 export type Cron = {
-    next: (expr: string, from: Date) => Date;
+  next: (expr: string, from: Date) => Date;
 };

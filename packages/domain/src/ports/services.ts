@@ -5,7 +5,7 @@
 import type { ExecutionResult, JobEndpoint } from "../entities/index.js";
 
 export type Dispatcher = {
-    execute: (ep: JobEndpoint) => Promise<ExecutionResult>;
+  execute: (ep: JobEndpoint) => Promise<ExecutionResult>;
 };
 
 /**
@@ -37,22 +37,22 @@ export type Dispatcher = {
  * ```
  */
 export type QuotaGuard = {
-    /**
-     * Check if tenant can proceed with operation.
-     *
-     * @param tenantId - Unique tenant identifier
-     * @returns true if quota available, false if exceeded
-     */
-    canProceed: (tenantId: string) => Promise<boolean>;
+  /**
+   * Check if tenant can proceed with operation.
+   *
+   * @param tenantId - Unique tenant identifier
+   * @returns true if quota available, false if exceeded
+   */
+  canProceed: (tenantId: string) => Promise<boolean>;
 
-    /**
-     * Record actual usage after operation completes.
-     *
-     * Call after AI call succeeds to track consumption for billing,
-     * metrics, and future quota checks. Fire-and-forget pattern acceptable.
-     *
-     * @param tenantId - Unique tenant identifier
-     * @param tokens - Total tokens consumed (prompt + completion)
-     */
-    recordUsage: (tenantId: string, tokens: number) => Promise<void>;
+  /**
+   * Record actual usage after operation completes.
+   *
+   * Call after AI call succeeds to track consumption for billing,
+   * metrics, and future quota checks. Fire-and-forget pattern acceptable.
+   *
+   * @param tenantId - Unique tenant identifier
+   * @param tokens - Total tokens consumed (prompt + completion)
+   */
+  recordUsage: (tenantId: string, tokens: number) => Promise<void>;
 };

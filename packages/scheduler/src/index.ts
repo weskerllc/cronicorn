@@ -13,7 +13,7 @@ export type {
   ToolFn,
   ToolObj,
   ToolResult,
-  Tools
+  Tools,
 } from "./domain/ports.js";
 
 // Tool utilities (for building custom AI tool integrations)
