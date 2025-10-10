@@ -1,5 +1,5 @@
 {
-  "name": "@cronicorn/scheduler",
+  "name": "@cronicorn/domain",
   "type": "module",
   "version": "0.0.0",
   "main": "./dist/index.js",
@@ -11,19 +11,14 @@
     }
   },
   "scripts": {
-    "watch": "tsc -w ",
-    "build": "tsc ",
-    "test": "pnpm sim",
-    "typecheck": "tsc --noEmit",
-    "sim": "tsx src/sim/simulate.ts",
-    "clean": "rm -rf node_modules .turbo dist",
-    "test:coverage": "vitest run --coverage",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf node_modules .turbo dist",
     "lint": "eslint .",
     "lint:fix": "eslint . --max-warnings 0 --fix"
-  },
-  "dependencies": {
-    "@cronicorn/domain": "workspace:*",
-    "zod": "^4.1.12"
   }
 }

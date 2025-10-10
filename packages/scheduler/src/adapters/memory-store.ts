@@ -1,7 +1,18 @@
-import type { JobEndpoint, RunsRepo } from "../domain/ports.js";
+import type { JobEndpoint, JobsRepo, RunsRepo } from "@cronicorn/domain";
 
-export class InMemoryJobsRepo {
-  private map = new Map<string, JobEndpoint>();
+/**
+ * Adapter-local storage type with internal locking state.
+ *
+ * The _lockedUntil field is an implementation detail for pessimistic locking
+ * and is NOT part of the domain model. It's stripped when returning JobEndpoint
+ * through the port interface.
+ */
+type StoredJob = JobEndpoint & {
+  _lockedUntil?: Date;
+};
+
+export class InMemoryJobsRepo implements JobsRepo {
+  private map = new Map<string, StoredJob>();
   constructor(private now: () => Date) { } // <-- inject clock
 
   add(ep: JobEndpoint) { this.map.set(ep.id, ep); }
@@ -16,7 +27,7 @@ export class InMemoryJobsRepo {
       .filter(e =>
         e.nextRunAt.getTime() <= horizonMs
         && (!e.pausedUntil || e.pausedUntil.getTime() <= nowMs)
-        && (!e.lockedUntil || e.lockedUntil.getTime() <= nowMs),
+        && (!e._lockedUntil || e._lockedUntil.getTime() <= nowMs),
       )
       .sort((a, b) => a.nextRunAt.getTime() - b.nextRunAt.getTime())
       .slice(0, limit);
@@ -24,7 +35,7 @@ export class InMemoryJobsRepo {
     // Lock for the duration of the horizon to prevent double-claiming
     const lockUntil = new Date(horizonMs);
     due.forEach((d) => {
-      d.lockedUntil = lockUntil;
+      d._lockedUntil = lockUntil;
     });
     return due.map(d => d.id);
   }
@@ -70,14 +81,14 @@ export class InMemoryJobsRepo {
     const e = this.map.get(id);
     if (!e)
       throw new Error(`JobsRepo.setLock: not found: ${id}`);
-    e.lockedUntil = until;
+    e._lockedUntil = until;
   }
 
   async clearLock(id: string) {
     const e = this.map.get(id);
     if (!e)
       throw new Error(`JobsRepo.clearLock: not found: ${id}`);
-    e.lockedUntil = undefined;
+    e._lockedUntil = undefined;
   }
 
   async updateAfterRun(id: string, p: {
@@ -92,7 +103,6 @@ export class InMemoryJobsRepo {
       throw new Error(`JobsRepo.updateAfterRun: not found: ${id}`);
     e.lastRunAt = p.lastRunAt;
     e.nextRunAt = p.nextRunAt;
-    e.lastStatus = p.status.status;
 
     // Apply failure count policy
     if (p.failureCountPolicy === "increment") {
@@ -102,7 +112,7 @@ export class InMemoryJobsRepo {
       e.failureCount = 0;
     }
 
-    e.lockedUntil = undefined;
+    e._lockedUntil = undefined;
 
     // Clear hints based on current time (now), not lastRunAt
     // This ensures hints that expire between runs are cleared immediately

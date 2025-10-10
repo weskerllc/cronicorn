@@ -1,7 +1,9 @@
+import type { Cron } from "@cronicorn/domain";
+
 import { FakeClock } from "../adapters/fake-clock.js";
 import { FakeDispatcher } from "../adapters/fake-dispatcher.js";
 import { InMemoryJobsRepo, InMemoryRunsRepo } from "../adapters/memory-store.js";
-import { callTool, type Cron, type Tool } from "../domain/ports.js";
+import { callTool, type Tool } from "../domain/ports.js";
 import { Scheduler } from "../domain/scheduler.js";
 
 /* =========================
@@ -248,7 +250,7 @@ function makeToolsForEndpoint(
       },
     },
   };
-    // eslint-disable-next-line ts/consistent-type-assertions
+  // eslint-disable-next-line ts/consistent-type-assertions
   return tools as Record<string, Tool<unknown, unknown>>;
 }
 

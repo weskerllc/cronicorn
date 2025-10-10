@@ -1,31 +1,42 @@
-import type { Clock, Cron, Dispatcher, JobsRepo, RunsRepo } from "./ports.js";
+// packages/scheduler/src/scheduler.ts
+import { planNextRun } from "@cronicorn/domain";
 
-import { planNextRun } from "./governor.js";
+import type { SchedulerDeps } from "./deps.js";
 
-export class Scheduler {
-  constructor(
-    private deps: { clock: Clock; jobs: JobsRepo; runs: RunsRepo; dispatcher: Dispatcher; cron: Cron },
-  ) { }
+export type IScheduler = {
+  tick: (batchSize: number, lockTtlMs: number) => Promise<void>;
+};
 
-  // poller entrypoint
-  async tick(batch: number, lockTtlMs: number) {
-    const ids = await this.deps.jobs.claimDueEndpoints(batch, lockTtlMs);
+export class Scheduler implements IScheduler {
+  constructor(private readonly d: SchedulerDeps) { }
+
+  async tick(batchSize: number, lockTtlMs: number) {
+    const ids = await this.d.jobs.claimDueEndpoints(batchSize, lockTtlMs);
     for (const id of ids) await this.handleEndpoint(id);
   }
 
-  async handleEndpoint(endpointId: string) {
-    const now = this.deps.clock.now();
-    const ep = await this.deps.jobs.getEndpoint(endpointId);
+  private async handleEndpoint(endpointId: string) {
+    const { clock, jobs, runs, dispatcher, cron } = this.d;
+    const now = clock.now();
 
-    const runId = await this.deps.runs.create({ endpointId, status: "running", attempt: ep.failureCount + 1 });
-    const result = await this.deps.dispatcher.execute(ep);
+    const ep = await jobs.getEndpoint(endpointId);
+    if (!ep)
+      return;
 
-    await this.deps.runs.finish(runId, { status: result.status, durationMs: result.durationMs });
+    const runId = await runs.create({
+      endpointId,
+      status: "running",
+      attempt: ep.failureCount + 1,
+    });
+
+    const result = await dispatcher.execute(ep);
+    await runs.finish(runId, { status: result.status, durationMs: result.durationMs });
 
     // re-read to include any AI hint the planner may have written while running
-    const fresh = await this.deps.jobs.getEndpoint(endpointId);
-    const plan = planNextRun(now, fresh, this.deps.cron);
-    await this.deps.jobs.updateAfterRun(endpointId, {
+    const fresh = await jobs.getEndpoint(endpointId);
+    const plan = planNextRun(now, fresh, cron);
+
+    await jobs.updateAfterRun(endpointId, {
       lastRunAt: now,
       nextRunAt: plan.nextRunAt,
       status: { status: result.status, durationMs: result.durationMs },
