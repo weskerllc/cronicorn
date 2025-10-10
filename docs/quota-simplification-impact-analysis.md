@@ -26,7 +26,7 @@ User wants to:
 - ❌ **No actual usage** in:
   - `scheduler.ts` (doesn't use quota)
   - `scenarios.ts` (doesn't instantiate or use FakeQuota)
-  - `feature-ai-vercel-sdk` (doesn't check quota)
+  - `adapter-ai` (doesn't check quota)
   - `apps/test-ai` (no quota checks)
 
 **Conclusion**: This is the **perfect time** to simplify - no breaking changes to real code!
@@ -159,11 +159,11 @@ export class FakeQuota implements QuotaGuard {
 
 ---
 
-### 4. **AI Feature Package** (`@cronicorn/feature-ai-vercel-sdk`)
+### 4. **AI Feature Package** (`@cronicorn/adapter-ai`)
 
 **Current State**: No quota checks implemented
 
-**File**: `packages/feature-ai-vercel-sdk/src/client.ts`
+**File**: `packages/adapter-ai/src/client.ts`
 - `planWithTools()` method has no quota logic
 - Could add quota check in future:
 

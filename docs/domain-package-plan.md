@@ -28,7 +28,7 @@ entities.ts should omit lockedUntil/lastStatus; adapters can extend via intersec
 ports.ts keeps today’s method signatures but converts functions to async returning Promise where we expect IO (e.g., make JobsRepo.add return Promise<void> for future DB). Document transitional differences (e.g., setLock remains until we finish leasing redesign).
 Decide whether QuotaGuard belongs: architecture guide lists it as a port. Move it into domain package but refactor to be interface-only (no helper functions, no zod).
 Provide narrow RunStatus union derived from actual usage ("success" | "failed" | "canceled"). Note optional future timeout.
-No tool helpers/zod types here; relocate them to a small helper inside feature-ai-vercel-sdk or leave inside scheduler temporarily (but not in domain).
+No tool helpers/zod types here; relocate them to a small helper inside adapter-ai or leave inside scheduler temporarily (but not in domain).
 Migration workflow
 Scaffold package
 
@@ -61,7 +61,7 @@ Move AI tool helpers either into a new file (e.g., adapters/tools.ts) or leave t
 Update package.json to depend on @cronicorn/domain (workspace).
 Adjust tsconfig.json references if needed.
 Ensure Scheduler imports re-point to new barrel.
-feature-ai-vercel-sdk / other packages:
+adapter-ai / other packages:
 Replace @cronicorn/scheduler type imports with @cronicorn/domain equivalents where appropriate (e.g., JobEndpoint, ports).
 If they rely on callTool helpers, migrate those helpers locally.
 Documentation & verification
@@ -77,7 +77,7 @@ Create adapter-only types for lockedUntil & failure metadata or extend domain ty
 Relocate callTool, tool, defineTools, AIClient, QuotaGuard to a new module (e.g., src/ai/tools.ts) or to the AI SDK package.
 Update imports in src/adapters/*, scheduler.ts, index.ts.
 Add dependency in package.json and adjust exports to avoid re-export loops.
-feature-ai-vercel-sdk
+adapter-ai
 
 Swap imports of domain entities/ports to new package.
 If depending on callTool helpers, either import from new helper location or define minimal wrappers.
