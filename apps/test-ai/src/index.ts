@@ -7,7 +7,7 @@
 // Usage: OPENAI_API_KEY=your_key pnpm start
 
 import { openai } from "@ai-sdk/openai";
-import { createVercelAiClient } from "@cronicorn/feature-ai-vercel-sdk";
+import { createVercelAiClient } from "@cronicorn/adapter-ai";
 import { defineTools, tool } from "@cronicorn/scheduler";
 import { z } from "zod";
 

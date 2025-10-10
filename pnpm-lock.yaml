@@ -47,9 +47,9 @@ importers:
       '@ai-sdk/openai':
         specifier: ^2.0.46
         version: 2.0.46(zod@4.1.12)
-      '@cronicorn/feature-ai-vercel-sdk':
+      '@cronicorn/adapter-ai':
         specifier: workspace:*
-        version: link:../../packages/feature-ai-vercel-sdk
+        version: link:../../packages/adapter-ai
       '@cronicorn/scheduler':
         specifier: workspace:*
         version: link:../../packages/scheduler
@@ -112,7 +112,7 @@ importers:
 
   packages/domain: {}
 
-  packages/feature-ai-vercel-sdk:
+  packages/adapter-ai:
     dependencies:
       '@cronicorn/scheduler':
         specifier: workspace:*

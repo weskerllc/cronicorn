@@ -81,7 +81,7 @@ Supports both:
 
 Works with any AI provider through adapters:
 
-- **@cronicorn/feature-ai-vercel-sdk**: For Vercel AI SDK
+- **@cronicorn/adapter-ai**: For Vercel AI SDK
 - **Custom implementations**: Implement the `AIClient` interface
 
 ## Migration

@@ -11,7 +11,7 @@
 
 ## Guiding Decisions
 
-1. **Package isolation**: create a dedicated workspace package (e.g. `packages/feature-ai-vercel-sdk`) that depends on `ai` v5 and provider modules. Core scheduler package remains zod-free.
+1. **Package isolation**: create a dedicated workspace package (e.g. `packages/adapter-ai`) that depends on `ai` v5 and provider modules. Core scheduler package remains zod-free.
 2. **Runtime metadata for tools**: extend `ToolObj` (in core ports) with optional `inputSchema?: JsonSchema` / `validate?: (args: unknown) => asserts args is P` metadata so adapters can supply schemas without forcing every consumer to use Zod.
 3. **Adapter strategy**: map our `Tools<T>` to Vercel tool definitions via `dynamicTool` when no schema is provided; prefer full `tool()` helper when a JSON schema is supplied (adapter can translate JSON schema to Zod using `zod-to-json-schema` or a lightweight utility).
 4. **Error handling**: standardise on domain-specific error classes (e.g. `AIClientTransientError`, `AIClientFatalError`) so callers can react appropriately.

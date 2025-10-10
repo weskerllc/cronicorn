@@ -1,4 +1,4 @@
-# @cronicorn/feature-ai-vercel-sdk
+# @cronicorn/adapter-ai
 
 A type-safe adapter that bridges the Cronicorn AI Scheduler with Vercel AI SDK, enabling seamless tool calling integration.
 
@@ -17,7 +17,7 @@ This adapter maintains clean architecture by decoupling your scheduler domain fr
 ## Installation
 
 ```bash
-pnpm add @cronicorn/feature-ai-vercel-sdk
+pnpm add @cronicorn/adapter-ai
 ```
 
 ## Basic Usage

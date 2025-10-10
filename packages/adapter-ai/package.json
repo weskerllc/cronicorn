@@ -1,5 +1,5 @@
 {
-  "name": "@cronicorn/feature-ai-vercel-sdk",
+  "name": "@cronicorn/adapter-ai",
   "version": "0.1.0",
   "type": "module",
   "exports": {

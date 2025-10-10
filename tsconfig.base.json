@@ -11,10 +11,10 @@
         "packages/config-eslint/src/*"
       ],
       "@cronicorn/test-ai/*": [
-        "apps/feature-ai-vercel-sdk/src/*"
+        "apps/adapter-ai/src/*"
       ],
-      "@cronicorn/feature-ai-vercel-sdk/*": [
-        "packages/feature-ai-vercel-sdk/src/*"
+      "@cronicorn/adapter-ai/*": [
+        "packages/adapter-ai/src/*"
       ],
       "@cronicorn/domain/*": [
         "packages/domain/src/*"

@@ -58,7 +58,7 @@
   _Details:_ Update `packages/scheduler` to consume new domain exports (`JobEndpoint`, ports, `planNextRun`). Remove redundant type definitions and keep scheduler-specific extensions (`StoredJobEndpoint = JobEndpoint & { lockedUntil?: Date; lastStatus?: ... }`).
 - [ ] **Relocate AI tool helpers**  \
   _Owner:_  \
-  _Details:_ Move `callTool`, `tool`, `defineTools`, `AIClient`, and related zod dependencies into an adapter-focused module (scheduler adapters or `feature-ai-vercel-sdk`). Replace imports accordingly.
+  _Details:_ Move `callTool`, `tool`, `defineTools`, `AIClient`, and related zod dependencies into an adapter-focused module (scheduler adapters or `adapter-ai`). Replace imports accordingly.
 - [ ] **Audit memory store & adapters**  \
   _Owner:_  \
   _Details:_ Update `memory-store.ts` to extend the refined domain types, ensuring leasing fields remain local. Confirm update payloads match new port signatures.
