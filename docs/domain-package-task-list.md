@@ -16,7 +16,7 @@
 
 - [ ] **Create `packages/domain` structure**  \
   _Owner:_  \
-  _Details:_ Add `package.json`, `tsconfig.json`, `src/` tree, `tests/` folder per plan. Ensure scripts (`build`, `test`, `typecheck`) point to root toolchain.
+  _Details:_ Add `package.json`, `tsconfig.json`, `src/` tree, `tests/` folder per plan. Organize `src/` with subfolders when a file would exceed ~150 lines; prefer multiple focused modules that re-export through `index.ts`. Ensure scripts (`build`, `test`, `typecheck`) point to root toolchain.
 - [ ] **Update monorepo tooling**  \
   _Owner:_  \
   _Details:_ Amend `tsconfig.base.json` paths with `@cronicorn/domain/*`, verify `pnpm-workspace.yaml` glob coverage, ensure Turbo sees new package outputs.  \
@@ -24,21 +24,21 @@
 
 ## 3. Domain Source Migration
 
-- [ ] **Port entities to `src/entities.ts`**  \
+- [ ] **Port entities module(s)**  \
   _Owner:_  \
-  _Details:_ Move `JobEndpoint` and related types from scheduler, removing adapter-only fields (`lockedUntil`, `lastStatus`). Introduce `RunStatus` union based on current usage. Document optional fields vs required defaults.
-- [ ] **Define ports in `src/ports.ts`**  \
+  _Details:_ Move `JobEndpoint` and related types from scheduler, removing adapter-only fields (`lockedUntil`, `lastStatus`). If the type surface grows, split into `entities/endpoint.ts`, `entities/run.ts`, etc., and re-export via `entities/index.ts`. Introduce `RunStatus` union based on current usage. Document optional fields vs required defaults.
+- [ ] **Define ports module(s)**  \
   _Owner:_  \
-  _Details:_ Recreate interfaces for `Clock`, `Cron`, `JobsRepo`, `RunsRepo`, `Dispatcher`, `QuotaGuard` (interface-only). Align method signatures with existing scheduler behavior and mark transitional TODOs (e.g., leasing redesign, status vocabulary).
-- [ ] **Relocate `planNextRun` into `src/governor.ts`**  \
+  _Details:_ Recreate interfaces for `Clock`, `Cron`, `JobsRepo`, `RunsRepo`, `Dispatcher`, `QuotaGuard` (interface-only). Group related ports into separate files (`ports/time.ts`, `ports/repos.ts`, etc.) to keep each under ~150 lines, and aggregate them through `ports/index.ts`. Align method signatures with existing scheduler behavior and mark transitional TODOs (e.g., leasing redesign, status vocabulary).
+- [ ] **Relocate `planNextRun` into governor module(s)**  \
   _Owner:_  \
-  _Details:_ Copy logic, adjust parameter types, preserve "pause wins", hint TTL, min/max clamping, and "floor to now" behavior. Document `PlanSource` union.
+  _Details:_ Copy logic, adjust parameter types, preserve "pause wins", hint TTL, min/max clamping, and "floor to now" behavior. Break supporting helpers (e.g., candidate builders, clamp utilities) into dedicated files if the main function grows beyond the target size. Document `PlanSource` union.
 - [ ] **Add domain errors & fixtures**  \
   _Owner:_  \
-  _Details:_ Create `errors.ts` (`NotFoundError`, `CronError`, `InvalidStateError`) and `fixtures.ts` (`at()`, `makeEndpoint()`), exporting via barrel.
+  _Details:_ Create compact modules for `errors` (`errors/index.ts` with per-error files if needed) and `fixtures` (`fixtures/time.ts`, `fixtures/endpoints.ts`). Re-export through the barrel so consumers stay decoupled from layout.
 - [ ] **Create public barrel `src/index.ts`**  \
   _Owner:_  \
-  _Details:_ Re-export entities, ports, governor, errors, fixtures for consumers.
+  _Details:_ Re-export entities, ports, governor, errors, fixtures for consumers. Validate that the barrel is the only large file; all implementation files should stay below the agreed line-count threshold.
 
 ## 4. Unit Testing
 
