@@ -1,4 +1,4 @@
-import type { Dispatcher, JobEndpoint } from "../domain/ports.js";
+import type { Dispatcher, JobEndpoint } from "@cronicorn/domain";
 
 export class FakeDispatcher implements Dispatcher {
   constructor(private plan: (ep: JobEndpoint) => { status: "success" | "failed"; durationMs: number }) { }

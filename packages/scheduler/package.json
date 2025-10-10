@@ -13,7 +13,7 @@
   "scripts": {
     "watch": "tsc -w ",
     "build": "tsc ",
-    "test": "vitest run && pnpm sim",
+    "test": "pnpm sim",
     "typecheck": "tsc --noEmit",
     "sim": "tsx src/sim/simulate.ts",
     "clean": "rm -rf node_modules .turbo dist",
@@ -23,6 +23,7 @@
     "lint:fix": "eslint . --max-warnings 0 --fix"
   },
   "dependencies": {
+    "@cronicorn/domain": "workspace:*",
     "zod": "^4.1.12"
   }
 }

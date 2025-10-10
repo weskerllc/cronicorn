@@ -5,19 +5,9 @@
  * Use this in production apps/api to instantiate the scheduler.
  */
 
-// Planning logic (useful for testing or custom schedulers)
-export { planNextRun } from "./domain/governor.js";
-
-// Port interfaces (contracts that consumers must implement)
+// Scheduler-specific AI tool types
 export type {
   AIClient,
-  Clock,
-  Cron,
-  Dispatcher,
-  JobEndpoint,
-  JobsRepo,
-  QuotaGuard,
-  RunsRepo,
   Tool,
   ToolArgs,
   ToolFn,

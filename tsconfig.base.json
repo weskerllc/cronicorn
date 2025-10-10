@@ -16,6 +16,9 @@
       "@cronicorn/feature-ai-vercel-sdk/*": [
         "packages/feature-ai-vercel-sdk/src/*"
       ],
+      "@cronicorn/domain/*": [
+        "packages/domain/src/*"
+      ],
       "@cronicorn/scheduler/*": [
         "packages/scheduler/src/*"
       ]
