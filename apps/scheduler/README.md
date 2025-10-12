@@ -7,6 +7,7 @@ This is the main entry point for the Cronicorn scheduling worker. It wires toget
 ## Architecture
 
 This worker follows the **hexagonal architecture** pattern where the composition root:
+
 - Owns infrastructure setup (database connection pooling, lifecycle management)
 - Wires concrete adapter implementations to domain ports
 - Manages graceful shutdown and error handling
@@ -20,12 +21,12 @@ Worker (this package)
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | ✅ Yes | - | PostgreSQL connection string (e.g., `postgresql://user:pass@localhost:5432/db`) |
-| `BATCH_SIZE` | No | `10` | Number of endpoints to claim per tick |
-| `POLL_INTERVAL_MS` | No | `5000` | Milliseconds between ticks (5 seconds) |
-| `LOCK_TTL_MS` | No | `60000` | Lock duration for claimed endpoints (60 seconds) |
+| Variable           | Required | Default | Description                                                                     |
+| ------------------ | -------- | ------- | ------------------------------------------------------------------------------- |
+| `DATABASE_URL`     | ✅ Yes   | -       | PostgreSQL connection string (e.g., `postgresql://user:pass@localhost:5432/db`) |
+| `BATCH_SIZE`       | No       | `10`    | Number of endpoints to claim per tick                                           |
+| `POLL_INTERVAL_MS` | No       | `5000`  | Milliseconds between ticks (5 seconds)                                          |
+| `LOCK_TTL_MS`      | No       | `60000` | Lock duration for claimed endpoints (60 seconds)                                |
 
 ## Development
 
@@ -109,16 +110,16 @@ Create a job that will execute shortly after worker starts:
 
 ```sql
 INSERT INTO job_endpoints (
-  id, 
-  job_id, 
-  tenant_id, 
-  name, 
-  url, 
+  id,
+  job_id,
+  tenant_id,
+  name,
+  url,
   next_run_at
 ) VALUES (
-  'ep-test-001', 
-  'job-001', 
-  'tenant-001', 
+  'ep-test-001',
+  'job-001',
+  'tenant-001',
   'Test Job',
   'https://httpbin.org/post',
   NOW() + INTERVAL '5 seconds'
@@ -153,18 +154,19 @@ Within ~7 seconds, you should see the scheduler claim and execute the job.
 Check that execution was recorded:
 
 ```sql
-SELECT 
-  id, 
-  endpoint_id, 
-  status, 
-  started_at, 
-  finished_at, 
-  duration_ms 
-FROM runs 
+SELECT
+  id,
+  endpoint_id,
+  status,
+  started_at,
+  finished_at,
+  duration_ms
+FROM runs
 WHERE endpoint_id = 'ep-test-001';
 ```
 
 **Expected:**
+
 - `status` = `'success'`
 - `duration_ms` > 0
 - `finished_at` IS NOT NULL
@@ -181,6 +183,7 @@ Press `Ctrl+C` in the terminal running the worker.
 ```
 
 **Success Criteria:**
+
 - Worker waits for current tick to complete before exiting
 - No abrupt termination or errors
 - Pool closes cleanly
@@ -196,10 +199,10 @@ DELETE FROM job_endpoints WHERE id = 'ep-test-001';
 
 ## Success Criteria Summary
 
-✅ **Job executes** within ~7 seconds of worker start  
-✅ **Run record created** with `status='success'` and `duration_ms` populated  
-✅ **No errors** in logs during normal operation  
-✅ **Graceful shutdown** waits for current tick completion  
+✅ **Job executes** within ~7 seconds of worker start
+✅ **Run record created** with `status='success'` and `duration_ms` populated
+✅ **No errors** in logs during normal operation
+✅ **Graceful shutdown** waits for current tick completion
 
 ## Troubleshooting
 
@@ -240,6 +243,7 @@ This follows hexagonal architecture: infrastructure setup happens in composition
 ### Why No Initial DB Ping?
 
 We let the first `claimDueEndpoints()` query validate the connection. This:
+
 - Simplifies startup logic
 - Follows "don't validate what the system validates" principle
 - Allows errors to bubble up naturally with proper logging
