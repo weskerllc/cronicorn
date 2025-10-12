@@ -17,60 +17,57 @@ import { closeTestPool, expect, test } from "../fixtures.js";
  * 3. Run: pnpm test
  */
 
-// eslint-disable-next-line node/no-process-env
-const DATABASE_URL = process.env.DATABASE_URL;
+describe("drizzle Repos (PostgreSQL)", () => {
+  afterAll(async () => {
+    await closeTestPool();
+  });
 
-describe.skipIf(!DATABASE_URL)("drizzle Repos (PostgreSQL)", () => {
-    afterAll(async () => {
-        await closeTestPool();
+  describe("drizzleJobsRepo", () => {
+    test("should create and retrieve endpoint", async ({ tx }) => {
+      const repo = new DrizzleJobsRepo(tx, () => new Date());
+
+      await repo.add({
+        id: "ep1",
+        jobId: "job1",
+        tenantId: "tenant1",
+        name: "test",
+        nextRunAt: new Date("2025-01-01T00:00:00Z"),
+        failureCount: 0,
+      });
+
+      const retrieved = await repo.getEndpoint("ep1");
+      expect(retrieved.id).toBe("ep1");
+      expect(retrieved.name).toBe("test");
     });
+  });
 
-    describe("drizzleJobsRepo", () => {
-        test("should create and retrieve endpoint", async ({ tx }) => {
-            const repo = new DrizzleJobsRepo(tx, () => new Date());
+  describe("drizzleRunsRepo", () => {
+    test("should create and finish a run", async ({ tx }) => {
+      // First create an endpoint (foreign key requirement)
+      const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
+      await jobsRepo.add({
+        id: "ep1",
+        jobId: "job1",
+        tenantId: "tenant1",
+        name: "test",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
-            await repo.add({
-                id: "ep1",
-                jobId: "job1",
-                tenantId: "tenant1",
-                name: "test",
-                nextRunAt: new Date("2025-01-01T00:00:00Z"),
-                failureCount: 0,
-            });
+      const repo = new DrizzleRunsRepo(tx);
 
-            const retrieved = await repo.getEndpoint("ep1");
-            expect(retrieved.id).toBe("ep1");
-            expect(retrieved.name).toBe("test");
-        });
+      const runId = await repo.create({
+        endpointId: "ep1",
+        status: "running",
+        attempt: 1,
+      });
+
+      expect(runId).toBeDefined();
+
+      await repo.finish(runId, {
+        status: "success",
+        durationMs: 100,
+      });
     });
-
-    describe("drizzleRunsRepo", () => {
-        test("should create and finish a run", async ({ tx }) => {
-            // First create an endpoint (foreign key requirement)
-            const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
-            await jobsRepo.add({
-                id: "ep1",
-                jobId: "job1",
-                tenantId: "tenant1",
-                name: "test",
-                nextRunAt: new Date(),
-                failureCount: 0,
-            });
-
-            const repo = new DrizzleRunsRepo(tx);
-
-            const runId = await repo.create({
-                endpointId: "ep1",
-                status: "running",
-                attempt: 1,
-            });
-
-            expect(runId).toBeDefined();
-
-            await repo.finish(runId, {
-                status: "success",
-                durationMs: 100,
-            });
-        });
-    });
+  });
 });

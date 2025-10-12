@@ -20,47 +20,47 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function main() {
-    // eslint-disable-next-line node/no-process-env
-    const databaseUrl = process.env.DATABASE_URL;
+  // eslint-disable-next-line node/no-process-env
+  const databaseUrl = process.env.DATABASE_URL;
 
-    if (!databaseUrl) {
-        console.error("❌ DATABASE_URL environment variable is required");
-        process.exit(1);
-    }
+  if (!databaseUrl) {
+    console.error("❌ DATABASE_URL environment variable is required");
+    process.exit(1);
+  }
+
+  // eslint-disable-next-line no-console
+  console.log("🔄 Connecting to database...");
+
+  // Create pg client for migrations
+  const migrationClient = new Client({ connectionString: databaseUrl });
+  await migrationClient.connect();
+
+  try {
+    const db = drizzle(migrationClient);
 
     // eslint-disable-next-line no-console
-    console.log("🔄 Connecting to database...");
+    console.log("🚀 Running migrations...");
 
-    // Create pg client for migrations
-    const migrationClient = new Client({ connectionString: databaseUrl });
-    await migrationClient.connect();
+    // Resolve migrations folder path relative to this file
+    const migrationsFolder = resolve(__dirname, "../migrations");
 
-    try {
-        const db = drizzle(migrationClient);
+    await migrate(db, {
+      migrationsFolder,
+      migrationsTable: "__drizzle_migrations",
+      migrationsSchema: "public",
+    });
 
-        // eslint-disable-next-line no-console
-        console.log("🚀 Running migrations...");
-
-        // Resolve migrations folder path relative to this file
-        const migrationsFolder = resolve(__dirname, "../migrations");
-
-        await migrate(db, {
-            migrationsFolder,
-            migrationsTable: "__drizzle_migrations",
-            migrationsSchema: "public",
-        });
-
-        // eslint-disable-next-line no-console
-        console.log("✅ Migrations completed successfully");
-    }
-    catch (error) {
-        console.error("❌ Migration failed:", error);
-        process.exit(1);
-    }
-    finally {
-        // Close the connection
-        await migrationClient.end();
-    }
+    // eslint-disable-next-line no-console
+    console.log("✅ Migrations completed successfully");
+  }
+  catch (error) {
+    console.error("❌ Migration failed:", error);
+    process.exit(1);
+  }
+  finally {
+    // Close the connection
+    await migrationClient.end();
+  }
 }
 
 main();

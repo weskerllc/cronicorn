@@ -96,3 +96,23 @@
 **Reference**: 
 - See `.adr/0003-postgres-adapter-contract-tests.md` for adapter implementation
 - See `.adr/0004-database-migration-strategy.md` for migration workflow
+
+---
+
+## Drizzle Adapter Typing Gaps (2025-10-12)
+
+**Status**: ⚠️ Acknowledged
+
+**Issue**: `DrizzleJobsRepo` and `DrizzleRunsRepo` accept `NodePgDatabase<any>` / `NodePgTransaction<any, any>` to maintain compatibility between production wiring and test fixtures. This avoids schema-type mismatches but sacrifices compile-time safety and IntelliSense when interacting with tables.
+
+**Impact**:
+- Reduced feedback if table/column names change (errors surface only at runtime/tests)
+- Harder for downstream consumers to rely on exported `AppDb` alias
+- Inconsistent with architectural goal of strong typing at boundaries
+
+**Proposed Fix**:
+1. Update repos to depend on typed aliases from `src/db.ts` (`AppDb` / `AppTx`)
+2. Adjust fixtures to reuse the same aliases instead of defining custom `Tx`
+3. Add regression tests ensuring typed schema remains in sync (optional)
+
+**Follow-up**: Schedule refactor when we next touch adapter-drizzle or when additional adapters require consistent typing.

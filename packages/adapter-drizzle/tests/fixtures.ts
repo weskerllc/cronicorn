@@ -7,14 +7,14 @@ import * as schema from "../src/schema.js";
 export type Tx = NodePgDatabase<typeof schema>;
 
 type Fixtures = {
-    tx: Tx;
+  tx: Tx;
 };
 
 // eslint-disable-next-line node/no-process-env
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
-    throw new Error("DATABASE_URL environment variable is required for tests");
+  throw new Error("DATABASE_URL environment variable is required for tests");
 }
 
 const pool = new Pool({ connectionString: DATABASE_URL });
@@ -38,19 +38,19 @@ const pool = new Pool({ connectionString: DATABASE_URL });
  * ```
  */
 export const test = base.extend<Fixtures>({
-    // eslint-disable-next-line no-empty-pattern
-    tx: async ({ }, use) => {
-        const client = await pool.connect();
-        try {
-            await client.query("BEGIN");
-            const tx = drizzle(client, { schema });
-            await use(tx); // <-- your test runs here with a tx
-            await client.query("ROLLBACK"); // <-- isolation via rollback
-        }
-        finally {
-            client.release();
-        }
-    },
+  // eslint-disable-next-line no-empty-pattern
+  tx: async ({ }, use) => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const tx = drizzle(client, { schema });
+      await use(tx); // <-- your test runs here with a tx
+      await client.query("ROLLBACK"); // <-- isolation via rollback
+    }
+    finally {
+      client.release();
+    }
+  },
 });
 
 // Re-export expect directly from vitest (NOT from `test`)
@@ -61,5 +61,5 @@ export { expect } from "vitest";
  * Call this in afterAll or in a global test teardown.
  */
 export async function closeTestPool() {
-    await pool.end();
+  await pool.end();
 }
