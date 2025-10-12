@@ -9,7 +9,7 @@
     }
   },
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

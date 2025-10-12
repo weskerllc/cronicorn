@@ -1,7 +1,7 @@
 import { CronError } from "@cronicorn/domain";
 import { describe, expect, it } from "vitest";
 
-import { CronParserAdapter } from "../src/cron-parser-adapter.js";
+import { CronParserAdapter } from "../cron-parser-adapter.js";
 
 describe("cronParserAdapter", () => {
   const cron = new CronParserAdapter();

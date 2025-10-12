@@ -1,0 +1,27 @@
+{
+  "name": "@cronicorn/scheduler-app",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cronicorn/adapter-cron": "workspace:*",
+    "@cronicorn/adapter-drizzle": "workspace:*",
+    "@cronicorn/adapter-http": "workspace:*",
+    "@cronicorn/adapter-system-clock": "workspace:*",
+    "@cronicorn/scheduler": "workspace:*",
+    "drizzle-orm": "^0.38.3",
+    "pg": "^8.13.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.19.2",
+    "typescript": "~5.7.2"
+  }
+}
