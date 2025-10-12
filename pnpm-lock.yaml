@@ -163,6 +163,19 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@20.19.19)(msw@2.11.5(@types/node@20.19.19)(typescript@5.7.3))
 
+  packages/adapter-system-clock:
+    dependencies:
+      '@cronicorn/domain':
+        specifier: workspace:*
+        version: link:../domain
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.5
+        version: 20.19.19
+      typescript:
+        specifier: ^5.7.2
+        version: 5.7.3
+
   packages/config-eslint:
     devDependencies:
       '@antfu/eslint-config':

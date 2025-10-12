@@ -271,7 +271,52 @@
 
 **Next Steps**: 
 - ✅ Phase 1.2 complete
-- ⏭️ Phase 1.3: System Clock adapter (trivial, 5 minutes)
+- ✅ Phase 1.3: System Clock adapter (complete)
 - ⏭️ Phase 2: Worker composition root (wire everything together)
 
 **ADR**: See `.adr/0008-http-dispatcher-implementation.md` for comprehensive design decisions and rationale.
+
+---
+
+## System Clock Adapter Implementation (2025-10-12)
+
+**Status**: ✅ Complete
+
+**What We Built**:
+- 📦 New package: `@cronicorn/adapter-system-clock`
+- ✅ **SystemClock**: Production implementation wrapping Node.js time APIs
+- ✅ ~25 lines of code total (package + implementation)
+- ✅ Zero external dependencies
+
+**Implementation**:
+```typescript
+export class SystemClock implements Clock {
+  now(): Date { return new Date(); }
+  async sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+}
+```
+
+**Design Decision: No Tests**
+
+We deliberately chose NOT to write tests for this adapter because:
+1. **Thin wrapper**: Just wraps Node.js built-ins (`new Date()`, `setTimeout`)
+2. **Already tested**: Node.js team has thoroughly tested these APIs
+3. **Contract validated**: Domain tests using `FakeClock` already validate the `Clock` interface
+4. **Obvious failures**: Any bugs would immediately surface in integration tests
+5. **No logic**: No branches, no edge cases, no complex behavior
+
+**Architectural Value**:
+
+While trivial, having a separate adapter:
+- Makes dependency injection explicit (worker wires `SystemClock`)
+- Maintains architectural consistency (all ports have adapters)
+- Documents the boundary (domain vs system time)
+- Enables testing (easy to swap with `FakeClock`)
+
+**No Tech Debt**: Straightforward implementation, follows established patterns.
+
+**Next Steps**: 
+- ✅ Phase 1 complete (all adapters implemented)
+- ⏭️ Phase 2: Worker composition root (wire Cron, HTTP, SystemClock, Drizzle repos)
