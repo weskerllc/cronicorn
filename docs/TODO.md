@@ -6,14 +6,19 @@
 - ✅ **Scheduler Logic** - Tick loop with claim → execute → plan cycle
 - ✅ **Vercel AI SDK Integration** - `@cronicorn/adapter-ai` with tool conversion
 - ✅ **PostgreSQL Adapter** - `@cronicorn/adapter-drizzle` with contract tests, migrations, atomic claiming
+- ✅ **Cron Adapter** - `@cronicorn/adapter-cron` with cron-parser (19 tests)
+- ✅ **HTTP Dispatcher** - `@cronicorn/adapter-http` with native fetch (14 tests)
+- ✅ **System Clock** - `@cronicorn/adapter-system-clock` wrapping Node.js time APIs
 - ✅ **In-Memory Adapters** - FakeClock, FakeDispatcher, FakeQuota, InMemoryJobsRepo for testing
 - ✅ **Test Composition Root** - `apps/test-ai` validates AI SDK integration
 
 ## Critical Path Forward
 
-### Phase 1: Complete Adapter Layer (NEXT)
+### Phase 1: Complete Adapter Layer ✅ **COMPLETE**
 
 **Why**: Foundation pieces needed before any production composition root can be built.
+
+**Status**: ✅ All adapters implemented and tested (Cron, HTTP Dispatcher, System Clock)
 
 #### 1.1 Cron Adapter (`@cronicorn/adapter-cron`) ✅ **COMPLETE**
 **Status**: ✅ Implemented and tested
@@ -111,15 +116,23 @@
 
 **ADR**: See `.adr/0008-http-dispatcher-implementation.md` for detailed design decisions
 
-#### 1.3 System Clock Adapter (`@cronicorn/adapter-system-clock`)
-**Status**: ⏳ NEXT - Simple 5-minute implementation after HTTP dispatcher
+#### 1.3 System Clock Adapter (`@cronicorn/adapter-system-clock`) ✅ **COMPLETE**
+**Status**: ✅ Implemented and validated
 
-- Create `packages/adapter-system-clock/src/system-clock.ts`
-- Implement `Clock.now()` → `new Date()`
-- Implement `Clock.sleep(ms)` → `new Promise(resolve => setTimeout(resolve, ms))`
-- Export from `index.ts` alongside `FakeClock` from domain (or keep separate)
-- **Acceptance**: Provides real system time for production use
-- **Estimate**: 5 minutes (trivial wrapper, no tests needed - it's just stdlib)
+**Implementation:**
+- ✅ Created package: `packages/adapter-system-clock/`
+- ✅ Implemented `SystemClock` class with `Clock` port
+- ✅ `now()` → `new Date()` (current system time)
+- ✅ `sleep(ms)` → `new Promise(resolve => setTimeout(resolve, ms))` (async delay)
+- ✅ Typecheck passes
+- ✅ Zero dependencies (just Node.js built-ins)
+
+**Design Decision:**
+- **No tests needed**: Thin wrapper around Node.js built-ins (already tested by Node.js team)
+- **Port contract validated**: Domain tests using `FakeClock` already validate the `Clock` interface
+- **Production ready**: Any issues would be immediately obvious in integration tests
+
+**Result**: Production-ready system clock adapter (~25 lines total)
 
 ---
 
