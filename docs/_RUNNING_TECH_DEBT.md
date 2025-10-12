@@ -116,3 +116,33 @@
 3. Add regression tests ensuring typed schema remains in sync (optional)
 
 **Follow-up**: Schedule refactor when we next touch adapter-drizzle or when additional adapters require consistent typing.
+
+---
+
+## Cron Adapter Implementation (2025-10-12)
+
+**Status**: ✅ Complete
+
+**What We Built**:
+- 📦 New package: `@cronicorn/adapter-cron`
+- ✅ **CronParserAdapter**: Production implementation using `cron-parser` library (v4.9.0)
+- ✅ **FakeCron**: Deterministic test stub (adds fixed interval, default 60s)
+- ✅ **19 unit tests**: Covering common patterns, edge cases, error handling
+- ✅ Clean architecture: Implements `Cron` port from domain, no circular dependencies
+
+**Design Decisions**:
+1. **Export from src/**: Following `adapter-drizzle` pattern (no build step needed)
+2. **UTC-only**: Default timezone is UTC, simpler than timezone configuration
+3. **Domain tests keep inline stub**: Maintains architectural purity (domain never depends on adapters)
+4. **FakeCron pattern**: Similar to `FakeClock` - simple, predictable, reusable
+
+**Test Coverage**:
+- ✅ Common cron patterns: every minute, hourly, daily, weekly, every 15 minutes
+- ✅ Different starting dates: mid-day, month boundary, year boundary
+- ✅ Edge cases: exact scheduled time, complex expressions
+- ✅ Error handling: Invalid expressions throw `CronError` with helpful messages
+- ✅ FakeCron behavior: Default interval, custom intervals, deterministic results
+
+**No Tech Debt**: Straightforward implementation, no shortcuts taken, follows established patterns.
+
+**Next Steps**: Ready for use in worker composition root (Phase 2).

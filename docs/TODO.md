@@ -15,16 +15,17 @@
 
 **Why**: Foundation pieces needed before any production composition root can be built.
 
-#### 1.1 Cron Adapter (`@cronicorn/adapter-cron`) 🎯 **START HERE**
-**Status**: CRITICAL BLOCKER - Currently only stub implementations exist
+#### 1.1 Cron Adapter (`@cronicorn/adapter-cron`) ✅ **COMPLETE**
+**Status**: ✅ Implemented and tested
 
-- Create new package: `packages/adapter-cron/`
-- Implement `Cron.next(expr, from)` using `cron-parser` library
-- Handle timezone support (UTC default)
-- Add error handling for invalid cron expressions (throw `CronError`)
-- Unit tests: verify next run calculations for common patterns
-- Contract test: validate against `Cron` port interface
-- **Acceptance**: Can calculate next run time for standard cron expressions
+- ✅ Created package: `packages/adapter-cron/`
+- ✅ Implemented `CronParserAdapter` using `cron-parser` library
+- ✅ UTC timezone support (default)
+- ✅ Error handling for invalid cron expressions (throws `CronError`)
+- ✅ Implemented `FakeCron` test stub (similar to `FakeClock` pattern)
+- ✅ Unit tests: 19 tests covering common patterns, edge cases, error handling
+- ✅ All tests pass, typecheck passes, no lint warnings
+- **Result**: Production-ready cron adapter with deterministic test stub
 
 #### 1.2 HTTP Dispatcher (`@cronicorn/adapter-http`)
 **Status**: Needed for worker to execute real job endpoints
