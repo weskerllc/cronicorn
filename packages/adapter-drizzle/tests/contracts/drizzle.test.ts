@@ -27,8 +27,7 @@ describe.skipIf(!DATABASE_URL)("drizzle Repos (PostgreSQL)", () => {
 
     describe("drizzleJobsRepo", () => {
         test("should create and retrieve endpoint", async ({ tx }) => {
-            // eslint-disable-next-line ts/no-explicit-any
-            const repo = new DrizzleJobsRepo(tx as any, () => new Date());
+            const repo = new DrizzleJobsRepo(tx, () => new Date());
 
             await repo.add({
                 id: "ep1",
@@ -48,8 +47,7 @@ describe.skipIf(!DATABASE_URL)("drizzle Repos (PostgreSQL)", () => {
     describe("drizzleRunsRepo", () => {
         test("should create and finish a run", async ({ tx }) => {
             // First create an endpoint (foreign key requirement)
-            // eslint-disable-next-line ts/no-explicit-any
-            const jobsRepo = new DrizzleJobsRepo(tx as any, () => new Date());
+            const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
             await jobsRepo.add({
                 id: "ep1",
                 jobId: "job1",
@@ -59,8 +57,7 @@ describe.skipIf(!DATABASE_URL)("drizzle Repos (PostgreSQL)", () => {
                 failureCount: 0,
             });
 
-            // eslint-disable-next-line ts/no-explicit-any
-            const repo = new DrizzleRunsRepo(tx as any);
+            const repo = new DrizzleRunsRepo(tx);
 
             const runId = await repo.create({
                 endpointId: "ep1",

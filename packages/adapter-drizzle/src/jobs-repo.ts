@@ -1,5 +1,5 @@
 import type { JobEndpoint, JobsRepo } from "@cronicorn/domain";
-import type { PgDatabase, PgQueryResultHKT, PgTransaction } from "drizzle-orm/pg-core";
+import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
 import { and, eq, isNull, lte, or, sql } from "drizzle-orm";
 
@@ -11,11 +11,11 @@ import { type JobEndpointRow, jobEndpoints } from "./schema.js";
  * Uses FOR UPDATE SKIP LOCKED for atomic claiming.
  * All operations are transaction-scoped.
  *
- * Generic over QueryResultHKT to support both postgres-js and node-postgres clients.
+ * Typed for node-postgres driver.
  */
-export class DrizzleJobsRepo<T extends PgQueryResultHKT = PgQueryResultHKT> implements JobsRepo {
+export class DrizzleJobsRepo implements JobsRepo {
   constructor(
-    private tx: PgDatabase<T, Record<string, never>> | PgTransaction<T, Record<string, never>>,
+    private tx: NodePgDatabase<Record<string, never>> | NodePgTransaction<Record<string, never>, Record<string, never>>,
     private now: () => Date = () => new Date(),
   ) { }
 
@@ -60,7 +60,7 @@ export class DrizzleJobsRepo<T extends PgQueryResultHKT = PgQueryResultHKT> impl
       .limit(limit)
       .for("update", { skipLocked: true });
 
-    const ids = claimed.map(r => r.id);
+    const ids = claimed.map((r: { id: string }) => r.id);
 
     // Extend lock for claimed endpoints
     if (ids.length > 0) {

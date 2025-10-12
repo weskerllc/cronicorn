@@ -99,9 +99,9 @@ importers:
       drizzle-orm:
         specifier: 0.38.3
         version: 0.38.3(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(pg@8.16.3)(postgres@3.4.7)
-      postgres:
-        specifier: ^3.4.5
-        version: 3.4.7
+      pg:
+        specifier: ^8.16.3
+        version: 8.16.3
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
@@ -112,9 +112,6 @@ importers:
       drizzle-kit:
         specifier: ^0.30.1
         version: 0.30.6
-      pg:
-        specifier: ^8.16.3
-        version: 8.16.3
       tsx:
         specifier: ^4.19.2
         version: 4.20.6
@@ -6417,7 +6414,8 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
-  postgres@3.4.7: {}
+  postgres@3.4.7:
+    optional: true
 
   prelude-ls@1.2.1: {}
 
