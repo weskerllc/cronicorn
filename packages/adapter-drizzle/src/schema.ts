@@ -37,9 +37,10 @@ export const jobEndpoints = pgTable("job_endpoints", {
 
   // Execution config (dispatcher may use these)
   url: text("url"),
-  method: text("method"), // "GET" | "POST" | "PUT" | "DELETE"
+  method: text("method"), // "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   headersJson: jsonb("headers_json").$type<Record<string, string>>(),
-  bodyJson: jsonb("body_json"),
+  bodyJson: jsonb("body_json").$type<import("@cronicorn/domain").JsonValue>(),
+  timeoutMs: integer("timeout_ms"),
 
   // Adapter-specific (not in domain entity)
   _lockedUntil: timestamp("_locked_until", { mode: "date" }),

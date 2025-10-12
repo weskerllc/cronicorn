@@ -146,3 +146,44 @@
 **No Tech Debt**: Straightforward implementation, no shortcuts taken, follows established patterns.
 
 **Next Steps**: Ready for use in worker composition root (Phase 2).
+
+---
+
+## Domain Type Improvements - HTTP Execution Config (2025-10-12)
+
+**Status**: ✅ Complete
+
+**What Changed**:
+- ✅ **JsonValue type**: Added recursive JSON type for type-safe body serialization
+- ✅ **bodyJson**: Changed from `unknown` to `JsonValue` for compile-time safety
+- ✅ **method**: Added `"PATCH"` to supported HTTP methods
+- ✅ **timeoutMs**: Added optional timeout field for HTTP requests
+- ✅ **Drizzle schema**: Updated to include new fields and type bodyJson correctly
+
+**Design Decisions**:
+1. **JsonValue over unknown**: Provides type safety without sacrificing flexibility
+   - Represents all valid JSON: null, boolean, number, string, arrays, objects
+   - Serializable (critical for DB storage)
+   - Self-documenting (clear intent)
+
+2. **Inline type definition**: JsonValue defined in endpoint.ts (not separate file)
+   - Single usage right now (YAGNI)
+   - Easy to extract later if needed
+
+3. **PATCH added, HEAD/OPTIONS deferred**: Common RESTful update method included, rare methods excluded until needed
+
+4. **Timeout as optional field**: Different endpoints may need different timeouts, dispatcher provides default
+
+**Rejected Alternatives** (from external recommendation):
+- ❌ FormData/Blob support - YAGNI for HTTP job scheduler
+- ❌ Discriminated union body types - Over-engineered for simple JSON bodies
+- ❌ Generic interface - Adds complexity without benefit for single use case
+- ❌ HEAD/OPTIONS methods - Rare for scheduled jobs, add when needed
+
+**Impact**:
+- ✅ All existing tests pass
+- ✅ Backward compatible at runtime (JSON serialization unchanged)
+- ✅ Better compile-time safety (no more `unknown` type assertions)
+- ✅ Ready for HTTP dispatcher implementation
+
+**Next Steps**: Implement HTTP dispatcher adapter (Phase 1.2).
