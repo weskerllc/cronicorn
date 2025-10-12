@@ -5,7 +5,6 @@
   },
   "include": ["src/**/*", "tests/**/*"],
   "references": [
-    { "path": "../domain" },
-    { "path": "../scheduler" }
+    { "path": "../domain" }
   ]
 }
