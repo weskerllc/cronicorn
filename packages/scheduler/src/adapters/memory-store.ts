@@ -15,7 +15,7 @@ export class InMemoryJobsRepo implements JobsRepo {
   private map = new Map<string, StoredJob>();
   constructor(private now: () => Date) { } // <-- inject clock
 
-  add(ep: JobEndpoint) { this.map.set(ep.id, ep); }
+  async add(ep: JobEndpoint) { this.map.set(ep.id, ep); }
 
   async claimDueEndpoints(limit: number, withinMs: number) {
     const now = this.now();

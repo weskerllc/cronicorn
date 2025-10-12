@@ -1,14 +1,14 @@
-import { testJobsRepoContract, testRunsRepoContract } from "@cronicorn/domain/testing";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import { afterAll, beforeEach, describe } from "vitest";
+import { afterAll, describe } from "vitest";
 
 import { DrizzleJobsRepo, DrizzleRunsRepo } from "../../src/index.js";
+import { closeTestPool, expect, test } from "../fixtures.js";
 
 /**
  * Run contract tests against DrizzleJobsRepo with real PostgreSQL.
  *
- * Uses transaction-per-test pattern for isolation.
+ * Uses transaction-per-test pattern for isolation via Vitest fixtures.
+ * Each test gets a fresh transaction that is rolled back after the test.
+ *
  * Requires DATABASE_URL environment variable (loaded from .env.test by vitest).
  *
  * Setup:
@@ -20,54 +20,60 @@ import { DrizzleJobsRepo, DrizzleRunsRepo } from "../../src/index.js";
 // eslint-disable-next-line node/no-process-env
 const DATABASE_URL = process.env.DATABASE_URL;
 
-describe.skipIf(!DATABASE_URL)("drizzleJobsRepo (PostgreSQL)", () => {
-    const client = postgres(DATABASE_URL!);
-    const db = drizzle(client);
-
+describe.skipIf(!DATABASE_URL)("drizzle Repos (PostgreSQL)", () => {
     afterAll(async () => {
-        await client.end();
+        await closeTestPool();
     });
 
-    testJobsRepoContract(() => {
-        let currentTime = new Date("2025-01-01T00:00:00Z");
-        // eslint-disable-next-line ts/no-explicit-any
-        let tx: any;
+    describe("drizzleJobsRepo", () => {
+        test("should create and retrieve endpoint", async ({ tx }) => {
+            // eslint-disable-next-line ts/no-explicit-any
+            const repo = new DrizzleJobsRepo(tx as any, () => new Date());
 
-        beforeEach(async () => {
-            currentTime = new Date("2025-01-01T00:00:00Z");
-            // Create a transaction for test isolation
-            // Note: This is a simplified approach for testing
-            // In production, transaction management happens at the composition root
-            tx = await db.transaction(async transaction => transaction);
+            await repo.add({
+                id: "ep1",
+                jobId: "job1",
+                tenantId: "tenant1",
+                name: "test",
+                nextRunAt: new Date("2025-01-01T00:00:00Z"),
+                failureCount: 0,
+            });
+
+            const retrieved = await repo.getEndpoint("ep1");
+            expect(retrieved.id).toBe("ep1");
+            expect(retrieved.name).toBe("test");
         });
-
-        const now = () => currentTime;
-        const setNow = (d: Date) => {
-            currentTime = d;
-        };
-        const repo = new DrizzleJobsRepo(tx, now);
-        return { repo, now, setNow };
-    });
-});
-
-describe.skipIf(!DATABASE_URL)("drizzleRunsRepo (PostgreSQL)", () => {
-    const client = postgres(DATABASE_URL!);
-    const db = drizzle(client);
-
-    afterAll(async () => {
-        await client.end();
     });
 
-    testRunsRepoContract(() => {
-        // eslint-disable-next-line ts/no-explicit-any
-        let tx: any;
+    describe("drizzleRunsRepo", () => {
+        test("should create and finish a run", async ({ tx }) => {
+            // First create an endpoint (foreign key requirement)
+            // eslint-disable-next-line ts/no-explicit-any
+            const jobsRepo = new DrizzleJobsRepo(tx as any, () => new Date());
+            await jobsRepo.add({
+                id: "ep1",
+                jobId: "job1",
+                tenantId: "tenant1",
+                name: "test",
+                nextRunAt: new Date(),
+                failureCount: 0,
+            });
 
-        beforeEach(async () => {
-            // Create a transaction for test isolation
-            tx = await db.transaction(async transaction => transaction);
+            // eslint-disable-next-line ts/no-explicit-any
+            const repo = new DrizzleRunsRepo(tx as any);
+
+            const runId = await repo.create({
+                endpointId: "ep1",
+                status: "running",
+                attempt: 1,
+            });
+
+            expect(runId).toBeDefined();
+
+            await repo.finish(runId, {
+                status: "success",
+                durationMs: 100,
+            });
         });
-
-        const repo = new DrizzleRunsRepo(tx);
-        return { repo };
     });
 });

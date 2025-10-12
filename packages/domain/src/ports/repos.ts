@@ -5,7 +5,7 @@
 import type { ExecutionResult, JobEndpoint } from "../entities/index.js";
 
 export type JobsRepo = {
-  add: (ep: JobEndpoint) => void;
+  add: (ep: JobEndpoint) => Promise<void>;
 
   /**
    * Claims due endpoints for execution.
