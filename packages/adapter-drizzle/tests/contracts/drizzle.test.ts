@@ -1,9 +1,9 @@
+import { testJobsRepoContract, testRunsRepoContract } from "@cronicorn/domain/testing";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { afterAll, beforeEach, describe } from "vitest";
 
 import { DrizzleJobsRepo, DrizzleRunsRepo } from "../../src/index.js";
-import { testJobsRepoContract, testRunsRepoContract } from "./repos.contract.js";
 
 /**
  * Run contract tests against DrizzleJobsRepo with real PostgreSQL.
@@ -21,53 +21,53 @@ import { testJobsRepoContract, testRunsRepoContract } from "./repos.contract.js"
 const DATABASE_URL = process.env.DATABASE_URL;
 
 describe.skipIf(!DATABASE_URL)("drizzleJobsRepo (PostgreSQL)", () => {
-  const client = postgres(DATABASE_URL!);
-  const db = drizzle(client);
+    const client = postgres(DATABASE_URL!);
+    const db = drizzle(client);
 
-  afterAll(async () => {
-    await client.end();
-  });
-
-  testJobsRepoContract(() => {
-    let currentTime = new Date("2025-01-01T00:00:00Z");
-    // eslint-disable-next-line ts/no-explicit-any
-    let tx: any;
-
-    beforeEach(async () => {
-      currentTime = new Date("2025-01-01T00:00:00Z");
-      // Create a transaction for test isolation
-      // Note: This is a simplified approach for testing
-      // In production, transaction management happens at the composition root
-      tx = await db.transaction(async transaction => transaction);
+    afterAll(async () => {
+        await client.end();
     });
 
-    const now = () => currentTime;
-    const setNow = (d: Date) => {
-      currentTime = d;
-    };
-    const repo = new DrizzleJobsRepo(tx, now);
-    return { repo, now, setNow };
-  });
+    testJobsRepoContract(() => {
+        let currentTime = new Date("2025-01-01T00:00:00Z");
+        // eslint-disable-next-line ts/no-explicit-any
+        let tx: any;
+
+        beforeEach(async () => {
+            currentTime = new Date("2025-01-01T00:00:00Z");
+            // Create a transaction for test isolation
+            // Note: This is a simplified approach for testing
+            // In production, transaction management happens at the composition root
+            tx = await db.transaction(async transaction => transaction);
+        });
+
+        const now = () => currentTime;
+        const setNow = (d: Date) => {
+            currentTime = d;
+        };
+        const repo = new DrizzleJobsRepo(tx, now);
+        return { repo, now, setNow };
+    });
 });
 
 describe.skipIf(!DATABASE_URL)("drizzleRunsRepo (PostgreSQL)", () => {
-  const client = postgres(DATABASE_URL!);
-  const db = drizzle(client);
+    const client = postgres(DATABASE_URL!);
+    const db = drizzle(client);
 
-  afterAll(async () => {
-    await client.end();
-  });
-
-  testRunsRepoContract(() => {
-    // eslint-disable-next-line ts/no-explicit-any
-    let tx: any;
-
-    beforeEach(async () => {
-      // Create a transaction for test isolation
-      tx = await db.transaction(async transaction => transaction);
+    afterAll(async () => {
+        await client.end();
     });
 
-    const repo = new DrizzleRunsRepo(tx);
-    return { repo };
-  });
+    testRunsRepoContract(() => {
+        // eslint-disable-next-line ts/no-explicit-any
+        let tx: any;
+
+        beforeEach(async () => {
+            // Create a transaction for test isolation
+            tx = await db.transaction(async transaction => transaction);
+        });
+
+        const repo = new DrizzleRunsRepo(tx);
+        return { repo };
+    });
 });

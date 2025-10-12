@@ -13,7 +13,7 @@
   "scripts": {
     "watch": "tsc -w ",
     "build": "tsc ",
-    "test": "pnpm sim",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "sim": "tsx src/sim/simulate.ts",
     "clean": "rm -rf node_modules .turbo dist",
@@ -25,5 +25,8 @@
   "dependencies": {
     "@cronicorn/domain": "workspace:*",
     "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
   }
 }

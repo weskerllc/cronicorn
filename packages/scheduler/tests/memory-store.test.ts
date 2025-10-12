@@ -1,7 +1,7 @@
+import { testJobsRepoContract, testRunsRepoContract } from "@cronicorn/domain/testing";
 import { describe } from "vitest";
 
-import { InMemoryJobsRepo, InMemoryRunsRepo } from "../../../scheduler/src/adapters/memory-store.js";
-import { testJobsRepoContract, testRunsRepoContract } from "./repos.contract.js";
+import { InMemoryJobsRepo, InMemoryRunsRepo } from "../src/adapters/memory-store.js";
 
 /**
  * Run contract tests against InMemoryJobsRepo.
