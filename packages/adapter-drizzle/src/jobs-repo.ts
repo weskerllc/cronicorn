@@ -11,11 +11,12 @@ import { type JobEndpointRow, jobEndpoints } from "./schema.js";
  * Uses FOR UPDATE SKIP LOCKED for atomic claiming.
  * All operations are transaction-scoped.
  *
- * Typed for node-postgres driver.
+ * Typed for node-postgres driver. Accepts any schema for flexibility.
  */
 export class DrizzleJobsRepo implements JobsRepo {
   constructor(
-    private tx: NodePgDatabase<Record<string, never>> | NodePgTransaction<Record<string, never>, Record<string, never>>,
+    // eslint-disable-next-line ts/no-explicit-any
+    private tx: NodePgDatabase<any> | NodePgTransaction<any, any>,
     private now: () => Date = () => new Date(),
   ) { }
 
