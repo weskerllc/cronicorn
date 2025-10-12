@@ -1,5 +1,5 @@
 import type { RunsRepo } from "@cronicorn/domain";
-import type { PgDatabase, PgQueryResultHKT, PgTransaction } from "drizzle-orm/pg-core";
+import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
 import { eq } from "drizzle-orm";
 
@@ -9,13 +9,13 @@ import { runs } from "./schema.js";
  * PostgreSQL implementation of RunsRepo using Drizzle ORM.
  * Tracks execution history with status and timing.
  *
- * Generic over QueryResultHKT to support both postgres-js and node-postgres clients.
+ * Typed for node-postgres driver.
  */
-export class DrizzleRunsRepo<T extends PgQueryResultHKT = PgQueryResultHKT> implements RunsRepo {
+export class DrizzleRunsRepo implements RunsRepo {
     private seq = 0;
 
     constructor(
-        private tx: PgDatabase<T, Record<string, never>> | PgTransaction<T, Record<string, never>>,
+        private tx: NodePgDatabase<Record<string, never>> | NodePgTransaction<Record<string, never>, Record<string, never>>,
     ) { }
 
     async create(run: {
