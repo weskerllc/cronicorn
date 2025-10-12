@@ -42,6 +42,43 @@ importers:
         specifier: ~3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.7.0)(msw@2.11.5(@types/node@24.7.0)(typescript@5.7.3))(tsx@4.20.6)(yaml@2.8.1)
 
+  apps/scheduler:
+    dependencies:
+      '@cronicorn/adapter-cron':
+        specifier: workspace:*
+        version: link:../../packages/adapter-cron
+      '@cronicorn/adapter-drizzle':
+        specifier: workspace:*
+        version: link:../../packages/adapter-drizzle
+      '@cronicorn/adapter-http':
+        specifier: workspace:*
+        version: link:../../packages/adapter-http
+      '@cronicorn/adapter-system-clock':
+        specifier: workspace:*
+        version: link:../../packages/adapter-system-clock
+      '@cronicorn/scheduler':
+        specifier: workspace:*
+        version: link:../../packages/scheduler
+      drizzle-orm:
+        specifier: ^0.38.3
+        version: 0.38.3(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(pg@8.16.3)(postgres@3.4.7)
+      pg:
+        specifier: ^8.13.1
+        version: 8.16.3
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/pg':
+        specifier: ^8.15.5
+        version: 8.15.5
+      tsx:
+        specifier: ^4.19.2
+        version: 4.20.6
+      typescript:
+        specifier: ~5.7.2
+        version: 5.7.3
+
   apps/test-ai:
     dependencies:
       '@ai-sdk/openai':
@@ -3607,6 +3644,9 @@ packages:
     resolution: {integrity: sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==}
     peerDependencies:
       zod: ^3.24.1
+
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
   zod@4.1.12:
     resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
@@ -7294,6 +7334,8 @@ snapshots:
   zod-to-json-schema@3.24.6(zod@4.1.12):
     dependencies:
       zod: 4.1.12
+
+  zod@3.25.76: {}
 
   zod@4.1.12: {}
 

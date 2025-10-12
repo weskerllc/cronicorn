@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FakeCron } from "../src/fake-cron.js";
+import { FakeCron } from "../fake-cron.js";
 
 describe("fakeCron", () => {
   describe("default behavior", () => {

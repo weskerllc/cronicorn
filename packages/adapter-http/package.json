@@ -9,7 +9,7 @@
     }
   },
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
