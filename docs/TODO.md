@@ -27,24 +27,99 @@
 - ✅ All tests pass, typecheck passes, no lint warnings
 - **Result**: Production-ready cron adapter with deterministic test stub
 
-#### 1.2 HTTP Dispatcher (`@cronicorn/adapter-http`)
-**Status**: Needed for worker to execute real job endpoints
+#### 1.2 HTTP Dispatcher (`@cronicorn/adapter-http`) ✅ **COMPLETE**
+**Status**: ✅ Implemented and tested
 
-- Create new package: `packages/adapter-http/`
-- Implement `Dispatcher.execute()` using `fetch` or `axios`
-- Support HTTP methods (GET, POST), headers, timeouts
-- Return `{ status: "success" | "failure", durationMs, errorMessage? }`
-- Add retry logic for transient failures (optional, can defer)
-- Unit tests with mock HTTP server
-- **Acceptance**: Can make HTTP requests and return standardized results
+**Analysis Summary** (18 sequential thoughts):
+- Use native `fetch` (Node 18+, no external HTTP client)
+- NO retry logic (scheduler handles retries via failureCount)
+- NO response body storage (only need status code for success/failure)
+- Timeout via `AbortController` (default 30s, clamped to min 1000ms)
+- Duration tracking with `performance.now()` (precise milliseconds)
+- Auto-add `Content-Type: application/json` when bodyJson present (user can override)
+
+**Implementation Plan:**
+1. Create package: `packages/adapter-http/`
+   ```
+   src/
+     index.ts                      # Export HttpDispatcher + FakeHttpDispatcher
+     http-dispatcher.ts            # Production implementation
+     fake-http-dispatcher.ts       # Test stub with configurable plan function
+     __tests__/
+       http-dispatcher.test.ts     # Unit tests with msw
+   ```
+
+2. **Core Implementation (http-dispatcher.ts):**
+   - Validate `ep.url` (early return if missing: `{ status: 'failed', durationMs: 0, errorMessage: 'No URL configured' }`)
+   - Clamp `timeoutMs` to minimum 1000ms (default 30000ms if not set)
+   - Build `Headers` from `ep.headersJson ?? {}`
+   - Auto-add `content-type: application/json` if `bodyJson` present AND not already set
+   - Exclude body for GET/HEAD requests (standard HTTP practice)
+   - Setup `AbortController` for timeout handling
+   - Measure duration with `performance.now()` (start to response headers)
+   - Success: HTTP 2xx → `{ status: 'success', durationMs }`
+   - Failure: HTTP 4xx/5xx → `{ status: 'failed', durationMs, errorMessage: 'HTTP 404' }`
+   - Network errors → `{ status: 'failed', durationMs, errorMessage: error.message }`
+   - Timeout → `{ status: 'failed', durationMs, errorMessage: 'Request timed out after 30000ms' }`
+
+3. **Test Coverage (11 tests with msw):**
+   - ✓ Success case (HTTP 200)
+   - ✓ HTTP errors (404, 500)
+   - ✓ Network errors (connection refused)
+   - ✓ Timeout errors (AbortError detection)
+   - ✓ Missing URL validation
+   - ✓ Default method to GET
+   - ✓ Body excluded for GET/HEAD
+   - ✓ Content-Type auto-added with bodyJson
+   - ✓ Content-Type NOT overridden if user sets it
+   - ✓ Duration measured correctly
+   - ✓ Timeout clamped to minimum 1000ms
+
+**Dependencies:**
+- `@cronicorn/domain` (Dispatcher port, JobEndpoint, ExecutionResult)
+- `msw` (devDependency for HTTP mocking)
+
+**Key Decisions:**
+- **No retry logic**: Scheduler handles retries via `failureCount` (avoid double-retry complexity)
+- **No response body**: Only status code matters for scheduling decisions (saves memory, storage)
+- **AbortController**: Proper timeout handling with request cancellation (clean resource cleanup)
+- **Boring solution**: Proven patterns, no clever abstractions
+
+**Implementation Results:**
+- ✅ Created package: `packages/adapter-http/`
+- ✅ Implemented `HttpDispatcher` class with native fetch API
+- ✅ Implemented `FakeHttpDispatcher` test stub
+- ✅ All 14 tests pass (3 additional tests for edge cases)
+- ✅ Typecheck passes
+- ✅ Duration tracking with `performance.now()` (precise milliseconds)
+- ✅ Timeout with `AbortController` (default 30s, clamped to min 1000ms)
+- ✅ Auto-adds `Content-Type: application/json` when bodyJson present
+- ✅ Body excluded for GET/HEAD requests
+- ✅ Comprehensive error handling (network, timeout, HTTP errors)
+
+**Test Coverage:**
+- Success cases: 200, 201, default GET method
+- HTTP errors: 404, 500
+- Network errors: Connection failures
+- Timeout: Exceeds timeout, clamp to 1000ms minimum
+- Validation: Missing URL
+- Headers: Auto-add Content-Type, user override
+- Body: Exclude for GET, include for POST
+- Duration: Precise measurement
+
+**Result**: Production-ready HTTP dispatcher with test stub for scheduler integration
+
+**ADR**: See `.adr/0008-http-dispatcher-implementation.md` for detailed design decisions
 
 #### 1.3 System Clock Adapter (`@cronicorn/adapter-system-clock`)
-**Status**: Trivial but needed for production (FakeClock only for tests)
+**Status**: ⏳ NEXT - Simple 5-minute implementation after HTTP dispatcher
 
+- Create `packages/adapter-system-clock/src/system-clock.ts`
 - Implement `Clock.now()` → `new Date()`
-- Implement `Clock.sleep()` → `setTimeout` promise wrapper
-- Can be inline in a "core-adapters" package if preferred
+- Implement `Clock.sleep(ms)` → `new Promise(resolve => setTimeout(resolve, ms))`
+- Export from `index.ts` alongside `FakeClock` from domain (or keep separate)
 - **Acceptance**: Provides real system time for production use
+- **Estimate**: 5 minutes (trivial wrapper, no tests needed - it's just stdlib)
 
 ---
 

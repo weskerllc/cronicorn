@@ -186,4 +186,92 @@
 - ✅ Better compile-time safety (no more `unknown` type assertions)
 - ✅ Ready for HTTP dispatcher implementation
 
-**Next Steps**: Implement HTTP dispatcher adapter (Phase 1.2).
+**Next Steps**: ✅ COMPLETE - HTTP dispatcher adapter implemented (Phase 1.2).
+
+---
+
+## HTTP Dispatcher Implementation (2025-10-12)
+
+**Status**: ✅ Complete
+
+**What We Built**:
+- 📦 New package: `@cronicorn/adapter-http`
+- ✅ **HttpDispatcher**: Production implementation using Node.js native `fetch` API (18+)
+- ✅ **FakeHttpDispatcher**: Configurable test stub for scheduler tests
+- ✅ **14 unit tests**: Comprehensive coverage using msw (Mock Service Worker)
+- ✅ Clean architecture: Implements `Dispatcher` port from domain
+
+**Design Decisions (Sequential Thinking - 18 thoughts)**:
+
+1. **Native fetch over external HTTP client**: 
+   - Node 18+ built-in, no external dependencies (axios, node-fetch)
+   - Standard, well-tested, sufficient for our needs
+
+2. **NO retry logic**: 
+   - Scheduler handles retries via `failureCount` and backoff policies
+   - Avoids double-retry complexity and unclear responsibility boundaries
+   - Keeps dispatcher simple and focused (single responsibility)
+
+3. **NO response body storage**:
+   - Only HTTP status code needed for success/failure determination
+   - Saves memory and database storage (responses can be megabytes)
+   - Not relevant for scheduling decisions (AI only needs duration + success/failure)
+   - If user needs logging, implement in endpoint (log before responding)
+
+4. **AbortController for timeout**:
+   - Proper request cancellation (cleaner than `Promise.race`)
+   - Releases resources immediately on timeout
+   - Standard pattern for fetch cancellation
+
+5. **Duration with performance.now()**:
+   - More precise than `Date.now()` (sub-millisecond resolution)
+   - Measures from request start to response headers (not body, since we don't read it)
+   - Always returned, even on errors (important for debugging slow failures)
+
+6. **Timeout clamped to 1000ms minimum**:
+   - Prevents unrealistic timeouts (0ms, negative)
+   - Default 30s (reasonable for most APIs)
+   - User can configure per-endpoint via `timeoutMs` field
+
+7. **Auto-add Content-Type header**:
+   - When `bodyJson` present AND user didn't set it
+   - Helpful default, avoids boilerplate
+   - User can override by setting `content-type` in `headersJson`
+
+8. **Body excluded for GET/HEAD**:
+   - Standard HTTP practice (GET/HEAD should not have bodies)
+   - Even if user mistakenly sets `bodyJson`, we don't send it
+
+9. **Error categorization**:
+   - HTTP 2xx → `{ status: 'success', durationMs }`
+   - HTTP 4xx/5xx → `{ status: 'failed', errorMessage: 'HTTP 404' }`
+   - Network errors → `{ status: 'failed', errorMessage: 'Connection refused' }`
+   - Timeout → `{ status: 'failed', errorMessage: 'Request timed out after 30000ms' }`
+   - No URL → `{ status: 'failed', durationMs: 0, errorMessage: 'No URL configured' }`
+
+**Test Coverage (14 tests with msw)**:
+- ✅ Success cases: HTTP 200, 201, default GET method
+- ✅ HTTP errors: 404, 500 with status text
+- ✅ Network errors: Connection failures
+- ✅ Timeout: Exceeds timeout, clamp to 1000ms minimum
+- ✅ Validation: Missing URL (early return)
+- ✅ Headers: Auto-add Content-Type, respect user override
+- ✅ Body handling: Exclude for GET, include for POST with JSON serialization
+- ✅ Duration: Precise measurement with tolerance for test timing
+
+**Implementation Notes**:
+- MSW responses can be extremely fast (0ms duration) - tests use `toBeGreaterThanOrEqual(0)` for flexibility
+- Timeout clamping applies BEFORE fetch call (test expectations updated to reflect 1000ms clamp)
+- All tests pass, typecheck passes, domain tests still pass (no regressions)
+
+**No Tech Debt**: 
+- Straightforward implementation following "boring solution" principle
+- No shortcuts, no over-engineering
+- Ready for production use in worker composition root
+
+**Next Steps**: 
+- ✅ Phase 1.2 complete
+- ⏭️ Phase 1.3: System Clock adapter (trivial, 5 minutes)
+- ⏭️ Phase 2: Worker composition root (wire everything together)
+
+**ADR**: See `.adr/0008-http-dispatcher-implementation.md` for comprehensive design decisions and rationale.

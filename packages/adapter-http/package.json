@@ -1,0 +1,26 @@
+{
+  "name": "@cronicorn/adapter-http",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cronicorn/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "msw": "^2.6.8",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
