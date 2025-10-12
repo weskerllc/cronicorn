@@ -1,4 +1,16 @@
 /**
+ * Represents any valid JSON value.
+ * Used for HTTP request bodies that will be serialized to JSON.
+ */
+export type JsonValue =
+  | null
+  | boolean
+  | number
+  | string
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+/**
  * Core job endpoint entity.
  * Pure domain type with no adapter-specific fields.
  */
@@ -33,7 +45,8 @@ export type JobEndpoint = {
 
   // Execution config (dispatcher may use these)
   url?: string;
-  method?: "GET" | "POST" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   headersJson?: Record<string, string>;
-  bodyJson?: unknown;
+  bodyJson?: JsonValue;
+  timeoutMs?: number;
 };

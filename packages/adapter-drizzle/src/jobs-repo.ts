@@ -239,9 +239,10 @@ export class DrizzleJobsRepo implements JobsRepo {
       nextRunAt: row.nextRunAt,
       failureCount: row.failureCount,
       url: row.url ?? undefined,
-      method: row.method ? (row.method === "GET" || row.method === "POST" || row.method === "PUT" || row.method === "DELETE" ? row.method : undefined) : undefined,
+      method: row.method ? (row.method === "GET" || row.method === "POST" || row.method === "PUT" || row.method === "PATCH" || row.method === "DELETE" ? row.method : undefined) : undefined,
       headersJson: row.headersJson ?? undefined,
       bodyJson: row.bodyJson,
+      timeoutMs: row.timeoutMs ?? undefined,
     };
   }
 }
