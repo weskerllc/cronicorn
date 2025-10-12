@@ -1,6 +1,5 @@
 import type { JobEndpoint, JobsRepo } from "@cronicorn/domain";
-import type { PgTransaction } from "drizzle-orm/pg-core";
-import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
+import type { PgDatabase, PgQueryResultHKT, PgTransaction } from "drizzle-orm/pg-core";
 
 import { and, eq, isNull, lte, or, sql } from "drizzle-orm";
 
@@ -11,22 +10,24 @@ import { type JobEndpointRow, jobEndpoints } from "./schema.js";
  *
  * Uses FOR UPDATE SKIP LOCKED for atomic claiming.
  * All operations are transaction-scoped.
+ *
+ * Generic over QueryResultHKT to support both postgres-js and node-postgres clients.
  */
-export class DrizzleJobsRepo implements JobsRepo {
+export class DrizzleJobsRepo<T extends PgQueryResultHKT = PgQueryResultHKT> implements JobsRepo {
   constructor(
-    private tx: PgTransaction<PostgresJsQueryResultHKT, Record<string, never>>,
+    private tx: PgDatabase<T, Record<string, never>> | PgTransaction<T, Record<string, never>>,
     private now: () => Date = () => new Date(),
   ) { }
 
-  add(ep: JobEndpoint): void {
+  async add(ep: JobEndpoint): Promise<void> {
     // Convert domain entity to DB row (add adapter fields)
     const row: typeof jobEndpoints.$inferInsert = {
       ...ep,
       _lockedUntil: undefined,
     };
 
-    // Fire-and-forget insert (synchronous interface per port)
-    void this.tx.insert(jobEndpoints).values(row);
+    // Execute insert immediately
+    await this.tx.insert(jobEndpoints).values(row);
   }
 
   async claimDueEndpoints(limit: number, withinMs: number): Promise<string[]> {
