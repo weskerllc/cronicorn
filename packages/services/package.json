@@ -3,21 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./jobs": "./src/jobs/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./jobs": {
+      "types": "./dist/jobs/index.d.ts",
+      "default": "./dist/jobs/index.js"
+    }
   },
-  "scripts": {
-    "build": "tsc -b",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
+  "files": ["dist"],
   "dependencies": {
     "@cronicorn/adapter-cron": "workspace:*",
     "@cronicorn/adapter-drizzle": "workspace:*",
     "@cronicorn/adapter-system-clock": "workspace:*",
     "@cronicorn/domain": "workspace:*",
     "nanoid": "^5.0.9"
-  },
-  "devDependencies": {}
+  }
 }

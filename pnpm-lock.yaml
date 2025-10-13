@@ -64,13 +64,16 @@ importers:
         version: link:../../packages/services
       '@hono/node-server':
         specifier: ^1.13.7
-        version: 1.19.5(hono@4.9.12)
+        version: 1.19.5(hono@4.8.5)
       '@hono/swagger-ui':
         specifier: ^0.4.1
-        version: 0.4.1(hono@4.9.12)
+        version: 0.4.1(hono@4.8.5)
       '@hono/zod-openapi':
-        specifier: ^0.18.4
-        version: 0.18.4(hono@4.9.12)(zod@3.25.76)
+        specifier: 0.18.3
+        version: 0.18.3(hono@4.8.5)(zod@3.25.76)
+      '@scalar/hono-api-reference':
+        specifier: 0.5.164
+        version: 0.5.164(hono@4.8.5)
       better-auth:
         specifier: ^1.3.27
         version: 1.3.27
@@ -78,16 +81,19 @@ importers:
         specifier: ^0.38.3
         version: 0.38.3(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(better-sqlite3@12.4.1)(kysely@0.28.8)(pg@8.16.3)(postgres@3.4.7)(prisma@5.22.0)
       hono:
-        specifier: ^4.6.14
-        version: 4.9.12
+        specifier: 4.8.5
+        version: 4.8.5
       nanoid:
         specifier: ^5.0.9
         version: 5.1.6
       pg:
         specifier: ^8.13.1
         version: 8.16.3
+      stoker:
+        specifier: 1.4.2
+        version: 1.4.2(@asteasolutions/zod-to-openapi@7.3.4(zod@3.25.76))(@hono/zod-openapi@0.18.3(hono@4.8.5)(zod@3.25.76))(hono@4.8.5)(openapi3-ts@4.5.0)
       zod:
-        specifier: ^3.24.1
+        specifier: 3.25.76
         version: 3.25.76
     devDependencies:
       '@better-auth/cli':
@@ -1123,8 +1129,8 @@ packages:
     peerDependencies:
       hono: '*'
 
-  '@hono/zod-openapi@0.18.4':
-    resolution: {integrity: sha512-6NHMHU96Hh32B1yDhb94Z4Z5/POsmEu2AXpWLWcBq9arskRnOMt2752yEoXoADV8WUAc7H1IkNaQHGj1ytXbYw==}
+  '@hono/zod-openapi@0.18.3':
+    resolution: {integrity: sha512-bNlRDODnp7P9Fs13ZPajEOt13G0XwXKfKRHMEFCphQsFiD1Y+twzHaglpNAhNcflzR1DQwHY92ZS06b4LTPbIQ==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       hono: '>=4.3.6'
@@ -1466,6 +1472,20 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@scalar/hono-api-reference@0.5.164':
+    resolution: {integrity: sha512-6m8IscA2+5nqnN8sR5Iib2lboXIawJrScZ0cwVUvQ/uUCrFCyuZGRWXpecuCxelXifDlQxfi0iCfmxgvTiswNg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      hono: ^4.0.0
+
+  '@scalar/openapi-types@0.1.5':
+    resolution: {integrity: sha512-6geH9ehvQ/sG/xUyy3e0lyOw3BaY5s6nn22wHjEJhcobdmWyFER0O6m7AU0ZN4QTjle/gYvFJOjj552l/rsNSw==}
+    engines: {node: '>=18'}
+
+  '@scalar/types@0.0.24':
+    resolution: {integrity: sha512-ahMb4WYFx9OP32r7j8KhyMzg5zU78gnKxhDNapuC8WMzlSyyOsX5LQLx8sUQJfw3ZvUHp+F2zv5GJSHD+hdIiA==}
+    engines: {node: '>=18'}
+
   '@simplewebauthn/browser@13.2.2':
     resolution: {integrity: sha512-FNW1oLQpTJyqG5kkDg5ZsotvWgmBaC6jCHR7Ej0qUNep36Wl9tj2eZu7J5rP+uhXgHaLk+QQ3lqcw2vS5MX1IA==}
 
@@ -1588,6 +1608,9 @@ packages:
   '@typescript-eslint/visitor-keys@8.46.0':
     resolution: {integrity: sha512-FrvMpAK+hTbFy7vH5j1+tMYHMSKLE6RzluFJlkFNKD0p9YsUT75JlBSmr5so3QRzvMwU5/bIEdeNrxm8du8l3Q==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@unhead/schema@1.11.20':
+    resolution: {integrity: sha512-0zWykKAaJdm+/Y7yi/Yds20PrUK7XabLe9c3IRcjnwYmSWY6z0Cr19VIs3ozCj8P+GhR+/TI2mwtGlueCEYouA==}
 
   '@unrs/resolver-binding-android-arm-eabi@1.11.1':
     resolution: {integrity: sha512-ppLRUgHVaGRWUx0R0Ut06Mjo9gBaBkg3v/8AxusGLhsIotbBLuRk51rAzqLC8gq6NyyAojEXglNjzf6R948DNw==}
@@ -2785,9 +2808,12 @@ packages:
   headers-polyfill@4.0.3:
     resolution: {integrity: sha512-IScLbePpkvO846sIwOtOTDjutRMWdXdJmXdMvk6gCBHxFO8d+QKOQedyZSxFTTFYRSmlgSTDtXqqq4pcenBXLQ==}
 
-  hono@4.9.12:
-    resolution: {integrity: sha512-SrTC0YxqPwnN7yKa8gg/giLyQ2pILCKoideIHbYbFQlWZjYt68D2A4Ae1hehO/aDQ6RmTcpqOV/O2yBtMzx/VQ==}
+  hono@4.8.5:
+    resolution: {integrity: sha512-Up2cQbtNz1s111qpnnECdTGqSIUIhZJMLikdKkshebQSEBcoUKq6XJayLGqSZWidiH0zfHRCJqFu062Mz5UuRA==}
     engines: {node: '>=16.9.0'}
+
+  hookable@5.5.3:
+    resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
 
   hosted-git-info@2.8.9:
     resolution: {integrity: sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==}
@@ -3746,6 +3772,17 @@ packages:
   std-env@3.9.0:
     resolution: {integrity: sha512-UGvjygr6F6tpH7o2qyqR6QYpwraIjKSdtzyBdyytFOHmPZY917kwdwLG0RbOjWOnKmnm3PeHjaoLLMie7kPLQw==}
 
+  stoker@1.4.2:
+    resolution: {integrity: sha512-zna86ZzC3fnMOIkuO+1vRMfcRw7SpC/7yafRb0u8DwDVig2pPh6POVnGB7t2A5t/rMvyr7hE7tjXTPvW8bhJKg==}
+    peerDependencies:
+      '@asteasolutions/zod-to-openapi': ^7.0.0
+      '@hono/zod-openapi': '>=0.16.0'
+      hono: ^4.0.0
+      openapi3-ts: ^4.4.0
+    peerDependenciesMeta:
+      '@hono/zod-openapi':
+        optional: true
+
   strict-event-emitter@0.5.1:
     resolution: {integrity: sha512-vMgjE/GGEPEFnhFub6pa4FmJBRBVOLpIII2hvCZ8Kzb7K0hlHo7mQv6xYrBvCL2LtAIBwFUK8wvuJgTVSQ5MFQ==}
 
@@ -4130,6 +4167,9 @@ packages:
   yoctocolors@2.1.2:
     resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
     engines: {node: '>=18'}
+
+  zhead@2.2.4:
+    resolution: {integrity: sha512-8F0OI5dpWIA5IGG5NHUg9staDwz/ZPxZtvGVf01j7vHqSyZ0raHY+78atOVxRqb73AotX22uV1pXt3gYSstGag==}
 
   zod-to-json-schema@3.24.6:
     resolution: {integrity: sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==}
@@ -5061,24 +5101,24 @@ snapshots:
 
   '@hexagon/base64@1.1.28': {}
 
-  '@hono/node-server@1.19.5(hono@4.9.12)':
+  '@hono/node-server@1.19.5(hono@4.8.5)':
     dependencies:
-      hono: 4.9.12
+      hono: 4.8.5
 
-  '@hono/swagger-ui@0.4.1(hono@4.9.12)':
+  '@hono/swagger-ui@0.4.1(hono@4.8.5)':
     dependencies:
-      hono: 4.9.12
+      hono: 4.8.5
 
-  '@hono/zod-openapi@0.18.4(hono@4.9.12)(zod@3.25.76)':
+  '@hono/zod-openapi@0.18.3(hono@4.8.5)(zod@3.25.76)':
     dependencies:
       '@asteasolutions/zod-to-openapi': 7.3.4(zod@3.25.76)
-      '@hono/zod-validator': 0.4.3(hono@4.9.12)(zod@3.25.76)
-      hono: 4.9.12
+      '@hono/zod-validator': 0.4.3(hono@4.8.5)(zod@3.25.76)
+      hono: 4.8.5
       zod: 3.25.76
 
-  '@hono/zod-validator@0.4.3(hono@4.9.12)(zod@3.25.76)':
+  '@hono/zod-validator@0.4.3(hono@4.8.5)(zod@3.25.76)':
     dependencies:
-      hono: 4.9.12
+      hono: 4.8.5
       zod: 3.25.76
 
   '@humanfs/core@0.19.1': {}
@@ -5425,6 +5465,18 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.52.4':
     optional: true
 
+  '@scalar/hono-api-reference@0.5.164(hono@4.8.5)':
+    dependencies:
+      '@scalar/types': 0.0.24
+      hono: 4.8.5
+
+  '@scalar/openapi-types@0.1.5': {}
+
+  '@scalar/types@0.0.24':
+    dependencies:
+      '@scalar/openapi-types': 0.1.5
+      '@unhead/schema': 1.11.20
+
   '@simplewebauthn/browser@13.2.2': {}
 
   '@simplewebauthn/server@13.2.2':
@@ -5596,6 +5648,11 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 8.46.0
       eslint-visitor-keys: 4.2.1
+
+  '@unhead/schema@1.11.20':
+    dependencies:
+      hookable: 5.5.3
+      zhead: 2.2.4
 
   '@unrs/resolver-binding-android-arm-eabi@1.11.1':
     optional: true
@@ -6744,7 +6801,9 @@ snapshots:
 
   headers-polyfill@4.0.3: {}
 
-  hono@4.9.12: {}
+  hono@4.8.5: {}
+
+  hookable@5.5.3: {}
 
   hosted-git-info@2.8.9: {}
 
@@ -7827,6 +7886,14 @@ snapshots:
 
   std-env@3.9.0: {}
 
+  stoker@1.4.2(@asteasolutions/zod-to-openapi@7.3.4(zod@3.25.76))(@hono/zod-openapi@0.18.3(hono@4.8.5)(zod@3.25.76))(hono@4.8.5)(openapi3-ts@4.5.0):
+    dependencies:
+      '@asteasolutions/zod-to-openapi': 7.3.4(zod@3.25.76)
+      hono: 4.8.5
+      openapi3-ts: 4.5.0
+    optionalDependencies:
+      '@hono/zod-openapi': 0.18.3(hono@4.8.5)(zod@3.25.76)
+
   strict-event-emitter@0.5.1: {}
 
   string-width@4.2.3:
@@ -8220,6 +8287,8 @@ snapshots:
   yoctocolors-cjs@2.1.3: {}
 
   yoctocolors@2.1.2: {}
+
+  zhead@2.2.4: {}
 
   zod-to-json-schema@3.24.6(zod@4.1.12):
     dependencies:
