@@ -10,23 +10,12 @@
       "default": "./dist/index.js"
     }
   },
+  "files": ["dist"],
   "scripts": {
-    "watch": "tsc -b -w",
-    "build": "tsc -b",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "sim": "tsx src/sim/simulate.ts",
-    "clean": "rm -rf node_modules .turbo dist",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --max-warnings 0 --fix"
+    "sim": "tsx src/sim/simulate.ts"
   },
   "dependencies": {
     "@cronicorn/domain": "workspace:*",
     "zod": "^4.1.12"
-  },
-  "devDependencies": {
-    "vitest": "^2.1.8"
   }
 }

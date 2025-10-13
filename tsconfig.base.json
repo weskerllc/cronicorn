@@ -4,29 +4,29 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    
+
     // Useful extras
     "resolveJsonModule": true,
-    
+
     // Node types available for Pool, process.env, etc.
     "types": ["node"],
-    
+
     // Strict, modern TS
     "strict": true,
-    
+
     // Declarations for libs (required for composite packages)
     "declaration": true,
     "declarationMap": true,
-    
+
     // ESM compatibility
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": false,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
-    
+
     // Performance
     "skipLibCheck": true,
-    
+
     // Incremental builds
     "incremental": true
   }

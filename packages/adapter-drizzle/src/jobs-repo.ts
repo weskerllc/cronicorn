@@ -1,7 +1,7 @@
 import type { JobEndpoint, JobsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, eq, isNull, lte, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lte, or } from "drizzle-orm";
 
 import { type JobEndpointRow, jobEndpoints } from "./schema.js";
 
@@ -68,9 +68,7 @@ export class DrizzleJobsRepo implements JobsRepo {
       await this.tx
         .update(jobEndpoints)
         .set({ _lockedUntil: horizon })
-        .where(
-          sql`${jobEndpoints.id} = ANY(${ids})`,
-        );
+        .where(inArray(jobEndpoints.id, ids));
     }
 
     return ids;
