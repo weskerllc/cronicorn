@@ -10,8 +10,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsc -b",
+    "dev": "tsc -b -w",
     "test": "vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --max-warnings 0 --fix",

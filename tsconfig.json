@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/domain" },
+    { "path": "./packages/scheduler" },
+    { "path": "./packages/adapter-ai" },
+    { "path": "./packages/adapter-cron" },
+    { "path": "./packages/adapter-drizzle" },
+    { "path": "./packages/adapter-http" },
+    { "path": "./packages/adapter-system-clock" },
+    { "path": "./apps/scheduler" },
+    { "path": "./apps/test-ai" }
+  ]
+}
