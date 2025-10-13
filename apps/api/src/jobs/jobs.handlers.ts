@@ -34,7 +34,7 @@ function mapJobToResponse(job: JobEndpoint): JobResponse {
         headersJson: job.headersJson,
         bodyJson: job.bodyJson,
         timeoutMs: job.timeoutMs,
-        createdAt: new Date().toISOString(), // TODO: Add createdAt/updatedAt to schema
+        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
 }
