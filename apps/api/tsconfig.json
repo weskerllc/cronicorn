@@ -1,35 +1,38 @@
 {
-    "extends": "../../tsconfig.base.json",
-    "compilerOptions": {
-        "outDir": "./dist",
-        "rootDir": "./src",
-        "composite": true,
-        "module": "ESNext",
-        "moduleResolution": "bundler",
-        "target": "ES2022",
-        "lib": [
-            "ES2022"
-        ],
-        "types": [
-            "node"
-        ]
-    },
-    "include": [
-        "src/**/*"
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
     ],
-    "exclude": [
-        "node_modules",
-        "dist"
-    ],
-    "references": [
-        {
-            "path": "../../packages/domain"
-        },
-        {
-            "path": "../../packages/adapter-drizzle"
-        },
-        {
-            "path": "../../packages/adapter-system-clock"
-        }
+    "types": [
+      "node"
     ]
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "references": [
+    {
+      "path": "../../packages/domain"
+    },
+    {
+      "path": "../../packages/services"
+    },
+    {
+      "path": "../../packages/adapter-drizzle"
+    },
+    {
+      "path": "../../packages/adapter-system-clock"
+    }
+  ]
 }
