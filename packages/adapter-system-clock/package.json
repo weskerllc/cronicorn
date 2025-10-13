@@ -14,9 +14,5 @@
   },
   "dependencies": {
     "@cronicorn/domain": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/node": "^20.11.5",
-    "typescript": "^5.7.2"
   }
 }

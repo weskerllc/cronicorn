@@ -21,17 +21,11 @@
   },
   "dependencies": {
     "@cronicorn/domain": "workspace:*",
-    "dotenv": "^16.4.5",
     "drizzle-orm": "0.38.3",
     "pg": "^8.16.3"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
     "@types/pg": "^8.15.5",
-    "drizzle-kit": "^0.30.1",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "vite": "^7.1.9",
-    "vitest": "^2.1.8"
+    "drizzle-kit": "^0.30.1"
   }
 }
