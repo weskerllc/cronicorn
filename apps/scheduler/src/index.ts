@@ -6,7 +6,7 @@
  */
 
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
-import { DrizzleJobsRepo, DrizzleRunsRepo, jobEndpoints, runs } from "@cronicorn/adapter-drizzle";
+import { DrizzleJobsRepo, DrizzleRunsRepo, schema } from "@cronicorn/adapter-drizzle";
 import { HttpDispatcher } from "@cronicorn/adapter-http";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { Scheduler } from "@cronicorn/scheduler";
@@ -49,7 +49,7 @@ async function main() {
 
   // Setup database connection
   const pool = new Pool({ connectionString: config.DATABASE_URL });
-  const db = drizzle(pool, { schema: { jobEndpoints, runs } });
+  const db = drizzle(pool, { schema });
 
   // Instantiate all adapters
   const clock = new SystemClock();
