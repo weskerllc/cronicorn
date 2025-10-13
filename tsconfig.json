@@ -11,6 +11,7 @@
     { "path": "./packages/adapter-system-clock" },
     { "path": "./apps/scheduler" },
     { "path": "./apps/api" },
-    { "path": "./apps/test-ai" }
+    { "path": "./apps/test-ai" },
+    { "path": "./apps/web" }
   ]
 }
