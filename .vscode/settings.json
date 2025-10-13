@@ -1,13 +1,11 @@
 {
   // Disable the default formatter, use eslint instead
   "prettier.enable": false,
-  "editor.formatOnSave": false,
-  "eslint.format.enable": false,
+  "editor.formatOnSave": true,
+  "eslint.format.enable": true,
   // Auto fix
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit",
-    "source.removeUnusedImports": "always",
-    "source.organizeImports": "always"
+    "source.fixAll.eslint": "explicit"
   },
   "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "eslint.useFlatConfig": true,
@@ -16,56 +14,56 @@
       "mode": "auto"
     }
   ],
-  // Silent the stylistic rules in you IDE, but still auto fix them
+  // Show stylistic rules as info/warnings so you can see them, but still auto-fix on save
   "eslint.rules.customizations": [
     {
       "rule": "style/*",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     },
     {
       "rule": "format/*",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     },
     {
       "rule": "*-indent",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     },
     {
       "rule": "*-spacing",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     },
     {
       "rule": "*-spaces",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     },
     {
       "rule": "*-order",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     },
     {
       "rule": "*-dangle",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     },
     {
       "rule": "*-newline",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     },
     {
       "rule": "*quotes",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     },
     {
       "rule": "*semi",
-      "severity": "off",
+      "severity": "info",
       "fixable": true
     }
   ],
