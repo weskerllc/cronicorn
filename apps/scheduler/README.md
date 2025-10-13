@@ -41,7 +41,7 @@ docker compose up -d
 
 # Apply migrations
 cd packages/adapter-drizzle
-pnpm db:migrate:apply
+pnpm migrate
 ```
 
 ### Run in Development Mode
@@ -101,7 +101,7 @@ This procedure validates the worker end-to-end.
 
 ```bash
 cd packages/adapter-drizzle
-pnpm db:migrate:apply
+pnpm migrate
 ```
 
 ### Step 2: Insert a Test Job
@@ -211,7 +211,7 @@ DELETE FROM job_endpoints WHERE id = 'ep-test-001';
 **Error:** `Worker failed to start`
 
 - Check `DATABASE_URL` is valid and database is accessible
-- Verify migrations are applied: `cd packages/adapter-drizzle && pnpm db:migrate:apply`
+- Verify migrations are applied: `cd packages/adapter-drizzle && pnpm migrate`
 - Check PostgreSQL is running: `docker compose ps` or `pg_isready`
 
 ### Jobs Not Executing

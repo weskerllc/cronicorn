@@ -2,7 +2,7 @@ import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { test as base } from "vitest";
 
-import * as schema from "../src/schema.js";
+import * as schema from "../schema.js";
 
 export type Tx = NodePgDatabase<typeof schema>;
 

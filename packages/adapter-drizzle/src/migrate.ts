@@ -6,7 +6,7 @@
  * Usage:
  *   DATABASE_URL=<url> node --import tsx src/migrate.ts
  *   or
- *   DATABASE_URL=<url> pnpm db:migrate:apply
+ *   DATABASE_URL=<url> pnpm migrate
  */
 
 import "dotenv/config";

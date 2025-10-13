@@ -15,8 +15,8 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --max-warnings 0 --fix",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate:apply": "tsx src/migrate.ts",
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx src/migrate.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 import { afterAll, describe } from "vitest";
 
-import { DrizzleJobsRepo, DrizzleRunsRepo } from "../../src/index.js";
+import { DrizzleJobsRepo, DrizzleRunsRepo } from "../../index.js";
 import { closeTestPool, expect, test } from "../fixtures.js";
 
 /**
