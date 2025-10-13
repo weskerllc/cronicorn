@@ -16,6 +16,7 @@ import type { CreateJobRequest } from "../schemas.js";
 import { createJobsRouter } from "../routes.js";
 
 // Mock Drizzle transaction that simulates the insert API
+// eslint-disable-next-line ts/consistent-type-assertions
 const mockTx = {
     insert: () => ({
         values: () => ({
@@ -32,6 +33,7 @@ const mockTx = {
 } as never;
 
 // Mock database for testing (validates transaction structure without persistence)
+// eslint-disable-next-line ts/consistent-type-assertions
 const mockDb = {
     transaction: async <T>(fn: (tx: never) => Promise<T>) => {
         // Execute transaction callback with mock Drizzle transaction
@@ -40,6 +42,7 @@ const mockDb = {
 } as never;
 
 // Mock auth for testing (always returns valid user session)
+// eslint-disable-next-line ts/consistent-type-assertions
 const mockAuth = {
     api: {
         getSession: async () => ({
@@ -64,7 +67,6 @@ describe("pOST /jobs routing and validation", () => {
 
         // Act
         const res = await client.jobs.$post({
-            // @ts-expect-error - Testing invalid request
             json: invalidRequest,
         });
 

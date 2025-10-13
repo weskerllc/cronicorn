@@ -12,17 +12,17 @@ import type { JsonValue } from "@cronicorn/domain";
  * - Custom SQL (future)
  */
 export type TransactionProvider = {
-    /**
-     * Execute operations within a database transaction.
-     *
-     * The transaction will:
-     * - Commit if the callback completes successfully
-     * - Rollback if the callback throws an error
-     *
-     * @param fn - Callback that receives transaction context
-     * @returns Result from the callback
-     */
-    transaction: <T>(fn: (tx: TransactionContext) => Promise<T>) => Promise<T>;
+  /**
+   * Execute operations within a database transaction.
+   *
+   * The transaction will:
+   * - Commit if the callback completes successfully
+   * - Rollback if the callback throws an error
+   *
+   * @param fn - Callback that receives transaction context
+   * @returns Result from the callback
+   */
+  transaction: <T>(fn: (tx: TransactionContext) => Promise<T>) => Promise<T>;
 };
 
 /**
@@ -42,14 +42,14 @@ export type TransactionContext = unknown;
  * - CLI layer maps command args → CreateJobInput
  */
 export type CreateJobInput = {
-    name: string;
-    baselineCron?: string;
-    baselineIntervalMs?: number;
-    minIntervalMs?: number;
-    maxIntervalMs?: number;
-    url: string;
-    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-    headersJson?: Record<string, string>;
-    bodyJson?: JsonValue;
-    timeoutMs?: number;
+  name: string;
+  baselineCron?: string;
+  baselineIntervalMs?: number;
+  minIntervalMs?: number;
+  maxIntervalMs?: number;
+  url: string;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  headersJson?: Record<string, string>;
+  bodyJson?: JsonValue;
+  timeoutMs?: number;
 };

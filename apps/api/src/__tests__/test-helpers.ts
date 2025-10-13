@@ -23,18 +23,18 @@ import { openapiConfig } from "../lib/openapi.js";
  * by checking that the auth middleware properly rejects unauthenticated requests.
  */
 export async function createTestApp() {
-    const app = new OpenAPIHono();
+  const app = new OpenAPIHono();
 
-    app.onError(errorHandler);
+  app.onError(errorHandler);
 
-    // Health check endpoint (no auth required)
-    app.get("/health", (c: Context) => {
-        return c.json({ status: "ok", timestamp: new Date().toISOString() });
-    });
+  // Health check endpoint (no auth required)
+  app.get("/health", (c: Context) => {
+    return c.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
 
-    // OpenAPI documentation
-    app.doc("/api/openapi.json", openapiConfig);
-    app.get("/api/docs", swaggerUI({ url: "/api/openapi.json" }));
+  // OpenAPI documentation
+  app.doc("/api/openapi.json", openapiConfig);
+  app.get("/api/docs", swaggerUI({ url: "/api/openapi.json" }));
 
-    return app;
+  return app;
 }
