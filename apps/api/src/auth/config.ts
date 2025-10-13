@@ -1,9 +1,9 @@
-import type { Pool } from "pg";
-
 import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { apiKey } from "better-auth/plugins";
 
 import type { Env } from "../lib/config";
+import type { Database } from "../lib/db";
 
 /**
  * Creates Better Auth instance with dual authentication:
@@ -13,12 +13,11 @@ import type { Env } from "../lib/config";
  * Better Auth manages both OAuth sessions and API key storage/validation.
  * Our middleware handles checking both authentication methods.
  */
-export function createAuth(config: Env, pool: Pool) {
+export function createAuth(config: Env, db: Database) {
   return betterAuth({
-    database: {
-      provider: "postgres",
-      pool,
-    },
+    database: drizzleAdapter(db, {
+      provider: "pg",
+    }),
     secret: config.BETTER_AUTH_SECRET,
     baseURL: config.BETTER_AUTH_URL,
     socialProviders: {

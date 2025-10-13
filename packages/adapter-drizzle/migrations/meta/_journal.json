@@ -15,6 +15,13 @@
       "when": 1760363466163,
       "tag": "0001_clammy_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1760384176488,
+      "tag": "0002_flippant_malcolm_colcord",
+      "breakpoints": true
     }
   ]
 }

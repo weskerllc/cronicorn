@@ -1,16 +1,5 @@
 import { z } from "@hono/zod-openapi";
 
-/**
- * Zod schemas for Job API endpoints.
- * Uses @hono/zod-openapi for automatic OpenAPI doc generation.
- */
-
-// ----- Request Schemas -----
-
-/**
- * Schema for creating a new job.
- * Maps to domain JobEndpoint creation requirements.
- */
 export const CreateJobRequestSchema = z
   .object({
     name: z
@@ -114,8 +103,7 @@ export const CreateJobRequestSchema = z
       message: "Either baselineCron or baselineIntervalMs must be provided",
       path: ["baselineCron"],
     },
-  )
-  .openapi("CreateJobRequest");
+  );
 
 export type CreateJobRequest = z.infer<typeof CreateJobRequestSchema>;
 
@@ -217,14 +205,6 @@ export const JobResponseSchema = z
       description: "Last update timestamp (ISO 8601)",
       example: "2024-10-13T08:00:00Z",
     }),
-  })
-  .openapi("JobResponse");
+  });
 
 export type JobResponse = z.infer<typeof JobResponseSchema>;
-
-/**
- * Schema for successful job creation response.
- */
-export const CreateJobResponseSchema = JobResponseSchema.openapi("CreateJobResponse");
-
-export type CreateJobResponse = z.infer<typeof CreateJobResponseSchema>;

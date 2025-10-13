@@ -13,6 +13,7 @@
     "🚀 ---------- MONOREPO ----------": "",
     "build": "tsc -b",
     "start": "dotenv -e .env -- pnpm run -r --parallel start",
+    "dev": "dotenv -e .env -- pnpm run -r --parallel dev",
     "watch": "dotenv -e .env -- tsc -b -w",
     "🚀 ---------- QUALITY ----------": "",
     "test": "dotenv -e .env.test vitest run",

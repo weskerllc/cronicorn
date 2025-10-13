@@ -1,3 +1,5 @@
+import type { TransactionProvider } from "@cronicorn/services";
+
 import { schema } from "@cronicorn/adapter-drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -16,3 +18,13 @@ export function createDatabase(config: Env) {
 }
 
 export type Database = ReturnType<typeof createDatabase>;
+
+/**
+ * Adapt Database to TransactionProvider interface.
+ * This allows the manager to work with our Drizzle database.
+ */
+export function createTransactionProvider(db: Database): TransactionProvider {
+  return {
+    transaction: async <T>(fn: (tx: unknown) => Promise<T>) => db.transaction(fn),
+  };
+}
