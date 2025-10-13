@@ -2,11 +2,11 @@ import type { JobEndpoint } from "@cronicorn/domain";
 
 import * as HTTPStatusCodes from "stoker/http-status-codes";
 
-import type { AppRouteHandler } from "../types.js";
+import type { AppRouteHandler } from "../../types.js";
 import type { CreateRoute } from "./jobs.routes.js";
 import type { JobResponse } from "./jobs.schemas.js";
 
-import { getAuthContext } from "../auth/middleware.js";
+import { getAuthContext } from "../../auth/middleware.js";
 
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
     const input = c.req.valid("json");

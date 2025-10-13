@@ -1,5 +1,5 @@
-import { requireAuth } from "../auth/middleware.js";
-import { createRouter } from "../types.js";
+import { requireAuth } from "../../auth/middleware.js";
+import { createRouter } from "../../types.js";
 import * as handlers from "./jobs.handlers.js";
 import * as routes from "./jobs.routes.js";
 
