@@ -14,31 +14,31 @@ import type { Env } from "../lib/config";
  * Our middleware handles checking both authentication methods.
  */
 export function createAuth(config: Env, pool: Pool) {
-    return betterAuth({
-        database: {
-            provider: "postgres",
-            pool,
+  return betterAuth({
+    database: {
+      provider: "postgres",
+      pool,
+    },
+    secret: config.BETTER_AUTH_SECRET,
+    baseURL: config.BETTER_AUTH_URL,
+    socialProviders: {
+      github: {
+        clientId: config.GITHUB_CLIENT_ID,
+        clientSecret: config.GITHUB_CLIENT_SECRET,
+      },
+    },
+    plugins: [
+      apiKey({
+        // API key configuration
+        apiKeyHeaders: "x-api-key",
+        rateLimit: {
+          enabled: true,
+          timeWindow: 60 * 1000, // 1 minute
+          maxRequests: 100,
         },
-        secret: config.BETTER_AUTH_SECRET,
-        baseURL: config.BETTER_AUTH_URL,
-        socialProviders: {
-            github: {
-                clientId: config.GITHUB_CLIENT_ID,
-                clientSecret: config.GITHUB_CLIENT_SECRET,
-            },
-        },
-        plugins: [
-            apiKey({
-                // API key configuration
-                apiKeyHeaders: "x-api-key",
-                rateLimit: {
-                    enabled: true,
-                    timeWindow: 60 * 1000, // 1 minute
-                    maxRequests: 100,
-                },
-            }),
-        ],
-    });
+      }),
+    ],
+  });
 }
 
 export type Auth = ReturnType<typeof createAuth>;

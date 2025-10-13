@@ -17,83 +17,83 @@ import { openapiConfig } from "./lib/openapi.js";
  */
 
 async function main() {
-    // Load and validate configuration
-    const config = loadConfig();
+  // Load and validate configuration
+  const config = loadConfig();
 
-    // Setup database connection
-    const db = createDatabase(config);
+  // Setup database connection
+  const db = createDatabase(config);
 
-    // Initialize Better Auth
-    const auth = createAuth(config, db.$client);
+  // Initialize Better Auth
+  const auth = createAuth(config, db.$client);
 
-    // Create main OpenAPI app
-    const app = new OpenAPIHono();
+  // Create main OpenAPI app
+  const app = new OpenAPIHono();
 
-    // Global error handler
-    app.onError(errorHandler);
+  // Global error handler
+  app.onError(errorHandler);
 
-    // Health check endpoint (no auth required)
-    app.get("/health", (c) => {
-        return c.json({ status: "ok", timestamp: new Date().toISOString() });
-    });
+  // Health check endpoint (no auth required)
+  app.get("/health", (c) => {
+    return c.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
 
-    // Mount Better Auth routes
-    // Better Auth provides: /api/auth/sign-in/social/github, /api/auth/callback/github, etc.
-    app.on(["GET", "POST"], "/api/auth/**", (c) => {
-        return auth.handler(c.req.raw);
-    });
+  // Mount Better Auth routes
+  // Better Auth provides: /api/auth/sign-in/social/github, /api/auth/callback/github, etc.
+  app.on(["GET", "POST"], "/api/auth/**", (c) => {
+    return auth.handler(c.req.raw);
+  });
 
-    // Mount job routes (protected by auth middleware)
-    const jobsRouter = createJobsRouter(db, auth);
-    app.route("/api/v1", jobsRouter);
+  // Mount job routes (protected by auth middleware)
+  const jobsRouter = createJobsRouter(db, auth);
+  app.route("/api/v1", jobsRouter);
 
-    // OpenAPI documentation
-    app.doc("/api/openapi.json", openapiConfig);
+  // OpenAPI documentation
+  app.doc("/api/openapi.json", openapiConfig);
 
-    // Swagger UI
-    app.get("/api/docs", swaggerUI({ url: "/api/openapi.json" }));
+  // Swagger UI
+  app.get("/api/docs", swaggerUI({ url: "/api/openapi.json" }));
 
-    // Start server
-    const port = config.PORT;
+  // Start server
+  const port = config.PORT;
 
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: "info",
-        message: "API server starting",
-        port,
-        env: config.NODE_ENV,
-    }));
+  // eslint-disable-next-line no-console
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: "info",
+    message: "API server starting",
+    port,
+    env: config.NODE_ENV,
+  }));
 
-    serve({
-        fetch: app.fetch,
-        port,
-    });
+  serve({
+    fetch: app.fetch,
+    port,
+  });
 
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: "info",
-        message: "API server started",
-        port,
-        urls: {
-            health: `http://localhost:${port}/health`,
-            docs: `http://localhost:${port}/api/docs`,
-            openapi: `http://localhost:${port}/api/openapi.json`,
-            auth: `http://localhost:${port}/api/auth`,
-            jobs: `http://localhost:${port}/api/v1/jobs`,
-        },
-    }));
+  // eslint-disable-next-line no-console
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: "info",
+    message: "API server started",
+    port,
+    urls: {
+      health: `http://localhost:${port}/health`,
+      docs: `http://localhost:${port}/api/docs`,
+      openapi: `http://localhost:${port}/api/openapi.json`,
+      auth: `http://localhost:${port}/api/auth`,
+      jobs: `http://localhost:${port}/api/v1/jobs`,
+    },
+  }));
 }
 
 // Top-level error handler for startup failures
 main().catch((err) => {
-    console.error(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: "fatal",
-        message: "API server failed to start",
-        error: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
-    }));
-    process.exit(1);
+  console.error(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: "fatal",
+    message: "API server failed to start",
+    error: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  }));
+  process.exit(1);
 });
