@@ -35,27 +35,12 @@ export function requireAuth(auth: Auth) {
             });
 
             if (apiKeyResult?.valid && apiKeyResult.key) {
-                // API key is valid, now we need to get the user
-                // The key object contains userId
                 const userId = apiKeyResult.key.userId;
 
-                // Fetch user details (Better Auth should provide a way to get user by ID)
-                // For now, we'll create a minimal session object
-                const session = {
-                    user: {
-                        id: userId,
-                        email: "", // We'll need to fetch this separately
-                        name: "", // We'll need to fetch this separately
-                    },
-                    session: {
-                        id: apiKeyResult.key.id, // API key ID acts as session ID
-                        userId,
-                        expiresAt: apiKeyResult.key.expiresAt ? new Date(apiKeyResult.key.expiresAt) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-                    },
-                };
-
-                c.set("session", session);
+                // For API key auth, we only need userId - no need to query full user details
+                // The key has already been validated by Better Auth
                 c.set("userId", userId);
+                c.set("session", null); // API key auth doesn't have a traditional session
                 return next();
             }
         }
@@ -74,7 +59,7 @@ export function getAuthContext(c: Context): AuthContext {
     const session = c.get("session");
     const userId = c.get("userId");
 
-    if (!session || !userId) {
+    if (!userId) {
         throw new HTTPException(500, {
             message: "Auth context not found - middleware may not have run",
         });

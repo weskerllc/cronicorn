@@ -14,7 +14,7 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "migrate": "tsx src/migrate.ts",
-    "db:studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@cronicorn/domain": "workspace:*",

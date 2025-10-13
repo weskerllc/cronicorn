@@ -404,6 +404,59 @@ const createdJob = await new DrizzleJobsRepo(tx as any, () => now).add(endpoint)
 
 ---
 
+## Dual Authentication Implementation (2025-10-13)
+
+**Status**: ✅ Complete
+
+**What We Built**:
+- 🔐 **Better Auth integration**: OAuth (GitHub) + API key authentication
+- ✅ **Unified middleware**: Single `requireAuth` function handles both auth methods
+- ✅ **Optimized API key auth**: Zero extra DB queries (only stores `userId`)
+- ✅ **Route protection**: Path-specific middleware (`/jobs/*` protected, `/health` and `/reference` public)
+- ✅ **Type-safe context**: Auth instance and user data available in Hono context
+
+**Architecture**:
+```
+Request → requireAuth middleware
+  ↓
+  ├─ OAuth session? → Full user object (email, name, etc.)
+  ├─ API key header? → Minimal (userId only, no DB query)
+  └─ Neither? → 401 Unauthorized
+```
+
+**Performance Optimization**:
+- **Initial approach**: Query user table after API key validation
+- **Final approach**: Skip user query, only store `userId` from validated key
+- **Benefit**: Eliminates ~1 DB query per API key request
+
+**Key Decisions**:
+1. **drizzleAdapter**: Pass Drizzle instance, not raw Pool (critical fix)
+2. **API key optimization**: Only `userId` needed for authorization, skip user details
+3. **Session handling**: OAuth gets full session, API key gets `session = null`
+4. **Middleware pattern**: Applied at router level (`/jobs/*`), not global
+
+**Files Created**:
+- `apps/api/src/auth/config.ts` - Better Auth configuration
+- `apps/api/src/auth/middleware.ts` - Unified auth middleware
+- `apps/api/src/auth/types.ts` - Auth context types
+
+**Files Modified**:
+- `apps/api/src/app.ts` - Added auth to context, mounted auth routes
+- `apps/api/src/types.ts` - Added auth to AppBindings Variables
+- `apps/api/src/jobs/jobs.index.ts` - Applied requireAuth middleware to job routes
+
+**Validation**:
+- ✅ Public routes work: `/api/health`, `/api/reference`, `/api/doc`
+- ✅ Protected routes return 401 without auth: `/api/jobs`
+- ✅ OAuth flow functional (GitHub login)
+- ✅ API key validation functional (`x-api-key` header)
+
+**No Tech Debt**: Clean implementation, well-documented with ADR-0011.
+
+**See**: `.adr/0011-dual-auth-implementation.md` for comprehensive design decisions.
+
+---
+
 ## API Auth Middleware - Incomplete User Data (2025-10-13)
 
 **Status**: ⚠️ Incomplete
@@ -459,38 +512,6 @@ Better Auth's `verifyApiKey` endpoint returns `{ valid: boolean, key: { id, user
 - ⏭️ Choose solution based on actual use case
 
 **Related**: This doesn't block MVP - we only need `userId` for job creation. User details are for display purposes.
-
----
-
-## Better Auth Documentation Discrepancy (2025-10-13)
-
-**Status**: ⚠️ Acknowledged
-
-**Issue**: Our initial planning documentation (`docs/dual-auth-architecture.md`) references a `sessionForAPIKeys: true` option for the Better Auth apiKey plugin that doesn't exist in the current version (v1.3.10).
-
-**What We Assumed**:
-```typescript
-apiKey({
-  sessionForAPIKeys: true, // ❌ This option doesn't exist
-})
-```
-
-**Actual Reality**:
-- Better Auth provides `verifyApiKey` endpoint for validation
-- We must manually create session-like objects for API key authentication
-- Middleware handles both OAuth (automatic session) and API key (manual session) separately
-
-**Impact**:
-- ✅ Implementation works correctly (we discovered and fixed this during implementation)
-- ⚠️ Planning docs are misleading (may confuse future developers)
-- ⚠️ Pattern less clean than originally envisioned
-
-**Action Items**:
-1. ✅ Updated implementation to use correct Better Auth API
-2. ⏭️ Update `docs/dual-auth-architecture.md` to reflect actual implementation
-3. ⏭️ Consider creating ADR documenting the auth approach we actually built
-
-**Follow-up**: Schedule documentation cleanup after completing Phase 3.1 (API Foundation).
 
 ````
 
