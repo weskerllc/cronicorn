@@ -1,5 +1,83 @@
 # Tech Debt Log
 
+## API Manager Layer Extraction (2025-01-13)
+
+**Status**: ✅ Complete
+
+**What We Built**:
+- 📦 **JobsManager**: Framework-agnostic business logic layer
+- ✅ **Routes refactored**: Thin HTTP layer delegating to manager
+- ✅ **Unit tests**: 6 manager tests + 4 route tests = 10 tests passing
+- ✅ **99.02% coverage**: Manager (94.11%) + Routes (100%)
+
+**Architecture Pattern**:
+```
+Route (HTTP layer)        → Thin: auth, DTOs, status codes
+  ↓
+Manager (Business logic)  → Framework-agnostic: validation, orchestration
+  ↓  
+Repository (Data access)  → Database operations
+```
+
+**Key Benefits**:
+1. **Reusability**: Same manager used by HTTP API, MCP server, CLI, etc.
+2. **Testability**: Manager tests don't require HTTP mocking (faster, simpler)
+3. **Separation of concerns**: HTTP vs business logic clearly separated
+4. **Framework independence**: Can swap Hono for another framework without changing logic
+
+**Files Created**:
+- `apps/api/src/jobs/manager.ts` - Business logic layer
+- `apps/api/src/jobs/__tests__/manager.test.ts` - Unit tests (6 tests)
+
+**Files Modified**:
+- `apps/api/src/jobs/routes.ts` - Refactored to delegate to manager (4 tests still passing)
+
+**Implementation Details**:
+
+**Manager responsibilities:**
+- Accept plain TypeScript inputs (`CreateJobInput` type)
+- Construct domain entities (`JobEndpoint`)
+- Calculate `nextRunAt` (cron or interval-based)
+- Manage database transactions
+- Call repositories (`DrizzleJobsRepo`)
+
+**Route responsibilities:**
+- Extract user ID from auth context
+- Parse and validate request body (Zod schemas)
+- Delegate to manager
+- Map domain entities to API responses
+- Return HTTP status codes
+
+**Test Coverage:**
+- ✅ Cron-based job creation with nextRunAt calculation
+- ✅ Interval-based job creation
+- ✅ Optional fields (headers, body, timeout, min/max intervals)
+- ✅ Weekly cron expressions (e.g., Monday at 9 AM)
+- ✅ Deterministic time with FakeClock
+- ✅ Unique ID generation
+
+**Use Cases Enabled:**
+```typescript
+// HTTP API (Hono)
+const manager = new JobsManager(db);
+const job = await manager.createJob(userId, input);
+return c.json(mapToResponse(job), 201);
+
+// MCP Server (future)
+const manager = new JobsManager(db);
+const job = await manager.createJob(userId, input);
+return { success: true, jobId: job.id };
+
+// CLI Tool (future)
+const manager = new JobsManager(db);
+const job = await manager.createJob(userId, input);
+console.log(`Created job ${job.id}`);
+```
+
+**No Tech Debt**: Clean separation, well-tested, follows established patterns.
+
+---
+
 ## Architecture Clean-up (2025-10-10)
 
 ### ✅ Fixed: Domain Type Extensions Removed
@@ -589,3 +667,118 @@ While trivial, having a separate adapter:
 **Next Steps**: 
 - ✅ Phase 1 complete (all adapters implemented)
 - ⏭️ Phase 2: Worker composition root (wire Cron, HTTP, SystemClock, Drizzle repos)
+
+---
+
+## Services Package Extraction (2025-01-15)
+
+**Status**: ✅ Complete
+
+**What We Built**:
+- 📦 **New package**: `@cronicorn/services` - Framework-agnostic business logic layer
+- ✅ **TransactionProvider abstraction**: Decouples services from concrete database type
+- ✅ **JobsManager migration**: Moved from `apps/api` to reusable services package
+- ✅ **All tests passing**: 89 tests (6 manager + 4 route tests for jobs)
+- ✅ **ADR documented**: `.adr/0009-extract-services-layer.md`
+
+**Architecture Pattern**:
+```
+API (Hono HTTP interface)       → Import from @cronicorn/services
+  ↓
+Services (Business logic)        → Framework-agnostic managers
+  ↓
+Adapters (Infrastructure)        → Database, cron, clock, etc.
+```
+
+**Key Benefits**:
+1. **Reusability**: Same business logic used by HTTP API, MCP server, CLI, etc.
+2. **Framework independence**: Services don't depend on Hono, Better Auth, or HTTP
+3. **Testability**: Manager tests run without spinning up HTTP server
+4. **Separation of concerns**: API = transport layer, Services = domain orchestration
+
+**TransactionProvider Abstraction**:
+
+```typescript
+// services/src/types.ts
+export type TransactionProvider = {
+  transaction: <T>(fn: (tx: TransactionContext) => Promise<T>) => Promise<T>;
+};
+
+// API adapter (apps/api/src/jobs/routes.ts)
+function createTransactionProvider(db: Database): TransactionProvider {
+  return {
+    transaction: async <T>(fn: (tx: unknown) => Promise<T>) => db.transaction(fn),
+  };
+}
+```
+
+**Why Abstract TransactionProvider?**
+- Manager was tied to `Database` type from `apps/api/src/lib/db.ts`
+- Couldn't move to services package without circular dependency
+- TransactionProvider = minimal interface services actually need
+- Allows different implementations (Drizzle, Prisma, custom SQL)
+
+**Files Moved**:
+- ✅ `apps/api/src/jobs/manager.ts` → `packages/services/src/jobs/manager.ts`
+- ✅ `apps/api/src/jobs/__tests__/manager.test.ts` → `packages/services/src/__tests__/jobs/manager.test.ts`
+
+**Files Updated**:
+- ✅ `apps/api/src/jobs/routes.ts` - Import from `@cronicorn/services/jobs`, adapt Database to TransactionProvider
+- ✅ `apps/api/package.json` - Add `@cronicorn/services` dependency
+- ✅ `apps/api/tsconfig.json` - Add services package reference
+- ✅ `tsconfig.json` - Add services to root project references
+
+**Package Structure**:
+```
+packages/services/
+  package.json          # Exports . and ./jobs subpaths
+  tsconfig.json         # References domain + adapter packages
+  src/
+    types.ts            # TransactionProvider, CreateJobInput
+    index.ts            # Main exports
+    jobs/
+      manager.ts        # JobsManager class
+      index.ts          # Jobs module exports
+    __tests__/
+      jobs/
+        manager.test.ts # 6 unit tests
+```
+
+**Implementation Steps**:
+1. ✅ Created package structure (package.json, tsconfig.json)
+2. ✅ Defined TransactionProvider abstraction in types.ts
+3. ✅ Moved manager.ts with updated imports (Database → TransactionProvider)
+4. ✅ Moved manager.test.ts with updated imports (TransactionProvider in mock)
+5. ✅ Updated API routes to import from services and adapt Database
+6. ✅ Verified all 89 tests passing (no regressions)
+
+**Future Use Cases Enabled**:
+
+```typescript
+// HTTP API (Hono) - apps/api
+import { JobsManager } from "@cronicorn/services/jobs";
+const txProvider = createTransactionProvider(db);
+const manager = new JobsManager(txProvider);
+const job = await manager.createJob(userId, input);
+
+// MCP Server (future) - apps/mcp-server
+import { JobsManager } from "@cronicorn/services/jobs";
+const txProvider = createTransactionProvider(db);
+const manager = new JobsManager(txProvider);
+// Handle tool calls from Claude Desktop
+
+// CLI Tool (future)
+import { JobsManager } from "@cronicorn/services/jobs";
+const txProvider = createTransactionProvider(db);
+const manager = new JobsManager(txProvider);
+// Handle command-line job creation
+```
+
+**No Tech Debt**:
+- Clean separation of concerns
+- Well-documented with ADR
+- All tests passing
+- Follows established patterns
+- Ready for MCP server implementation
+
+**Reference**: See `.adr/0009-extract-services-layer.md` for comprehensive design rationale.

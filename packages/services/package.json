@@ -1,0 +1,23 @@
+{
+  "name": "@cronicorn/services",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./jobs": "./src/jobs/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@cronicorn/adapter-cron": "workspace:*",
+    "@cronicorn/adapter-drizzle": "workspace:*",
+    "@cronicorn/adapter-system-clock": "workspace:*",
+    "@cronicorn/domain": "workspace:*",
+    "nanoid": "^5.0.9"
+  },
+  "devDependencies": {}
+}

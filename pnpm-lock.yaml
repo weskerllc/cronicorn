@@ -59,6 +59,9 @@ importers:
       '@cronicorn/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@cronicorn/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@hono/node-server':
         specifier: ^1.13.7
         version: 1.19.5(hono@4.9.12)
@@ -215,6 +218,24 @@ importers:
       zod:
         specifier: ^4.1.12
         version: 4.1.12
+
+  packages/services:
+    dependencies:
+      '@cronicorn/adapter-cron':
+        specifier: workspace:*
+        version: link:../adapter-cron
+      '@cronicorn/adapter-drizzle':
+        specifier: workspace:*
+        version: link:../adapter-drizzle
+      '@cronicorn/adapter-system-clock':
+        specifier: workspace:*
+        version: link:../adapter-system-clock
+      '@cronicorn/domain':
+        specifier: workspace:*
+        version: link:../domain
+      nanoid:
+        specifier: ^5.0.9
+        version: 5.1.6
 
 packages:
 
