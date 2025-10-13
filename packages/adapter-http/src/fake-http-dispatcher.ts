@@ -19,14 +19,14 @@ import type { Dispatcher, ExecutionResult, JobEndpoint } from "@cronicorn/domain
  * ```
  */
 export class FakeHttpDispatcher implements Dispatcher {
-    constructor(
-        private plan: (ep: JobEndpoint) => ExecutionResult = () => ({
-            status: "success",
-            durationMs: 100,
-        }),
-    ) { }
+  constructor(
+    private plan: (ep: JobEndpoint) => ExecutionResult = () => ({
+      status: "success",
+      durationMs: 100,
+    }),
+  ) { }
 
-    async execute(ep: JobEndpoint): Promise<ExecutionResult> {
-        return this.plan(ep);
-    }
+  async execute(ep: JobEndpoint): Promise<ExecutionResult> {
+    return this.plan(ep);
+  }
 }

@@ -2,9 +2,9 @@ name: 🔍 Quality Checks
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   quality-checks:
@@ -27,12 +27,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-      
+          node-version: "24"
+
       - name: Setup PNPM
         uses: pnpm/action-setup@v3
         with:
@@ -57,12 +57,12 @@ jobs:
 
       - name: Build
         run: pnpm build
-        
+
       - name: Lint
         run: pnpm lint
-      
+
       - name: Run database migrations
         run: pnpm migrate
-      
+
       - name: Run Tests with coverage
         run: pnpm test
