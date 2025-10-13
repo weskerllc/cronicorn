@@ -2,44 +2,32 @@
   "compilerOptions": {
     // ESM in Node — matches runtime behavior
     "target": "ES2022",
-    // Paths/aliases for the monorepo (adjust as you add packages)
-    "baseUrl": ".",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "paths": {
-      "@cronicorn/config-eslint/*": [
-        "packages/config-eslint/src/*"
-      ],
-      "@cronicorn/test-ai/*": [
-        "apps/adapter-ai/src/*"
-      ],
-      "@cronicorn/adapter-ai/*": [
-        "packages/adapter-ai/src/*"
-      ],
-      "@cronicorn/domain/*": [
-        "packages/domain/src/*"
-      ],
-      "@cronicorn/scheduler/*": [
-        "packages/scheduler/src/*"
-      ]
-    },
+    
     // Useful extras
     "resolveJsonModule": true,
+    
     // Node types available for Pool, process.env, etc.
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
+    
     // Strict, modern TS
     "strict": true,
-    // Declarations for libs you might publish (packages override outDir)
+    
+    // Declarations for libs (required for composite packages)
     "declaration": true,
     "declarationMap": true,
+    
+    // ESM compatibility
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": false, // keep ESM semantics tidy
+    "esModuleInterop": false,
     "forceConsistentCasingInFileNames": true,
-    // Keep `import`/`export` as written (no downleveling),
-    // and make TS respect your explicit .js extensions.
     "verbatimModuleSyntax": true,
-    "skipLibCheck": true
+    
+    // Performance
+    "skipLibCheck": true,
+    
+    // Incremental builds
+    "incremental": true
   }
 }

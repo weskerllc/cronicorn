@@ -6,7 +6,13 @@
     "composite": false
   },
   "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules"],
   "references": [
-    { "path": "../../packages/scheduler" }
+    { "path": "../../packages/domain" },
+    { "path": "../../packages/scheduler" },
+    { "path": "../../packages/adapter-cron" },
+    { "path": "../../packages/adapter-drizzle" },
+    { "path": "../../packages/adapter-http" },
+    { "path": "../../packages/adapter-system-clock" }
   ]
 }

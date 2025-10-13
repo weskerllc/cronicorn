@@ -11,8 +11,8 @@
     }
   },
   "scripts": {
-    "watch": "tsc -w ",
-    "build": "tsc ",
+    "watch": "tsc -b -w",
+    "build": "tsc -b",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "sim": "tsx src/sim/simulate.ts",
