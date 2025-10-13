@@ -26,7 +26,7 @@ export async function createApp(db: Database, config: Env) {
     app.use(
         "/auth/**",
         cors({
-            origin: "http://localhost:5173", // Vite dev server
+            origin: config.WEB_URL,
             credentials: true, // Allow cookies
             allowHeaders: ["Content-Type", "Authorization"],
             allowMethods: ["POST", "GET", "OPTIONS"],

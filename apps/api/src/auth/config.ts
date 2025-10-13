@@ -20,11 +20,12 @@ export function createAuth(config: Env, db: Database) {
     }),
     secret: config.BETTER_AUTH_SECRET,
     baseURL: config.BETTER_AUTH_URL,
-    trustedOrigins: ["http://localhost:5173"], // Allow frontend dev server
+    trustedOrigins: [config.WEB_URL],
     socialProviders: {
       github: {
         clientId: config.GITHUB_CLIENT_ID,
         clientSecret: config.GITHUB_CLIENT_SECRET,
+        redirectURI: `${config.BETTER_AUTH_URL}/api/auth/callback/github`,
       },
     },
     plugins: [

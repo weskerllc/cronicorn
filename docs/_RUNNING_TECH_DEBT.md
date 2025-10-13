@@ -414,6 +414,8 @@ const createdJob = await new DrizzleJobsRepo(tx as any, () => now).add(endpoint)
 - ✅ **Optimized API key auth**: Zero extra DB queries (only stores `userId`)
 - ✅ **Route protection**: Path-specific middleware (`/jobs/*` protected, `/health` and `/reference` public)
 - ✅ **Type-safe context**: Auth instance and user data available in Hono context
+- ✅ **Cross-origin configuration**: Environment-based CORS, trustedOrigins, redirects
+- ✅ **Production ready**: Configurable URLs via environment variables
 
 **Architecture**:
 ```
@@ -423,6 +425,13 @@ Request → requireAuth middleware
   ├─ API key header? → Minimal (userId only, no DB query)
   └─ Neither? → 401 Unauthorized
 ```
+
+**Cross-Origin Setup**:
+- **API**: `WEB_URL` environment variable for CORS origin and trustedOrigins
+- **Web**: `VITE_API_URL` environment variable for API baseURL
+- **OAuth**: `callbackURL` parameter redirects to web UI after login
+- **Cookies**: `credentials: "include"` for cross-domain authentication
+- **Security**: Explicit redirectURI in GitHub OAuth config
 
 **Performance Optimization**:
 - **Initial approach**: Query user table after API key validation
@@ -434,26 +443,48 @@ Request → requireAuth middleware
 2. **API key optimization**: Only `userId` needed for authorization, skip user details
 3. **Session handling**: OAuth gets full session, API key gets `session = null`
 4. **Middleware pattern**: Applied at router level (`/jobs/*`), not global
+5. **Environment variables**: All URLs configurable for easy production deployment
 
 **Files Created**:
 - `apps/api/src/auth/config.ts` - Better Auth configuration
 - `apps/api/src/auth/middleware.ts` - Unified auth middleware
 - `apps/api/src/auth/types.ts` - Auth context types
+- `apps/api/.env.production.example` - Production environment template
+- `apps/web/.env.example` - Development environment template
+- `apps/web/.env.local` - Local development configuration
+- `apps/web/.env.production.example` - Production environment template
+- `docs/cross-origin-auth-setup.md` - Complete setup and troubleshooting guide
 
 **Files Modified**:
-- `apps/api/src/app.ts` - Added auth to context, mounted auth routes
+- `apps/api/src/app.ts` - Added auth to context, mounted auth routes, configured CORS
 - `apps/api/src/types.ts` - Added auth to AppBindings Variables
 - `apps/api/src/jobs/jobs.index.ts` - Applied requireAuth middleware to job routes
+- `apps/api/src/lib/config.ts` - Added WEB_URL environment variable
+- `apps/api/src/auth/config.ts` - Use WEB_URL for trustedOrigins, explicit redirectURI
+- `apps/api/.env.example` - Added WEB_URL and API_URL configuration
+- `apps/web/src/lib/auth-client.ts` - Configurable API URL from environment
+- `apps/web/src/routes/login.tsx` - Added callbackURL to OAuth flows
+- `apps/web/src/routes/index.tsx` - Added logout button with proper redirect
 
 **Validation**:
 - ✅ Public routes work: `/api/health`, `/api/reference`, `/api/doc`
 - ✅ Protected routes return 401 without auth: `/api/jobs`
-- ✅ OAuth flow functional (GitHub login)
+- ✅ OAuth flow redirects back to web UI (not API port)
 - ✅ API key validation functional (`x-api-key` header)
+- ✅ Logout button works with proper redirect
+- ✅ All URLs configurable via environment variables
 
-**No Tech Debt**: Clean implementation, well-documented with ADR-0011.
+**Production Deployment**:
+- Set `BETTER_AUTH_URL=https://api.yourdomain.com` in API
+- Set `WEB_URL=https://yourdomain.com` in API
+- Set `VITE_API_URL=https://api.yourdomain.com` in Web
+- Register GitHub OAuth callback: `https://api.yourdomain.com/api/auth/callback/github`
 
-**See**: `.adr/0011-dual-auth-implementation.md` for comprehensive design decisions.
+**No Tech Debt**: Clean implementation, environment-configurable, well-documented.
+
+**See**: 
+- `.adr/0011-dual-auth-implementation.md` for comprehensive design decisions
+- `docs/cross-origin-auth-setup.md` for deployment guide and troubleshooting
 
 ---
 

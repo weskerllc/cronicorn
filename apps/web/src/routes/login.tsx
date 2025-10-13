@@ -31,7 +31,10 @@ function RouteComponent() {
     e.preventDefault();
 
     await signIn.social(
-      { provider: "google" },
+      { 
+        provider: "google",
+        callbackURL: window.location.origin + "/",
+      },
       {
         onSuccess: () => {
           navigate({ to: "/" });
@@ -47,7 +50,10 @@ function RouteComponent() {
     e.preventDefault();
 
     await signIn.social(
-      { provider: "github" },
+      { 
+        provider: "github",
+        callbackURL: window.location.origin + "/",
+      },
       {
         onSuccess: () => {
           navigate({ to: "/" });
