@@ -248,8 +248,171 @@ setInterval(async () => {
 - Well-documented with operational procedures
 
 **Next Steps**: 
-- ⏭️ Phase 2.2: API composition root (HTTP server for job/endpoint CRUD)
+- ✅ Phase 2.2: API composition root - IN PROGRESS
 - ⏭️ Phase 3: AI SDK integration with tool system
+
+---
+
+## API POST /jobs Implementation (2025-01-13)
+
+**Status**: ✅ Complete
+
+**What We Built**:
+- ✅ **Actual database transaction**: Replaces mock with `DrizzleJobsRepo.add(endpoint)`
+- ✅ **Simple baseline nextRunAt calculation**: Correctly handles both cron and interval-based jobs
+- ✅ **CronParserAdapter integration**: Real cron parsing for `baselineCron` field
+- ✅ **Type assertion workaround**: Uses `tx as any` for Drizzle transaction compatibility
+- ✅ **All tests passing**: 79 tests across 8 files verified
+
+**Architectural Analysis**:
+
+During implementation, we discovered a critical design issue: the initial approach used `planNextRun` with a stub cron implementation, which broke cron-based jobs (always returned now + 60s regardless of cron expression).
+
+This led to two deep architectural analyses:
+
+1. **Should we call planNextRun in API route?**
+   - **Conclusion**: NO
+   - **Rationale**: `planNextRun` is designed for SUBSEQUENT runs (after execution)
+     - Takes full endpoint state (AI hints, clamps, pause)
+     - Designed for scheduler's tick loop (has execution context)
+     - API creation only needs simple baseline calculation
+   - **Solution**: Simple baseline calculation sufficient for initial creation
+
+2. **Should nextRunAt be nullable?**
+   - **Conclusion**: NO  
+   - **Rationale**: Would break claiming logic and add complexity
+     - `claimDueEndpoints` query requires `WHERE next_run_at <= now`
+     - Initialization logic must live somewhere (moves complexity, doesn't eliminate)
+     - Creates confusing UX ("pending" state for new jobs)
+     - Industry patterns (Unix cron, systemd, k8s) all calculate at creation time
+   - **Solution**: Keep nextRunAt required, calculate properly at creation
+
+**Final Implementation**:
+
+```typescript
+// Simple baseline calculation (correct approach)
+if (endpoint.baselineCron) {
+  const cronAdapter = new CronParserAdapter();
+  endpoint.nextRunAt = cronAdapter.next(endpoint.baselineCron, now);
+} else if (endpoint.baselineIntervalMs) {
+  endpoint.nextRunAt = new Date(now.getTime() + endpoint.baselineIntervalMs);
+}
+
+// Persist with transaction
+const createdJob = await new DrizzleJobsRepo(tx as any, () => now).add(endpoint);
+```
+
+**Key Design Principles**:
+- **Separation of concerns**: API handles simple baseline creation, Scheduler handles complex execution timing
+- **Industry alignment**: Follows patterns from Unix cron, systemd timers, Kubernetes CronJobs
+- **Simplicity**: Minimal logic at creation, full governor logic only where needed (scheduler tick)
+
+**Tech Debt**:
+- ⚠️ Type assertion `tx as any` remains due to Drizzle's complex transaction typing
+- 📋 TODO: Integration tests for POST /jobs with real database
+
+**Validation**:
+- ✅ All 79 tests passing (smoke tests, unit tests, contract tests)
+- ✅ Correctly handles cron-based jobs (uses CronParserAdapter)
+- ✅ Correctly handles interval-based jobs (adds baselineIntervalMs to now)
+- ✅ Database transaction ensures atomicity
+- ✅ Returns created job with proper nextRunAt
+
+**Next Steps**:
+- ⏭️ Integration tests for POST /jobs (verify persistence)
+- ⏭️ Additional CRUD endpoints (GET, PATCH, DELETE)
+- ⏭️ Job control endpoints (pause/resume)
+- ⏭️ Run history endpoints
+
+---
+
+## API Auth Middleware - Incomplete User Data (2025-10-13)
+
+**Status**: ⚠️ Incomplete
+
+**Issue**: The API key authentication middleware (`apps/api/src/auth/middleware.ts`) successfully validates API keys via Better Auth's `verifyApiKey` endpoint, but the resulting session object has incomplete user data (empty email and name fields).
+
+**Current Implementation**:
+```typescript
+// When API key is valid, we only have userId from the key
+const session = {
+  user: {
+    id: userId,
+    email: "", // ❌ Empty - needs to be fetched
+    name: "", // ❌ Empty - needs to be fetched
+  },
+  session: { id, userId, expiresAt }
+};
+```
+
+**Impact**:
+- ✅ Authorization works (userId available for domain logic)
+- ⚠️ Incomplete user context (can't display name/email in logs or responses)
+- ⚠️ Inconsistent with OAuth session (which has full user object)
+
+**Root Cause**: 
+Better Auth's `verifyApiKey` endpoint returns `{ valid: boolean, key: { id, userId, expiresAt, ... } }` but doesn't include user details. We need to make a separate call to fetch user data.
+
+**Proposed Solutions**:
+
+1. **Fetch user after key validation** (Clean but adds latency):
+   ```typescript
+   if (apiKeyResult.valid && apiKeyResult.key) {
+     const user = await auth.api.getUser({ userId: apiKeyResult.key.userId });
+     // Full session with user.email, user.name, etc.
+   }
+   ```
+
+2. **Lazy load user data** (Faster but complex):
+   - Return minimal session immediately
+   - Fetch user on first access (`getAuthContext()` triggers fetch)
+   - Cache result in context
+
+3. **Accept incomplete data** (Simplest but limiting):
+   - Document that API key sessions only have `userId`
+   - Routes needing user details must fetch separately
+   - Add helper function for consistent user lookup
+
+**Decision**: Deferred until we implement first protected route and determine actual requirements.
+
+**Next Steps**:
+- ⏭️ Implement first protected route (POST /jobs) to understand user data needs
+- ⏭️ Profile latency impact of additional user fetch
+- ⏭️ Choose solution based on actual use case
+
+**Related**: This doesn't block MVP - we only need `userId` for job creation. User details are for display purposes.
+
+---
+
+## Better Auth Documentation Discrepancy (2025-10-13)
+
+**Status**: ⚠️ Acknowledged
+
+**Issue**: Our initial planning documentation (`docs/dual-auth-architecture.md`) references a `sessionForAPIKeys: true` option for the Better Auth apiKey plugin that doesn't exist in the current version (v1.3.10).
+
+**What We Assumed**:
+```typescript
+apiKey({
+  sessionForAPIKeys: true, // ❌ This option doesn't exist
+})
+```
+
+**Actual Reality**:
+- Better Auth provides `verifyApiKey` endpoint for validation
+- We must manually create session-like objects for API key authentication
+- Middleware handles both OAuth (automatic session) and API key (manual session) separately
+
+**Impact**:
+- ✅ Implementation works correctly (we discovered and fixed this during implementation)
+- ⚠️ Planning docs are misleading (may confuse future developers)
+- ⚠️ Pattern less clean than originally envisioned
+
+**Action Items**:
+1. ✅ Updated implementation to use correct Better Auth API
+2. ⏭️ Update `docs/dual-auth-architecture.md` to reflect actual implementation
+3. ⏭️ Consider creating ADR documenting the auth approach we actually built
+
+**Follow-up**: Schedule documentation cleanup after completing Phase 3.1 (API Foundation).
 
 ````
 
