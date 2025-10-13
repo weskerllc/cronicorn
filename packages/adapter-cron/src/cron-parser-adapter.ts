@@ -1,7 +1,9 @@
 import type { Cron } from "@cronicorn/domain";
 
 import { CronError } from "@cronicorn/domain";
-import { parseExpression } from "cron-parser";
+import cronParser from "cron-parser";
+
+const { parseExpression } = cronParser;
 
 /**
  * Production Cron adapter using cron-parser library.

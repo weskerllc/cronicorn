@@ -2,21 +2,15 @@
   "name": "@cronicorn/adapter-ai",
   "version": "0.1.0",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./types": "./dist/types/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsc -b",
-    "dev": "tsc -b -w",
-    "test": "vitest run",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --max-warnings 0 --fix",
-    "clean": "rm -rf node_modules .turbo dist"
-  },
+  "files": ["dist"],
   "dependencies": {
     "ai": "^5.0.0",
     "zod": "^4.1.12",

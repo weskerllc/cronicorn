@@ -14,12 +14,5 @@
       "default": "./dist/testing/index.js"
     }
   },
-  "scripts": {
-    "build": "tsc -b",
-    "watch": "tsc -b -w",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf node_modules .turbo dist",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --max-warnings 0 --fix"
-  }
+  "files": ["dist"]
 }

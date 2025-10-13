@@ -6,7 +6,6 @@
         [
             "@cronicorn/api",
             "@cronicorn/scheduler",
-            "@cronicorn/config-eslint",
             "@cronicorn/contracts",
             "@cronicorn/core-observability",
             "@cronicorn/core-schemas",

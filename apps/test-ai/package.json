@@ -5,11 +5,7 @@
   "private": true,
   "scripts": {
     "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --max-warnings 0 --fix",
-    "clean": "rm -rf node_modules .turbo dist"
+    "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
     "@cronicorn/scheduler": "workspace:*",
