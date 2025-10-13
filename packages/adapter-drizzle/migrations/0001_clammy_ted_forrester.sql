@@ -1,0 +1,1 @@
+ALTER TABLE "job_endpoints" ADD COLUMN "timeout_ms" integer;

@@ -77,8 +77,8 @@
 - ⏭️ Drizzle tests skip without DATABASE_URL (as designed)
 
 **Migration Strategy** (See ADR-0004):
-- ✅ `pnpm db:generate` - Generate migrations from schema changes (dev only)
-- ✅ `pnpm db:migrate:apply` - Apply migrations programmatically (all environments)
+- ✅ `pnpm generate` - Generate migrations from schema changes (dev only)
+- ✅ `pnpm migrate` - Apply migrations programmatically (all environments)
 - ✅ dotenv integration for flexible DATABASE_URL loading
 - ✅ Works in local dev, Docker Compose, and CI/CD
 
@@ -143,9 +143,115 @@
 - ✅ Error handling: Invalid expressions throw `CronError` with helpful messages
 - ✅ FakeCron behavior: Default interval, custom intervals, deterministic results
 
-**No Tech Debt**: Straightforward implementation, no shortcuts taken, follows established patterns.
+**No Tech Debt**: Straightforward implementation, follows established patterns.
 
-**Next Steps**: Ready for use in worker composition root (Phase 2).
+**Next Steps**: 
+- ✅ Phase 1 complete (all adapters implemented)
+- ✅ Phase 2.1 complete (worker composition root)
+- ⏭️ Phase 2.2: API composition root
+
+---
+
+## Worker Composition Root Implementation (2025-10-13)
+
+**Status**: ✅ Complete
+
+**What We Built**:
+- 📦 New package: `@cronicorn/scheduler-app`
+- ✅ **Main worker process**: Wires all Phase 1 adapters with domain scheduler
+- ✅ **Configuration**: Zod-validated environment variables with sensible defaults
+- ✅ **Structured logging**: JSON output for container-friendly observability
+- ✅ **Graceful shutdown**: SIGTERM/SIGINT handlers wait for current tick completion
+- ✅ **Database lifecycle**: Pool creation and cleanup in composition root
+- ✅ **Comprehensive README**: Step-by-step manual E2E acceptance test procedure
+- ✅ ~130 lines total (single index.ts file)
+
+**Architecture Decisions**:
+
+1. **Composition Root Owns Infrastructure** (Critical Design)
+   - Pool creation: `new Pool({ connectionString })` 
+   - Drizzle instance: `drizzle(pool, { schema })`
+   - Lifecycle management: `pool.end()` in shutdown handler
+   - **Why**: Adapters (repos) stay pure, just accept drizzle instance
+   - **Benefit**: Composition root controls connection pooling, read replicas, deployment concerns
+
+2. **No Initial DB Ping**
+   - First `claimDueEndpoints()` query validates connection
+   - Simpler startup, follows "don't validate what system validates"
+   - Errors bubble up naturally with proper logging
+
+3. **Error Handling Strategy**
+   - Tick failures: Logged but don't crash worker (resilient)
+   - Startup failures: Log fatal error, exit with code 1 (fail fast)
+   - Graceful shutdown: Wait for current tick, then clean exit
+
+4. **Configuration Defaults**
+   - `BATCH_SIZE=10` - Jobs per tick
+   - `POLL_INTERVAL_MS=5000` - 5 second tick frequency
+   - `LOCK_TTL_MS=60000` - 60 second lock duration
+   - All customizable via environment variables
+
+**Implementation Details**:
+
+```typescript
+// Database setup (composition root responsibility)
+const pool = new Pool({ connectionString: config.DATABASE_URL });
+const db = drizzle(pool, { schema: { jobEndpoints, runs } });
+
+// Adapter instantiation
+const clock = new SystemClock();
+const cron = new CronParserAdapter();
+const dispatcher = new HttpDispatcher();
+const jobsRepo = new DrizzleJobsRepo(db);
+const runsRepo = new DrizzleRunsRepo(db);
+
+// Scheduler wiring
+const scheduler = new Scheduler({ clock, cron, dispatcher, jobs: jobsRepo, runs: runsRepo });
+
+// Tick loop with error resilience
+setInterval(async () => {
+  try {
+    await scheduler.tick(batchSize, lockTtlMs);
+  } catch (err) {
+    logger('error', 'Tick failed', { error, stack });
+    // Continue - don't crash worker
+  }
+}, pollIntervalMs);
+```
+
+**Testing Strategy**:
+
+- ❌ **No automated E2E tests** (by design)
+  - Composition roots are pure wiring (zero logic to test)
+  - All components already tested (Domain: unit tests, Adapters: contract tests)
+  - Manual acceptance test proves wiring works
+  - Follows "boring solution" principle (don't over-engineer)
+
+- ✅ **Manual E2E Acceptance Test** (documented in README)
+  1. Ensure database migrated
+  2. Insert test job (executes in 5 seconds)
+  3. Start worker with short poll interval
+  4. Watch logs for execution
+  5. Verify runs table shows success
+  6. Test graceful shutdown (Ctrl+C)
+
+**Validation**:
+- ✅ TypeScript compilation succeeds
+- ✅ All imports resolve correctly
+- ✅ pnpm build passes
+- ✅ Comprehensive README documents deployment
+
+**No Tech Debt**: 
+- Straightforward implementation following hexagonal architecture
+- Clear separation: infrastructure setup in root, logic in domain/adapters
+- Proper error handling and graceful shutdown
+- Well-documented with operational procedures
+
+**Next Steps**: 
+- ⏭️ Phase 2.2: API composition root (HTTP server for job/endpoint CRUD)
+- ⏭️ Phase 3: AI SDK integration with tool system
+
+````
 
 ---
 

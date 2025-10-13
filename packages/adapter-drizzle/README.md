@@ -58,7 +58,7 @@ To run contract tests against the real Drizzle adapter:
    createdb cronicorn_test
 
    # Run migrations (see Migrations section below)
-   DATABASE_URL="postgresql://localhost:5432/cronicorn_test" pnpm db:migrate:apply
+   DATABASE_URL="postgresql://localhost:5432/cronicorn_test" pnpm migrate
    ```
 
 2. **Configure environment:**
@@ -116,7 +116,7 @@ Adapter-specific fields (e.g., `_locked_until`) are prefixed with underscore and
 When you modify `src/schema.ts`, generate a new migration file:
 
 ```bash
-DATABASE_URL="postgresql://localhost:5432/yourdb" pnpm db:generate
+DATABASE_URL="postgresql://localhost:5432/yourdb" pnpm generate
 ```
 
 This uses `drizzle-kit` to:
@@ -132,7 +132,7 @@ This uses `drizzle-kit` to:
 Use the programmatic migration script (recommended for CI/CD):
 
 ```bash
-DATABASE_URL="postgresql://localhost:5432/yourdb" pnpm db:migrate:apply
+DATABASE_URL="postgresql://localhost:5432/yourdb" pnpm migrate
 ```
 
 This runs `src/migrate.ts` which uses Drizzle's runtime `migrate()` function to:
@@ -144,14 +144,14 @@ This runs `src/migrate.ts` which uses Drizzle's runtime `migrate()` function to:
 
 #### For CI/CD Environments
 
-The `db:migrate:apply` script is designed for automated deployments:
+The `migrate` script is designed for automated deployments:
 
 ```yaml
 # Example GitHub Actions workflow
 - name: Run Database Migrations
   env:
     DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  run: pnpm -F @cronicorn/adapter-drizzle db:migrate:apply
+  run: pnpm -F @cronicorn/adapter-drizzle migrate
 ```
 
 **Benefits of programmatic migrations:**

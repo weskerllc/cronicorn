@@ -21,14 +21,14 @@ Key requirements:
 **Step 1: Generate Migrations (Development Only)**
 - Uses `drizzle-kit generate` to diff schema and create SQL files
 - Run when `src/schema.ts` changes
-- Command: `pnpm db:generate`
+- Command: `pnpm generate`
 - Requires `drizzle-kit` dev dependency
 - Output: SQL files in `./migrations/` folder
 
 **Step 2: Apply Migrations (All Environments)**
 - Uses programmatic `migrate()` function from `drizzle-orm/postgres-js/migrator`
 - Runs `src/migrate.ts` script via `tsx`
-- Command: `pnpm db:migrate:apply`
+- Command: `pnpm migrate`
 - Works in dev, Docker, and CI/CD
 - Only requires runtime dependencies (no drizzle-kit)
 
@@ -45,7 +45,7 @@ import "dotenv/config"; // Loads .env files if present
 - **Local dev**: Reads from `.env` file
 - **Docker Compose**: Uses env vars from compose.yml (dotenv doesn't override)
 - **CI/CD**: Uses secrets/env vars (dotenv doesn't override)
-- **Explicit override**: `DATABASE_URL=... pnpm db:migrate:apply` still works
+- **Explicit override**: `DATABASE_URL=... pnpm migrate` still works
 
 ### Migration Tracking
 
@@ -58,7 +58,7 @@ import "dotenv/config"; // Loads .env files if present
 
 **Intentional design choice:**
 - Migrations are NOT run automatically when app starts
-- Must be explicitly triggered via `pnpm db:migrate:apply`
+- Must be explicitly triggered via `pnpm migrate`
 - Prevents accidental migrations in production
 - Allows separate migration step in deployment pipelines
 
@@ -66,7 +66,7 @@ Example deployment flow:
 ```yaml
 # CI/CD Pipeline
 - name: Run Migrations
-  run: pnpm -F @cronicorn/adapter-drizzle db:migrate:apply
+  run: pnpm -F @cronicorn/adapter-drizzle migrate
   
 - name: Deploy Application
   run: docker compose up -d
@@ -85,7 +85,7 @@ Example deployment flow:
 
 ### Tradeoffs
 
-⚠️ **Manual generation**: Developer must remember to run `db:generate` after schema changes  
+⚠️ **Manual generation**: Developer must remember to run `generate` after schema changes  
 ⚠️ **Dev dependency**: `drizzle-kit` must be installed (but not in production)  
 ⚠️ **No auto-rollback**: Drizzle doesn't support "down" migrations natively  
 ⚠️ **One-way only**: Can't automatically undo migrations (need manual SQL)  
@@ -109,7 +109,7 @@ Example deployment flow:
 ### If Reversed
 
 **To switch to CLI-based migrations:**
-1. Replace `pnpm db:migrate:apply` with `drizzle-kit migrate`
+1. Replace `pnpm migrate` with `drizzle-kit migrate`
 2. Add drizzle-kit to production dependencies (larger container)
 3. Update CI/CD to use CLI command
 4. Remove `src/migrate.ts` script
@@ -146,14 +146,14 @@ vim packages/adapter-drizzle/src/schema.ts
 
 # 2. Generate migration
 cd packages/adapter-drizzle
-pnpm db:generate
+pnpm generate
 # Creates: migrations/0002_fancy_name.sql
 
 # 3. Review generated SQL
 cat migrations/0002_fancy_name.sql
 
 # 4. Apply migration
-pnpm db:migrate:apply
+pnpm migrate
 # ✅ Migrations completed successfully
 
 # 5. Verify with Drizzle Studio
@@ -176,7 +176,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          pnpm -F @cronicorn/adapter-drizzle db:migrate:apply
+          pnpm -F @cronicorn/adapter-drizzle migrate
       
       - name: Deploy Application
         run: docker compose up -d
@@ -188,7 +188,7 @@ jobs:
 services:
   migrate:
     image: node:20
-    command: pnpm -F @cronicorn/adapter-drizzle db:migrate:apply
+    command: pnpm -F @cronicorn/adapter-drizzle migrate
     environment:
       DATABASE_URL: postgresql://user:pass@db:5432/mydb
     depends_on:
