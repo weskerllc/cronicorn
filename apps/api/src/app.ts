@@ -1,12 +1,13 @@
 import { JobsManager } from "@cronicorn/services/jobs";
+import { cors } from "hono/cors";
 
 import type { Env } from "./lib/config.js";
 
 import { createAuth } from "./auth/config.js";
-import jobs from "./jobs/jobs.index.js";
 import { createTransactionProvider, type Database } from "./lib/db.js";
 import { errorHandler } from "./lib/error-handler.js";
 import configureOpenAPI from "./lib/openapi.js";
+import jobs from "./routes/jobs/jobs.index.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
 
 export async function createApp(db: Database, config: Env) {
@@ -20,6 +21,19 @@ export async function createApp(db: Database, config: Env) {
     // Create main OpenAPI app
     // eslint-disable-next-line ts/consistent-type-assertions
     const app = createRouter().basePath("/api") as AppOpenAPI;
+
+    // Configure CORS for Better Auth (must come before auth routes)
+    app.use(
+        "/auth/**",
+        cors({
+            origin: "http://localhost:5173", // Vite dev server
+            credentials: true, // Allow cookies
+            allowHeaders: ["Content-Type", "Authorization"],
+            allowMethods: ["POST", "GET", "OPTIONS"],
+            exposeHeaders: ["Content-Length"],
+            maxAge: 600,
+        }),
+    );
 
     // Global error handler
     app.onError(errorHandler);
@@ -38,7 +52,7 @@ export async function createApp(db: Database, config: Env) {
 
     // Mount Better Auth routes
     // Better Auth provides: /api/auth/sign-in/social/github, /api/auth/callback/github, etc.
-    app.on(["GET", "POST"], "/api/auth/**", (c) => {
+    app.on(["GET", "POST"], "/auth/**", (c) => {
         return auth.handler(c.req.raw);
     });
 
