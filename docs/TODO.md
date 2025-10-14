@@ -165,7 +165,97 @@
 
 ---
 
-### Phase 3: API Composition Root
+### Phase 3: Core Service Architecture
+
+
+**Intro: List of Core Service Actions**
+
+- **Jobs Lifecycle**
+  - `createJob` – params `{ tenantId: string; name: string; description?: string; tags?: string[]; ownerUserId: string; baseline: { cron?: string; intervalMs?: number }; visibility?: "public"|"private"; metadata?: Record<string, unknown>; reason?: string }`; returns `{ jobId: string; nextRunAt: string; createdAt: string }`; lets users/agents stand up a new job with scheduling defaults and audit context.
+  - `updateJobProfile` – params `{ jobId: string; tenantId: string; expectedUpdatedAt: string; patch: { name?: string; description?: string; tags?: string[]; ownerUserId?: string; metadata?: Record<string, unknown> }; reason?: string }`; returns `{ updatedAt: string }`; maintains job metadata with optimistic concurrency to prevent clobbering.
+  - `listJobs` – params `{ tenantId: string; filters?: { tag?: string; ownerUserId?: string; status?: "active"|"archived" }; pagination?: { cursor?: string; limit?: number } }`; returns `{ jobs: Array<{ jobId: string; name: string; status: string; endpointCount: number; pausedEndpointCount: number; failureStreak: number; nextRunAt: string }>; nextCursor?: string }`; gives high-level catalog for dashboards or AI planning loops.
+  - `getJobSummary` – params `{ jobId: string; tenantId: string }`; returns `{ job: { name: string; status: string; createdAt: string; updatedAt: string; tags: string[] }; health: { endpointCount: number; pausedEndpointCount: number; failureStreak: number; lastRunAt?: string; lastRunStatus?: string }; schedule: { nextRunAt: string; baseline: Record<string, unknown>; adaptiveOverrides: Record<string, unknown> } }`; consolidates key facts before an agent makes changes.
+  - `archiveJob` – params `{ jobId: string; tenantId: string; actorUserId: string; reason?: string }`; returns `{ archivedAt: string }`; cleanly retires a job, cascading disablement of endpoints while preserving audit history.
+
+- **Endpoint Orchestration**
+  - `addEndpointToJob` – params `{ jobId: string; tenantId: string; definition: { name: string; url: string; method: "GET"|"POST"|"PUT"|"PATCH"|"DELETE"; headers?: Record<string, string>; bodyTemplate?: Record<string, unknown>; baseline?: { cron?: string; intervalMs?: number }; clamp?: { minIntervalMs?: number; maxIntervalMs?: number }; tier?: string }; reason?: string }`; returns `{ endpointId: string; nextRunAt: string }`; attaches a runnable endpoint with guardrails.
+  - `updateEndpointConfig` – params `{ endpointId: string; tenantId: string; expectedUpdatedAt: string; patch: { url?: string; method?: string; headers?: Record<string,string>; bodyTemplate?: Record<string,unknown>; clamp?: { minIntervalMs?: number; maxIntervalMs?: number }; timeoutMs?: number }; reason?: string }`; returns `{ updatedAt: string }`; keeps endpoint behavior in sync with upstream systems.
+  - `defineEndpointRelationships` – params `{ jobId: string; tenantId: string; graph: Array<{ endpointId: string; tier?: string; dependsOn?: string[] }>; reason?: string }`; returns `{ appliedAt: string }`; captures dependency graph/tiering so planners can respect order-of-operations.
+  - `disableEndpoint` – params `{ endpointId: string; tenantId: string; actorUserId: string; reason?: string }`; returns `{ disabledAt: string }`; pauses execution without deleting configuration.
+  - `deleteEndpoint` – params `{ endpointId: string; tenantId: string; actorUserId: string; reason?: string }`; returns `{ deletedAt: string }`; irreversibly removes endpoint once no longer needed.
+  - `listJobEndpoints` – params `{ jobId: string; tenantId: string }`; returns `{ endpoints: Array<{ endpointId: string; name: string; status: "active"|"disabled"; tier?: string; nextRunAt: string; failureCount: number }> }`; supplies quick inventory for orchestrating updates.
+  - `getEndpointDetails` – params `{ endpointId: string; tenantId: string }`; returns `{ endpoint: { name: string; config: Record<string, unknown>; clamp: Record<string, unknown>; adaptiveState: Record<string, unknown>; lastRun?: { at: string; status: string; durationMs: number } } }`; deep dive for troubleshooting or targeted adjustments.
+
+- **Adaptive Scheduling Control**
+  - `applyIntervalHint` – params `{ endpointId: string; tenantId: string; actor: { type: "user"|"ai"|"system"; id: string }; intervalMs: number; ttlMinutes: number; reason?: string }`; returns `{ hintExpiresAt: string; nextRunAt: string }`; nudges scheduler cadence based on fresh insight.
+  - `scheduleOneShotRun` – params `{ endpointId: string; tenantId: string; actor: { type: string; id: string }; runAt: string; ttlMinutes?: number; reason?: string }`; returns `{ scheduledFor: string }`; instructs the governor to run once at a specific time (e.g., flash sale kickoff).
+  - `triggerImmediateRun` – params `{ endpointId: string; tenantId: string; actor: { type: string; id: string }; reason?: string }`; returns `{ runId: string; dispatchedAt: string }`; claims and fires an endpoint right away, bypassing normal cadence.
+  - `pauseOrResumeEndpoint` – params `{ endpointId: string; tenantId: string; actor: { type: string; id: string }; pauseUntil?: string|null; reason?: string }`; returns `{ effectivePauseUntil?: string }`; toggles execution windows while respecting clamps.
+  - `clearAdaptiveHints` – params `{ endpointId: string; tenantId: string; actor: { type: string; id: string }; reason?: string }`; returns `{ clearedAt: string }`; wipes AI hints to revert back to baseline scheduling.
+  - `resetFailureCount` – params `{ endpointId: string; tenantId: string; actor: { type: string; id: string }; reason?: string }`; returns `{ failureCount: number }`; clears accumulated failures after remediation to prevent unnecessary backoffs.
+
+- **Execution Visibility & Insights**
+  - `listRuns` – params `{ tenantId: string; filters?: { jobId?: string; endpointId?: string; status?: "success"|"failure"|"timeout"; since?: string; until?: string; source?: "baseline"|"ai-hint"|"clamped" }; pagination?: { cursor?: string; limit?: number } }`; returns `{ runs: Array<{ runId: string; jobId: string; endpointId: string; startedAt: string; finishedAt: string; status: string; durationMs: number; source: string }>; nextCursor?: string }`; surfaces recent activity for analytics or anomaly checks.
+  - `getRunDetails` – params `{ runId: string; tenantId: string }`; returns `{ run: { jobId: string; endpointId: string; payload: Record<string, unknown>; responseStatus?: number; errorMessage?: string; source: string; durationMs: number; metadata: Record<string, unknown> } }`; supports post-mortems and debugging.
+  - `summarizeEndpointHealth` – params `{ endpointId: string; tenantId: string; windowHours?: number }`; returns `{ uptimePercent: number; successCount: number; failureCount: number; averageDurationMs: number; nextRunAt: string; lastFailure?: { at: string; message: string } }`; concise readout for status dashboards.
+  - `summarizeJobHealth` – params `{ jobId: string; tenantId: string; windowHours?: number }`; returns `{ overallStatus: "healthy"|"degraded"|"paused"; endpointBreakdown: Array<{ endpointId: string; status: string; latestSource: string }>; recommendations?: string[] }`; equips AI assistants with context before making changes.
+  - `exportRunMetrics` – params `{ tenantId: string; jobId?: string; endpointId?: string; format: "jsonl"|"csv"; range: { since: string; until: string } }`; returns `{ downloadUrl: string; expiresAt: string }`; allows offline analysis or sharing with other observability tools.
+  - `listRecentFailures` – params `{ tenantId: string; limit?: number }`; returns `{ failures: Array<{ runId: string; jobId: string; endpointId: string; failedAt: string; errorMessage: string; failureCount: number }> }`; quick triage queue for responders.
+
+- **Access & Automation Foundations**
+  - `provisionApiKey` – params `{ tenantId: string; actorUserId: string; label: string; scopes: string[]; expiresAt?: string; reason?: string }`; returns `{ apiKeyId: string; secret: string; createdAt: string }`; enables trusted services or AI agents to authenticate.
+  - `revokeApiKey` – params `{ apiKeyId: string; tenantId: string; actorUserId: string; reason?: string }`; returns `{ revokedAt: string }`; terminates compromised or unused credentials.
+  - `assignRole` – params `{ tenantId: string; targetUserId: string; actorUserId: string; roles: string[]; reason?: string }`; returns `{ grantedRoles: string[]; updatedAt: string }`; manages authorization matrices that govern service access.
+  - `listServiceCatalog` – params `{ tenantId: string }`; returns `{ services: Array<{ name: string; actions: Array<{ name: string; paramsSchema: Record<string, unknown>; returnsSchema: Record<string, unknown>; description: string }> }> }`; publishes discoverable tool metadata for AI agents or MCP manifests.
+  - `registerAutomationWebhook` – params `{ tenantId: string; url: string; events: string[]; actorUserId: string; secret?: string; reason?: string }`; returns `{ webhookId: string; createdAt: string }`; allows external systems to receive push updates (e.g., run failures, pauses).
+  - `simulateSchedule` – params `{ tenantId: string; jobId: string; horizonHours: number; includeAdaptiveState?: boolean }`; returns `{ projections: Array<{ endpointId: string; plannedRuns: Array<{ at: string; source: string }> }> }`; lets users model planned execution before applying adjustments.
+
+
+**Why**: Build the service-layer contracts and storage models that power the core actions before we expose them via REST or MCP. This ensures the API and future agent surfaces sit on a stable foundation.
+
+#### 3.1 Data Model & Repository Evolution
+- Add a persistent `jobs` table plus entity for job-level metadata (name, description, tags, owner, lifecycle timestamps) in `packages/adapter-drizzle/src/schema.ts`, and generate Drizzle migrations.
+- Extend `job_endpoints` with grouping/relationship columns (FK jobId, tier, dependency graph JSON, visibility flags) and add indexes on `job_id`, `tier`, `next_run_at`.
+- Capture governor planning output on each run (`runs.source`) so downstream insights know whether baseline, AI hint, or clamp drove the next schedule.
+- Update `JobsRepo`/`RunsRepo` interfaces to surface new reads/writes (`listByJob`, `updateJobMetadata`, `writeEndpointGraph`, `listRuns`) while keeping existing consumers backward compatible.
+
+#### 3.2 Job Lifecycle Service (`@cronicorn/services/jobs`)
+- Carve out a dedicated service for job creation, updates, listing, and archiving (replacing the current catch-all `JobsManager`).
+- Implement actions: `createJob`, `updateJobProfile`, `listJobs`, `getJobSummary`, `archiveJob`, ensuring tenant isolation and audit fields.
+- Return aggregated job health (counts of endpoints, paused endpoints, recent failure streak) so higher layers do not re-query raw tables.
+- Cover with unit tests that validate transaction usage, optimistic concurrency (updatedAt guard), and soft-delete semantics.
+
+#### 3.3 Endpoint Orchestration Service (`@cronicorn/services/endpoints`)
+- Move endpoint CRUD + dependency logic into its own service so jobs and endpoints evolve independently.
+- Actions: `addEndpointToJob`, `updateEndpointConfig`, `disableEndpoint`, `deleteEndpoint`, `defineEndpointRelationships` (stores tier + dependency metadata).
+- Enforce HTTP request validation, guardrail clamp ranges, and cross-endpoint dependency integrity within a job.
+- Add unit tests using in-memory repos to confirm policy enforcement without relying on API routes.
+
+#### 3.4 Adaptive Scheduling Control Service (`@cronicorn/services/scheduling`)
+- Wrap `JobsRepo.writeAIHint`, `setNextRunAtIfEarlier`, `setPausedUntil`, and failure reset helpers in a cohesive service that records actor + reason metadata.
+- Provide `applyIntervalHint`, `scheduleOneShotRun`, `pauseOrResumeEndpoint`, `triggerImmediateRun`, `clearAdaptiveHints`, `resetFailureCount` with consistent validation (respect clamps, purge expired hints first).
+- Integrate `QuotaGuard.canProceed` / `recordUsage` for AI-driven calls and add contract tests with fake clock + repos to guarantee deterministic behavior.
+
+#### 3.5 Execution Visibility & Insights Service (`@cronicorn/services/insights`)
+- Build read-only orchestration that fetches runs/endpoints to produce histories and health summaries: `listRuns`, `getRunDetails`, `summarizeEndpointHealth`, `exportRunMetrics`.
+- Implement pagination + filtering (status, time range, tier) inside the service so surfaces simply forward parameters.
+- Store and expose governor source + duration aggregates to support future anomaly detection.
+- Back with integration tests exercising Drizzle adapter inside transaction-per-test harness.
+
+#### 3.6 Access & Automation Foundations
+- Extend Better Auth schema with tenant/role metadata required for service-level authorization (e.g., `scheduling:control`, `endpoint:write`, `insights:read`).
+- Define permission checks shared by all services before wiring transports; document how API keys inherit scopes.
+- Draft the service catalog + JSON schemas that the eventual MCP manifest will expose, ensuring service methods accept `reason`/`metadata` for audit logs.
+
+#### 3.7 Validation & Documentation
+- Run migrations, backfill existing endpoints with default job rows, and update seed/test data.
+- Update `packages/services` barrels + README to export the new services and deprecate legacy entry points.
+- Refresh documentation (`docs/ai-scheduler-architecture.md`, `CORE_SERVICE_RESEARCH.md`, ADR describing service split) and log open questions/tech debt in `docs/_RUNNING_TECH_DEBT.md`.
+- Execute workspace builds/tests to confirm no regressions before layering API/MCP surfaces.
+
+---
+
+### Phase 4: API Composition Root
 
 **Why**: Provides management interface for job CRUD and operational controls.
 
@@ -304,7 +394,7 @@ app.post('/jobs', authMiddleware, async (c) => {
 
 ---
 
-## Phase 3.1: API Foundation (Single Route) - **IN PROGRESS**
+## Phase 4.1: API Foundation (Single Route) - **IN PROGRESS**
 
 **Goal**: Implement `POST /jobs` with ALL core patterns established before building remaining routes.
 
@@ -693,7 +783,7 @@ curl -X POST http://localhost:3000/api/v1/jobs \
 
 ---
 
-## Phase 3.2: Complete CRUD Routes - **NEXT**
+## Phase 4.2: Complete CRUD Routes - **NEXT**
 
 **Goal**: Add remaining job management routes using established patterns from 3.1.
 
@@ -753,7 +843,7 @@ curl -X POST http://localhost:3000/api/v1/jobs \
 
 ---
 
-## Phase 3.2b: API Key Management Routes (User-Facing)
+## Phase 4.2b: API Key Management Routes (User-Facing)
 
 **Goal**: Allow users to manage their API keys via the API (for future UI)
 
@@ -813,7 +903,7 @@ Better Auth's `apiKey` plugin automatically provides these endpoints at `/api/au
 
 ---
 
-## Phase 3.3: Database Schema for Auth - **PARALLEL**
+## Phase 4.3: Database Schema for Auth - **PARALLEL**
 
 **Required**: Users table with Better Auth schema
 
