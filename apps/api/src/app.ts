@@ -11,74 +11,74 @@ import jobs from "./routes/jobs/jobs.index.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
 
 export async function createApp(db: Database, config: Env) {
-    // Initialize Better Auth (pass Drizzle instance, not raw pool)
-    const auth = createAuth(config, db);
+  // Initialize Better Auth (pass Drizzle instance, not raw pool)
+  const auth = createAuth(config, db);
 
-    // Create singletons (instantiate once, reuse for all requests)
-    const txProvider = createTransactionProvider(db);
-    const jobsManager = new JobsManager(txProvider);
+  // Create singletons (instantiate once, reuse for all requests)
+  const txProvider = createTransactionProvider(db);
+  const jobsManager = new JobsManager(txProvider);
 
-    // Create main OpenAPI app
-    // eslint-disable-next-line ts/consistent-type-assertions
-    const app = createRouter().basePath("/api") as AppOpenAPI;
+  // Create main OpenAPI app
+  // eslint-disable-next-line ts/consistent-type-assertions
+  const app = createRouter().basePath("/api") as AppOpenAPI;
 
-    // Configure CORS for Better Auth (must come before auth routes)
-    app.use(
-        "/auth/**",
-        cors({
-            origin: config.WEB_URL,
-            credentials: true, // Allow cookies
-            allowHeaders: ["Content-Type", "Authorization"],
-            allowMethods: ["POST", "GET", "OPTIONS"],
-            exposeHeaders: ["Content-Length"],
-            maxAge: 600,
-        }),
-    );
+  // Configure CORS for Better Auth (must come before auth routes)
+  app.use(
+    "/auth/**",
+    cors({
+      origin: config.WEB_URL,
+      credentials: true, // Allow cookies
+      allowHeaders: ["Content-Type", "Authorization"],
+      allowMethods: ["POST", "GET", "OPTIONS"],
+      exposeHeaders: ["Content-Length"],
+      maxAge: 600,
+    }),
+  );
 
-    // Global error handler
-    app.onError(errorHandler);
+  // Global error handler
+  app.onError(errorHandler);
 
-    // Attach singletons to context (no per-request instantiation)
-    app.use("*", async (c, next) => {
-        c.set("jobsManager", jobsManager);
-        c.set("auth", auth);
-        await next();
-    });
+  // Attach singletons to context (no per-request instantiation)
+  app.use("*", async (c, next) => {
+    c.set("jobsManager", jobsManager);
+    c.set("auth", auth);
+    await next();
+  });
 
-    // Health check endpoint (no auth required)
-    app.get("/health", (c) => {
-        return c.json({ status: "ok", timestamp: new Date().toISOString() });
-    });
+  // Health check endpoint (no auth required)
+  app.get("/health", (c) => {
+    return c.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
 
-    // Mount Better Auth routes
-    // Better Auth provides: /api/auth/sign-in/social/github, /api/auth/callback/github, etc.
-    app.on(["GET", "POST"], "/auth/**", (c) => {
-        return auth.handler(c.req.raw);
-    });
+  // Mount Better Auth routes
+  // Better Auth provides: /api/auth/sign-in/social/github, /api/auth/callback/github, etc.
+  app.on(["GET", "POST"], "/auth/**", (c) => {
+    return auth.handler(c.req.raw);
+  });
 
-    // Mount job routes (protected by auth middleware)
-    const routes = [
-        jobs,
-    ] as const;
+  // Mount job routes (protected by auth middleware)
+  const routes = [
+    jobs,
+  ] as const;
 
-    routes.forEach((route) => {
-        app.route("/", route);
-    });
+  routes.forEach((route) => {
+    app.route("/", route);
+  });
 
-    // OpenAPI documentation
-    configureOpenAPI(app, config.API_URL);
+  // OpenAPI documentation
+  configureOpenAPI(app, config.API_URL);
 
-    // Start server
-    const port = config.PORT;
+  // Start server
+  const port = config.PORT;
 
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: "info",
-        message: "API server starting",
-        port,
-        env: config.NODE_ENV,
-    }));
+  // eslint-disable-next-line no-console
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: "info",
+    message: "API server starting",
+    port,
+    env: config.NODE_ENV,
+  }));
 
-    return app;
+  return app;
 }

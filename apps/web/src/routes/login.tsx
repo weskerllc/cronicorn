@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+
 import { signIn } from "../lib/auth-client";
 
 export const Route = createFileRoute("/login")({
@@ -23,7 +24,7 @@ function RouteComponent() {
         onError: (error) => {
           console.error(error);
         },
-      }
+      },
     );
   };
 
@@ -31,9 +32,9 @@ function RouteComponent() {
     e.preventDefault();
 
     await signIn.social(
-      { 
+      {
         provider: "google",
-        callbackURL: window.location.origin + "/",
+        callbackURL: `${window.location.origin}/`,
       },
       {
         onSuccess: () => {
@@ -42,7 +43,7 @@ function RouteComponent() {
         onError: (error) => {
           console.error(error);
         },
-      }
+      },
     );
   };
 
@@ -50,9 +51,9 @@ function RouteComponent() {
     e.preventDefault();
 
     await signIn.social(
-      { 
+      {
         provider: "github",
-        callbackURL: window.location.origin + "/",
+        callbackURL: `${window.location.origin}/`,
       },
       {
         onSuccess: () => {
@@ -61,7 +62,7 @@ function RouteComponent() {
         onError: (error) => {
           console.error(error);
         },
-      }
+      },
     );
   };
 
@@ -73,13 +74,13 @@ function RouteComponent() {
         <input
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={e => setEmail(e.target.value)}
         />
         <label htmlFor="password">Password</label>
         <input
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={e => setPassword(e.target.value)}
         />
         <button type="submit">Login</button>
       </form>

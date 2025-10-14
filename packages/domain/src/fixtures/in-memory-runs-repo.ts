@@ -36,13 +36,13 @@ export class InMemoryRunsRepo implements RunsRepo {
     status?: "success" | "failed";
     limit?: number;
   }): Promise<Array<{
-    runId: string;
-    endpointId: string;
-    startedAt: Date;
-    status: string;
-    durationMs?: number;
-    source?: string;
-  }>> {
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>> {
     let filtered = this.runs;
 
     if (filters.endpointId) {

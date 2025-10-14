@@ -7,8 +7,8 @@ const router = createRouter();
 
 // Protect all /jobs routes with auth
 router.use("/jobs/*", async (c, next) => {
-    const auth = c.get("auth");
-    return requireAuth(auth)(c, next);
+  const auth = c.get("auth");
+  return requireAuth(auth)(c, next);
 });
 
 router.openapi(routes.create, handlers.create);
