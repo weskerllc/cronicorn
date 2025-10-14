@@ -30,17 +30,17 @@ import { JobsManager } from "@cronicorn/services/jobs";
  * @returns Fully-wired JobsManager instance
  */
 export function createJobsManager(
-  // eslint-disable-next-line ts/no-explicit-any
-  tx: NodePgDatabase<any> | NodePgTransaction<any, any>,
-  clock: Clock,
-  cron: Cron,
+    // eslint-disable-next-line ts/no-explicit-any
+    tx: NodePgDatabase<any> | NodePgTransaction<any, any>,
+    clock: Clock,
+    cron: Cron,
 ): JobsManager {
-  // Instantiate transaction-bound repositories
-  // @ts-expect-error - Drizzle type mismatch between pnpm versions
-  const jobsRepo = new DrizzleJobsRepo(tx);
-  // @ts-expect-error - Drizzle type mismatch between pnpm versions
-  const runsRepo = new DrizzleRunsRepo(tx);
+    // Instantiate transaction-bound repositories
+    // @ts-expect-error - Drizzle type mismatch between pnpm versions
+    const jobsRepo = new DrizzleJobsRepo(tx);
+    // @ts-expect-error - Drizzle type mismatch between pnpm versions
+    const runsRepo = new DrizzleRunsRepo(tx);
 
-  // Wire everything into the manager (pure DI)
-  return new JobsManager(jobsRepo, runsRepo, clock, cron);
+    // Wire everything into the manager (pure DI)
+    return new JobsManager(jobsRepo, runsRepo, clock, cron);
 }
