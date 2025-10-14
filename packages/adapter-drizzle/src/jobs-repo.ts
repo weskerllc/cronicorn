@@ -1,9 +1,9 @@
-import type { JobEndpoint, JobsRepo } from "@cronicorn/domain";
+import type { Job, JobEndpoint, JobsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, eq, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 
-import { type JobEndpointRow, jobEndpoints } from "./schema.js";
+import { type JobEndpointRow, jobEndpoints, type JobRow, jobs } from "./schema.js";
 
 /**
  * PostgreSQL implementation of JobsRepo using Drizzle ORM.
@@ -221,7 +221,7 @@ export class DrizzleJobsRepo implements JobsRepo {
   private rowToEntity(row: JobEndpointRow): JobEndpoint {
     return {
       id: row.id,
-      jobId: row.jobId,
+      jobId: row.jobId ?? "", // Nullable for backward compat, default to empty string
       tenantId: row.tenantId,
       name: row.name,
       baselineCron: row.baselineCron ?? undefined,
@@ -241,6 +241,162 @@ export class DrizzleJobsRepo implements JobsRepo {
       headersJson: row.headersJson ?? undefined,
       bodyJson: row.bodyJson,
       timeoutMs: row.timeoutMs ?? undefined,
+    };
+  }
+
+  // ============================================================================
+  // Phase 3: Job Lifecycle Operations
+  // ============================================================================
+
+  async createJob(job: Omit<Job, "id" | "createdAt" | "updatedAt">): Promise<Job> {
+    const now = this.now();
+    const id = `job_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+    const row: typeof jobs.$inferInsert = {
+      id,
+      userId: job.userId,
+      name: job.name,
+      description: job.description,
+      status: job.status,
+      createdAt: now,
+      updatedAt: now,
+      archivedAt: job.archivedAt,
+    };
+
+    await this.tx.insert(jobs).values(row);
+
+    return {
+      id,
+      userId: job.userId,
+      name: job.name,
+      description: job.description,
+      status: job.status,
+      createdAt: now,
+      updatedAt: now,
+      archivedAt: job.archivedAt,
+    };
+  }
+
+  async getJob(id: string): Promise<Job | null> {
+    const rows = await this.tx
+      .select()
+      .from(jobs)
+      .where(eq(jobs.id, id))
+      .limit(1);
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    return this.jobRowToEntity(rows[0]);
+  }
+
+  async listJobs(
+    userId: string,
+    filters?: { status?: "active" | "archived" },
+  ): Promise<Array<Job & { endpointCount: number }>> {
+    // Build base query with endpoint count
+    const query = this.tx
+      .select({
+        id: jobs.id,
+        userId: jobs.userId,
+        name: jobs.name,
+        description: jobs.description,
+        status: jobs.status,
+        createdAt: jobs.createdAt,
+        updatedAt: jobs.updatedAt,
+        archivedAt: jobs.archivedAt,
+        endpointCount: sql<number>`cast(count(${jobEndpoints.id}) as int)`,
+      })
+      .from(jobs)
+      .leftJoin(jobEndpoints, eq(jobEndpoints.jobId, jobs.id))
+      .where(
+        filters?.status
+          ? and(eq(jobs.userId, userId), eq(jobs.status, filters.status))
+          : eq(jobs.userId, userId),
+      )
+      .groupBy(jobs.id);
+
+    const rows = await query;
+
+    return rows.map(row => ({
+      id: row.id,
+      userId: row.userId,
+      name: row.name,
+      description: row.description ?? undefined,
+      status: row.status as "active" | "archived",
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      archivedAt: row.archivedAt ?? undefined,
+      endpointCount: row.endpointCount,
+    }));
+  }
+
+  async updateJob(id: string, patch: { name?: string; description?: string }): Promise<Job> {
+    const now = this.now();
+
+    await this.tx
+      .update(jobs)
+      .set({
+        ...patch,
+        updatedAt: now,
+      })
+      .where(eq(jobs.id, id));
+
+    const updated = await this.getJob(id);
+    if (!updated) {
+      throw new Error(`Job not found: ${id}`);
+    }
+
+    return updated;
+  }
+
+  async archiveJob(id: string): Promise<Job> {
+    const now = this.now();
+
+    await this.tx
+      .update(jobs)
+      .set({
+        status: "archived",
+        archivedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(jobs.id, id));
+
+    const archived = await this.getJob(id);
+    if (!archived) {
+      throw new Error(`Job not found: ${id}`);
+    }
+
+    return archived;
+  }
+
+  // ============================================================================
+  // Phase 3: Endpoint Relationship Operations
+  // ============================================================================
+
+  async listEndpointsByJob(jobId: string): Promise<JobEndpoint[]> {
+    const rows = await this.tx
+      .select()
+      .from(jobEndpoints)
+      .where(eq(jobEndpoints.jobId, jobId));
+
+    return rows.map(row => this.rowToEntity(row));
+  }
+
+  /**
+   * Convert DB job row to domain entity.
+   */
+  private jobRowToEntity(row: JobRow): Job {
+    return {
+      id: row.id,
+      userId: row.userId,
+      name: row.name,
+      description: row.description ?? undefined,
+      status: row.status as "active" | "archived",
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      archivedAt: row.archivedAt ?? undefined,
     };
   }
 }

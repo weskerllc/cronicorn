@@ -1,6 +1,21 @@
 import { boolean, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /**
+ * Jobs table (Phase 3).
+ * Organizational container for related endpoints.
+ */
+export const jobs = pgTable("jobs", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(), // Single-user ownership (MVP simplification)
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").notNull().default("active"), // "active" | "archived"
+  createdAt: timestamp("created_at", { mode: "date" }).notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull(),
+  archivedAt: timestamp("archived_at", { mode: "date" }),
+});
+
+/**
  * Job endpoints table.
  *
  * Maps to JobEndpoint domain entity with adapter-specific fields:
@@ -9,7 +24,7 @@ import { boolean, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/p
 export const jobEndpoints = pgTable("job_endpoints", {
   // Identity
   id: text("id").primaryKey(),
-  jobId: text("job_id").notNull(),
+  jobId: text("job_id").references(() => jobs.id, { onDelete: "cascade" }), // Phase 3: FK to jobs table (nullable for backward compat)
   tenantId: text("tenant_id").notNull(),
   name: text("name").notNull(),
 
@@ -55,6 +70,7 @@ export const runs = pgTable("runs", {
   endpointId: text("endpoint_id").notNull().references(() => jobEndpoints.id),
   status: text("status").notNull(), // "running" | "success" | "failed" | "canceled"
   attempt: integer("attempt").notNull(),
+  source: text("source"), // Phase 3: What triggered this run (baseline, AI hint, manual, etc.)
   startedAt: timestamp("started_at", { mode: "date" }).notNull(),
   finishedAt: timestamp("finished_at", { mode: "date" }),
   durationMs: integer("duration_ms"),
@@ -62,6 +78,8 @@ export const runs = pgTable("runs", {
   errorDetails: jsonb("error_details"),
 });
 
+export type JobRow = typeof jobs.$inferSelect;
+export type JobInsert = typeof jobs.$inferInsert;
 export type JobEndpointRow = typeof jobEndpoints.$inferSelect;
 export type JobEndpointInsert = typeof jobEndpoints.$inferInsert;
 export type RunRow = typeof runs.$inferSelect;

@@ -207,13 +207,21 @@
 
 **Why**: Build the service-layer contracts and storage models that power the core actions before we expose them via REST or MCP. This ensures the API and future agent surfaces sit on a stable foundation.
 
-#### 3.1 Data Model & Repository Evolution
-- Add a persistent `jobs` table plus entity for job-level metadata (name, description, tags, owner, lifecycle timestamps) in `packages/adapter-drizzle/src/schema.ts`, and generate Drizzle migrations.
-- Extend `job_endpoints` with grouping/relationship columns (FK jobId, tier, dependency graph JSON, visibility flags) and add indexes on `job_id`, `tier`, `next_run_at`.
-- Capture governor planning output on each run (`runs.source`) so downstream insights know whether baseline, AI hint, or clamp drove the next schedule.
-- Update `JobsRepo`/`RunsRepo` interfaces to surface new reads/writes (`listByJob`, `updateJobMetadata`, `writeEndpointGraph`, `listRuns`) while keeping existing consumers backward compatible.
+#### 3.1 Data Model & Repository Evolution ✅ **COMPLETE**
+**Status**: ✅ Domain entities, ports, and adapters implemented with migrations applied
 
-#### 3.2 Job Lifecycle Service (`@cronicorn/services/jobs`)
+- ✅ Added `jobs` table for job-level metadata (id, userId, name, description, status, timestamps)
+- ✅ Extended `job_endpoints` with jobId FK (nullable for backward compat, cascade delete)
+- ✅ Added `runs.source` column to track what triggered each run (baseline, AI hint, manual, etc.)
+- ✅ Extended `JobsRepo` interface with job CRUD operations (createJob, getJob, listJobs, updateJob, archiveJob)
+- ✅ Extended `JobsRepo` with endpoint relationship query (listEndpointsByJob)
+- ✅ Extended `RunsRepo` with execution visibility (listRuns, getRunDetails, source tracking)
+- ✅ Implemented all new methods in DrizzleJobsRepo and DrizzleRunsRepo
+- ✅ Implemented all new methods in InMemoryJobsRepo and InMemoryRunsRepo (moved to domain/fixtures)
+- ✅ Generated and applied database migration
+- **Decision**: Removed `tier` and `dependencyGraph` fields - AI will orchestrate execution via natural language understanding instead of storing explicit dependency graphs
+
+#### 3.2 Job Lifecycle Service (`@cronicorn/services/jobs`) - **NEXT**
 - Carve out a dedicated service for job creation, updates, listing, and archiving (replacing the current catch-all `JobsManager`).
 - Implement actions: `createJob`, `updateJobProfile`, `listJobs`, `getJobSummary`, `archiveJob`, ensuring tenant isolation and audit fields.
 - Return aggregated job health (counts of endpoints, paused endpoints, recent failure streak) so higher layers do not re-query raw tables.

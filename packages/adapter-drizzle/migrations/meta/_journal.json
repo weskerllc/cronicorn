@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1760127415782,
-      "tag": "0000_classy_talos",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1760363466163,
-      "tag": "0001_clammy_ted_forrester",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1760384176488,
-      "tag": "0002_flippant_malcolm_colcord",
+      "when": 1760470912079,
+      "tag": "0000_strange_punisher",
       "breakpoints": true
     }
   ]
