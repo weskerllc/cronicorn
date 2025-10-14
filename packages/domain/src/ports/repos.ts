@@ -66,7 +66,6 @@ export type JobsRepo = {
 
   // Endpoint relationship operations (Phase 3)
   listEndpointsByJob: (jobId: string) => Promise<JobEndpoint[]>;
-  defineEndpointRelationships: (jobId: string, graph: Array<{ endpointId: string; tier?: string; dependsOn?: string[] }>) => Promise<void>;
 };
 
 export type RunsRepo = {

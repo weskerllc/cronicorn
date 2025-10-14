@@ -204,22 +204,4 @@ export class InMemoryJobsRepo implements JobsRepo {
       .filter(ep => (ep as any).jobId === jobId)
       .map(ep => structuredClone(ep));
   }
-
-  async defineEndpointRelationships(jobId: string, graph: Array<{ endpointId: string; tier?: string; dependsOn?: string[] }>): Promise<void> {
-    // Validate all endpoints belong to this job
-    for (const node of graph) {
-      const ep = this.map.get(node.endpointId) as any;
-      if (!ep)
-        throw new Error(`Endpoint not found: ${node.endpointId}`);
-      if (ep.jobId !== jobId)
-        throw new Error(`Endpoint ${node.endpointId} does not belong to job ${jobId}`);
-    }
-
-    // Update endpoints with tier and dependency info
-    for (const node of graph) {
-      const ep = this.map.get(node.endpointId) as any;
-      ep.tier = node.tier;
-      ep.dependencyGraph = node.dependsOn;
-    }
-  }
 }
