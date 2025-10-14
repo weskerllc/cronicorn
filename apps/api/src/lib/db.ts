@@ -1,5 +1,3 @@
-import type { TransactionProvider } from "@cronicorn/services";
-
 import { schema } from "@cronicorn/adapter-drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -18,6 +16,40 @@ export function createDatabase(config: Env) {
 }
 
 export type Database = ReturnType<typeof createDatabase>;
+
+// TODO we can define transaction context / provider with stronger types using drizzle adapter
+/**
+ * Transaction context provided to operations within a transaction.
+ *
+ * This is intentionally minimal - just enough for repositories to work.
+ * Concrete implementations (Drizzle, Prisma) will provide richer APIs.
+ */
+export type TransactionContext = unknown;
+
+/**
+ * Abstract interface for database transaction management.
+ *
+ * This abstraction allows services to work with any database implementation
+ * without coupling to specific ORM or database details.
+ *
+ * Implementations:
+ * - Drizzle ORM (current)
+ * - Prisma (future)
+ * - Custom SQL (future)
+ */
+export type TransactionProvider = {
+  /**
+   * Execute operations within a database transaction.
+   *
+   * The transaction will:
+   * - Commit if the callback completes successfully
+   * - Rollback if the callback throws an error
+   *
+   * @param fn - Callback that receives transaction context
+   * @returns Result from the callback
+   */
+  transaction: <T>(fn: (tx: TransactionContext) => Promise<T>) => Promise<T>;
+};
 
 /**
  * Adapt Database to TransactionProvider interface.

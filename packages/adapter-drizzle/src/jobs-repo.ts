@@ -389,6 +389,15 @@ export class DrizzleJobsRepo implements JobsRepo {
     return rows.map(row => this.rowToEntity(row));
   }
 
+  async deleteEndpoint(id: string): Promise<void> {
+    await this.tx
+      .delete(jobEndpoints)
+      .where(eq(jobEndpoints.id, id));
+
+    // Note: Drizzle doesn't return rowCount, optimistically assume success
+    // getEndpoint will throw if row doesn't exist
+  }
+
   /**
    * Convert DB job row to domain entity.
    */
