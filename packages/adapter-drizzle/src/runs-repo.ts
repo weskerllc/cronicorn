@@ -74,14 +74,15 @@ export class DrizzleRunsRepo implements RunsRepo {
     status?: "success" | "failed";
     limit?: number;
   }): Promise<Array<{
-      runId: string;
-      endpointId: string;
-      startedAt: Date;
-      status: string;
-      durationMs?: number;
-      source?: string;
-    }>> {
+    runId: string;
+    endpointId: string;
+    startedAt: Date;
+    status: string;
+    durationMs?: number;
+    source?: string;
+  }>> {
     // Build conditions
+    // Build query conditions
     const conditions = [];
 
     if (filters.endpointId) {
@@ -96,8 +97,8 @@ export class DrizzleRunsRepo implements RunsRepo {
       conditions.push(eq(runs.status, filters.status));
     }
 
-    // Execute query
-    let query = this.tx
+    // Build and execute query - construct in one fluent chain
+    const baseSelect = this.tx
       .select({
         runId: runs.id,
         endpointId: runs.endpointId,
@@ -108,22 +109,23 @@ export class DrizzleRunsRepo implements RunsRepo {
       })
       .from(runs);
 
-    // Join with endpoints if needed for jobId filtering
-    if (filters.jobId) {
-      query = query.innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id)) as any;
-    }
+    // Add join if filtering by jobId
+    const withJoin = filters.jobId
+      ? baseSelect.innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      : baseSelect;
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
-    }
+    // Add where conditions
+    const withWhere = conditions.length > 0
+      ? withJoin.where(and(...conditions))
+      : withJoin;
 
-    query = query.orderBy(desc(runs.startedAt)) as any;
+    // Add ordering
+    const withOrder = withWhere.orderBy(desc(runs.startedAt));
 
-    if (filters.limit) {
-      query = query.limit(filters.limit) as any;
-    }
-
-    const rows = await query;
+    // Add limit and execute
+    const rows = filters.limit
+      ? await withOrder.limit(filters.limit)
+      : await withOrder;
 
     return rows.map(row => ({
       runId: row.runId,

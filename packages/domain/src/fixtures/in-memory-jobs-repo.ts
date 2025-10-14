@@ -1,14 +1,17 @@
 import type { Job, JobEndpoint, JobsRepo } from "../index.js";
 
 /**
- * Adapter-local storage type with internal locking state.
+ * Adapter-local storage type with internal locking state and job relationship.
  *
  * The _lockedUntil field is an implementation detail for pessimistic locking
  * and is NOT part of the domain model. It's stripped when returning JobEndpoint
  * through the port interface.
+ *
+ * The jobId field tracks Phase 3 endpoint-to-job relationships.
  */
 type StoredJob = JobEndpoint & {
   _lockedUntil?: Date;
+  jobId?: string;
 };
 
 export class InMemoryJobsRepo implements JobsRepo {
@@ -42,7 +45,9 @@ export class InMemoryJobsRepo implements JobsRepo {
       .filter(j => !filters?.status || j.status === filters.status);
 
     return userJobs.map((j) => {
-      const endpointCount = [...this.map.values()].filter(ep => (ep as any).jobId === j.id).length;
+      const endpointCount = [...this.map.values()].filter((ep) => {
+        return ep.jobId === j.id;
+      }).length;
       return { ...structuredClone(j), endpointCount };
     });
   }
@@ -201,7 +206,7 @@ export class InMemoryJobsRepo implements JobsRepo {
   // Phase 3: Endpoint relationship operations
   async listEndpointsByJob(jobId: string): Promise<JobEndpoint[]> {
     return [...this.map.values()]
-      .filter(ep => (ep as any).jobId === jobId)
+      .filter(ep => ep.jobId === jobId)
       .map(ep => structuredClone(ep));
   }
 }

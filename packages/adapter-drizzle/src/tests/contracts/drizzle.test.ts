@@ -28,7 +28,6 @@ describe("drizzle Repos (PostgreSQL)", () => {
 
       await repo.add({
         id: "ep1",
-        jobId: "job1",
         tenantId: "tenant1",
         name: "test",
         nextRunAt: new Date("2025-01-01T00:00:00Z"),
@@ -47,7 +46,6 @@ describe("drizzle Repos (PostgreSQL)", () => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
       await jobsRepo.add({
         id: "ep1",
-        jobId: "job1",
         tenantId: "tenant1",
         name: "test",
         nextRunAt: new Date(),

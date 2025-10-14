@@ -17,7 +17,7 @@ export type JsonValue =
 export type JobEndpoint = {
   // Identity
   id: string;
-  jobId: string;
+  jobId?: string; // Phase 3: Optional FK to parent Job (for organizational grouping)
   tenantId: string;
   name: string;
 

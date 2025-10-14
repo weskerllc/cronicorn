@@ -22,8 +22,10 @@ export class DrizzleJobsRepo implements JobsRepo {
 
   async add(ep: JobEndpoint): Promise<void> {
     // Convert domain entity to DB row (add adapter fields)
+    // Note: jobId defaults to empty string in domain, but DB expects null for no job
     const row: typeof jobEndpoints.$inferInsert = {
       ...ep,
+      jobId: ep.jobId && ep.jobId !== "" ? ep.jobId : null,
       _lockedUntil: undefined,
     };
 
@@ -319,17 +321,20 @@ export class DrizzleJobsRepo implements JobsRepo {
 
     const rows = await query;
 
-    return rows.map(row => ({
-      id: row.id,
-      userId: row.userId,
-      name: row.name,
-      description: row.description ?? undefined,
-      status: row.status as "active" | "archived",
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      archivedAt: row.archivedAt ?? undefined,
-      endpointCount: row.endpointCount,
-    }));
+    return rows.map((row) => {
+      const status: "active" | "archived" = row.status === "archived" ? "archived" : "active";
+      return {
+        id: row.id,
+        userId: row.userId,
+        name: row.name,
+        description: row.description ?? undefined,
+        status,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        archivedAt: row.archivedAt ?? undefined,
+        endpointCount: row.endpointCount,
+      };
+    });
   }
 
   async updateJob(id: string, patch: { name?: string; description?: string }): Promise<Job> {
@@ -388,12 +393,13 @@ export class DrizzleJobsRepo implements JobsRepo {
    * Convert DB job row to domain entity.
    */
   private jobRowToEntity(row: JobRow): Job {
+    const status: "active" | "archived" = row.status === "archived" ? "archived" : "active";
     return {
       id: row.id,
       userId: row.userId,
       name: row.name,
       description: row.description ?? undefined,
-      status: row.status as "active" | "archived",
+      status,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       archivedAt: row.archivedAt ?? undefined,
