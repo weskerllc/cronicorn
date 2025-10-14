@@ -1,4 +1,4 @@
-import type { JobEndpoint, JobsRepo, RunsRepo } from "@cronicorn/domain";
+import type { Job, JobEndpoint, JobsRepo } from "../index.js";
 
 /**
  * Adapter-local storage type with internal locking state.
@@ -13,8 +13,70 @@ type StoredJob = JobEndpoint & {
 
 export class InMemoryJobsRepo implements JobsRepo {
   private map = new Map<string, StoredJob>();
+  private jobs = new Map<string, Job>(); // Phase 3: Store Job entities
+  private jobSeq = 0; // For generating job IDs
+
   constructor(private now: () => Date) { } // <-- inject clock
 
+  // Phase 3: Job lifecycle operations
+  async createJob(job: Omit<Job, "id" | "createdAt" | "updatedAt">): Promise<Job> {
+    const now = this.now();
+    const newJob: Job = {
+      ...job,
+      id: `job_${this.jobSeq++}`,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.jobs.set(newJob.id, newJob);
+    return structuredClone(newJob);
+  }
+
+  async getJob(id: string): Promise<Job | null> {
+    const job = this.jobs.get(id);
+    return job ? structuredClone(job) : null;
+  }
+
+  async listJobs(userId: string, filters?: { status?: "active" | "archived" }): Promise<Array<Job & { endpointCount: number }>> {
+    const userJobs = [...this.jobs.values()]
+      .filter(j => j.userId === userId)
+      .filter(j => !filters?.status || j.status === filters.status);
+
+    return userJobs.map((j) => {
+      const endpointCount = [...this.map.values()].filter(ep => (ep as any).jobId === j.id).length;
+      return { ...structuredClone(j), endpointCount };
+    });
+  }
+
+  async updateJob(id: string, patch: { name?: string; description?: string }): Promise<Job> {
+    const job = this.jobs.get(id);
+    if (!job)
+      throw new Error(`Job not found: ${id}`);
+
+    const updated: Job = {
+      ...job,
+      ...patch,
+      updatedAt: this.now(),
+    };
+    this.jobs.set(id, updated);
+    return structuredClone(updated);
+  }
+
+  async archiveJob(id: string): Promise<Job> {
+    const job = this.jobs.get(id);
+    if (!job)
+      throw new Error(`Job not found: ${id}`);
+
+    const archived: Job = {
+      ...job,
+      status: "archived",
+      archivedAt: this.now(),
+      updatedAt: this.now(),
+    };
+    this.jobs.set(id, archived);
+    return structuredClone(archived);
+  }
+
+  // Endpoint operations (existing)
   async add(ep: JobEndpoint) { this.map.set(ep.id, ep); }
 
   async claimDueEndpoints(limit: number, withinMs: number) {
@@ -59,13 +121,7 @@ export class InMemoryJobsRepo implements JobsRepo {
       candidate = maxAt;
 
     if (candidate < e.nextRunAt) {
-      // (optional) debug:
-      // console.log(`[nudge] ${id}: before=${e.nextRunAt.toISOString()} candidate=${candidate.toISOString()} now=${now.toISOString()}`);
       e.nextRunAt = candidate;
-    }
-    else {
-      // (optional) debug:
-      // console.log(`[nudge-skip] ${id}: before=${e.nextRunAt.toISOString()} candidate=${candidate.toISOString()} now=${now.toISOString()}`);
     }
   }
 
@@ -141,32 +197,29 @@ export class InMemoryJobsRepo implements JobsRepo {
       throw new Error(`JobsRepo.setPausedUntil: not found: ${id}`);
     e.pausedUntil = until ?? undefined;
   }
-}
 
-type Run = {
-  id: string;
-  endpointId: string;
-  status: "running" | "success" | "failed" | "canceled";
-  attempt: number;
-  startedAt: number;
-  durationMs?: number;
-  err?: unknown;
-};
-
-export class InMemoryRunsRepo implements RunsRepo {
-  private seq = 0;
-  runs: Run[] = [];
-
-  async create(r: { endpointId: string; status: "running"; attempt: number }) {
-    const id = `run_${this.seq++}`;
-    this.runs.push({ id, ...r, startedAt: Date.now() });
-    return id;
+  // Phase 3: Endpoint relationship operations
+  async listEndpointsByJob(jobId: string): Promise<JobEndpoint[]> {
+    return [...this.map.values()]
+      .filter(ep => (ep as any).jobId === jobId)
+      .map(ep => structuredClone(ep));
   }
 
-  async finish(id: string, patch: { status: "success" | "failed" | "canceled"; durationMs: number; err?: unknown }) {
-    const run = this.runs.find(r => r.id === id);
-    if (!run)
-      throw new Error(`Run not found: ${id}`);
-    Object.assign(run, patch);
+  async defineEndpointRelationships(jobId: string, graph: Array<{ endpointId: string; tier?: string; dependsOn?: string[] }>): Promise<void> {
+    // Validate all endpoints belong to this job
+    for (const node of graph) {
+      const ep = this.map.get(node.endpointId) as any;
+      if (!ep)
+        throw new Error(`Endpoint not found: ${node.endpointId}`);
+      if (ep.jobId !== jobId)
+        throw new Error(`Endpoint ${node.endpointId} does not belong to job ${jobId}`);
+    }
+
+    // Update endpoints with tier and dependency info
+    for (const node of graph) {
+      const ep = this.map.get(node.endpointId) as any;
+      ep.tier = node.tier;
+      ep.dependencyGraph = node.dependsOn;
+    }
   }
 }
