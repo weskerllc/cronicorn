@@ -5,7 +5,7 @@ import { DrizzleJobsRepo } from "@cronicorn/adapter-drizzle";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { nanoid } from "nanoid";
 
-import type { CreateJobInput, TransactionProvider } from "../types.js";
+import type { CreateEndpointInputV1, TransactionProvider } from "../types.js";
 
 /**
  * JobsManager handles business logic for job operations.
@@ -42,7 +42,7 @@ export class JobsManager {
    * @param input - Job configuration
    * @returns The created JobEndpoint domain entity
    */
-  async createJob(userId: string, input: CreateJobInput): Promise<JobEndpoint> {
+  async createJob(userId: string, input: CreateEndpointInputV1): Promise<JobEndpoint> {
     return this.txProvider.transaction(async (tx) => {
       const now = this.clock.now();
       const endpointId = nanoid();

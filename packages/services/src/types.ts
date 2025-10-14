@@ -34,14 +34,15 @@ export type TransactionProvider = {
 export type TransactionContext = unknown;
 
 /**
- * Input for creating a new job.
+ * @deprecated Use CreateEndpointInput from manager-v2 instead
+ * Input for creating a new endpoint (legacy from v1).
  *
  * This is a plain TypeScript type (not a Zod schema or domain entity).
- * - API layer maps HTTP DTOs → CreateJobInput
- * - MCP layer maps tool parameters → CreateJobInput
- * - CLI layer maps command args → CreateJobInput
+ * - API layer maps HTTP DTOs → CreateEndpointInput
+ * - MCP layer maps tool parameters → CreateEndpointInput
+ * - CLI layer maps command args → CreateEndpointInput
  */
-export type CreateJobInput = {
+export type CreateEndpointInputV1 = {
   name: string;
   baselineCron?: string;
   baselineIntervalMs?: number;
