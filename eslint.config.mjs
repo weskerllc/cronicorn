@@ -51,6 +51,6 @@ export default antfu({
       ts: "never",
     }],
   },
-
-  ignores: ["**/migrations/*", "**/*.md"],
+  // TODO: Add the web baack in
+  ignores: ["**/migrations/*", "**/*.md", "**/apps/web/*"],
 });
