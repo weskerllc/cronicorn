@@ -1,8 +1,9 @@
 import type { Cron } from "@cronicorn/domain";
 
+import { InMemoryJobsRepo, InMemoryRunsRepo } from "@cronicorn/domain/fixtures";
+
 import { FakeClock } from "../adapters/fake-clock.js";
 import { FakeDispatcher } from "../adapters/fake-dispatcher.js";
-import { InMemoryJobsRepo, InMemoryRunsRepo } from "../adapters/memory-store.js";
 import { callTool, type Tool } from "../domain/ports.js";
 import { Scheduler } from "../domain/scheduler.js";
 
