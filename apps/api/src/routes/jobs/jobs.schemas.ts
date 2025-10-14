@@ -194,17 +194,6 @@ export const JobResponseSchema = z
       description: "Request timeout (ms)",
       example: 30000,
     }),
-
-    // Metadata
-    createdAt: z.string().datetime().openapi({
-      description: "Job creation timestamp (ISO 8601)",
-      example: "2024-10-13T08:00:00Z",
-    }),
-
-    updatedAt: z.string().datetime().openapi({
-      description: "Last update timestamp (ISO 8601)",
-      example: "2024-10-13T08:00:00Z",
-    }),
   });
 
 export type JobResponse = z.infer<typeof JobResponseSchema>;
