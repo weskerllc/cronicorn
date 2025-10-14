@@ -1,3 +1,4 @@
+import type { Clock, Cron } from "@cronicorn/domain";
 import type { JobsManager } from "@cronicorn/services/jobs";
 import type { RouteConfig, RouteHandler } from "@hono/zod-openapi";
 
@@ -6,11 +7,15 @@ import { defaultHook } from "stoker/openapi";
 
 import type { Auth } from "./auth/config.js";
 import type { AuthContext } from "./auth/types.js";
+import type { Database } from "./lib/db.js";
 
 export type AppBindings = {
   Variables: {
-    jobsManager: JobsManager;
+    db: Database;
+    clock: Clock;
+    cron: Cron;
     auth: Auth;
+    withJobsManager: <T extends Response>(fn: (manager: JobsManager) => Promise<T>) => Promise<T>;
     // Set by requireAuth middleware
     session?: AuthContext["session"];
     userId?: string;

@@ -12,11 +12,12 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
   const input = c.req.valid("json");
   const { userId } = getAuthContext(c);
 
-  // Use singleton manager from context (no per-request instantiation)
-  const manager = c.get("jobsManager");
-  const result = await manager.createJob(userId, input);
-  const response = mapJobToResponse(result);
-  return c.json(response, HTTPStatusCodes.CREATED);
+  // Use transaction-per-request pattern with auto-wired manager
+  return c.get("withJobsManager")(async (manager) => {
+    const result = await manager.createEndpoint(userId, input);
+    const response = mapJobToResponse(result);
+    return c.json(response, HTTPStatusCodes.CREATED);
+  });
 };
 
 function mapJobToResponse(job: JobEndpoint): JobResponse {
