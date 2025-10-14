@@ -1,12 +1,10 @@
-import type { JobEndpoint } from "@cronicorn/domain";
-
 import * as HTTPStatusCodes from "stoker/http-status-codes";
 
 import type { AppRouteHandler } from "../../types.js";
 import type { CreateRoute } from "./jobs.routes.js";
-import type { JobResponse } from "./jobs.schemas.js";
 
 import { getAuthContext } from "../../auth/middleware.js";
+import { mapEndpointToResponse } from "./jobs.mappers.js";
 
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
   const input = c.req.valid("json");
@@ -14,28 +12,8 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 
   // Use transaction-per-request pattern with auto-wired manager
   return c.get("withJobsManager")(async (manager) => {
-    const result = await manager.createEndpoint(userId, input);
-    const response = mapJobToResponse(result);
+    const endpoint = await manager.createEndpoint(userId, input);
+    const response = mapEndpointToResponse(endpoint);
     return c.json(response, HTTPStatusCodes.CREATED);
   });
 };
-
-function mapJobToResponse(job: JobEndpoint): JobResponse {
-  return {
-    id: job.id,
-    name: job.name,
-    baselineCron: job.baselineCron,
-    baselineIntervalMs: job.baselineIntervalMs,
-    minIntervalMs: job.minIntervalMs,
-    maxIntervalMs: job.maxIntervalMs,
-    nextRunAt: job.nextRunAt.toISOString(),
-    failureCount: job.failureCount,
-    url: job.url,
-    method: job.method,
-    headersJson: job.headersJson,
-    bodyJson: job.bodyJson,
-    timeoutMs: job.timeoutMs,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-}
