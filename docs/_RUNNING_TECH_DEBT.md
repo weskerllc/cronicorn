@@ -834,3 +834,86 @@ const manager = new JobsManager(txProvider);
 - Ready for MCP server implementation
 
 **Reference**: See `.adr/0009-extract-services-layer.md` for comprehensive design rationale.
+
+---
+
+## Use Cases & Public Actions Research (2025-01-16)
+
+**Status**: ✅ Complete
+
+**What We Documented**:
+- 📋 **6 Diverse Use Cases**: E-commerce flash sales, DevOps monitoring, content publishing, data pipelines, SaaS billing, web scraping
+- ✅ **Action Classification**: Clear separation of user-facing (17 actions) vs background scheduler (6 actions)
+- ✅ **Public API Surface**: 17 actions across 4 categories (Jobs, Endpoints, Adaptive Control, Visibility)
+- ✅ **Actor Mapping**: Identified when users vs AI agents vs background scheduler perform each action
+- ✅ **Use Case Coverage**: Validated that 17 public actions support all 6 use cases
+
+**Key Findings**:
+
+1. **Two Modes of Interaction**:
+   - **Setup Phase**: Create jobs, configure endpoints, set baselines
+   - **Maintenance Phase**: Monitor, adjust, pause/resume, investigate failures
+
+2. **Actor Distinction**:
+   - **Users**: Direct control via REST API (manual configuration, troubleshooting)
+   - **AI Agents**: Autonomous steering via MCP/REST (adaptive hints, conditional activation)
+   - **Background Scheduler**: Internal execution loop (claim, dispatch, update) - NOT user-facing
+
+3. **17 Public-Facing Actions** (MCP/REST):
+   - **Jobs Lifecycle**: createJob, getJob, listJobs, updateJob, archiveJob
+   - **Endpoint Orchestration**: addEndpointToJob, updateEndpointConfig, deleteEndpoint, listJobEndpoints
+   - **Adaptive Control**: applyIntervalHint, scheduleOneShotRun, pauseOrResumeEndpoint, clearAdaptiveHints, resetFailureCount
+   - **Visibility**: listRuns, getRunDetails, summarizeEndpointHealth
+
+4. **6 Background Scheduler Actions** (Internal Only):
+   - claimDueEndpoints, dispatcher.execute, runs.create/finish, governor.planNextRun, jobs.updateAfterRun, tick loop orchestration
+
+**Documentation Created**:
+- `docs/use-cases-and-actions.md` - Comprehensive guide covering:
+  - 6 diverse use cases with detailed scenarios
+  - User actions during setup and maintenance
+  - AI agent actions for each use case
+  - Clear action category definitions
+  - Public API surface (17 actions)
+  - Implementation roadmap
+
+**Alignment with Existing Docs**:
+- ✅ Consistent with `docs/TODO.md` Phase 3 service actions
+- ✅ Extends `docs/flash-sale-scenario.md` with 5 additional use cases
+- ✅ Validates `CORE_SERVICE_RESEARCH.md` service breakdown
+- ✅ Confirms architecture patterns in `docs/ai-scheduler-architecture.md`
+
+**Uncertainties & Open Questions**:
+
+1. **Endpoint Relationship Management** (TODO.md mentions `defineEndpointRelationships`):
+   - Current decision: AI orchestrates via natural language, no explicit dependency graph storage
+   - Question: Should we expose `defineEndpointRelationships` action for power users?
+   - Resolution: Defer until third use case requires it (YAGNI)
+
+2. **Reason Parameter Consistency**:
+   - Adaptive control actions accept optional `reason` for audit trails
+   - Question: Should all actions accept `reason` for comprehensive audit?
+   - Resolution: Add to adaptive control first, extend to others if needed
+
+3. **Pagination Strategy**:
+   - `listRuns` mentions `limit` and `offset` parameters
+   - Question: Cursor-based vs offset-based pagination?
+   - Resolution: Start with offset (simpler), migrate to cursor if performance issues
+
+4. **API Key Scoping**:
+   - Better Auth provides API keys, but no scheduler-specific scopes defined
+   - Question: Should we implement action-level permissions (e.g., `endpoint:write`, `scheduling:control`)?
+   - Resolution: Start with userId-based auth, add scopes when multi-user/team features arrive
+
+5. **Batch Operations**:
+   - Currently all actions operate on single resources
+   - Question: Should we add batch variants (e.g., `pauseMultipleEndpoints`)?
+   - Resolution: MCP agents can call actions multiple times, defer batch APIs until performance requirement emerges
+
+**No Tech Debt**: This is research and documentation, not code. All findings documented in `docs/use-cases-and-actions.md`.
+
+**Next Steps**:
+- ⏭️ Implement remaining CRUD endpoints (GET, PATCH, DELETE for jobs and endpoints)
+- ⏭️ Implement adaptive control surface (hints, pause, one-shot scheduling)
+- ⏭️ Implement visibility surface (runs listing, health summaries)
+- ⏭️ Design and implement MCP server wrapping all 17 actions
