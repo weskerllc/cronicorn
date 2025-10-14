@@ -209,4 +209,11 @@ export class InMemoryJobsRepo implements JobsRepo {
       .filter(ep => ep.jobId === jobId)
       .map(ep => structuredClone(ep));
   }
+
+  async deleteEndpoint(id: string): Promise<void> {
+    if (!this.map.has(id)) {
+      throw new Error(`Endpoint not found: ${id}`);
+    }
+    this.map.delete(id);
+  }
 }

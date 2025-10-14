@@ -66,6 +66,7 @@ export type JobsRepo = {
 
   // Endpoint relationship operations (Phase 3)
   listEndpointsByJob: (jobId: string) => Promise<JobEndpoint[]>;
+  deleteEndpoint: (id: string) => Promise<void>;
 };
 
 export type RunsRepo = {

@@ -2,9 +2,9 @@ import type { Clock, Cron, Job, JobEndpoint, JobsRepo, RunsRepo } from "@cronico
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CreateEndpointInput, CreateJobInput } from "../manager-v2.js";
+import type { CreateEndpointInput, CreateJobInput } from "../manager.js";
 
-import { JobsManager } from "../manager-v2.js";
+import { JobsManager } from "../manager.js";
 
 /**
  * Test suite for JobsManager (v2 - clean hexagonal architecture).
@@ -14,7 +14,7 @@ import { JobsManager } from "../manager-v2.js";
  * - Simple mocking of port interfaces
  * - Fast, isolated unit tests
  */
-describe("jobsManager (v2)", () => {
+describe("jobsManager", () => {
     let mockJobsRepo: JobsRepo;
     let mockRunsRepo: RunsRepo;
     let fakeClock: Clock;
@@ -32,6 +32,7 @@ describe("jobsManager (v2)", () => {
             add: vi.fn(),
             listEndpointsByJob: vi.fn(),
             getEndpoint: vi.fn(),
+            deleteEndpoint: vi.fn(),
             claimDueEndpoints: vi.fn(),
             setLock: vi.fn(),
             clearLock: vi.fn(),
@@ -319,6 +320,43 @@ describe("jobsManager (v2)", () => {
             const result = await manager.getEndpoint("user-1", "ep-1");
 
             expect(result).toBeNull();
+        });
+    });
+
+    describe("deleteEndpoint", () => {
+        it("deletes endpoint when user owns it", async () => {
+            const mockEndpoint: JobEndpoint = {
+                id: "ep-1",
+                tenantId: "user-1",
+                name: "My Endpoint",
+                nextRunAt: new Date(),
+                failureCount: 0,
+            };
+
+            vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+            vi.mocked(mockJobsRepo.deleteEndpoint).mockResolvedValue(undefined);
+
+            await manager.deleteEndpoint("user-1", "ep-1");
+
+            expect(mockJobsRepo.deleteEndpoint).toHaveBeenCalledWith("ep-1");
+        });
+
+        it("throws when user does not own endpoint", async () => {
+            const mockEndpoint: JobEndpoint = {
+                id: "ep-1",
+                tenantId: "user-2", // Different user
+                name: "Someone else's endpoint",
+                nextRunAt: new Date(),
+                failureCount: 0,
+            };
+
+            vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+
+            await expect(
+                manager.deleteEndpoint("user-1", "ep-1"),
+            ).rejects.toThrow("Endpoint not found or unauthorized");
+
+            expect(mockJobsRepo.deleteEndpoint).not.toHaveBeenCalled();
         });
     });
 });

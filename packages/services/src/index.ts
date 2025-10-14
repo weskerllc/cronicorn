@@ -11,5 +11,4 @@
  * about HTTP, JSON-RPC, or other transport details.
  */
 
-export * from "./jobs/manager-v2.js";
-export * from "./types.js";
+export * from "./jobs/manager.js";
