@@ -1,4 +1,4 @@
-# @cronicorn/scheduler
+# @cronicorn/worker-scheduler
 
 A flexible, AI-powered job scheduler with clean architecture and type-safe tool integration for modern TypeScript applications.
 
@@ -17,7 +17,7 @@ Provides the core scheduling domain logic with pluggable AI integration. Uses he
 ## Installation
 
 ```bash
-pnpm add @cronicorn/scheduler zod
+pnpm add @cronicorn/worker-scheduler zod
 ```
 
 ## Core Concepts

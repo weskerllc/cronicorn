@@ -9,7 +9,7 @@ import { CronParserAdapter } from "@cronicorn/adapter-cron";
 import { DrizzleJobsRepo, DrizzleRunsRepo, schema } from "@cronicorn/adapter-drizzle";
 import { HttpDispatcher } from "@cronicorn/adapter-http";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
-import { Scheduler } from "@cronicorn/scheduler";
+import { Scheduler } from "@cronicorn/worker-scheduler";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { z } from "zod";

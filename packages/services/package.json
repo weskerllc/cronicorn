@@ -25,7 +25,7 @@
     "@cronicorn/adapter-drizzle": "workspace:*",
     "@cronicorn/adapter-system-clock": "workspace:*",
     "@cronicorn/domain": "workspace:*",
-    "@cronicorn/scheduler": "workspace:*",
+    "@cronicorn/worker-scheduler": "workspace:*",
     "nanoid": "^5.0.9",
     "zod": "^4.1.12"
   }

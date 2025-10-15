@@ -5,7 +5,7 @@
     "fixed": [
         [
             "@cronicorn/api",
-            "@cronicorn/scheduler",
+            "@cronicorn/worker-scheduler",
             "@cronicorn/contracts",
             "@cronicorn/core-observability",
             "@cronicorn/core-schemas",

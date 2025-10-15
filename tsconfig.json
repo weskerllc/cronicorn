@@ -2,7 +2,7 @@
   "files": [],
   "references": [
     { "path": "./packages/domain" },
-    { "path": "./packages/scheduler" },
+    { "path": "./packages/worker-scheduler" },
     { "path": "./packages/worker-ai-planner" },
     { "path": "./packages/services" },
     { "path": "./packages/adapter-ai" },
