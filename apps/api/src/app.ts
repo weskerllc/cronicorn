@@ -2,6 +2,7 @@ import { CronParserAdapter } from "@cronicorn/adapter-cron";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { cors } from "hono/cors";
 
+import type { Auth } from "./auth/config.js";
 import type { Env } from "./lib/config.js";
 import type { Database } from "./lib/db.js";
 
@@ -12,9 +13,14 @@ import configureOpenAPI from "./lib/openapi.js";
 import jobs from "./routes/jobs/jobs.index.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
 
-export async function createApp(db: Database, config: Env) {
+export async function createApp(
+  db: Database,
+  config: Env,
+  authInstance?: Auth, // Optional auth for testing
+) {
   // Initialize Better Auth (pass Drizzle instance, not raw pool)
-  const auth = createAuth(config, db);
+  // Use provided auth instance for testing, or create new one for production
+  const auth = authInstance ?? createAuth(config, db);
 
   // Create stateless singletons (safe to reuse across requests)
   const clock = new SystemClock();
