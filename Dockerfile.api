@@ -27,15 +27,15 @@ FROM deps AS builder
 # Copy application source code
 COPY . .
 
-# Build all workspace packages first
-RUN pnpm run --filter="./packages/*" build
-
-# Build the application
-WORKDIR /repo/apps/api
+# Build using TypeScript project references (builds all dependencies)
 RUN pnpm run build
 
 # Create a pruned node_modules for the API with all dependencies
-RUN pnpm deploy --filter=api --legacy /tmp/api-deploy
+# Note: Must include migrations folder from adapter-drizzle
+RUN pnpm deploy --filter=@cronicorn/api --legacy /tmp/api-deploy
+
+# Copy the built dist folder to the deploy directory
+RUN cp -r /repo/apps/api/dist /tmp/api-deploy/
 
 # Stage 2: Final Production Image
 FROM node:lts-alpine AS runner
@@ -47,9 +47,6 @@ FROM node:${NODE_VERSION}-alpine AS api
 ENV NODE_ENV=production
 USER node
 WORKDIR /app
-# copy compiled dist + package.json + pruned node_modules
-COPY --chown=node:node --from=builder   /repo/apps/api/dist ./dist
-COPY --chown=node:node --from=builder   /repo/apps/api/package.json ./package.json
-COPY --chown=node:node --from=builder   /tmp/api-deploy/node_modules ./node_modules
-EXPOSE 3333
+# Copy everything from the deploy directory
+COPY --chown=node:node --from=builder /tmp/api-deploy ./
 CMD ["node","dist/index.js"]

@@ -48,13 +48,17 @@ services:
       migrator:
         condition: service_completed_successfully
     environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@${COMPOSE_PROJECT_NAME:-cronicorn}-db:5432/${POSTGRES_DB:-db}
+      PORT: ${PORT:-3333}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      WEB_URL: ${WEB_URL}
+      API_URL: ${API_URL}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
-      AUTH_SECRET: ${AUTH_SECRET}
-      DATABASE_URL: ${DATABASE_URL}
-      CRONICORN_API_URL: ${CRONICORN_API_URL}
+      NODE_ENV: ${NODE_ENV:-production}
     ports:
-      - "${API_PORT:-3333}:3333"
+      - "${PORT:-3333}:3333"
 
   scheduler:
     profiles: [prod]

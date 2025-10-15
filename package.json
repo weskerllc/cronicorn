@@ -39,7 +39,7 @@
     "scenarios": "dotenv -e .env -- pnpm --filter @cronicorn/scenarios scenarios",
     "🚀 ---------- DOCKER ----------": "",
     "docker:dev": "docker compose --profile dev up --build",
-    "docker:prod": "docker compose --profile prod up -d --build",
+    "docker:prod": "docker compose --env-file .env.production --profile prod up -d --build",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f"
   },
