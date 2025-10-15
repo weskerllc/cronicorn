@@ -13,6 +13,10 @@
     "./jobs": {
       "types": "./dist/jobs/index.d.ts",
       "default": "./dist/jobs/index.js"
+    },
+    "./scheduling": {
+      "types": "./dist/scheduling/index.d.ts",
+      "default": "./dist/scheduling/index.js"
     }
   },
   "files": ["dist"],
@@ -21,6 +25,8 @@
     "@cronicorn/adapter-drizzle": "workspace:*",
     "@cronicorn/adapter-system-clock": "workspace:*",
     "@cronicorn/domain": "workspace:*",
-    "nanoid": "^5.0.9"
+    "@cronicorn/scheduler": "workspace:*",
+    "nanoid": "^5.0.9",
+    "zod": "^4.1.12"
   }
 }

@@ -79,6 +79,29 @@ services:
       AI_MODEL: ${AI_MODEL}
       NODE_ENV: ${NODE_ENV:-production}
 
+  ai-planner:
+    profiles: [prod]
+    build:
+      context: .
+      dockerfile: Dockerfile.ai-planner
+    container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-ai-planner
+    restart: unless-stopped
+    networks: [cronicorn]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@${COMPOSE_PROJECT_NAME:-cronicorn}-db:5432/${POSTGRES_DB:-db}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      AI_ANALYSIS_INTERVAL_MS: ${AI_ANALYSIS_INTERVAL_MS:-300000}
+      AI_LOOKBACK_MINUTES: ${AI_LOOKBACK_MINUTES:-5}
+      AI_MAX_TOKENS: ${AI_MAX_TOKENS:-500}
+      AI_TEMPERATURE: ${AI_TEMPERATURE:-0.7}
+      NODE_ENV: ${NODE_ENV:-production}
+
 volumes:
   db_data:
 

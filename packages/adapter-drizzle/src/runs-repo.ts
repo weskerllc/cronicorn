@@ -75,16 +75,16 @@ export class DrizzleRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-      runs: Array<{
-        runId: string;
-        endpointId: string;
-        startedAt: Date;
-        status: string;
-        durationMs?: number;
-        source?: string;
-      }>;
-      total: number;
-    }> {
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }> {
     // Build conditions
     // Build query conditions
     const conditions = [];
@@ -256,5 +256,14 @@ export class DrizzleRunsRepo implements RunsRepo {
       lastRun,
       failureStreak,
     };
+  }
+
+  async getEndpointsWithRecentRuns(since: Date): Promise<string[]> {
+    const results = await this.tx
+      .selectDistinct({ endpointId: runs.endpointId })
+      .from(runs)
+      .where(gte(runs.startedAt, since));
+
+    return results.map(r => r.endpointId);
   }
 }
