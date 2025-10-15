@@ -19,7 +19,7 @@ This package provides a simple wrapper around Node.js system time APIs, implemen
 
 ```typescript
 import { SystemClock } from "@cronicorn/adapter-system-clock";
-import { Scheduler } from "@cronicorn/scheduler";
+import { Scheduler } from "@cronicorn/worker-scheduler";
 
 const clock = new SystemClock();
 
@@ -40,7 +40,7 @@ await scheduler.tick(batchSize, lockTtlMs);
 Use `FakeClock` from the scheduler package for deterministic testing:
 
 ```typescript
-import { FakeClock } from "@cronicorn/scheduler/adapters";
+import { FakeClock } from "@cronicorn/worker-scheduler/adapters";
 
 const clock = new FakeClock("2025-01-01T00:00:00Z");
 console.log(clock.now()); // 2025-01-01T00:00:00.000Z

@@ -35,7 +35,7 @@ await planner.analyzeEndpoints(["ep-1", "ep-2", "ep-3"]);
 ## Dependencies
 
 - `@cronicorn/domain` - Domain entities and ports
-- `@cronicorn/scheduler` - Tool system infrastructure (defineTools, tool, AIClient type)
+- `@cronicorn/worker-scheduler` - Tool system infrastructure (defineTools, tool, AIClient type)
 - `zod` - Schema validation for AI tools
 
 ## Pattern

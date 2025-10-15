@@ -9,12 +9,12 @@
 ```typescript
 // ✅ Correct: Import from source packages
 import { planNextRun, type JobEndpoint, type Clock } from "@cronicorn/domain";
-import { Scheduler, callTool, type AIClient } from "@cronicorn/scheduler";
+import { Scheduler, callTool, type AIClient } from "@cronicorn/worker-scheduler";
 ```
 
 ```typescript
 // ❌ Wrong: Don't re-export domain from scheduler
-import { Scheduler, planNextRun, type JobEndpoint } from "@cronicorn/scheduler";
+import { Scheduler, planNextRun, type JobEndpoint } from "@cronicorn/worker-scheduler";
 ```
 
 ### Why This Pattern?
@@ -37,7 +37,7 @@ import { Scheduler, planNextRun, type JobEndpoint } from "@cronicorn/scheduler";
 | Package | Exports | Purpose |
 |---------|---------|---------|
 | `@cronicorn/domain` | `JobEndpoint`, `planNextRun`, ports, fixtures | Pure scheduling domain logic |
-| `@cronicorn/scheduler` | `Scheduler`, AI tool helpers | Orchestration & AI integration |
+| `@cronicorn/worker-scheduler` | `Scheduler`, AI tool helpers | Orchestration & AI integration |
 
 **See**: ADR-0001 for full rationale on removing domain extensions and re-exports.
 

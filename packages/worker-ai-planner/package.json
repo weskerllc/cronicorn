@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@cronicorn/domain": "workspace:*",
-    "@cronicorn/scheduler": "workspace:*",
     "zod": "^4.1.12"
   },
   "devDependencies": {

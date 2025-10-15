@@ -164,9 +164,9 @@ importers:
       '@cronicorn/adapter-system-clock':
         specifier: workspace:*
         version: link:../../packages/adapter-system-clock
-      '@cronicorn/scheduler':
+      '@cronicorn/worker-scheduler':
         specifier: workspace:*
-        version: link:../../packages/scheduler
+        version: link:../../packages/worker-scheduler
       drizzle-orm:
         specifier: ^0.38.3
         version: 0.38.3(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.15.5)(@types/react@19.2.2)(better-sqlite3@12.4.1)(kysely@0.28.8)(pg@8.16.3)(prisma@5.22.0)(react@19.2.0)
@@ -340,15 +340,6 @@ importers:
         specifier: ^4.1.12
         version: 4.1.12
 
-  packages/scheduler:
-    dependencies:
-      '@cronicorn/domain':
-        specifier: workspace:*
-        version: link:../domain
-      zod:
-        specifier: ^4.1.12
-        version: 4.1.12
-
   packages/services:
     dependencies:
       '@cronicorn/adapter-cron':
@@ -363,9 +354,9 @@ importers:
       '@cronicorn/domain':
         specifier: workspace:*
         version: link:../domain
-      '@cronicorn/scheduler':
+      '@cronicorn/worker-scheduler':
         specifier: workspace:*
-        version: link:../scheduler
+        version: link:../worker-scheduler
       nanoid:
         specifier: ^5.0.9
         version: 5.1.6
@@ -378,9 +369,6 @@ importers:
       '@cronicorn/domain':
         specifier: workspace:*
         version: link:../domain
-      '@cronicorn/scheduler':
-        specifier: workspace:*
-        version: link:../scheduler
       zod:
         specifier: ^4.1.12
         version: 4.1.12
@@ -394,6 +382,15 @@ importers:
       vitest:
         specifier: ~3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.7.2)(jiti@2.6.1)(jsdom@27.0.0(postcss@8.5.6))(lightningcss@1.30.1)(msw@2.11.5(@types/node@24.7.2)(typescript@5.7.3))(tsx@4.20.6)(yaml@2.8.1)
+
+  packages/worker-scheduler:
+    dependencies:
+      '@cronicorn/domain':
+        specifier: workspace:*
+        version: link:../domain
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
 
 packages:
 

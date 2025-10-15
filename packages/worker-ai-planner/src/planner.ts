@@ -10,33 +10,33 @@ import type { AIClient, Clock, JobsRepo, RunsRepo } from "@cronicorn/domain";
 import { createToolsForEndpoint } from "./tools.js";
 
 export type AIPlannerDeps = {
-    aiClient: AIClient;
-    jobs: JobsRepo;
-    runs: RunsRepo;
-    clock: Clock;
+  aiClient: AIClient;
+  jobs: JobsRepo;
+  runs: RunsRepo;
+  clock: Clock;
 };
 
 /**
  * Build analysis prompt for AI to understand endpoint context and suggest adjustments.
  */
 function buildAnalysisPrompt(endpoint: {
-    name: string;
-    baselineCron?: string;
-    baselineIntervalMs?: number;
-    lastRunAt?: Date;
-    nextRunAt: Date;
-    failureCount: number;
+  name: string;
+  baselineCron?: string;
+  baselineIntervalMs?: number;
+  lastRunAt?: Date;
+  nextRunAt: Date;
+  failureCount: number;
 }, health: {
-    successCount: number;
-    failureCount: number;
-    avgDurationMs: number | null;
-    lastRun: { status: string; at: Date } | null;
-    failureStreak: number;
+  successCount: number;
+  failureCount: number;
+  avgDurationMs: number | null;
+  lastRun: { status: string; at: Date } | null;
+  failureStreak: number;
 }): string {
-    const totalRuns = health.successCount + health.failureCount;
-    const successRate = totalRuns > 0 ? (health.successCount / totalRuns * 100).toFixed(1) : "N/A";
+  const totalRuns = health.successCount + health.failureCount;
+  const successRate = totalRuns > 0 ? (health.successCount / totalRuns * 100).toFixed(1) : "N/A";
 
-    return `You are an adaptive job scheduler AI. Analyze this endpoint's execution patterns and suggest adjustments if needed.
+  return `You are an adaptive job scheduler AI. Analyze this endpoint's execution patterns and suggest adjustments if needed.
 
 **Endpoint: ${endpoint.name}**
 
@@ -74,66 +74,66 @@ Analyze the data and call appropriate tools if adjustments would improve reliabi
  * Analyzes endpoint execution patterns and writes adaptive hints to the database.
  */
 export class AIPlanner {
-    constructor(private readonly deps: AIPlannerDeps) { }
+  constructor(private readonly deps: AIPlannerDeps) { }
 
-    /**
-     * Analyze a single endpoint and let AI suggest adjustments.
-     *
-     * This method:
-     * 1. Fetches endpoint state from database
-     * 2. Gets health summary (last 24 hours)
-     * 3. Builds context prompt for AI
-     * 4. Invokes AI with endpoint-scoped tools
-     * 5. AI may call tools to write hints to database
-     * 6. Scheduler picks up hints on next execution
-     *
-     * @param endpointId - The endpoint to analyze
-     */
-    async analyzeEndpoint(endpointId: string): Promise<void> {
-        const { aiClient, jobs, runs, clock } = this.deps;
+  /**
+   * Analyze a single endpoint and let AI suggest adjustments.
+   *
+   * This method:
+   * 1. Fetches endpoint state from database
+   * 2. Gets health summary (last 24 hours)
+   * 3. Builds context prompt for AI
+   * 4. Invokes AI with endpoint-scoped tools
+   * 5. AI may call tools to write hints to database
+   * 6. Scheduler picks up hints on next execution
+   *
+   * @param endpointId - The endpoint to analyze
+   */
+  async analyzeEndpoint(endpointId: string): Promise<void> {
+    const { aiClient, jobs, runs, clock } = this.deps;
 
-        // 1. Get current endpoint state
-        const endpoint = await jobs.getEndpoint(endpointId);
+    // 1. Get current endpoint state
+    const endpoint = await jobs.getEndpoint(endpointId);
 
-        // 2. Get health summary (last 24 hours)
-        const since = new Date(clock.now().getTime() - 24 * 60 * 60 * 1000);
-        const health = await runs.getHealthSummary(endpointId, since);
+    // 2. Get health summary (last 24 hours)
+    const since = new Date(clock.now().getTime() - 24 * 60 * 60 * 1000);
+    const health = await runs.getHealthSummary(endpointId, since);
 
-        // 3. Build AI context
-        const prompt = buildAnalysisPrompt(endpoint, health);
+    // 3. Build AI context
+    const prompt = buildAnalysisPrompt(endpoint, health);
 
-        // 4. Create endpoint-scoped tools
-        const tools = createToolsForEndpoint(endpointId, jobs, clock);
+    // 4. Create endpoint-scoped tools
+    const tools = createToolsForEndpoint(endpointId, jobs, clock);
 
-        // 5. Invoke AI with tools
-        // AI will analyze and optionally call tools to write hints
-        await aiClient.planWithTools({
-            input: prompt,
-            tools,
-            maxTokens: 500, // Keep responses concise
-        });
+    // 5. Invoke AI with tools
+    // AI will analyze and optionally call tools to write hints
+    await aiClient.planWithTools({
+      input: prompt,
+      tools,
+      maxTokens: 500, // Keep responses concise
+    });
 
-        // Tools write hints to database asynchronously
-        // Scheduler will pick them up on next execution
+    // Tools write hints to database asynchronously
+    // Scheduler will pick them up on next execution
+  }
+
+  /**
+   * Analyze multiple endpoints in batch.
+   *
+   * Useful for periodic analysis of all active endpoints.
+   *
+   * @param endpointIds - Array of endpoint IDs to analyze
+   */
+  async analyzeEndpoints(endpointIds: string[]): Promise<void> {
+    for (const id of endpointIds) {
+      try {
+        await this.analyzeEndpoint(id);
+      }
+      catch (error) {
+        // Log but continue - don't let one failure stop batch
+
+        console.error(`Failed to analyze endpoint ${id}:`, error);
+      }
     }
-
-    /**
-     * Analyze multiple endpoints in batch.
-     *
-     * Useful for periodic analysis of all active endpoints.
-     *
-     * @param endpointIds - Array of endpoint IDs to analyze
-     */
-    async analyzeEndpoints(endpointIds: string[]): Promise<void> {
-        for (const id of endpointIds) {
-            try {
-                await this.analyzeEndpoint(id);
-            }
-            catch (error) {
-                // Log but continue - don't let one failure stop batch
-
-                console.error(`Failed to analyze endpoint ${id}:`, error);
-            }
-        }
-    }
+  }
 }

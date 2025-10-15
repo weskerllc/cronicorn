@@ -510,7 +510,7 @@ You don’t need a DB for the sim, but if/when you do:
 ## 15) Quick Start (Sim)
 
 ```bash
-pnpm --filter @cronicorn/scheduler run sim
+pnpm --filter @cronicorn/worker-scheduler run sim
 # or from packages/scheduler:
 pnpm sim
 ```

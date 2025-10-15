@@ -20,7 +20,7 @@ This package implements the `Dispatcher` port from `@cronicorn/domain`, providin
 
 ```typescript
 import { HttpDispatcher } from "@cronicorn/adapter-http";
-import { Scheduler } from "@cronicorn/scheduler";
+import { Scheduler } from "@cronicorn/worker-scheduler";
 
 const dispatcher = new HttpDispatcher();
 

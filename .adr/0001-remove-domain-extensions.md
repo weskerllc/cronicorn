@@ -85,7 +85,7 @@ Additionally, the scheduler was re-exporting all domain ports (`Clock`, `Cron`, 
 - Explicit boundary forces intentional design
 
 ⚠️ **More verbose imports**: Need two import statements instead of one  
-- `import { Scheduler } from "@cronicorn/scheduler";`
+- `import { Scheduler } from "@cronicorn/worker-scheduler";`
 - `import { JobEndpoint } from "@cronicorn/domain";`
 - Minor verbosity worth the clarity (modern IDEs auto-import correctly)
 

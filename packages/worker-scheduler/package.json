@@ -1,5 +1,5 @@
 {
-  "name": "@cronicorn/scheduler",
+  "name": "@cronicorn/worker-scheduler",
   "type": "module",
   "version": "0.0.0",
   "main": "./dist/index.js",
