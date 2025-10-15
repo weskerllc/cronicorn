@@ -41,7 +41,7 @@ export function testJobsRepoContract(
           failureCount: 0,
         };
 
-        await repo.add(ep);
+        await repo.addEndpoint(ep);
         const retrieved = await repo.getEndpoint("ep1");
 
         expect(retrieved).toMatchObject({
@@ -64,7 +64,7 @@ export function testJobsRepoContract(
       it("should claim endpoints that are due now", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -73,7 +73,7 @@ export function testJobsRepoContract(
           failureCount: 0,
         });
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep2",
           jobId: "job2",
           tenantId: "t1",
@@ -89,7 +89,7 @@ export function testJobsRepoContract(
       it("should claim endpoints within time horizon", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -105,7 +105,7 @@ export function testJobsRepoContract(
       it("should respect limit parameter", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -114,7 +114,7 @@ export function testJobsRepoContract(
           failureCount: 0,
         });
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep2",
           jobId: "job2",
           tenantId: "t1",
@@ -131,7 +131,7 @@ export function testJobsRepoContract(
       it("should skip paused endpoints", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -148,7 +148,7 @@ export function testJobsRepoContract(
       it("should claim paused endpoint after pause expires", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -165,7 +165,7 @@ export function testJobsRepoContract(
       it("should be idempotent (no double-claiming)", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -186,7 +186,7 @@ export function testJobsRepoContract(
       it("should update lastRunAt, nextRunAt, and clear lock", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -213,7 +213,7 @@ export function testJobsRepoContract(
       it("should reset failure count on success", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -237,7 +237,7 @@ export function testJobsRepoContract(
       it("should increment failure count on failure", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -261,7 +261,7 @@ export function testJobsRepoContract(
       it("should clear expired AI hints", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -288,7 +288,7 @@ export function testJobsRepoContract(
       it("should not clear non-expired AI hints", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -315,7 +315,7 @@ export function testJobsRepoContract(
 
     describe("AI steering - writeAIHint", () => {
       it("should write interval hint", async () => {
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -337,7 +337,7 @@ export function testJobsRepoContract(
       });
 
       it("should write one-shot hint", async () => {
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -361,7 +361,7 @@ export function testJobsRepoContract(
       it("should nudge nextRunAt to earlier time", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -380,7 +380,7 @@ export function testJobsRepoContract(
       it("should not nudge to later time", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -399,7 +399,7 @@ export function testJobsRepoContract(
       it("should clamp to minIntervalMs", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -421,7 +421,7 @@ export function testJobsRepoContract(
       it("should clamp to maxIntervalMs", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -443,7 +443,7 @@ export function testJobsRepoContract(
       it("should not nudge paused endpoint", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -462,7 +462,7 @@ export function testJobsRepoContract(
 
     describe("AI steering - setPausedUntil", () => {
       it("should pause endpoint", async () => {
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -478,7 +478,7 @@ export function testJobsRepoContract(
       });
 
       it("should resume endpoint (null pause)", async () => {
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",
@@ -499,7 +499,7 @@ export function testJobsRepoContract(
       it("should lock and unlock endpoint", async () => {
         setNow(new Date("2025-01-01T00:00:00Z"));
 
-        await repo.add({
+        await repo.addEndpoint({
           id: "ep1",
           jobId: "job1",
           tenantId: "t1",

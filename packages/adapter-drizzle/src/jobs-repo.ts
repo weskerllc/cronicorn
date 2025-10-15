@@ -20,7 +20,7 @@ export class DrizzleJobsRepo implements JobsRepo {
     private now: () => Date = () => new Date(),
   ) { }
 
-  async add(ep: JobEndpoint): Promise<void> {
+  async addEndpoint(ep: JobEndpoint): Promise<void> {
     // Convert domain entity to DB row (add adapter fields)
     // Note: jobId defaults to empty string in domain, but DB expects null for no job
     const row: typeof jobEndpoints.$inferInsert = {
@@ -31,6 +31,76 @@ export class DrizzleJobsRepo implements JobsRepo {
 
     // Execute insert immediately
     await this.tx.insert(jobEndpoints).values(row);
+  }
+
+  async updateEndpoint(id: string, patch: Partial<Omit<JobEndpoint, "id" | "tenantId">>): Promise<JobEndpoint> {
+    // Build update object, only including defined fields
+    const updates: Partial<typeof jobEndpoints.$inferInsert> = {};
+
+    if (patch.name !== undefined)
+      updates.name = patch.name;
+    if (patch.jobId !== undefined)
+      updates.jobId = patch.jobId && patch.jobId !== "" ? patch.jobId : null;
+    if (patch.baselineCron !== undefined)
+      updates.baselineCron = patch.baselineCron;
+    if (patch.baselineIntervalMs !== undefined)
+      updates.baselineIntervalMs = patch.baselineIntervalMs;
+    if (patch.minIntervalMs !== undefined)
+      updates.minIntervalMs = patch.minIntervalMs;
+    if (patch.maxIntervalMs !== undefined)
+      updates.maxIntervalMs = patch.maxIntervalMs;
+    if (patch.pausedUntil !== undefined)
+      updates.pausedUntil = patch.pausedUntil;
+    if (patch.lastRunAt !== undefined)
+      updates.lastRunAt = patch.lastRunAt;
+    if (patch.nextRunAt !== undefined)
+      updates.nextRunAt = patch.nextRunAt;
+    if (patch.failureCount !== undefined)
+      updates.failureCount = patch.failureCount;
+    if (patch.url !== undefined)
+      updates.url = patch.url;
+    if (patch.method !== undefined)
+      updates.method = patch.method;
+    if (patch.headersJson !== undefined)
+      updates.headersJson = patch.headersJson;
+    if (patch.bodyJson !== undefined)
+      updates.bodyJson = patch.bodyJson;
+    if (patch.timeoutMs !== undefined)
+      updates.timeoutMs = patch.timeoutMs;
+    if (patch.aiHintIntervalMs !== undefined)
+      updates.aiHintIntervalMs = patch.aiHintIntervalMs;
+    if (patch.aiHintNextRunAt !== undefined)
+      updates.aiHintNextRunAt = patch.aiHintNextRunAt;
+    if (patch.aiHintExpiresAt !== undefined)
+      updates.aiHintExpiresAt = patch.aiHintExpiresAt;
+    if (patch.aiHintReason !== undefined)
+      updates.aiHintReason = patch.aiHintReason;
+
+    await this.tx
+      .update(jobEndpoints)
+      .set(updates)
+      .where(eq(jobEndpoints.id, id));
+
+    return this.getEndpoint(id);
+  }
+
+  async clearAIHints(id: string): Promise<void> {
+    await this.tx
+      .update(jobEndpoints)
+      .set({
+        aiHintIntervalMs: null,
+        aiHintNextRunAt: null,
+        aiHintExpiresAt: null,
+        aiHintReason: null,
+      })
+      .where(eq(jobEndpoints.id, id));
+  }
+
+  async resetFailureCount(id: string): Promise<void> {
+    await this.tx
+      .update(jobEndpoints)
+      .set({ failureCount: 0 })
+      .where(eq(jobEndpoints.id, id));
   }
 
   async claimDueEndpoints(limit: number, withinMs: number): Promise<string[]> {
