@@ -27,29 +27,26 @@ FROM deps AS builder
 # Copy application source code
 COPY . .
 
-# Build all workspace packages first
-RUN pnpm run --filter="./packages/*" build
-
-# Build the application
-WORKDIR /repo/apps/scheduler
+# Build using TypeScript project references (builds all dependencies)
 RUN pnpm run build
 
-# Create a pruned node_modules for the Scheduler with all dependencies
-RUN pnpm deploy --filter=scheduler --legacy /tmp/scheduler-deploy
+# Create a pruned node_modules for the API with all dependencies
+# Note: Must include migrations folder from adapter-drizzle
+RUN pnpm deploy --filter=@cronicorn/scheduler-app --legacy /tmp/scheduler-app-deploy
+
+# Copy the built dist folder to the deploy directory
+RUN cp -r /repo/apps/scheduler/dist /tmp/scheduler-app-deploy/
 
 # Stage 2: Final Production Image
 FROM node:lts-alpine AS runner
 
 WORKDIR /app
 
-# -------- Runtime image: Scheduler --------
-FROM node:${NODE_VERSION}-alpine AS scheduler
+# -------- Runtime image: API --------
+FROM node:${NODE_VERSION}-alpine AS scheduler-app
 ENV NODE_ENV=production
 USER node
 WORKDIR /app
-# copy compiled dist + package.json + pruned node_modules
-COPY --chown=node:node --from=builder   /repo/apps/scheduler/dist ./dist
-COPY --chown=node:node --from=builder   /repo/apps/scheduler/package.json ./package.json
-COPY --chown=node:node --from=builder   /tmp/scheduler-deploy/node_modules ./node_modules
-EXPOSE 3333
+# Copy everything from the deploy directory
+COPY --chown=node:node --from=builder /tmp/scheduler-app-deploy ./
 CMD ["node","dist/index.js"]

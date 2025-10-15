@@ -86,14 +86,17 @@ cp .env.example .env.production
 # Edit with real secrets
 nano .env.production
 
-# Set DATABASE_URL to use container hostname for services
-# DATABASE_URL=postgresql://user:password@cronicorn-prod-db:5432/db
+# Set real values for:
+# - GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET (for OAuth)
+# - AUTH_SECRET (generate with: openssl rand -base64 32)
+# - OPENAI_API_KEY (if using AI features)
+# - DATABASE_URL (if using external database, otherwise uses Docker DB)
 ```
 
 ### Deploy Full Stack
 ```bash
-# Specify production env file explicitly
-docker compose --env-file .env.production --profile prod up -d --build
+pnpm docker:prod
+# Uses .env.production automatically
 ```
 
 ### View Logs
