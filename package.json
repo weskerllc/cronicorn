@@ -28,14 +28,21 @@
     "🚀 ---------- UTILS ----------": "",
     "clean": "pnpm -r exec rimraf dist coverage node_modules tsconfig.tsbuildinfo && rimraf node_modules .eslintcache",
     "🚀 ---------- DATABASE ----------": "",
+    "db": "docker compose --env-file .env.docker.dev up -d",
+    "db:down": "docker compose --env-file .env.docker.dev down",
+    "db:reset": "docker compose --env-file .env.docker.dev down -v && pnpm db",
+    "db:migrate": "docker compose --env-file .env.docker.dev --profile dev up migrator",
     "push": "dotenv -e .env -- pnpm run -r --parallel push",
     "migrate": "dotenv -e .env -- pnpm run -r --parallel migrate",
     "generate": "dotenv -e .env -- pnpm run -r --parallel generate",
     "studio": "dotenv -e .env -- pnpm run -r --parallel studio",
     "🚀 ---------- SCENARIOS ----------": "",
     "scenarios": "dotenv -e .env -- pnpm --filter @cronicorn/scenarios scenarios",
-    "🚀 ---------- PROD ----------": "",
-    "prod": "docker compose -p \"cronicorn\" --env-file .env.production -f ./docker-compose-prod.yml up -d --build --remove-orphans"
+    "🚀 ---------- DOCKER ----------": "",
+    "docker:dev": "docker compose --env-file .env.docker.dev --profile dev up --build",
+    "docker:prod": "docker compose --env-file .env.docker.prod --profile prod up -d --build --remove-orphans",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.4",

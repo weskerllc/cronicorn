@@ -35,6 +35,13 @@ Created `apps/migrator` as a dedicated composition root for database migrations:
 - If migrations fail, services never start (fail-fast safety)
 - Migrations run exactly once per deployment
 
+**Docker Compose profiles** (unified single file):
+- No profile: Database only (local dev)
+- `dev` profile: Database + Migrator
+- `prod` profile: Full stack (Database + Migrator + API + Scheduler)
+- Environment variables parameterized via `.env.docker.dev` / `.env.docker.prod`
+- Single `docker-compose.yml` replaced separate dev/prod files
+
 **TypeScript build fix**:
 - Added `**/*.tsbuildinfo` to `.dockerignore`
 - Without this, `tsc -b` saw cached build metadata and skipped compilation
@@ -52,12 +59,14 @@ Created `apps/migrator` as a dedicated composition root for database migrations:
 **Code changes**:
 - `packages/adapter-drizzle`: Removed `pnpm migrate` script, env var usage
 - `apps/migrator`: New composition root with Dockerfile.migrator
-- `docker-compose.yml` & `docker-compose-prod.yml`: Added migrator service
+- `docker-compose.yml`: Unified file with profiles (replaced docker-compose-prod.yml)
 - `.dockerignore`: Added `**/*.tsbuildinfo` to fix TypeScript incremental builds
+- `package.json`: Added db/docker scripts (db, db:migrate, docker:dev, docker:prod)
 
 **Tradeoffs**:
 - One more Docker service to maintain (but follows existing pattern)
 - Migration logic split across two packages (adapter exports function, app calls it)
+- Unified docker-compose requires profile awareness (`--profile dev|prod`)
 
 ## References
 

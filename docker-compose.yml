@@ -1,34 +1,82 @@
 services:
-  cronicorn-dev-db:
-    container_name: cronicorn-dev-db
+  db:
     image: postgres:17
-    restart: always
+    container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-db
+    restart: ${DB_RESTART:-unless-stopped}
+    networks: [cronicorn]
     ports:
-      - 6666:5432
+      - "${DB_PORT:-6666}:5432"
     environment:
-      POSTGRES_PASSWORD: password
-      POSTGRES_USER: user
-      POSTGRES_DB: db
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-db}
     healthcheck:
-      test: [CMD-SHELL, pg_isready]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user}"]
       interval: 10s
       timeout: 5s
       retries: 5
     volumes:
-      - cronicorndevdatavolume:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
 
   migrator:
+    profiles: ["dev", "prod"]
     build:
       context: .
       dockerfile: Dockerfile.migrator
       target: migrator
-    container_name: cronicorn-dev-migrator
+    container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-migrator
     restart: "no"
+    networks: [cronicorn]
     depends_on:
-      cronicorn-dev-db:
+      db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://user:password@cronicorn-dev-db:5432/db
+      DATABASE_URL: ${DATABASE_URL}
+
+  api:
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-api
+    restart: unless-stopped
+    networks: [cronicorn]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      AUTH_SECRET: ${AUTH_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      CRONICORN_API_URL: ${CRONICORN_API_URL}
+    ports:
+      - "${API_PORT:-3333}:3333"
+
+  scheduler:
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
+    container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-scheduler
+    restart: unless-stopped
+    networks: [cronicorn]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_MODEL: ${AI_MODEL}
+      NODE_ENV: ${NODE_ENV:-production}
 
 volumes:
-  cronicorndevdatavolume:
+  db_data:
+
+networks:
+  cronicorn:
+    driver: bridge
