@@ -667,11 +667,13 @@ export async function scenario_flash_sale() {
   const oncallPageId = "emergency_oncall_page#prod";
 
   // Seed Health Tier endpoints
-  jobs.add({
+  await jobs.addEndpoint({
     id: trafficMonitorId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Traffic Monitor",
+    url: "https://example.com/metrics/traffic",
+    method: "GET",
     baselineIntervalMs: 60_000, // 1 minute baseline
     minIntervalMs: 20_000,
     maxIntervalMs: 5 * 60_000,
@@ -679,11 +681,13 @@ export async function scenario_flash_sale() {
     failureCount: 0,
   });
 
-  jobs.add({
+  await jobs.addEndpoint({
     id: orderProcessorId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Order Processor Health",
+    url: "https://example.com/metrics/orders",
+    method: "GET",
     baselineIntervalMs: 2 * 60_000, // 2 minutes baseline
     minIntervalMs: 60_000,
     maxIntervalMs: 5 * 60_000,
@@ -691,11 +695,13 @@ export async function scenario_flash_sale() {
     failureCount: 0,
   });
 
-  jobs.add({
+  await jobs.addEndpoint({
     id: inventorySyncId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Inventory Sync Check",
+    url: "https://example.com/metrics/inventory",
+    method: "GET",
     baselineIntervalMs: 3 * 60_000, // 3 minutes baseline
     minIntervalMs: 30_000,
     maxIntervalMs: 10 * 60_000,
@@ -704,11 +710,13 @@ export async function scenario_flash_sale() {
   });
 
   // Seed Investigation Tier endpoints (start paused, activate conditionally)
-  jobs.add({
+  await jobs.addEndpoint({
     id: slowPageAnalyzerId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Slow Page Analyzer",
+    url: "https://example.com/analyze/page-performance",
+    method: "POST",
     baselineIntervalMs: 90_000, // 90s when active
     minIntervalMs: 60_000,
     maxIntervalMs: 5 * 60_000,
@@ -717,11 +725,13 @@ export async function scenario_flash_sale() {
     failureCount: 0,
   });
 
-  jobs.add({
+  await jobs.addEndpoint({
     id: dbQueryTraceId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Database Query Trace",
+    url: "https://example.com/analyze/db-queries",
+    method: "POST",
     baselineIntervalMs: 2 * 60_000, // 2m when active
     minIntervalMs: 60_000,
     maxIntervalMs: 5 * 60_000,
@@ -731,11 +741,13 @@ export async function scenario_flash_sale() {
   });
 
   // Seed Recovery Tier endpoints (one-shot actions with cooldowns)
-  jobs.add({
+  await jobs.addEndpoint({
     id: cacheWarmUpId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Cache Warm Up",
+    url: "https://example.com/recovery/cache-warmup",
+    method: "POST",
     baselineIntervalMs: 60_000,
     minIntervalMs: 5_000,
     maxIntervalMs: 10 * 60_000,
@@ -744,11 +756,13 @@ export async function scenario_flash_sale() {
     failureCount: 0,
   });
 
-  jobs.add({
+  await jobs.addEndpoint({
     id: scaleCheckoutId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Scale Checkout Workers",
+    url: "https://example.com/recovery/scale-workers",
+    method: "POST",
     baselineIntervalMs: 60_000,
     minIntervalMs: 5_000,
     maxIntervalMs: 15 * 60_000,
@@ -758,11 +772,13 @@ export async function scenario_flash_sale() {
   });
 
   // Seed Alert Tier endpoints (escalation alerts with cooldowns)
-  jobs.add({
+  await jobs.addEndpoint({
     id: slackOperationsId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Slack Operations Alert",
+    url: "https://hooks.slack.com/services/operations",
+    method: "POST",
     baselineIntervalMs: 60_000,
     minIntervalMs: 5_000,
     maxIntervalMs: 10 * 60_000,
@@ -771,11 +787,13 @@ export async function scenario_flash_sale() {
     failureCount: 0,
   });
 
-  jobs.add({
+  await jobs.addEndpoint({
     id: slackSupportId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Slack Customer Support Alert",
+    url: "https://hooks.slack.com/services/support",
+    method: "POST",
     baselineIntervalMs: 60_000,
     minIntervalMs: 5_000,
     maxIntervalMs: 15 * 60_000,
@@ -784,11 +802,13 @@ export async function scenario_flash_sale() {
     failureCount: 0,
   });
 
-  jobs.add({
+  await jobs.addEndpoint({
     id: oncallPageId,
     jobId: "job#flash-sale",
     tenantId: "tenant#ecommerce",
     name: "Emergency Oncall Page",
+    url: "https://api.pagerduty.com/incidents",
+    method: "POST",
     baselineIntervalMs: 60_000,
     minIntervalMs: 5_000,
     maxIntervalMs: 2 * 60 * 60_000,
