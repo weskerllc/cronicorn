@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-db}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user}"]
+      test: [CMD-SHELL, "pg_isready -U ${POSTGRES_USER:-user}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -19,13 +19,13 @@ services:
       - db_data:/var/lib/postgresql/data
 
   migrator:
-    profiles: ["dev", "prod"]
+    profiles: [dev, prod]
     build:
       context: .
       dockerfile: Dockerfile.migrator
       target: migrator
     container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-migrator
-    restart: "no"
+    restart: no
     networks: [cronicorn]
     depends_on:
       db:
@@ -35,7 +35,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@${COMPOSE_PROJECT_NAME:-cronicorn}-db:5432/${POSTGRES_DB:-db}
 
   api:
-    profiles: ["prod"]
+    profiles: [prod]
     build:
       context: .
       dockerfile: Dockerfile.api
@@ -57,7 +57,7 @@ services:
       - "${API_PORT:-3333}:3333"
 
   scheduler:
-    profiles: ["prod"]
+    profiles: [prod]
     build:
       context: .
       dockerfile: Dockerfile.scheduler
