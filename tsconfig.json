@@ -3,6 +3,7 @@
   "references": [
     { "path": "./packages/domain" },
     { "path": "./packages/scheduler" },
+    { "path": "./packages/worker-ai-planner" },
     { "path": "./packages/services" },
     { "path": "./packages/adapter-ai" },
     { "path": "./packages/adapter-cron" },
