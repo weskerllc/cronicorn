@@ -1,5 +1,60 @@
 # Tech Debt Log
 
+## AI Worker Process - Decoupled Architecture (2025-10-15)
+
+**Status**: ⏳ In Progress
+
+**What We're Building**:
+- 📦 Separate AI Planner worker process (apps/ai-planner)
+- ✅ **Discovery method added**: `getEndpointsWithRecentRuns(since: Date)`
+- ⏭️ AI Planner service with endpoint analysis
+- ⏭️ AI tools for adaptive scheduling (propose_interval, propose_next_time, pause_until)
+
+**Architecture Decision: Complete Decoupling**
+
+**Why Decoupling is Critical:**
+- ✅ **Independent scaling**: 10 scheduler workers + 1 AI worker
+- ✅ **Graceful degradation**: Scheduler works without AI (baseline intervals)
+- ✅ **Different cadences**: Scheduler ticks every 5s, AI analyzes every 5min
+- ✅ **Cost control**: Adjust AI frequency, disable entirely, or use cheaper model
+- ✅ **Resilience**: AI failures don't affect scheduler execution
+- ✅ **Testing**: Test scheduler and AI planner independently
+
+**Integration Pattern: Database as Boundary**
+```
+Scheduler Worker          AI Planner Worker
+    │                           │
+    ├─ writes runs ─────────────┤
+    ├─ reads hints ─────────────┤
+    └─────────┬─────────────────┘
+              │
+         Database
+```
+
+**Flow:**
+1. Scheduler executes endpoint → writes run to database
+2. AI Planner queries recent runs → analyzes patterns
+3. AI calls tools → writes hints to database
+4. Scheduler re-reads endpoint → picks up hints
+5. Governor plans next run → respects hints
+
+**Domain Changes:**
+- ✅ Added `RunsRepo.getEndpointsWithRecentRuns(since: Date)` - Discovery method
+- ✅ Implemented in DrizzleRunsRepo with `SELECT DISTINCT endpointId`
+- ❌ No scheduler changes needed (already designed for async AI)
+
+**Next Steps:**
+1. Create AI Planner service in packages/services/src/scheduling/
+2. Define 3 AI tools (propose_interval, propose_next_time, pause_until)
+3. Create apps/ai-planner worker composition root
+4. Wire into docker-compose.yml
+
+**No Tech Debt**: Clean separation of concerns, follows hexagonal architecture.
+
+---
+
+# Tech Debt Log
+
 ## API Manager Layer Extraction (2025-01-13)
 
 **Status**: ✅ Complete
