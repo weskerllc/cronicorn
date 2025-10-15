@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "scripts": {
-    "start": "tsx src/index.ts"
-  },
   "dependencies": {
     "@cronicorn/scheduler": "workspace:*",
     "@cronicorn/adapter-ai": "workspace:*",
