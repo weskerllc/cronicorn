@@ -1,5 +1,137 @@
 # Tech Debt Log
 
+## 🚨 SOLUTION: AI Query Tools + Response Body Storage (2025-10-15)
+
+**Status**: ✅ DESIGNED - Comprehensive solution using tool-based approach
+
+**Solution**: Instead of pre-loading all response data into prompts, equip the AI agent with **query tools** to fetch data on-demand. This mirrors the JobsManager pattern: user-facing actions for humans, AI-facing tools for the scheduler.
+
+**Architecture: 6 Total Tools** (3 query + 3 action)
+
+**Query Tools** (read-only, fetch data on-demand):
+1. **`get_latest_response({ endpointId })`**
+   - Fetch most recent response from any endpoint (current or sibling)
+   - Returns: `{ found, responseBody?, timestamp?, status? }`
+   - Use case: Check current metric values, status flags
+
+2. **`get_response_history({ endpointId, limit })`**
+   - Fetch N recent responses for trend analysis
+   - Returns: `{ count, responses: [{responseBody, timestamp, status, durationMs}] }`
+   - Use case: Detect patterns (increasing errors, declining engagement, rate limiting)
+
+3. **`get_sibling_latest_responses()`**
+   - Batch fetch latest responses from all sibling endpoints
+   - Returns: `{ count, siblings: [{endpointId, name, responseBody, timestamp, status}] }`
+   - Use case: Coordinate with related endpoints, check upstream completion, detect systemic issues
+
+**Action Tools** (existing, endpoint-scoped):
+4. **`propose_interval({ intervalMs, ttlMinutes?, reason? })`**
+5. **`propose_next_time({ nextRunAt?, nextRunInMs?, ttlMinutes?, reason? })`**
+6. **`pause_until({ pausedUntil, reason? })`**
+
+**Key Design Decisions**:
+
+**1. Endpoint-Scoped Tools** ✅
+- Query tools can fetch data from any endpoint
+- Action tools can only modify the endpoint being analyzed
+- Uses **emergent coordination**: Each endpoint queries sibling state, decides own schedule
+- Example: Investigation endpoint sees fraud score from sibling, unpauses itself
+- Simpler and safer than cross-endpoint modification
+
+**2. Analyze ALL Endpoints in Active Jobs** ✅
+- Change discovery from `getEndpointsWithRecentRuns(since)` to analyzing all endpoints
+- Critical for conditional activation (paused endpoints must be analyzed to self-activate)
+- Cost: ~2.5x more AI calls, but enables core use case patterns
+
+**3. Lazy Loading > Pre-loading** ✅
+- AI only fetches data when needed via tool calls
+- More cost-efficient than bloated prompts with all sibling data
+- Adaptive: Different use cases need different data
+
+**Implementation Checklist**:
+
+**Phase 1: Domain Layer**
+- [ ] Add `responseBody?: JsonValue` to `ExecutionResult` type
+- [ ] Add `statusCode?: number` to `ExecutionResult` type
+- [ ] Add `maxResponseSizeKb?: number` to `JobEndpoint` entity (default: 100)
+- [ ] Add 3 methods to `RunsRepo` port:
+  - `getLatestResponse(endpointId: string)`
+  - `getResponseHistory(endpointId: string, limit: number)`
+  - `getSiblingLatestResponses(jobId: string, excludeEndpointId: string)`
+
+**Phase 2: Database Schema**
+- [ ] Migration: Add `response_body JSONB` to `runs` table
+- [ ] Migration: Add `status_code INTEGER` to `runs` table
+- [ ] Migration: Add `max_response_size_kb INTEGER` to `job_endpoints` table (nullable, default 100)
+- [ ] Index: `CREATE INDEX idx_runs_endpoint_started ON runs(endpoint_id, started_at DESC)`
+
+**Phase 3: HttpDispatcher**
+- [ ] Read response body (check Content-Type: application/json)
+- [ ] Enforce size limit (configurable per endpoint, default 100 KB)
+- [ ] Parse JSON safely (catch errors, set to null on failure)
+- [ ] Include `responseBody` and `statusCode` in `ExecutionResult`
+- [ ] Unit tests for response capture, size limits, parse errors
+
+**Phase 4: Drizzle Adapter**
+- [ ] Implement `getLatestResponse` in DrizzleRunsRepo
+- [ ] Implement `getResponseHistory` (ORDER BY started_at DESC LIMIT N)
+- [ ] Implement `getSiblingLatestResponses` (JOIN runs + job_endpoints)
+- [ ] Update `finish` method to store responseBody and statusCode
+- [ ] Contract tests for new methods
+
+**Phase 5: AI Planner Tools**
+- [ ] Add 3 query tools to `packages/worker-ai-planner/src/tools.ts`
+- [ ] Update `createToolsForEndpoint()` signature: add `runs: RunsRepo` param
+- [ ] Implement query tools with Zod schemas and tool descriptions
+- [ ] Update AI planner worker to pass RunsRepo to tool creator
+- [ ] Unit tests for query tools
+
+**Phase 6: Discovery Change** (CRITICAL)
+- [ ] Add `getActiveJobIds()` to JobsRepo
+- [ ] Change AI worker loop: jobs → endpoints (not endpoints with recent runs)
+- [ ] Ensure paused endpoints are analyzed
+- [ ] Monitor cost impact (2.5x more AI calls expected)
+
+**Phase 7: Testing**
+- [ ] Integration: Verify response bodies stored and retrieved
+- [ ] E2E: Flash sale scenario (conditional activation via sibling query)
+- [ ] E2E: ETL scenario (dependency coordination via response data)
+- [ ] E2E: DevOps scenario (health aggregation across siblings)
+- [ ] Performance: Measure token usage with query tools
+
+**Phase 8: Documentation**
+- [ ] ADR: Query tool design and rationale
+- [ ] README: Update AI planner with tool usage examples
+- [ ] Document: Response size limits and retention policy (last 100 runs per endpoint)
+
+**Response Storage Policies**:
+- **Size limit**: 100 KB per response (configurable via `maxResponseSizeKb`)
+- **Retention**: Last 100 responses per endpoint (count-based, not time-based)
+- **Content-Type**: Only store `application/json` responses
+- **Error responses**: YES, store error bodies if JSON (valuable for diagnostics)
+- **Parse failures**: Set responseBody to null, execution still recorded
+
+**Use Case Coverage**:
+✅ Flash Sale - conditional activation (investigation queries fraud score)
+✅ DevOps - health aggregation (remediation queries all health checks)
+✅ Content Publishing - trend analysis (analytics checks engagement history)
+✅ ETL Pipeline - dependency coordination (transform verifies fetch completion)
+✅ SaaS Billing - threshold checks (warning endpoint queries usage)
+✅ Web Scraping - rate limit detection (scraper analyzes failure patterns)
+
+**Beyond Defined Use Cases**:
+✅ Canary deployments (compare canary vs baseline error rates)
+✅ Multi-region aggregation (count unhealthy regions)
+✅ Cost optimization (adaptive polling based on activity detection)
+✅ A/B testing (track variant execution patterns)
+✅ Circuit breakers (count consecutive failures from history)
+
+**Priority**: 🔴 HIGH - Required for AI planner effectiveness
+
+**Confidence**: 100% - Tool-based approach is flexible, cost-efficient, and supports diverse use cases!
+
+---
+
 ## AI Worker Process - Decoupled Architecture (2025-10-15)
 
 **Status**: ⏳ Phase 1-4 Complete, Testing Pending
