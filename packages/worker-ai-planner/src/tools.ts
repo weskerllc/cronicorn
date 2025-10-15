@@ -5,7 +5,7 @@
  * Each tool is endpoint-scoped via closure (endpointId bound at creation time).
  */
 
-import type { Clock, JobsRepo, JsonValue, RunsRepo } from "@cronicorn/domain";
+import type { Clock, JobsRepo, RunsRepo } from "@cronicorn/domain";
 
 import { defineTools, tool } from "@cronicorn/domain";
 import { z } from "zod";
@@ -20,7 +20,10 @@ import { z } from "zod";
  *
  * @param endpointId - The endpoint being analyzed
  * @param jobId - The job this endpoint belongs to (for sibling queries)
- * @param deps - Dependencies { jobs: JobsRepo, runs: RunsRepo, clock: Clock }
+ * @param deps - Dependencies object
+ * @param deps.jobs - JobsRepo instance for job operations
+ * @param deps.runs - RunsRepo instance for run/response queries
+ * @param deps.clock - Clock instance for current time
  * @returns Tools object with 6 tools (3 query + 3 action)
  */
 export function createToolsForEndpoint(

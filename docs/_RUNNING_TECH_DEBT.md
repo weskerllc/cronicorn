@@ -2,6 +2,81 @@
 
 ## 🚨 SOLUTION: AI Query Tools + Response Body Storage (2025-10-15)
 
+**Status**: ✅ IMPLEMENTED - AI session tracking with database persistence ready
+
+**Recent Update (2025-10-15)**: Implemented `AISessionResult` return type for observability
+
+**What We Built**:
+
+1. **AIClient Port Enhancement**:
+   - Updated `planWithTools()` to return `AISessionResult` instead of void
+   - Captures: `toolCalls[]`, `reasoning` (AI's explanation), `tokenUsage`
+   - Clean separation: AI client returns data, orchestrator decides persistence
+
+2. **Database Schema** (`ai_analysis_sessions` table):
+   ```sql
+   CREATE TABLE ai_analysis_sessions (
+     id TEXT PRIMARY KEY,
+     endpoint_id TEXT REFERENCES job_endpoints(id) ON DELETE CASCADE,
+     analyzed_at TIMESTAMP NOT NULL,
+     tool_calls JSONB,      -- Array<{ tool, args, result }>
+     reasoning TEXT,         -- AI's explanation
+     token_usage INTEGER,    -- Total tokens consumed
+     duration_ms INTEGER     -- Analysis duration
+   );
+   ```
+
+3. **Vercel AI Adapter Updates**:
+   - Captures tool calls during `onStepFinish` callback
+   - Returns structured `AISessionResult` with all session data
+   - Zero breaking changes to tool execution (tools still write hints during call)
+
+4. **AI Planner Orchestration**:
+   - Receives session data from `aiClient.planWithTools()`
+   - Logs to console (via `console.warn`) for immediate observability
+   - TODO comment for future database persistence
+
+**Architecture Pattern**:
+```
+AIClient (adapter)          → Returns session data
+  ↓
+AIPlanner (orchestrator)    → Decides what to log/persist
+  ↓
+SessionsRepo (future)       → Database persistence
+```
+
+**Benefits Achieved**:
+- ✅ **Testability**: Can assert on tool calls without DB queries
+- ✅ **Flexibility**: Planner decides logging strategy (console, DB, metrics, skip)
+- ✅ **YAGNI-friendly**: Data available NOW, schema commitment LATER
+- ✅ **Clean architecture**: Adapter pure (no DB), orchestrator explicit
+
+**Current State**:
+- ✅ Schema defined and migrated (0002_bored_layla_miller.sql)
+- ✅ Type system updated (`AISessionResult` type)
+- ✅ AI client captures tool calls
+- ✅ Planner logs sessions to console
+- ⏳ SessionsRepo port NOT yet created (deferred)
+- ⏳ Database persistence NOT yet implemented (TODO in planner)
+
+**Next Steps** (when observability is needed):
+1. Create `SessionsRepo` port in `packages/domain/src/ports/repos.ts`
+2. Implement `DrizzleSessionsRepo` in `packages/adapter-drizzle`
+3. Update AIPlanner to accept `sessions: SessionsRepo` dep
+4. Remove TODO comment, add `await sessions.create({ endpointId, ...session })`
+
+**Migration Applied**: `0002_bored_layla_miller.sql` (ai_analysis_sessions table created)
+
+**Files Modified**:
+- `packages/domain/src/ports/ai.ts` - Added `AISessionResult` type, updated `AIClient` return type
+- `packages/adapter-drizzle/src/schema.ts` - Added `aiAnalysisSessions` table
+- `packages/adapter-ai/src/client.ts` - Capture tool calls, return `AISessionResult`
+- `packages/worker-ai-planner/src/planner.ts` - Log session data to console
+
+---
+
+## 🚨 SOLUTION: AI Query Tools + Response Body Storage (2025-10-15)
+
 **Status**: ✅ DESIGNED - Comprehensive solution using tool-based approach
 
 **Solution**: Instead of pre-loading all response data into prompts, equip the AI agent with **query tools** to fetch data on-demand. This mirrors the JobsManager pattern: user-facing actions for humans, AI-facing tools for the scheduler.

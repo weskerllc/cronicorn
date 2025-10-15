@@ -1,5 +1,4 @@
-import type { Dispatcher, ExecutionResult, JobEndpoint } from "@cronicorn/domain";
-import type { JsonValue } from "@cronicorn/domain/src/entities/run";
+import type { Dispatcher, ExecutionResult, JobEndpoint, JsonValue } from "@cronicorn/domain";
 
 /**
  * Production HTTP dispatcher using Node.js native fetch API.
@@ -160,7 +159,7 @@ export class HttpDispatcher implements Dispatcher {
       }
 
       // Parse JSON safely
-      const responseBody = JSON.parse(bodyText) as JsonValue;
+      const responseBody = JSON.parse(bodyText);
       return { statusCode, responseBody };
     }
     catch {

@@ -1,4 +1,4 @@
-import type { AIClient, Clock, JobEndpoint, JobsRepo, RunsRepo } from "@cronicorn/domain";
+import type { AIClient, Clock, JobEndpoint, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -7,6 +7,7 @@ import { AIPlanner } from "../planner.js";
 describe("aiPlanner", () => {
   let mockJobsRepo: JobsRepo;
   let mockRunsRepo: RunsRepo;
+  let mockSessionsRepo: SessionsRepo;
   let mockAIClient: AIClient;
   let fakeClock: Clock;
   let planner: AIPlanner;
@@ -49,16 +50,30 @@ describe("aiPlanner", () => {
       listRuns: vi.fn(),
       getRunDetails: vi.fn(),
       getEndpointsWithRecentRuns: vi.fn(),
+      getLatestResponse: vi.fn(),
+      getResponseHistory: vi.fn(),
+      getSiblingLatestResponses: vi.fn(),
+    };
+
+    mockSessionsRepo = {
+      create: vi.fn(),
+      getRecentSessions: vi.fn(),
+      getTotalTokenUsage: vi.fn(),
     };
 
     mockAIClient = {
-      planWithTools: vi.fn(),
+      planWithTools: vi.fn().mockResolvedValue({
+        toolCalls: [],
+        reasoning: "AI analysis complete",
+        tokenUsage: 100,
+      }),
     };
 
     planner = new AIPlanner({
       aiClient: mockAIClient,
       jobs: mockJobsRepo,
       runs: mockRunsRepo,
+      sessions: mockSessionsRepo,
       clock: fakeClock,
     });
   });
@@ -87,7 +102,7 @@ describe("aiPlanner", () => {
 
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
       vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
-      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ text: "Analysis complete" });
+      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       await planner.analyzeEndpoint("ep-1");
 
@@ -132,7 +147,7 @@ describe("aiPlanner", () => {
 
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
       vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
-      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ text: "Analysis complete" });
+      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       await planner.analyzeEndpoint("ep-1");
 
@@ -171,7 +186,7 @@ describe("aiPlanner", () => {
 
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
       vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
-      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ text: "Analysis complete" });
+      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       await planner.analyzeEndpoint("ep-1");
 
@@ -215,7 +230,7 @@ describe("aiPlanner", () => {
         .mockResolvedValueOnce(mockEndpoint1)
         .mockResolvedValueOnce(mockEndpoint2);
       vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
-      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ text: "Analysis complete" });
+      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       await planner.analyzeEndpoints(["ep-1", "ep-2"]);
 
@@ -248,7 +263,7 @@ describe("aiPlanner", () => {
         .mockResolvedValueOnce(mockEndpoint2);
 
       vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
-      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ text: "Analysis complete" });
+      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       // Mock console.error to verify error logging
       const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { });

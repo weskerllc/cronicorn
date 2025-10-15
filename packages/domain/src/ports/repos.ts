@@ -192,3 +192,51 @@ export type RunsRepo = {
     status: string;
   }>>;
 };
+
+/**
+ * AI Analysis Sessions repository.
+ * Tracks AI planner decisions for debugging, cost tracking, and observability.
+ */
+export type SessionsRepo = {
+  /**
+   * Create a new AI analysis session record.
+   *
+   * @param session - Session data from AISessionResult
+   * @returns Created session ID
+   */
+  create: (session: {
+    endpointId: string;
+    analyzedAt: Date;
+    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+    reasoning: string;
+    tokenUsage?: number;
+    durationMs?: number;
+  }) => Promise<string>;
+
+  /**
+   * Get recent analysis sessions for an endpoint.
+   * Useful for debugging AI decision patterns.
+   *
+   * @param endpointId - The endpoint to query
+   * @param limit - Maximum number of sessions to return (default: 10)
+   * @returns Array of sessions, ordered newest to oldest
+   */
+  getRecentSessions: (endpointId: string, limit?: number) => Promise<Array<{
+    id: string;
+    analyzedAt: Date;
+    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+    reasoning: string;
+    tokenUsage: number | null;
+    durationMs: number | null;
+  }>>;
+
+  /**
+   * Get total token usage for an endpoint over a time window.
+   * Useful for cost tracking and quota enforcement.
+   *
+   * @param endpointId - The endpoint to query
+   * @param since - Only include sessions after this date
+   * @returns Total tokens consumed
+   */
+  getTotalTokenUsage: (endpointId: string, since: Date) => Promise<number>;
+};
