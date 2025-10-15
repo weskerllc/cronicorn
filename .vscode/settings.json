@@ -8,6 +8,9 @@
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "never"
   },
+  "files.watcherExclude": {
+    "**/routetree.gen.ts": true
+  },
 
   // Silent the stylistic rules in you IDE, but still auto fix them
   "eslint.rules.customizations": [
