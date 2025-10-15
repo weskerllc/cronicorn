@@ -5,7 +5,7 @@
  * Runs independently from the scheduler worker - communicates via database.
  */
 
-import type { AIClient, Clock, JobsRepo, RunsRepo } from "@cronicorn/domain";
+import type { AIClient, Clock, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { createToolsForEndpoint } from "./tools.js";
 
@@ -13,6 +13,7 @@ export type AIPlannerDeps = {
   aiClient: AIClient;
   jobs: JobsRepo;
   runs: RunsRepo;
+  sessions: SessionsRepo;
   clock: Clock;
 };
 
@@ -135,7 +136,7 @@ export class AIPlanner {
    * @param endpointId - The endpoint to analyze
    */
   async analyzeEndpoint(endpointId: string): Promise<void> {
-    const { aiClient, jobs, runs, clock } = this.deps;
+    const { aiClient, jobs, runs, sessions, clock } = this.deps;
 
     // 1. Get current endpoint state
     const endpoint = await jobs.getEndpoint(endpointId);
@@ -151,16 +152,33 @@ export class AIPlanner {
     // Note: jobId is required for sibling queries. If missing, sibling tool will return empty.
     const tools = createToolsForEndpoint(endpointId, endpoint.jobId || "", { jobs, runs, clock });
 
-    // 5. Invoke AI with tools
-    // AI will analyze and optionally call tools to write hints
-    await aiClient.planWithTools({
+    // 5. Invoke AI with tools and capture session result
+    const startTime = clock.now().getTime();
+    const session = await aiClient.planWithTools({
       input: prompt,
       tools,
       maxTokens: 500, // Keep responses concise
     });
+    const durationMs = clock.now().getTime() - startTime;
 
-    // Tools write hints to database asynchronously
-    // Scheduler will pick them up on next execution
+    // 6. Persist session to database for debugging/cost tracking
+    await sessions.create({
+      endpointId,
+      analyzedAt: clock.now(),
+      toolCalls: session.toolCalls,
+      reasoning: session.reasoning,
+      tokenUsage: session.tokenUsage,
+      durationMs,
+    });
+
+    // Log summary for real-time observability
+    if (session.toolCalls.length > 0) {
+      console.warn(`[AI Analysis] ${endpoint.name}:`, {
+        toolsCalled: session.toolCalls.map(tc => tc.tool),
+        reasoning: session.reasoning.slice(0, 150) + (session.reasoning.length > 150 ? "..." : ""),
+        tokens: session.tokenUsage,
+      });
+    }
   }
 
   /**

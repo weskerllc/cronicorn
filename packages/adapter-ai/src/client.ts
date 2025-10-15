@@ -125,24 +125,42 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           ? vercelTools as Parameters<typeof generateText>[0]["tools"]
           : undefined;
 
+        // Track tool calls for observability
+        const capturedToolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [];
+
         const result = await generateText({
           model: config.model,
           prompt: input,
           tools: cleanTools,
           maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
           temperature: config.temperature || 0,
+          onStepFinish: ({ toolCalls, toolResults }) => {
+            // Capture tool calls as they execute
+            if (toolCalls && toolResults) {
+              for (let i = 0; i < toolCalls.length; i++) {
+                const call = toolCalls[i];
+                const result = toolResults[i];
+                capturedToolCalls.push({
+                  tool: call.toolName,
+                  args: "args" in call ? call.args : undefined,
+                  result: result ? ("result" in result ? result.result : result) : undefined,
+                });
+              }
+            }
+          },
         });
 
         // Emit telemetry if configured
         config.logger?.info("AI client execution completed", {
           textLength: result.text.length,
           hasUsage: !!result.usage,
-          toolCalls: result.toolCalls?.length || 0,
+          toolCalls: capturedToolCalls.length,
         });
 
         return {
-          text: result.text,
-          usage: undefined,
+          toolCalls: capturedToolCalls,
+          reasoning: result.text,
+          tokenUsage: result.usage?.totalTokens,
         };
       }
       catch (error) {

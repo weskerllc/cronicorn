@@ -138,3 +138,17 @@ export const verification = pgTable("verification", {
   createdAt: timestamp("created_at"),
   updatedAt: timestamp("updated_at"),
 });
+
+/**
+ * AI Analysis Sessions table.
+ * Tracks AI planner decisions for debugging, cost tracking, and observability.
+ */
+export const aiAnalysisSessions = pgTable("ai_analysis_sessions", {
+  id: text("id").primaryKey(),
+  endpointId: text("endpoint_id").notNull().references(() => jobEndpoints.id, { onDelete: "cascade" }),
+  analyzedAt: timestamp("analyzed_at", { mode: "date" }).notNull(),
+  toolCalls: jsonb("tool_calls").$type<Array<{ tool: string; args: unknown; result: unknown }>>(), // Tools called during analysis
+  reasoning: text("reasoning"), // AI's explanation/decision
+  tokenUsage: integer("token_usage"), // Total tokens consumed
+  durationMs: integer("duration_ms"), // Analysis duration
+});

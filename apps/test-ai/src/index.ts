@@ -63,13 +63,19 @@ async function main() {
       maxTokens: 200,
     });
 
-    console.log("\\n✅ AI Response:");
-    console.log(result.text);
+    console.log("\n✅ AI Response:");
+    console.log(result.reasoning);
 
-    if (result.usage) {
-      console.log("\\n📊 Usage:");
-      console.log(`  Prompt tokens: ${result.usage.promptTokens}`);
-      console.log(`  Completion tokens: ${result.usage.completionTokens}`);
+    if (result.tokenUsage) {
+      console.log("\n📊 Token Usage:");
+      console.log(`  Total tokens: ${result.tokenUsage}`);
+    }
+
+    if (result.toolCalls.length > 0) {
+      console.log("\n🔧 Tools Called:");
+      result.toolCalls.forEach((tc) => {
+        console.log(`  - ${tc.tool}: ${JSON.stringify(tc.result)}`);
+      });
     }
   }
   catch (error) {

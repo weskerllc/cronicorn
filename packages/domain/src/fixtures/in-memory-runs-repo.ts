@@ -39,16 +39,16 @@ export class InMemoryRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-    runs: Array<{
-      runId: string;
-      endpointId: string;
-      startedAt: Date;
-      status: string;
-      durationMs?: number;
-      source?: string;
-    }>;
-    total: number;
-  }> {
+      runs: Array<{
+        runId: string;
+        endpointId: string;
+        startedAt: Date;
+        status: string;
+        durationMs?: number;
+        source?: string;
+      }>;
+      total: number;
+    }> {
     let filtered = this.runs;
 
     if (filters.endpointId) {
@@ -191,11 +191,11 @@ export class InMemoryRunsRepo implements RunsRepo {
     endpointId: string,
     limit: number,
   ): Promise<Array<{
-    responseBody: JsonValue | null;
-    timestamp: Date;
-    status: string;
-    durationMs: number;
-  }>> {
+      responseBody: JsonValue | null;
+      timestamp: Date;
+      status: string;
+      durationMs: number;
+    }>> {
     // Filter to endpoint and only finished runs (those with durationMs)
     const filtered = this.runs.filter(r =>
       r.endpointId === endpointId && r.durationMs !== undefined,
@@ -217,15 +217,15 @@ export class InMemoryRunsRepo implements RunsRepo {
   }
 
   async getSiblingLatestResponses(
-    jobId: string,
-    excludeEndpointId: string,
+    _jobId: string,
+    _excludeEndpointId: string,
   ): Promise<Array<{
-    endpointId: string;
-    endpointName: string;
-    responseBody: JsonValue | null;
-    timestamp: Date;
-    status: string;
-  }>> {
+      endpointId: string;
+      endpointName: string;
+      responseBody: JsonValue | null;
+      timestamp: Date;
+      status: string;
+    }>> {
     // In-memory implementation doesn't have job/endpoint relationships
     // So we'll return empty array. This is fine for unit tests that mock this.
     // Integration tests use DrizzleRunsRepo which has full implementation.

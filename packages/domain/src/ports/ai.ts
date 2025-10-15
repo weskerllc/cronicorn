@@ -7,12 +7,29 @@ import type { z } from "zod";
 
 type AnyTools = Record<string, Tool<unknown, unknown>>;
 
+/**
+ * Result of an AI analysis session.
+ * Captures what the AI did (tools called, reasoning) for observability and debugging.
+ */
+export type AISessionResult = {
+  /** Tools called during analysis */
+  toolCalls: Array<{
+    tool: string; // Tool name (e.g., "propose_interval")
+    args: unknown; // Input parameters
+    result: unknown; // Tool execution result
+  }>;
+  /** AI's final text response (reasoning/analysis) */
+  reasoning: string;
+  /** Token usage (if available from provider) */
+  tokenUsage?: number;
+};
+
 export type AIClient = {
   planWithTools: (args: {
     input: string;
     tools: Tools<AnyTools>;
     maxTokens: number;
-  }) => Promise<{ text: string; usage?: { promptTokens: number; completionTokens: number } }>;
+  }) => Promise<AISessionResult>;
 };
 
 export type ToolFn<P, R> = (args: P) => Promise<R>;
@@ -39,14 +56,14 @@ export type Tools<T extends Record<string, Tool<unknown, unknown>>> = {
 };
 
 export type ToolArgs<T> =
-    T extends ToolFn<infer P, unknown> ? P
-      : T extends ToolObj<infer P, unknown> ? P
-        : never;
+  T extends ToolFn<infer P, unknown> ? P
+    : T extends ToolObj<infer P, unknown> ? P
+      : never;
 
 export type ToolResult<T> =
-    T extends ToolFn<unknown, infer R> ? R
-      : T extends ToolObj<unknown, infer R> ? R
-        : never;
+  T extends ToolFn<unknown, infer R> ? R
+    : T extends ToolObj<unknown, infer R> ? R
+      : never;
 
 /** Type guards (no `any`) */
 function isToolFn<P, R>(t: Tool<P, R>): t is ToolFn<P, R> {

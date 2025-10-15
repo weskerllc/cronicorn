@@ -15,6 +15,13 @@
       "when": 1760556678026,
       "tag": "0001_robust_vin_gonzales",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1760558841757,
+      "tag": "0002_bored_layla_miller",
+      "breakpoints": true
     }
   ]
 }

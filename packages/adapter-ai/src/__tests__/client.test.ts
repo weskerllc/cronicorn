@@ -78,8 +78,9 @@ describe("createVercelAiClient", () => {
       maxTokens: 500,
     });
 
-    expect(result.text).toBe("Hello, world!");
-    expect(result).toHaveProperty("usage");
+    expect(result.reasoning).toBe("Hello, world!");
+    expect(result.tokenUsage).toBe(30);
+    expect(result.toolCalls).toEqual([]);
   });
 
   it("should convert tools to Vercel format and handle tool calls", async () => {
@@ -136,9 +137,11 @@ describe("createVercelAiClient", () => {
       { toolNames: ["testTool"] },
     );
 
-    // Should return a result with text property
-    expect(result).toHaveProperty("text");
-    expect(typeof result.text).toBe("string");
+    // Should return a result with reasoning property
+    expect(result).toHaveProperty("reasoning");
+    expect(typeof result.reasoning).toBe("string");
+    expect(result).toHaveProperty("toolCalls");
+    expect(Array.isArray(result.toolCalls)).toBe(true);
   });
 
   it("should handle error cases gracefully", async () => {
@@ -191,7 +194,7 @@ describe("createVercelAiClient", () => {
       maxTokens: 500,
     });
 
-    expect(result.text).toBe("Response with function tool");
+    expect(result.reasoning).toBe("Response with function tool");
     expect(mockLogger.info).toHaveBeenCalledWith(
       "Converting tools to Vercel format:",
       { toolNames: ["functionTool"] },
