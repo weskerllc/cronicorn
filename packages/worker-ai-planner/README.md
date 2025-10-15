@@ -18,12 +18,14 @@ This package contains the orchestration logic for the AI Planner worker process.
 ```typescript
 import { AIPlanner } from "@cronicorn/worker-ai-planner";
 import { createVercelAiClient } from "@cronicorn/adapter-ai";
+import { DrizzleSessionsRepo } from "@cronicorn/adapter-drizzle";
 
 const aiClient = createVercelAiClient(config);
 const planner = new AIPlanner({
   aiClient,
   jobs: jobsRepo,
   runs: runsRepo,
+  sessions: sessionsRepo,  // For session persistence
   clock: systemClock,
 });
 
@@ -32,6 +34,21 @@ await planner.analyzeEndpoint("endpoint-id");
 
 // Batch analysis
 await planner.analyzeEndpoints(["ep-1", "ep-2", "ep-3"]);
+```
+
+## Session Tracking
+
+Every AI analysis is persisted to the `ai_analysis_sessions` table for observability:
+
+- **Tool calls**: JSONB array of all tools called (tool name, args, results)
+- **Reasoning**: AI's explanation and decision rationale
+- **Token usage**: Total tokens consumed for cost tracking
+- **Duration**: Analysis execution time in milliseconds
+
+**Query sessions:**
+```typescript
+const recent = await sessionsRepo.getRecentSessions("endpoint-id", 10);
+const totalTokens = await sessionsRepo.getTotalTokenUsage("endpoint-id", since);
 ```
 
 ## Dependencies
