@@ -2,6 +2,52 @@
 
 Single `docker-compose.yml` with profile-based service control.
 
+## Quick Start
+
+```bash
+# 1. Create your .env file
+cp .env.example .env
+
+# 2. Start database
+pnpm db
+
+# 3. Run migrations
+pnpm db:migrate
+```
+
+That's it! The same `.env` file works for both Docker and local development.
+
+## Environment Configuration
+
+**Single `.env` file for everything:**
+- Docker Compose reads it automatically (no `--env-file` needed)
+- Local dev (`pnpm dev`) reads the same file
+- Production uses `.env.production` (gitignored)
+
+**Key environment variables:**
+```bash
+# Docker Compose
+COMPOSE_PROJECT_NAME=cronicorn-dev  # Container name prefix
+DB_PORT=6666                         # Exposed port on host
+DB_RESTART=unless-stopped            # Container restart policy
+
+# Postgres Container
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password
+POSTGRES_DB=db
+
+# Local App Connection (points to localhost:6666)
+DATABASE_URL=postgresql://user:password@localhost:6666/db
+
+# Application (optional)
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+AUTH_SECRET=...
+OPENAI_API_KEY=...
+```
+
+**Note:** The migrator container automatically constructs its own `DATABASE_URL` using the container hostname (`cronicorn-dev-db:5432`) instead of `localhost`.
+
 ## Profiles
 
 - **No profile** (default): Database only
@@ -10,64 +56,50 @@ Single `docker-compose.yml` with profile-based service control.
 
 ## Development Workflow
 
-### Start Database Only
+### Start Database
 ```bash
 pnpm db
-# or
-docker compose --env-file .env.docker.dev up -d
 ```
 
 ### Run Migrations
 ```bash
 pnpm db:migrate
-# or
-docker compose --env-file .env.docker.dev --profile dev up migrator
 ```
 
 ### Reset Database
 ```bash
 pnpm db:reset
-# Stops DB, removes volume, starts fresh DB
 ```
 
-### Stop Database
+### Stop Services
 ```bash
 pnpm db:down
-# or
-docker compose down
 ```
 
 ## Production Deployment
 
 ### Setup
 ```bash
-# Copy example env file
-cp .env.docker.prod.example .env.docker.prod
+# Production uses .env.production (gitignored)
+cp .env.example .env.production
 
-# Edit with real values
-nano .env.docker.prod
+# Edit with real secrets
+nano .env.production
+
+# Set DATABASE_URL to use container hostname for services
+# DATABASE_URL=postgresql://user:password@cronicorn-prod-db:5432/db
 ```
 
 ### Deploy Full Stack
 ```bash
-pnpm docker:prod
-# or
-docker compose --env-file .env.docker.prod --profile prod up -d --build
+# Specify production env file explicitly
+docker compose --env-file .env.production --profile prod up -d --build
 ```
 
 ### View Logs
 ```bash
 pnpm docker:logs
-# or
-docker compose logs -f
 ```
-
-## Environment Files
-
-- `.env.docker.dev` - Development configuration (committed)
-- `.env.docker.prod` - Production secrets (gitignored, copy from .example)
-
-## Available Scripts
 
 ```bash
 # Database Management
@@ -119,15 +151,20 @@ pnpm docker:logs     # Follow logs
 
 Run services natively with `pnpm dev`:
 ```bash
-# Terminal 1: Start DB only
+# 1. Ensure .env exists
+cp .env.example .env
+
+# 2. Start DB via Docker
 pnpm db
 
-# Terminal 2: Run migrations (optional, or via pnpm migrate)
+# 3. Run migrations
 pnpm db:migrate
 
-# Terminal 3: Run all apps locally
+# 4. Run all apps locally (reads same .env file)
 pnpm dev
 ```
+
+The `.env` file works for both Docker services AND local development!
 
 ## Troubleshooting
 
