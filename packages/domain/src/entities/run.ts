@@ -1,3 +1,5 @@
+import type { JsonValue } from "./endpoint.js";
+
 /**
  * Run status types based on current usage.
  * Reflects the actual status values used in the scheduler.
@@ -11,4 +13,6 @@ export type ExecutionResult = {
   status: "success" | "failed";
   durationMs: number;
   errorMessage?: string;
+  responseBody?: JsonValue; // Response data from endpoint execution (if JSON and within size limit)
+  statusCode?: number; // HTTP status code (200, 404, 500, etc.)
 };

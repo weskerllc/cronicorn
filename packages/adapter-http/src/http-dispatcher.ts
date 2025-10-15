@@ -1,4 +1,5 @@
 import type { Dispatcher, ExecutionResult, JobEndpoint } from "@cronicorn/domain";
+import type { JsonValue } from "@cronicorn/domain/src/entities/run";
 
 /**
  * Production HTTP dispatcher using Node.js native fetch API.
@@ -6,11 +7,13 @@ import type { Dispatcher, ExecutionResult, JobEndpoint } from "@cronicorn/domain
  * Design decisions:
  * - Uses AbortController for timeout handling (proper request cancellation)
  * - Does NOT retry (scheduler handles retries via failureCount)
- * - Does NOT store response bodies (only status code matters for scheduling)
+ * - Stores JSON response bodies (for AI query tools) with size limits
  * - Auto-adds Content-Type: application/json when bodyJson present
  * - Measures duration from request start to response headers (precise timing)
  */
 export class HttpDispatcher implements Dispatcher {
+  /** Default response size limit: 100 KB */
+  private static readonly DEFAULT_MAX_RESPONSE_SIZE_KB = 100;
   async execute(ep: JobEndpoint): Promise<ExecutionResult> {
     // Validate URL early
     if (!ep.url) {
@@ -59,14 +62,19 @@ export class HttpDispatcher implements Dispatcher {
       // Measure duration
       const durationMs = Math.round(performance.now() - startMs);
 
+      // Capture response body if JSON and within size limits
+      const { responseBody, statusCode } = await this.captureResponse(response, ep);
+
       // Determine success/failure based on HTTP status
       if (response.ok) {
-        return { status: "success", durationMs };
+        return { status: "success", durationMs, statusCode, responseBody };
       }
 
       return {
         status: "failed",
         durationMs,
+        statusCode,
+        responseBody,
         errorMessage: `HTTP ${response.status} ${response.statusText}`,
       };
     }
@@ -93,6 +101,71 @@ export class HttpDispatcher implements Dispatcher {
         durationMs,
         errorMessage,
       };
+    }
+  }
+
+  /**
+   * Captures response body and status code from HTTP response.
+   *
+   * Behavior:
+   * - Always captures statusCode
+   * - Only captures responseBody if:
+   *   1. Content-Type is application/json (or variant)
+   *   2. Body size is within limits (maxResponseSizeKb, default 100KB)
+   *   3. Body parses successfully as JSON
+   * - Silently skips response body storage on errors (non-JSON, oversized, parse errors)
+   *
+   * @param response Fetch Response object
+   * @param ep JobEndpoint (for maxResponseSizeKb config)
+   * @returns Object with statusCode (always) and responseBody (conditional)
+   */
+  private async captureResponse(
+    response: Response,
+    ep: JobEndpoint,
+  ): Promise<{ statusCode: number; responseBody?: JsonValue }> {
+    const statusCode = response.status;
+
+    // Check Content-Type header
+    const contentType = response.headers.get("content-type") || "";
+    const isJson = contentType.includes("application/json");
+
+    if (!isJson) {
+      // Not JSON - skip response body storage
+      return { statusCode };
+    }
+
+    // Determine size limit
+    const maxSizeKb = ep.maxResponseSizeKb ?? HttpDispatcher.DEFAULT_MAX_RESPONSE_SIZE_KB;
+    const maxSizeBytes = maxSizeKb * 1024;
+
+    // Check Content-Length header if available
+    const contentLength = response.headers.get("content-length");
+    if (contentLength) {
+      const sizeBytes = Number.parseInt(contentLength, 10);
+      if (sizeBytes > maxSizeBytes) {
+        // Response too large - skip storage
+        return { statusCode };
+      }
+    }
+
+    try {
+      // Read response body as text first to check size
+      const bodyText = await response.text();
+
+      // Check actual size
+      const actualSizeBytes = new TextEncoder().encode(bodyText).length;
+      if (actualSizeBytes > maxSizeBytes) {
+        // Actual response too large - skip storage
+        return { statusCode };
+      }
+
+      // Parse JSON safely
+      const responseBody = JSON.parse(bodyText) as JsonValue;
+      return { statusCode, responseBody };
+    }
+    catch {
+      // JSON parse error or read error - skip storage
+      return { statusCode };
     }
   }
 }

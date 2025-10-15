@@ -1,4 +1,4 @@
-import type { HealthSummary, RunsRepo } from "../index.js";
+import type { HealthSummary, JsonValue, RunsRepo } from "../index.js";
 
 type Run = {
   id: string;
@@ -9,6 +9,8 @@ type Run = {
   durationMs?: number;
   err?: unknown;
   source?: string; // Phase 3: Track what triggered this run
+  responseBody?: JsonValue;
+  statusCode?: number;
 };
 
 export class InMemoryRunsRepo implements RunsRepo {
@@ -21,7 +23,7 @@ export class InMemoryRunsRepo implements RunsRepo {
     return id;
   }
 
-  async finish(id: string, patch: { status: "success" | "failed" | "canceled"; durationMs: number; err?: unknown }) {
+  async finish(id: string, patch: { status: "success" | "failed" | "canceled"; durationMs: number; err?: unknown; responseBody?: JsonValue; statusCode?: number }) {
     const run = this.runs.find(r => r.id === id);
     if (!run)
       throw new Error(`Run not found: ${id}`);
@@ -37,16 +39,16 @@ export class InMemoryRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-      runs: Array<{
-        runId: string;
-        endpointId: string;
-        startedAt: Date;
-        status: string;
-        durationMs?: number;
-        source?: string;
-      }>;
-      total: number;
-    }> {
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }> {
     let filtered = this.runs;
 
     if (filters.endpointId) {
@@ -158,5 +160,75 @@ export class InMemoryRunsRepo implements RunsRepo {
     }
 
     return Array.from(endpointIds);
+  }
+
+  // ============================================================================
+  // AI Query Tools: Response Data Retrieval
+  // ============================================================================
+
+  async getLatestResponse(endpointId: string): Promise<{
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+  } | null> {
+    const filtered = this.runs.filter(r => r.endpointId === endpointId);
+    if (filtered.length === 0) {
+      return null;
+    }
+
+    // Sort by most recent first
+    const sorted = filtered.sort((a, b) => b.startedAt - a.startedAt);
+    const latest = sorted[0];
+
+    return {
+      responseBody: latest.responseBody ?? null,
+      timestamp: new Date(latest.startedAt),
+      status: latest.status,
+    };
+  }
+
+  async getResponseHistory(
+    endpointId: string,
+    limit: number,
+  ): Promise<Array<{
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+    durationMs: number;
+  }>> {
+    // Filter to endpoint and only finished runs (those with durationMs)
+    const filtered = this.runs.filter(r =>
+      r.endpointId === endpointId && r.durationMs !== undefined,
+    );
+
+    // Sort by most recent first
+    const sorted = filtered.sort((a, b) => b.startedAt - a.startedAt);
+
+    // Clamp limit to max 50
+    const clampedLimit = Math.min(limit, 50);
+    const limited = sorted.slice(0, clampedLimit);
+
+    return limited.map(r => ({
+      responseBody: r.responseBody ?? null,
+      timestamp: new Date(r.startedAt),
+      status: r.status,
+      durationMs: r.durationMs!, // Safe because we filtered out undefined
+    }));
+  }
+
+  async getSiblingLatestResponses(
+    jobId: string,
+    excludeEndpointId: string,
+  ): Promise<Array<{
+    endpointId: string;
+    endpointName: string;
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+  }>> {
+    // In-memory implementation doesn't have job/endpoint relationships
+    // So we'll return empty array. This is fine for unit tests that mock this.
+    // Integration tests use DrizzleRunsRepo which has full implementation.
+    return [];
   }
 }

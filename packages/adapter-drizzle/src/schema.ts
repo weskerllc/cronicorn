@@ -56,6 +56,7 @@ export const jobEndpoints = pgTable("job_endpoints", {
   headersJson: jsonb("headers_json").$type<Record<string, string>>(),
   bodyJson: jsonb("body_json").$type<import("@cronicorn/domain").JsonValue>(),
   timeoutMs: integer("timeout_ms"),
+  maxResponseSizeKb: integer("max_response_size_kb"), // Max response body size to store (default: 100 KB)
 
   // Adapter-specific (not in domain entity)
   _lockedUntil: timestamp("_locked_until", { mode: "date" }),
@@ -76,6 +77,8 @@ export const runs = pgTable("runs", {
   durationMs: integer("duration_ms"),
   errorMessage: text("error_message"),
   errorDetails: jsonb("error_details"),
+  responseBody: jsonb("response_body").$type<import("@cronicorn/domain").JsonValue>(), // Response data from endpoint (if JSON and within size limit)
+  statusCode: integer("status_code"), // HTTP status code (200, 404, 500, etc.)
 });
 
 export type JobRow = typeof jobs.$inferSelect;
