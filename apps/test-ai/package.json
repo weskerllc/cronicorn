@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "dependencies": {
-    "@cronicorn/scheduler": "workspace:*",
+    "@cronicorn/domain": "workspace:*",
     "@cronicorn/adapter-ai": "workspace:*",
     "ai": "^5.0.0",
     "@ai-sdk/openai": "^2.0.46",

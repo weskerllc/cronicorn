@@ -7,7 +7,7 @@
 
 import type { Clock, JobsRepo } from "@cronicorn/domain";
 
-import { defineTools, tool } from "@cronicorn/scheduler";
+import { defineTools, tool } from "@cronicorn/domain";
 import { z } from "zod";
 
 /**

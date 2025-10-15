@@ -1,6 +1,6 @@
 import type { Clock, JobsRepo } from "@cronicorn/domain";
 
-import { callTool } from "@cronicorn/scheduler";
+import { callTool } from "@cronicorn/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createToolsForEndpoint } from "../tools.js";
