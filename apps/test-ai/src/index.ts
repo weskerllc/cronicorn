@@ -8,7 +8,7 @@
 
 import { openai } from "@ai-sdk/openai";
 import { createVercelAiClient } from "@cronicorn/adapter-ai";
-import { defineTools, tool } from "@cronicorn/scheduler";
+import { defineTools, tool } from "@cronicorn/domain";
 import { z } from "zod";
 
 async function main() {

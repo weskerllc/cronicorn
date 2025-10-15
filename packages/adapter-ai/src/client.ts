@@ -1,6 +1,6 @@
 // Vercel AI SDK client implementation
 
-import type { AIClient, Tool } from "@cronicorn/scheduler";
+import type { AIClient, Tool } from "@cronicorn/domain";
 
 import { generateText, tool } from "ai";
 import { z } from "zod";
@@ -121,7 +121,7 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
         // TypeScript struggles with the complex tool generics, but runtime behavior is correct
         // This single type assertion is safer than scattering 'any' throughout the codebase
         const cleanTools = Object.keys(vercelTools).length > 0
-        // eslint-disable-next-line ts/consistent-type-assertions
+          // eslint-disable-next-line ts/consistent-type-assertions
           ? vercelTools as Parameters<typeof generateText>[0]["tools"]
           : undefined;
 

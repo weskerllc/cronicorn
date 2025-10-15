@@ -18,6 +18,6 @@
     "msw": "^2.11.3"
   },
   "peerDependencies": {
-    "@cronicorn/scheduler": "workspace:*"
+    "@cronicorn/domain": "workspace:*"
   }
 }

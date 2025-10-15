@@ -5,8 +5,7 @@
  * Runs independently from the scheduler worker - communicates via database.
  */
 
-import type { Clock, JobsRepo, RunsRepo } from "@cronicorn/domain";
-import type { AIClient } from "@cronicorn/scheduler";
+import type { AIClient, Clock, JobsRepo, RunsRepo } from "@cronicorn/domain";
 
 import { createToolsForEndpoint } from "./tools.js";
 

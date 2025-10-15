@@ -189,9 +189,9 @@ importers:
       '@cronicorn/adapter-ai':
         specifier: workspace:*
         version: link:../../packages/adapter-ai
-      '@cronicorn/scheduler':
+      '@cronicorn/domain':
         specifier: workspace:*
-        version: link:../../packages/scheduler
+        version: link:../../packages/domain
       ai:
         specifier: ^5.0.0
         version: 5.0.72(zod@4.1.12)
@@ -274,9 +274,9 @@ importers:
 
   packages/adapter-ai:
     dependencies:
-      '@cronicorn/scheduler':
+      '@cronicorn/domain':
         specifier: workspace:*
-        version: link:../scheduler
+        version: link:../domain
       ai:
         specifier: ^5.0.0
         version: 5.0.72(zod@4.1.12)
@@ -334,7 +334,11 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
-  packages/domain: {}
+  packages/domain:
+    dependencies:
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
 
   packages/scheduler:
     dependencies:
