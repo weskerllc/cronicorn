@@ -1,17 +1,17 @@
 /**
  * Complete Zod Schema Definitions for 17 Public-Facing Actions
- * 
+ *
  * This file contains production-ready Zod schemas for all public actions
  * in the adaptive scheduler. Suitable for:
  * - REST API route validation
  * - MCP server tool definitions
  * - TypeScript type inference
  * - OpenAPI documentation generation
- * 
+ *
  * Usage:
  * ```typescript
  * import { CreateJobRequestSchema, CreateJobResponseSchema } from './api-actions-schemas';
- * 
+ *
  * const request = CreateJobRequestSchema.parse(input);
  * const response: CreateJobResponse = { jobId: "...", createdAt: "..." };
  * ```
@@ -89,7 +89,7 @@ const JobStatusSchema = z.enum(["active", "archived"]).openapi({
 // 1.1 Create Job
 export const CreateJobRequestSchema = z.object({
   userId: UserIdSchema,
-  
+
   name: z.string()
     .min(1, "Name is required")
     .max(255, "Name must be 255 characters or less")
@@ -97,7 +97,7 @@ export const CreateJobRequestSchema = z.object({
       description: "Human-readable name for the job. Should clearly describe the job's purpose.",
       example: "Production Health Monitor",
     }),
-  
+
   description: z.string()
     .max(1000, "Description must be 1000 characters or less")
     .optional()
@@ -214,7 +214,7 @@ export type ArchiveJobResponse = z.infer<typeof ArchiveJobResponseSchema>;
 export const AddEndpointToJobRequestSchema = z.object({
   jobId: JobIdSchema,
   userId: UserIdSchema,
-  
+
   name: z.string()
     .min(1, "Name is required")
     .max(255, "Name must be 255 characters or less")
@@ -222,38 +222,38 @@ export const AddEndpointToJobRequestSchema = z.object({
       description: "Human-readable name for this endpoint",
       example: "check_api_latency",
     }),
-  
+
   url: z.string()
     .url("Must be a valid HTTP/HTTPS URL")
     .openapi({
       description: "HTTP endpoint URL to call when this endpoint executes",
       example: "https://api.example.com/health/latency",
     }),
-  
+
   method: HttpMethodSchema.default("GET").openapi({
     description: "HTTP method for the request",
   }),
-  
+
   headers: z.record(z.string()).optional().openapi({
     description: "HTTP headers to include in the request",
-    example: { "Authorization": "Bearer token123" },
+    example: { Authorization: "Bearer token123" },
   }),
-  
+
   body: JsonValueSchema.optional().openapi({
     description: "JSON body to send with POST/PUT/PATCH requests",
     example: { check: "latency", threshold: 200 },
   }),
-  
+
   baseline: z.object({
     cron: CronExpressionSchema.optional(),
     intervalMs: IntervalMsSchema.optional(),
   }).refine(
     data => (data.cron && !data.intervalMs) || (!data.cron && data.intervalMs),
-    { message: "Exactly one of 'cron' or 'intervalMs' must be provided" }
+    { message: "Exactly one of 'cron' or 'intervalMs' must be provided" },
   ).optional().openapi({
     description: "Baseline scheduling cadence",
   }),
-  
+
   clamp: z.object({
     minIntervalMs: IntervalMsSchema.optional().openapi({
       description: "Minimum allowed interval between runs",
@@ -264,7 +264,7 @@ export const AddEndpointToJobRequestSchema = z.object({
       example: 3600000,
     }),
   }).optional(),
-  
+
   timeoutMs: z.number()
     .int()
     .positive()

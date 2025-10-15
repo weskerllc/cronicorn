@@ -1,14 +1,42 @@
-import type { JobEndpoint } from "@cronicorn/domain";
+import type { Job, JobEndpoint } from "@cronicorn/domain";
 
-import type { JobResponse } from "./jobs.schemas.js";
+import type {
+  EndpointResponse,
+  HealthSummaryResponse,
+  JobResponse,
+  JobWithCountResponse,
+  ListRunsResponse,
+  RunDetailsResponse,
+  RunSummaryResponse,
+} from "./jobs.schemas.js";
 
 /**
- * Maps a domain JobEndpoint entity to an API JobResponse DTO.
- *
- * Handles all optional fields and Date → ISO string conversions.
- * Reusable across all CRUD handlers (create, get, list, update).
+ * Maps a domain Job entity to an API JobResponse DTO.
  */
-export function mapEndpointToResponse(endpoint: JobEndpoint): JobResponse {
+export function mapJobToResponse(job: Job): JobResponse {
+  return {
+    id: job.id,
+    userId: job.userId,
+    name: job.name,
+    description: job.description,
+    status: job.status,
+  };
+}
+
+/**
+ * Maps a domain Job with endpoint count to JobWithCountResponse DTO.
+ */
+export function mapJobWithCountToResponse(job: Job & { endpointCount: number }): JobWithCountResponse {
+  return {
+    ...mapJobToResponse(job),
+    endpointCount: job.endpointCount,
+  };
+}
+
+/**
+ * Maps a domain JobEndpoint entity to an API EndpointResponse DTO.
+ */
+export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
   return {
     id: endpoint.id,
     name: endpoint.name,
@@ -25,5 +53,97 @@ export function mapEndpointToResponse(endpoint: JobEndpoint): JobResponse {
     headersJson: endpoint.headersJson,
     bodyJson: endpoint.bodyJson,
     timeoutMs: endpoint.timeoutMs,
+  };
+}
+
+/**
+ * Maps run summary from manager to RunSummaryResponse DTO.
+ */
+export function mapRunSummaryToResponse(run: {
+  runId: string;
+  endpointId: string;
+  startedAt: Date;
+  status: string;
+  durationMs?: number;
+  source?: string;
+}): RunSummaryResponse {
+  return {
+    runId: run.runId,
+    endpointId: run.endpointId,
+    startedAt: run.startedAt.toISOString(),
+    status: run.status,
+    durationMs: run.durationMs,
+    source: run.source,
+  };
+}
+
+/**
+ * Maps list runs result with pagination.
+ */
+export function mapListRunsToResponse(result: {
+  runs: Array<{
+    runId: string;
+    endpointId: string;
+    startedAt: Date;
+    status: string;
+    durationMs?: number;
+    source?: string;
+  }>;
+  total: number;
+}): ListRunsResponse {
+  return {
+    runs: result.runs.map(mapRunSummaryToResponse),
+    total: result.total,
+  };
+}
+
+/**
+ * Maps run details from manager to RunDetailsResponse DTO.
+ */
+export function mapRunDetailsToResponse(run: {
+  id: string;
+  endpointId: string;
+  status: string;
+  startedAt: Date;
+  finishedAt?: Date;
+  durationMs?: number;
+  errorMessage?: string;
+  source?: string;
+  attempt: number;
+}): RunDetailsResponse {
+  return {
+    id: run.id,
+    endpointId: run.endpointId,
+    status: run.status,
+    startedAt: run.startedAt.toISOString(),
+    finishedAt: run.finishedAt?.toISOString(),
+    durationMs: run.durationMs,
+    errorMessage: run.errorMessage,
+    source: run.source,
+    attempt: run.attempt,
+  };
+}
+
+/**
+ * Maps health summary from manager to HealthSummaryResponse DTO.
+ */
+export function mapHealthSummaryToResponse(summary: {
+  successCount: number;
+  failureCount: number;
+  avgDurationMs: number | null;
+  lastRun: { status: string; at: Date } | null;
+  failureStreak: number;
+}): HealthSummaryResponse {
+  return {
+    successCount: summary.successCount,
+    failureCount: summary.failureCount,
+    avgDurationMs: summary.avgDurationMs,
+    lastRun: summary.lastRun
+      ? {
+          status: summary.lastRun.status,
+          at: summary.lastRun.at.toISOString(),
+        }
+      : null,
+    failureStreak: summary.failureStreak,
   };
 }

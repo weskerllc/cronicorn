@@ -4,6 +4,18 @@
 
 import type { ExecutionResult, Job, JobEndpoint } from "../entities/index.js";
 
+/**
+ * Health summary for an endpoint over a time window.
+ * Used by summarizeEndpointHealth action.
+ */
+export type HealthSummary = {
+  successCount: number;
+  failureCount: number;
+  avgDurationMs: number | null;
+  lastRun: { status: string; at: Date } | null;
+  failureStreak: number; // consecutive failures from most recent
+};
+
 export type JobsRepo = {
   // Job lifecycle operations (Phase 3)
   createJob: (job: Omit<Job, "id" | "createdAt" | "updatedAt">) => Promise<Job>;
@@ -13,7 +25,8 @@ export type JobsRepo = {
   archiveJob: (id: string) => Promise<Job>;
 
   // Endpoint operations (existing + Phase 3 extensions)
-  add: (ep: JobEndpoint) => Promise<void>;
+  addEndpoint: (ep: JobEndpoint) => Promise<void>;
+  updateEndpoint: (id: string, patch: Partial<Omit<JobEndpoint, "id" | "tenantId">>) => Promise<JobEndpoint>;
 
   /**
    * Claims due endpoints for execution.
@@ -54,6 +67,8 @@ export type JobsRepo = {
     reason?: string;
   }) => Promise<void>;
   setPausedUntil: (id: string, until: Date | null) => Promise<void>;
+  clearAIHints: (id: string) => Promise<void>;
+  resetFailureCount: (id: string) => Promise<void>;
 
   // Post-run update
   updateAfterRun: (id: string, patch: {
@@ -90,14 +105,18 @@ export type RunsRepo = {
     endpointId?: string;
     status?: "success" | "failed";
     limit?: number;
-  }) => Promise<Array<{
-    runId: string;
-    endpointId: string;
-    startedAt: Date;
-    status: string;
-    durationMs?: number;
-    source?: string;
-  }>>;
+    offset?: number;
+  }) => Promise<{
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }>;
 
   getRunDetails: (runId: string) => Promise<{
     id: string;
@@ -108,5 +127,15 @@ export type RunsRepo = {
     durationMs?: number;
     errorMessage?: string;
     source?: string;
+    attempt: number;
   } | null>;
+
+  /**
+   * Get health summary for an endpoint over a time window.
+   *
+   * @param endpointId - The endpoint to summarize
+   * @param since - Only include runs starting after this date
+   * @returns Aggregated health metrics
+   */
+  getHealthSummary: (endpointId: string, since: Date) => Promise<HealthSummary>;
 };

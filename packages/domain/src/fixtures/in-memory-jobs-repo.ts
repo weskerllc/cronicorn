@@ -82,7 +82,41 @@ export class InMemoryJobsRepo implements JobsRepo {
   }
 
   // Endpoint operations (existing)
-  async add(ep: JobEndpoint) { this.map.set(ep.id, ep); }
+  async addEndpoint(ep: JobEndpoint) { this.map.set(ep.id, ep); }
+
+  async updateEndpoint(id: string, patch: Partial<Omit<JobEndpoint, "id" | "tenantId">>): Promise<JobEndpoint> {
+    const existing = this.map.get(id);
+    if (!existing)
+      throw new Error(`Endpoint not found: ${id}`);
+
+    const updated: JobEndpoint = {
+      ...existing,
+      ...patch,
+      id: existing.id, // Preserve id
+      tenantId: existing.tenantId, // Preserve tenantId
+    };
+    this.map.set(id, updated);
+    return structuredClone(updated);
+  }
+
+  async clearAIHints(id: string): Promise<void> {
+    const e = this.map.get(id);
+    if (!e)
+      throw new Error(`clearAIHints: not found: ${id}`);
+
+    e.aiHintIntervalMs = undefined;
+    e.aiHintNextRunAt = undefined;
+    e.aiHintExpiresAt = undefined;
+    e.aiHintReason = undefined;
+  }
+
+  async resetFailureCount(id: string): Promise<void> {
+    const e = this.map.get(id);
+    if (!e)
+      throw new Error(`resetFailureCount: not found: ${id}`);
+
+    e.failureCount = 0;
+  }
 
   async claimDueEndpoints(limit: number, withinMs: number) {
     const now = this.now();

@@ -1,7 +1,7 @@
-import type { RunsRepo } from "@cronicorn/domain";
+import type { HealthSummary, RunsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, sql } from "drizzle-orm";
 
 import { jobEndpoints, runs } from "./schema.js";
 
@@ -73,14 +73,18 @@ export class DrizzleRunsRepo implements RunsRepo {
     endpointId?: string;
     status?: "success" | "failed";
     limit?: number;
-  }): Promise<Array<{
-      runId: string;
-      endpointId: string;
-      startedAt: Date;
-      status: string;
-      durationMs?: number;
-      source?: string;
-    }>> {
+    offset?: number;
+  }): Promise<{
+      runs: Array<{
+        runId: string;
+        endpointId: string;
+        startedAt: Date;
+        status: string;
+        durationMs?: number;
+        source?: string;
+      }>;
+      total: number;
+    }> {
     // Build conditions
     // Build query conditions
     const conditions = [];
@@ -124,17 +128,32 @@ export class DrizzleRunsRepo implements RunsRepo {
 
     // Add limit and execute
     const rows = filters.limit
-      ? await withOrder.limit(filters.limit)
-      : await withOrder;
+      ? await withOrder.limit(filters.limit).offset(filters.offset ?? 0)
+      : await withOrder.offset(filters.offset ?? 0);
 
-    return rows.map(row => ({
-      runId: row.runId,
-      endpointId: row.endpointId,
-      startedAt: row.startedAt,
-      status: row.status,
-      durationMs: row.durationMs ?? undefined,
-      source: row.source ?? undefined,
-    }));
+    // Get total count (TODO: optimize with single query using window functions)
+    const countQuery = filters.jobId
+      ? this.tx.select({ count: count() }).from(runs).innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      : this.tx.select({ count: count() }).from(runs);
+
+    const countWithWhere = conditions.length > 0
+      ? countQuery.where(and(...conditions))
+      : countQuery;
+
+    const totalResult = await countWithWhere;
+    const total = Number(totalResult[0]?.count ?? 0);
+
+    return {
+      runs: rows.map(row => ({
+        runId: row.runId,
+        endpointId: row.endpointId,
+        startedAt: row.startedAt,
+        status: row.status,
+        durationMs: row.durationMs ?? undefined,
+        source: row.source ?? undefined,
+      })),
+      total,
+    };
   }
 
   async getRunDetails(runId: string): Promise<{
@@ -146,6 +165,7 @@ export class DrizzleRunsRepo implements RunsRepo {
     durationMs?: number;
     errorMessage?: string;
     source?: string;
+    attempt: number;
   } | null> {
     const rows = await this.tx
       .select()
@@ -167,6 +187,74 @@ export class DrizzleRunsRepo implements RunsRepo {
       durationMs: row.durationMs ?? undefined,
       errorMessage: row.errorMessage ?? undefined,
       source: row.source ?? undefined,
+      attempt: row.attempt,
+    };
+  }
+
+  async getHealthSummary(endpointId: string, since: Date): Promise<HealthSummary> {
+    // Get aggregated stats
+    const statsResult = await this.tx
+      .select({
+        successCount: sql<number>`count(*) filter (where ${runs.status} = 'success')`.as("success_count"),
+        failureCount: sql<number>`count(*) filter (where ${runs.status} = 'failed')`.as("failure_count"),
+        avgDuration: avg(runs.durationMs),
+      })
+      .from(runs)
+      .where(and(
+        eq(runs.endpointId, endpointId),
+        gte(runs.startedAt, since),
+      ));
+
+    const stats = statsResult[0];
+    const successCount = Number(stats?.successCount ?? 0);
+    const failureCount = Number(stats?.failureCount ?? 0);
+    const avgDurationMs = stats?.avgDuration ? Number(stats.avgDuration) : null;
+
+    // Get last run
+    const lastRunResult = await this.tx
+      .select({
+        status: runs.status,
+        startedAt: runs.startedAt,
+      })
+      .from(runs)
+      .where(and(
+        eq(runs.endpointId, endpointId),
+        gte(runs.startedAt, since),
+      ))
+      .orderBy(desc(runs.startedAt))
+      .limit(1);
+
+    const lastRun = lastRunResult[0]
+      ? { status: lastRunResult[0].status, at: lastRunResult[0].startedAt }
+      : null;
+
+    // Calculate failure streak (consecutive failures from most recent)
+    const recentRuns = await this.tx
+      .select({ status: runs.status })
+      .from(runs)
+      .where(and(
+        eq(runs.endpointId, endpointId),
+        gte(runs.startedAt, since),
+      ))
+      .orderBy(desc(runs.startedAt))
+      .limit(100); // Reasonable limit for streak calculation
+
+    let failureStreak = 0;
+    for (const run of recentRuns) {
+      if (run.status === "failed") {
+        failureStreak++;
+      }
+      else {
+        break;
+      }
+    }
+
+    return {
+      successCount,
+      failureCount,
+      avgDurationMs,
+      lastRun,
+      failureStreak,
     };
   }
 }

@@ -11,11 +11,11 @@ export type CreateJobInput = {
 };
 
 /**
- * Input for creating an endpoint (optionally under a job).
+ * Input for adding an endpoint to a job.
  */
-export type CreateEndpointInput = {
+export type AddEndpointInput = {
   name: string;
-  jobId?: string; // Optional: assign to a job
+  jobId: string; // Required: must belong to a job
   baselineCron?: string;
   baselineIntervalMs?: number;
   minIntervalMs?: number;
@@ -57,7 +57,7 @@ function validateCreateJobInput(input: CreateJobInput): void {
   }
 }
 
-function validateCreateEndpointInput(input: CreateEndpointInput): void {
+function validateAddEndpointInput(input: AddEndpointInput): void {
   if (!input.name || input.name.trim().length === 0) {
     throw new ValidationError("Endpoint name is required");
   }
@@ -241,23 +241,21 @@ export class JobsManager {
   // ==================== Endpoint Operations ====================
 
   /**
-   * Create a new endpoint (optionally under a job).
+   * Add a new endpoint to a job.
    *
    * @param userId - The user/tenant ID who owns this endpoint
    * @param input - Endpoint configuration
    * @returns The created JobEndpoint entity
    */
-  async createEndpoint(userId: string, input: CreateEndpointInput): Promise<JobEndpoint> {
-    validateCreateEndpointInput(input);
+  async addEndpointToJob(userId: string, input: AddEndpointInput): Promise<JobEndpoint> {
+    validateAddEndpointInput(input);
 
     const now = this.clock.now();
 
-    // If jobId provided, verify user owns it
-    if (input.jobId) {
-      const job = await this.getJob(userId, input.jobId);
-      if (!job) {
-        throw new Error("Job not found or unauthorized");
-      }
+    // Verify user owns the job
+    const job = await this.getJob(userId, input.jobId);
+    if (!job) {
+      throw new Error("Job not found or unauthorized");
     }
 
     // Build JobEndpoint domain entity
@@ -295,7 +293,7 @@ export class JobsManager {
     }
 
     // Persist to database
-    await this.jobsRepo.add(endpoint);
+    await this.jobsRepo.addEndpoint(endpoint);
 
     return endpoint;
   }
@@ -345,10 +343,10 @@ export class JobsManager {
    * @returns The updated endpoint
    * @throws Error if endpoint not found or user not authorized
    */
-  async updateEndpoint(
+  async updateEndpointConfig(
     userId: string,
     endpointId: string,
-    input: Partial<Omit<CreateEndpointInput, "jobId">>,
+    input: Partial<Omit<AddEndpointInput, "jobId">>,
   ): Promise<JobEndpoint> {
     // Authorization check
     const existing = await this.getEndpoint(userId, endpointId);
@@ -356,27 +354,23 @@ export class JobsManager {
       throw new Error("Endpoint not found or unauthorized");
     }
 
-    // Get current endpoint to merge updates
-    const updated: JobEndpoint = {
-      ...existing,
-      ...input,
-    };
+    // Build update object
+    const updates: Partial<JobEndpoint> = { ...input };
 
     // Recalculate nextRunAt if baseline schedule changed
     const now = this.clock.now();
     if (input.baselineCron && input.baselineCron !== existing.baselineCron) {
-      updated.nextRunAt = this.cron.next(input.baselineCron, now);
+      updates.nextRunAt = this.cron.next(input.baselineCron, now);
     }
     else if (
       input.baselineIntervalMs
       && input.baselineIntervalMs !== existing.baselineIntervalMs
     ) {
-      updated.nextRunAt = new Date(now.getTime() + input.baselineIntervalMs);
+      updates.nextRunAt = new Date(now.getTime() + input.baselineIntervalMs);
     }
 
-    // Update via repo (note: this uses the existing add method which replaces)
-    // In a real implementation, you'd want an updateEndpoint method on the repo
-    await this.jobsRepo.add(updated);
+    // Update via repo partial update
+    const updated = await this.jobsRepo.updateEndpoint(endpointId, updates);
 
     return updated;
   }
@@ -409,7 +403,8 @@ export class JobsManager {
    * @param filters.endpointId - Filter by endpoint ID
    * @param filters.status - Filter by run status (success/failed)
    * @param filters.limit - Maximum number of runs to return
-   * @returns Array of run summaries
+   * @param filters.offset - Offset for pagination
+   * @returns Paginated run summaries with total count
    */
   async listRuns(
     userId: string,
@@ -418,15 +413,19 @@ export class JobsManager {
       endpointId?: string;
       status?: "success" | "failed";
       limit?: number;
+      offset?: number;
     },
-  ): Promise<Array<{
-      runId: string;
-      endpointId: string;
-      startedAt: Date;
-      status: string;
-      durationMs?: number;
-      source?: string;
-    }>> {
+  ): Promise<{
+      runs: Array<{
+        runId: string;
+        endpointId: string;
+        startedAt: Date;
+        status: string;
+        durationMs?: number;
+        source?: string;
+      }>;
+      total: number;
+    }> {
     return this.runsRepo.listRuns({
       userId,
       ...filters,
@@ -449,6 +448,7 @@ export class JobsManager {
     durationMs?: number;
     errorMessage?: string;
     source?: string;
+    attempt: number;
   } | null> {
     const run = await this.runsRepo.getRunDetails(runId);
 
@@ -463,5 +463,219 @@ export class JobsManager {
     }
 
     return run;
+  }
+
+  // ==================== Adaptive Scheduling ====================
+
+  /**
+   * Apply an interval hint to an endpoint (AI-suggested interval adjustment).
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param endpointId - The endpoint ID
+   * @param input - Hint configuration
+   * @param input.intervalMs - Suggested interval in milliseconds
+   * @param input.ttlMinutes - How long this hint should remain valid (default: 60)
+   * @param input.reason - Optional explanation for the hint
+   * @throws Error if endpoint not found or user not authorized
+   */
+  async applyIntervalHint(
+    userId: string,
+    endpointId: string,
+    input: { intervalMs: number; ttlMinutes?: number; reason?: string },
+  ): Promise<void> {
+    // Authorization check
+    const endpoint = await this.getEndpoint(userId, endpointId);
+    if (!endpoint) {
+      throw new Error("Endpoint not found or unauthorized");
+    }
+
+    // Validate intervalMs is within min/max bounds if set
+    if (endpoint.minIntervalMs && input.intervalMs < endpoint.minIntervalMs) {
+      throw new ValidationError(
+        `Interval hint (${input.intervalMs}ms) is below minimum (${endpoint.minIntervalMs}ms)`,
+      );
+    }
+    if (endpoint.maxIntervalMs && input.intervalMs > endpoint.maxIntervalMs) {
+      throw new ValidationError(
+        `Interval hint (${input.intervalMs}ms) exceeds maximum (${endpoint.maxIntervalMs}ms)`,
+      );
+    }
+
+    const now = this.clock.now();
+    const ttlMs = (input.ttlMinutes ?? 60) * 60 * 1000;
+    const expiresAt = new Date(now.getTime() + ttlMs);
+
+    // Write AI hint to repo
+    await this.jobsRepo.writeAIHint(endpointId, {
+      intervalMs: input.intervalMs,
+      expiresAt,
+      reason: input.reason,
+    });
+
+    // Nudge nextRunAt if earlier than current
+    if (endpoint.lastRunAt) {
+      const suggestedNext = new Date(endpoint.lastRunAt.getTime() + input.intervalMs);
+      await this.jobsRepo.setNextRunAtIfEarlier(endpointId, suggestedNext);
+    }
+  }
+
+  /**
+   * Schedule a one-shot run at a specific time (AI-suggested timing).
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param endpointId - The endpoint ID
+   * @param input - One-shot configuration
+   * @param input.nextRunAt - When to run (ISO string or Date)
+   * @param input.nextRunInMs - Alternative: run in X milliseconds from now
+   * @param input.ttlMinutes - How long this hint should remain valid (default: 60)
+   * @param input.reason - Optional explanation for the hint
+   * @throws Error if endpoint not found or user not authorized
+   */
+  async scheduleOneShotRun(
+    userId: string,
+    endpointId: string,
+    input: {
+      nextRunAt?: string | Date;
+      nextRunInMs?: number;
+      ttlMinutes?: number;
+      reason?: string;
+    },
+  ): Promise<void> {
+    // Authorization check
+    const endpoint = await this.getEndpoint(userId, endpointId);
+    if (!endpoint) {
+      throw new Error("Endpoint not found or unauthorized");
+    }
+
+    const now = this.clock.now();
+
+    // Calculate nextRunAt
+    let targetTime: Date;
+    if (input.nextRunAt) {
+      targetTime = typeof input.nextRunAt === "string"
+        ? new Date(input.nextRunAt)
+        : input.nextRunAt;
+    }
+    else if (input.nextRunInMs !== undefined) {
+      targetTime = new Date(now.getTime() + input.nextRunInMs);
+    }
+    else {
+      throw new ValidationError("Must provide either nextRunAt or nextRunInMs");
+    }
+
+    // Validate it's in the future
+    if (targetTime <= now) {
+      throw new ValidationError("nextRunAt must be in the future");
+    }
+
+    const ttlMs = (input.ttlMinutes ?? 60) * 60 * 1000;
+    const expiresAt = new Date(now.getTime() + ttlMs);
+
+    // Write AI hint to repo
+    await this.jobsRepo.writeAIHint(endpointId, {
+      nextRunAt: targetTime,
+      expiresAt,
+      reason: input.reason,
+    });
+
+    // Nudge nextRunAt if earlier
+    await this.jobsRepo.setNextRunAtIfEarlier(endpointId, targetTime);
+  }
+
+  /**
+   * Pause or resume an endpoint.
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param endpointId - The endpoint ID
+   * @param input - Pause configuration
+   * @param input.pausedUntil - When to resume (ISO string, Date, or null to unpause)
+   * @param input.reason - Optional explanation for pausing
+   * @throws Error if endpoint not found or user not authorized
+   */
+  async pauseOrResumeEndpoint(
+    userId: string,
+    endpointId: string,
+    input: { pausedUntil: string | Date | null; reason?: string },
+  ): Promise<void> {
+    // Authorization check
+    const endpoint = await this.getEndpoint(userId, endpointId);
+    if (!endpoint) {
+      throw new Error("Endpoint not found or unauthorized");
+    }
+
+    let pauseDate: Date | null = null;
+    if (input.pausedUntil !== null) {
+      pauseDate = typeof input.pausedUntil === "string"
+        ? new Date(input.pausedUntil)
+        : input.pausedUntil;
+    }
+
+    await this.jobsRepo.setPausedUntil(endpointId, pauseDate);
+  }
+
+  /**
+   * Clear all AI hints for an endpoint.
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param endpointId - The endpoint ID
+   * @throws Error if endpoint not found or user not authorized
+   */
+  async clearAdaptiveHints(userId: string, endpointId: string): Promise<void> {
+    // Authorization check
+    const endpoint = await this.getEndpoint(userId, endpointId);
+    if (!endpoint) {
+      throw new Error("Endpoint not found or unauthorized");
+    }
+
+    await this.jobsRepo.clearAIHints(endpointId);
+  }
+
+  /**
+   * Reset the failure count for an endpoint.
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param endpointId - The endpoint ID
+   * @throws Error if endpoint not found or user not authorized
+   */
+  async resetFailureCount(userId: string, endpointId: string): Promise<void> {
+    // Authorization check
+    const endpoint = await this.getEndpoint(userId, endpointId);
+    if (!endpoint) {
+      throw new Error("Endpoint not found or unauthorized");
+    }
+
+    await this.jobsRepo.resetFailureCount(endpointId);
+  }
+
+  /**
+   * Get health summary for an endpoint.
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param endpointId - The endpoint ID
+   * @param sinceHours - How many hours of history to analyze (default: 24)
+   * @returns Health summary statistics
+   * @throws Error if endpoint not found or user not authorized
+   */
+  async summarizeEndpointHealth(
+    userId: string,
+    endpointId: string,
+    sinceHours = 24,
+  ): Promise<{
+      successCount: number;
+      failureCount: number;
+      avgDurationMs: number | null;
+      lastRun: { status: string; at: Date } | null;
+      failureStreak: number;
+    }> {
+    // Authorization check
+    const endpoint = await this.getEndpoint(userId, endpointId);
+    if (!endpoint) {
+      throw new Error("Endpoint not found or unauthorized");
+    }
+
+    const now = this.clock.now();
+    const since = new Date(now.getTime() - sinceHours * 60 * 60 * 1000);
+
+    return this.runsRepo.getHealthSummary(endpointId, since);
   }
 }

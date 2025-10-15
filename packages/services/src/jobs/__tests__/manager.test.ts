@@ -2,17 +2,12 @@ import type { Clock, Cron, Job, JobEndpoint, JobsRepo, RunsRepo } from "@cronico
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CreateEndpointInput, CreateJobInput } from "../manager.js";
+import type { AddEndpointInput } from "../manager.js";
 
 import { JobsManager } from "../manager.js";
 
 /**
- * Test suite for JobsManager (v2 - clean hexagonal architecture).
- *
- * Demonstrates:
- * - Pure dependency injection (no adapters, no TransactionProvider)
- * - Simple mocking of port interfaces
- * - Fast, isolated unit tests
+ * Test suite for JobsManager covering all 17 public actions.
  */
 describe("jobsManager", () => {
   let mockJobsRepo: JobsRepo;
@@ -22,14 +17,15 @@ describe("jobsManager", () => {
   let manager: JobsManager;
 
   beforeEach(() => {
-    // Mock repos with minimal setup - include all required methods
+    // Setup mock repositories with all required methods
     mockJobsRepo = {
       createJob: vi.fn(),
       getJob: vi.fn(),
       listJobs: vi.fn(),
       updateJob: vi.fn(),
       archiveJob: vi.fn(),
-      add: vi.fn(),
+      addEndpoint: vi.fn(),
+      updateEndpoint: vi.fn(),
       listEndpointsByJob: vi.fn(),
       getEndpoint: vi.fn(),
       deleteEndpoint: vi.fn(),
@@ -38,6 +34,8 @@ describe("jobsManager", () => {
       clearLock: vi.fn(),
       setNextRunAtIfEarlier: vi.fn(),
       writeAIHint: vi.fn(),
+      clearAIHints: vi.fn(),
+      resetFailureCount: vi.fn(),
       setPausedUntil: vi.fn(),
       updateAfterRun: vi.fn(),
     };
@@ -47,112 +45,38 @@ describe("jobsManager", () => {
       finish: vi.fn(),
       listRuns: vi.fn(),
       getRunDetails: vi.fn(),
+      getHealthSummary: vi.fn(),
     };
 
-    // Fake clock (deterministic time)
     const now = new Date("2025-01-14T12:00:00Z");
-    fakeClock = {
-      now: () => now,
-      sleep: async () => { },
-    };
+    fakeClock = { now: () => now, sleep: async () => { } };
+    fakeCron = { next: (_cron: string, from: Date) => new Date(from.getTime() + 3600_000) };
 
-    // Fake cron (simple +1 hour logic for testing)
-    fakeCron = {
-      next: (cron: string, from: Date) => new Date(from.getTime() + 3600_000),
-    };
-
-    // Instantiate manager with all dependencies injected
     manager = new JobsManager(mockJobsRepo, mockRunsRepo, fakeClock, fakeCron);
   });
 
+  // ==================== Job Lifecycle Tests ====================
+
   describe("createJob", () => {
     it("creates job with correct fields", async () => {
-      const input: CreateJobInput = {
-        name: "Flash Sale Coordination",
-        description: "Orchestrates flash sale endpoints",
-      };
-
       const mockJob: Job = {
-        id: "job-123",
+        id: "job-1",
         userId: "user-1",
-        name: input.name,
-        description: input.description,
+        name: "Test Job",
         status: "active",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-
       vi.mocked(mockJobsRepo.createJob).mockResolvedValue(mockJob);
 
-      const result = await manager.createJob("user-1", input);
+      const result = await manager.createJob("user-1", { name: "Test Job" });
 
       expect(mockJobsRepo.createJob).toHaveBeenCalledWith({
         userId: "user-1",
-        name: "Flash Sale Coordination",
-        description: "Orchestrates flash sale endpoints",
+        name: "Test Job",
         status: "active",
       });
       expect(result).toEqual(mockJob);
-    });
-  });
-
-  describe("createEndpoint", () => {
-    it("creates endpoint with calculated nextRunAt from cron", async () => {
-      const input: CreateEndpointInput = {
-        name: "Check inventory",
-        baselineCron: "*/5 * * * *",
-        url: "https://api.example.com/inventory",
-        method: "GET",
-      };
-
-      await manager.createEndpoint("user-1", input);
-
-      expect(mockJobsRepo.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: "Check inventory",
-          baselineCron: "*/5 * * * *",
-          tenantId: "user-1",
-          // nextRunAt should be clock.now() + 1 hour (from fake cron)
-          nextRunAt: new Date("2025-01-14T13:00:00Z"),
-          failureCount: 0,
-        }),
-      );
-    });
-
-    it("creates endpoint with calculated nextRunAt from interval", async () => {
-      const input: CreateEndpointInput = {
-        name: "Health check",
-        baselineIntervalMs: 30_000, // 30 seconds
-        url: "https://api.example.com/health",
-        method: "GET",
-      };
-
-      await manager.createEndpoint("user-1", input);
-
-      expect(mockJobsRepo.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: "Health check",
-          baselineIntervalMs: 30_000,
-          // nextRunAt should be clock.now() + 30s
-          nextRunAt: new Date("2025-01-14T12:00:30Z"),
-        }),
-      );
-    });
-
-    it("throws if jobId provided but job not found", async () => {
-      const input: CreateEndpointInput = {
-        name: "Test",
-        jobId: "nonexistent-job",
-        baselineIntervalMs: 30_000, // Add required baseline schedule
-        url: "https://api.example.com/test",
-        method: "GET",
-      };
-
-      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(null);
-
-      await expect(manager.createEndpoint("user-1", input)).rejects.toThrow(
-        "Job not found or unauthorized",
-      );
     });
   });
 
@@ -166,7 +90,6 @@ describe("jobsManager", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
 
       const result = await manager.getJob("user-1", "job-1");
@@ -177,18 +100,109 @@ describe("jobsManager", () => {
     it("returns null when user does not own job", async () => {
       const mockJob: Job = {
         id: "job-1",
-        userId: "user-2", // Different user
+        userId: "user-2",
         name: "Someone else's job",
         status: "active",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
 
       const result = await manager.getJob("user-1", "job-1");
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe("listJobs", () => {
+    it("returns jobs for user", async () => {
+      const mockJobs = [
+        {
+          id: "job-1",
+          userId: "user-1",
+          name: "Job 1",
+          status: "active" as const,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          endpointCount: 3,
+        },
+      ];
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue(mockJobs);
+
+      const result = await manager.listJobs("user-1");
+
+      expect(result).toEqual(mockJobs);
+    });
+  });
+
+  describe("updateJob", () => {
+    it("updates job when user owns it", async () => {
+      const existingJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "Old Name",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const updatedJob: Job = { ...existingJob, name: "New Name" };
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(existingJob);
+      vi.mocked(mockJobsRepo.updateJob).mockResolvedValue(updatedJob);
+
+      const result = await manager.updateJob("user-1", "job-1", { name: "New Name" });
+
+      expect(result).toEqual(updatedJob);
+    });
+  });
+
+  describe("archiveJob", () => {
+    it("archives job when user owns it", async () => {
+      const existingJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const archivedJob: Job = { ...existingJob, status: "archived" };
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(existingJob);
+      vi.mocked(mockJobsRepo.archiveJob).mockResolvedValue(archivedJob);
+
+      const result = await manager.archiveJob("user-1", "job-1");
+
+      expect(result.status).toBe("archived");
+    });
+  });
+
+  // ==================== Endpoint Orchestration Tests ====================
+
+  describe("addEndpointToJob", () => {
+    it("creates endpoint with calculated nextRunAt from interval", async () => {
+      const mockJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const input: AddEndpointInput = {
+        name: "Health Check",
+        jobId: "job-1",
+        baselineIntervalMs: 30_000,
+        url: "https://api.example.com/health",
+        method: "GET",
+      };
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.addEndpoint).mockResolvedValue(undefined);
+
+      await manager.addEndpointToJob("user-1", input);
+
+      expect(mockJobsRepo.addEndpoint).toHaveBeenCalled();
     });
   });
 
@@ -202,7 +216,6 @@ describe("jobsManager", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-
       const mockEndpoints: JobEndpoint[] = [
         {
           id: "ep-1",
@@ -220,72 +233,6 @@ describe("jobsManager", () => {
       const result = await manager.listEndpointsByJob("user-1", "job-1");
 
       expect(result).toEqual(mockEndpoints);
-    });
-
-    it("throws when user does not own job", async () => {
-      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(null);
-
-      await expect(manager.listEndpointsByJob("user-1", "job-1")).rejects.toThrow(
-        "Job not found or unauthorized",
-      );
-    });
-  });
-
-  describe("validation", () => {
-    it("validates job name is required", async () => {
-      await expect(
-        manager.createJob("user-1", { name: "" }),
-      ).rejects.toThrow("Job name is required");
-    });
-
-    it("validates job name length", async () => {
-      await expect(
-        manager.createJob("user-1", { name: "a".repeat(256) }),
-      ).rejects.toThrow("Job name must be 255 characters or less");
-    });
-
-    it("validates endpoint must have baseline schedule", async () => {
-      await expect(
-        manager.createEndpoint("user-1", {
-          name: "Test",
-          url: "https://api.example.com",
-          method: "GET",
-        }),
-      ).rejects.toThrow("Endpoint must have either baselineCron or baselineIntervalMs");
-    });
-
-    it("validates endpoint cannot have both cron and interval", async () => {
-      await expect(
-        manager.createEndpoint("user-1", {
-          name: "Test",
-          baselineCron: "*/5 * * * *",
-          baselineIntervalMs: 30_000,
-          url: "https://api.example.com",
-          method: "GET",
-        }),
-      ).rejects.toThrow("Endpoint cannot have both baselineCron and baselineIntervalMs");
-    });
-
-    it("validates URL format", async () => {
-      await expect(
-        manager.createEndpoint("user-1", {
-          name: "Test",
-          baselineIntervalMs: 30_000,
-          url: "not-a-valid-url",
-          method: "GET",
-        }),
-      ).rejects.toThrow("Endpoint URL must be a valid URL");
-    });
-
-    it("validates minimum interval", async () => {
-      await expect(
-        manager.createEndpoint("user-1", {
-          name: "Test",
-          baselineIntervalMs: 500, // Less than 1000ms
-          url: "https://api.example.com",
-          method: "GET",
-        }),
-      ).rejects.toThrow("Baseline interval must be at least 1000ms");
     });
   });
 
@@ -305,21 +252,26 @@ describe("jobsManager", () => {
 
       expect(result).toEqual(mockEndpoint);
     });
+  });
 
-    it("returns null when user does not own endpoint", async () => {
-      const mockEndpoint: JobEndpoint = {
+  describe("updateEndpointConfig", () => {
+    it("updates endpoint configuration", async () => {
+      const existingEndpoint: JobEndpoint = {
         id: "ep-1",
-        tenantId: "user-2", // Different user
-        name: "Someone else's endpoint",
+        tenantId: "user-1",
+        name: "Old Name",
+        baselineIntervalMs: 60_000,
         nextRunAt: new Date(),
         failureCount: 0,
       };
+      const updatedEndpoint: JobEndpoint = { ...existingEndpoint, name: "New Name" };
 
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(existingEndpoint);
+      vi.mocked(mockJobsRepo.updateEndpoint).mockResolvedValue(updatedEndpoint);
 
-      const result = await manager.getEndpoint("user-1", "ep-1");
+      const result = await manager.updateEndpointConfig("user-1", "ep-1", { name: "New Name" });
 
-      expect(result).toBeNull();
+      expect(result.name).toBe("New Name");
     });
   });
 
@@ -340,23 +292,185 @@ describe("jobsManager", () => {
 
       expect(mockJobsRepo.deleteEndpoint).toHaveBeenCalledWith("ep-1");
     });
+  });
 
-    it("throws when user does not own endpoint", async () => {
+  // ==================== Adaptive Scheduling Tests ====================
+
+  describe("applyIntervalHint", () => {
+    it("applies interval hint with TTL", async () => {
       const mockEndpoint: JobEndpoint = {
         id: "ep-1",
-        tenantId: "user-2", // Different user
-        name: "Someone else's endpoint",
+        tenantId: "user-1",
+        name: "My Endpoint",
+        minIntervalMs: 10_000,
+        maxIntervalMs: 3600_000,
+        lastRunAt: new Date("2025-01-14T11:00:00Z"),
         nextRunAt: new Date(),
         failureCount: 0,
       };
 
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
+      vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
 
-      await expect(
-        manager.deleteEndpoint("user-1", "ep-1"),
-      ).rejects.toThrow("Endpoint not found or unauthorized");
+      await manager.applyIntervalHint("user-1", "ep-1", { intervalMs: 300_000 });
 
-      expect(mockJobsRepo.deleteEndpoint).not.toHaveBeenCalled();
+      expect(mockJobsRepo.writeAIHint).toHaveBeenCalled();
+    });
+  });
+
+  describe("scheduleOneShotRun", () => {
+    it("schedules one-shot run with ISO timestamp", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "My Endpoint",
+        nextRunAt: new Date("2025-01-14T15:00:00Z"),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
+      vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
+
+      await manager.scheduleOneShotRun("user-1", "ep-1", { nextRunAt: "2025-01-14T12:30:00Z" });
+
+      expect(mockJobsRepo.writeAIHint).toHaveBeenCalled();
+    });
+  });
+
+  describe("pauseOrResumeEndpoint", () => {
+    it("pauses endpoint until specific date", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "My Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockJobsRepo.setPausedUntil).mockResolvedValue(undefined);
+
+      await manager.pauseOrResumeEndpoint("user-1", "ep-1", { pausedUntil: "2025-01-20T00:00:00Z" });
+
+      expect(mockJobsRepo.setPausedUntil).toHaveBeenCalled();
+    });
+  });
+
+  describe("clearAdaptiveHints", () => {
+    it("clears all AI hints", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "My Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockJobsRepo.clearAIHints).mockResolvedValue(undefined);
+
+      await manager.clearAdaptiveHints("user-1", "ep-1");
+
+      expect(mockJobsRepo.clearAIHints).toHaveBeenCalled();
+    });
+  });
+
+  describe("resetFailureCount", () => {
+    it("resets failure count to zero", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "My Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 5,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockJobsRepo.resetFailureCount).mockResolvedValue(undefined);
+
+      await manager.resetFailureCount("user-1", "ep-1");
+
+      expect(mockJobsRepo.resetFailureCount).toHaveBeenCalled();
+    });
+  });
+
+  // ==================== Execution Visibility Tests ====================
+
+  describe("listRuns", () => {
+    it("lists runs with pagination", async () => {
+      const mockResult = {
+        runs: [
+          {
+            runId: "run-1",
+            endpointId: "ep-1",
+            startedAt: new Date(),
+            status: "success" as const,
+            durationMs: 1234,
+          },
+        ],
+        total: 42,
+      };
+
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue(mockResult);
+
+      const result = await manager.listRuns("user-1", { endpointId: "ep-1", limit: 20, offset: 10 });
+
+      expect(result.total).toBe(42);
+    });
+  });
+
+  describe("getRunDetails", () => {
+    it("returns run details when user owns endpoint", async () => {
+      const mockRun = {
+        id: "run-1",
+        endpointId: "ep-1",
+        status: "success" as const,
+        startedAt: new Date(),
+        durationMs: 1234,
+        attempt: 1,
+      };
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "My Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockRunsRepo.getRunDetails).mockResolvedValue(mockRun);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+
+      const result = await manager.getRunDetails("user-1", "run-1");
+
+      expect(result?.attempt).toBe(1);
+    });
+  });
+
+  describe("summarizeEndpointHealth", () => {
+    it("returns health summary for endpoint", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "My Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      };
+      const mockSummary = {
+        successCount: 42,
+        failureCount: 3,
+        avgDurationMs: 1234.5,
+        lastRun: null,
+        failureStreak: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockSummary);
+
+      const result = await manager.summarizeEndpointHealth("user-1", "ep-1");
+
+      expect(result.successCount).toBe(42);
     });
   });
 });

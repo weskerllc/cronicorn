@@ -1,199 +1,176 @@
 import { z } from "@hono/zod-openapi";
 
-export const CreateJobRequestSchema = z
-  .object({
-    name: z
-      .string()
-      .min(1, "Name is required")
-      .max(255, "Name must be 255 characters or less")
-      .openapi({
-        description: "Human-readable name for the job",
-        example: "Daily sales report",
-      }),
+// ==================== Job Lifecycle Schemas ====================
 
-    // Baseline cadence (one required)
-    baselineCron: z
-      .string()
-      .optional()
-      .openapi({
-        description: "Cron expression for baseline scheduling (e.g., '0 0 * * *' for daily at midnight UTC)",
-        example: "0 9 * * 1-5",
-      }),
-
-    baselineIntervalMs: z
-      .number()
-      .int()
-      .positive()
-      .optional()
-      .openapi({
-        description: "Fixed interval in milliseconds for baseline scheduling",
-        example: 3600000, // 1 hour
-      }),
-
-    // Guardrails (optional)
-    minIntervalMs: z
-      .number()
-      .int()
-      .positive()
-      .optional()
-      .openapi({
-        description: "Minimum allowed interval between runs (in milliseconds). AI hints are clamped to this.",
-        example: 60000, // 1 minute
-      }),
-
-    maxIntervalMs: z
-      .number()
-      .int()
-      .positive()
-      .optional()
-      .openapi({
-        description: "Maximum allowed interval between runs (in milliseconds). AI hints are clamped to this.",
-        example: 86400000, // 1 day
-      }),
-
-    // HTTP execution config
-    url: z
-      .string()
-      .url("Must be a valid URL")
-      .openapi({
-        description: "HTTP endpoint to call when job executes",
-        example: "https://api.example.com/webhooks/daily-report",
-      }),
-
-    method: z
-      .enum(["GET", "POST", "PUT", "PATCH", "DELETE"])
-      .default("GET")
-      .openapi({
-        description: "HTTP method for the request",
-        example: "POST",
-      }),
-
-    headersJson: z
-      .record(z.string())
-      .optional()
-      .openapi({
-        description: "HTTP headers to include in the request",
-        example: {
-          "Content-Type": "application/json",
-          "X-API-Key": "secret-key",
-        },
-      }),
-
-    bodyJson: z
-      .any()
-      .optional()
-      .openapi({
-        description: "JSON body to send with the request (for POST/PUT/PATCH)",
-        example: { reportType: "sales", period: "daily" },
-      }),
-
-    timeoutMs: z
-      .number()
-      .int()
-      .positive()
-      .optional()
-      .openapi({
-        description: "Request timeout in milliseconds",
-        example: 30000,
-      }),
-  })
-  .refine(
-    data => data.baselineCron || data.baselineIntervalMs,
-    {
-      message: "Either baselineCron or baselineIntervalMs must be provided",
-      path: ["baselineCron"],
-    },
-  );
+export const CreateJobRequestSchema = z.object({
+  name: z.string().min(1).max(255).openapi({
+    description: "Job name",
+    example: "Daily sales report",
+  }),
+  description: z.string().max(1000).optional().openapi({
+    description: "Job description",
+    example: "Generates daily sales metrics",
+  }),
+});
 
 export type CreateJobRequest = z.infer<typeof CreateJobRequestSchema>;
 
-// ----- Response Schemas -----
+export const UpdateJobRequestSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  description: z.string().max(1000).optional(),
+});
 
-/**
- * Schema for job response (after creation or fetch).
- * Matches domain JobEndpoint fields that are safe to expose via API.
- */
-export const JobResponseSchema = z
-  .object({
-    id: z.string().openapi({
-      description: "Unique job ID",
-      example: "job_abc123",
-    }),
+export type UpdateJobRequest = z.infer<typeof UpdateJobRequestSchema>;
 
-    name: z.string().openapi({
-      description: "Job name",
-      example: "Daily sales report",
-    }),
-
-    // Baseline cadence
-    baselineCron: z.string().optional().openapi({
-      description: "Cron expression for baseline scheduling",
-      example: "0 9 * * 1-5",
-    }),
-
-    baselineIntervalMs: z.number().optional().openapi({
-      description: "Fixed interval in milliseconds",
-      example: 3600000,
-    }),
-
-    // Guardrails
-    minIntervalMs: z.number().optional().openapi({
-      description: "Minimum interval between runs (ms)",
-      example: 60000,
-    }),
-
-    maxIntervalMs: z.number().optional().openapi({
-      description: "Maximum interval between runs (ms)",
-      example: 86400000,
-    }),
-
-    // Runtime state
-    nextRunAt: z.string().datetime().openapi({
-      description: "Next scheduled run time (ISO 8601)",
-      example: "2024-10-14T09:00:00Z",
-    }),
-
-    lastRunAt: z.string().datetime().optional().openapi({
-      description: "Last execution time (ISO 8601)",
-      example: "2024-10-13T09:00:00Z",
-    }),
-
-    failureCount: z.number().int().openapi({
-      description: "Consecutive failure count",
-      example: 0,
-    }),
-
-    pausedUntil: z.string().datetime().optional().openapi({
-      description: "Job is paused until this time (ISO 8601)",
-      example: "2024-10-15T00:00:00Z",
-    }),
-
-    // Execution config
-    url: z.string().optional().openapi({
-      description: "HTTP endpoint URL",
-      example: "https://api.example.com/webhooks/daily-report",
-    }),
-
-    method: z
-      .enum(["GET", "POST", "PUT", "PATCH", "DELETE"])
-      .optional()
-      .openapi({
-        description: "HTTP method",
-        example: "POST",
-      }),
-
-    headersJson: z.record(z.string()).optional().openapi({
-      description: "HTTP headers",
-    }),
-
-    bodyJson: z.any().optional().openapi({
-      description: "JSON request body",
-    }),
-
-    timeoutMs: z.number().optional().openapi({
-      description: "Request timeout (ms)",
-      example: 30000,
-    }),
-  });
+export const JobResponseSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  status: z.enum(["active", "archived"]),
+});
 
 export type JobResponse = z.infer<typeof JobResponseSchema>;
+
+export const JobWithCountResponseSchema = JobResponseSchema.extend({
+  endpointCount: z.number().int(),
+});
+
+export type JobWithCountResponse = z.infer<typeof JobWithCountResponseSchema>;
+
+// ==================== Endpoint Orchestration Schemas ====================
+
+const EndpointFieldsSchema = z.object({
+  name: z.string().min(1).max(255),
+  baselineCron: z.string().optional(),
+  baselineIntervalMs: z.number().int().positive().optional(),
+  minIntervalMs: z.number().int().positive().optional(),
+  maxIntervalMs: z.number().int().positive().optional(),
+  url: z.string().url(),
+  method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
+  headersJson: z.record(z.string()).optional(),
+  bodyJson: z.any().optional(),
+  timeoutMs: z.number().int().positive().optional(),
+});
+
+export const AddEndpointRequestSchema = EndpointFieldsSchema.refine(
+  data => data.baselineCron || data.baselineIntervalMs,
+  { message: "Either baselineCron or baselineIntervalMs required", path: ["baselineCron"] },
+);
+
+export type AddEndpointRequest = z.infer<typeof AddEndpointRequestSchema>;
+
+export const UpdateEndpointRequestSchema = EndpointFieldsSchema.partial();
+
+export type UpdateEndpointRequest = z.infer<typeof UpdateEndpointRequestSchema>;
+
+export const EndpointResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  baselineCron: z.string().optional(),
+  baselineIntervalMs: z.number().optional(),
+  minIntervalMs: z.number().optional(),
+  maxIntervalMs: z.number().optional(),
+  nextRunAt: z.string().datetime(),
+  lastRunAt: z.string().datetime().optional(),
+  failureCount: z.number().int(),
+  pausedUntil: z.string().datetime().optional(),
+  url: z.string().optional(),
+  method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).optional(),
+  headersJson: z.record(z.string()).optional(),
+  bodyJson: z.any().optional(),
+  timeoutMs: z.number().optional(),
+});
+
+export type EndpointResponse = z.infer<typeof EndpointResponseSchema>;
+
+// ==================== Adaptive Scheduling Schemas ====================
+
+export const ApplyIntervalHintRequestSchema = z.object({
+  intervalMs: z.number().int().positive(),
+  ttlMinutes: z.number().int().positive().optional(),
+  reason: z.string().optional(),
+});
+
+export type ApplyIntervalHintRequest = z.infer<typeof ApplyIntervalHintRequestSchema>;
+
+export const ScheduleOneShotRequestSchema = z.object({
+  nextRunAt: z.string().datetime().optional(),
+  nextRunInMs: z.number().int().positive().optional(),
+  ttlMinutes: z.number().int().positive().optional(),
+  reason: z.string().optional(),
+}).refine(
+  data => data.nextRunAt || data.nextRunInMs !== undefined,
+  { message: "Must provide either nextRunAt or nextRunInMs", path: ["nextRunAt"] },
+);
+
+export type ScheduleOneShotRequest = z.infer<typeof ScheduleOneShotRequestSchema>;
+
+export const PauseResumeRequestSchema = z.object({
+  pausedUntil: z.string().datetime().nullable(),
+  reason: z.string().optional(),
+});
+
+export type PauseResumeRequest = z.infer<typeof PauseResumeRequestSchema>;
+
+// ==================== Execution Visibility Schemas ====================
+
+export const ListRunsQuerySchema = z.object({
+  endpointId: z.string().optional(),
+  status: z.enum(["success", "failed"]).optional(),
+  limit: z.coerce.number().int().positive().optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
+});
+
+export type ListRunsQuery = z.infer<typeof ListRunsQuerySchema>;
+
+export const RunSummaryResponseSchema = z.object({
+  runId: z.string(),
+  endpointId: z.string(),
+  startedAt: z.string().datetime(),
+  status: z.string(),
+  durationMs: z.number().optional(),
+  source: z.string().optional(),
+});
+
+export type RunSummaryResponse = z.infer<typeof RunSummaryResponseSchema>;
+
+export const ListRunsResponseSchema = z.object({
+  runs: z.array(RunSummaryResponseSchema),
+  total: z.number().int(),
+});
+
+export type ListRunsResponse = z.infer<typeof ListRunsResponseSchema>;
+
+export const RunDetailsResponseSchema = z.object({
+  id: z.string(),
+  endpointId: z.string(),
+  status: z.string(),
+  startedAt: z.string().datetime(),
+  finishedAt: z.string().datetime().optional(),
+  durationMs: z.number().optional(),
+  errorMessage: z.string().optional(),
+  source: z.string().optional(),
+  attempt: z.number().int(),
+});
+
+export type RunDetailsResponse = z.infer<typeof RunDetailsResponseSchema>;
+
+export const HealthSummaryQuerySchema = z.object({
+  sinceHours: z.coerce.number().int().positive().optional(),
+});
+
+export type HealthSummaryQuery = z.infer<typeof HealthSummaryQuerySchema>;
+
+export const HealthSummaryResponseSchema = z.object({
+  successCount: z.number().int(),
+  failureCount: z.number().int(),
+  avgDurationMs: z.number().nullable(),
+  lastRun: z.object({
+    status: z.string(),
+    at: z.string().datetime(),
+  }).nullable(),
+  failureStreak: z.number().int(),
+});
+
+export type HealthSummaryResponse = z.infer<typeof HealthSummaryResponseSchema>;
