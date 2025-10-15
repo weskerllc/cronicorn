@@ -3,7 +3,7 @@ import type { AIClient } from "@cronicorn/scheduler";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AIPlanner } from "../ai-planner.js";
+import { AIPlanner } from "../planner.js";
 
 describe("aiPlanner", () => {
   let mockJobsRepo: JobsRepo;

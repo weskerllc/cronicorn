@@ -1,0 +1,21 @@
+{
+  "name": "@cronicorn/worker-ai-planner",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@cronicorn/domain": "workspace:*",
+    "@cronicorn/scheduler": "workspace:*",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "24",
+    "typescript": "~5.7.2",
+    "vitest": "~3.2.4"
+  }
+}

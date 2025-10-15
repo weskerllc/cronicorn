@@ -9,6 +9,6 @@
     { "path": "../../packages/adapter-ai" },
     { "path": "../../packages/adapter-drizzle" },
     { "path": "../../packages/adapter-system-clock" },
-    { "path": "../../packages/services" }
+    { "path": "../../packages/worker-ai-planner" }
   ]
 }
