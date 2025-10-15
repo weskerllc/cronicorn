@@ -1,10 +1,12 @@
 # AI-Driven Adaptive Scheduler — Architecture & Intent
 
+> **Note**: This document describes the core scheduling architecture and simulation patterns. For current implementation status, see `TODO.md`. For architectural decisions, see `.adr/` folder.
+
 ## At a glance
 
 - **Mission:** Keep every `JobEndpoint` on the right cadence by blending a baseline schedule with short-lived AI "hints" that can tighten, relax, or pause runs in real time.
 - **Loop:** AI tooling (rule-based or model-driven) writes hints through ports → the scheduler claims due endpoints, executes them, records the run, and asks the governor for the next slot → the governor reconciles baseline cadence, AI hints, clamps, and pauses to produce the next run time.
-- **Building blocks:** Domain files (`ports`, `governor`, `scheduler`) hold pure logic; adapters (`memory-store`, fake clock/dispatcher/quota) provide infrastructure for tests and sims; the simulator demonstrates the full loop without touching a real DB or external APIs.
+- **Building blocks:** Domain package holds pure logic (entities, ports, governor); adapters provide infrastructure (DrizzleJobsRepo, HttpDispatcher, CronParser, etc.); fake adapters (FakeClock, FakeDispatcher) enable deterministic testing; the simulator demonstrates the full loop without touching a real DB or external APIs.
 - **You can explore it today:** Run `pnpm sim` to watch a complete **e-commerce flash sale scenario** with 10 endpoints orchestrating across 4 coordination tiers—traffic monitoring tightens from 1m→20s, investigation tools activate conditionally, recovery actions fire with cooldowns, and alerts escalate from Slack→oncall.
 
 > **Purpose:** This document explains the complete intent and mechanics of the AI-driven scheduler prototype so another AI/engineer can confidently extend, test, or port it. It covers file structure, domain concepts, ports, tools, scheduling logic, simulator design, testability, and integration guidance (e.g., Vercel AI SDK).
@@ -28,24 +30,41 @@ If you are brand new, read the quick outcomes (Section 0), map the folders (Sect
 
 ## 1) Repository Layout
 
+The project follows **hexagonal architecture** with clean separation between domain, adapters, and composition roots:
+
 ```
-packages/feature-endpoints/
-└─ src/
-   ├─ adapters/
-   │  ├─ fake-clock.ts          # deterministic time for tests/sim
-   │  ├─ fake-dispatcher.ts     # executes endpoints; CPU endpoint records metrics
-   │  ├─ fake-quota.ts          # placeholder for token/AI quota enforcement
-   │  └─ memory-store.ts        # in-memory Jobs repo w/ AI hints + "nudge" helper
-   ├─ domain/
-   │  ├─ governor.ts            # planNextRun: baseline + AI hints + clamps + pause
-   │  ├─ ports.ts               # core types & ports (interfaces)
-   │  └─ scheduler.ts           # scheduler loop: tick, claim, run, persist, compute next
-   └─ sim/
-      ├─ scenarios.ts           # scenario: CPU + Discord policy + planning tools
-      └─ simulate.ts            # entrypoint to run the scenario
+packages/
+├─ domain/                      # Pure core (no IO dependencies)
+│  ├─ entities/                 # JobEndpoint, Job, Run types
+│  ├─ ports/                    # Interfaces (Clock, Cron, Repos, Dispatcher, etc.)
+│  ├─ governor/                 # planNextRun: baseline + AI hints + clamps + pause
+│  ├─ fixtures/                 # In-memory repos for testing
+│  └─ testing/                  # Contract test suites
+│
+├─ scheduler/                   # Scheduler orchestration
+│  ├─ domain/
+│  │  └─ scheduler.ts           # Tick loop: claim → execute → plan → update
+│  ├─ adapters/                 # Test fakes (FakeClock, FakeDispatcher, FakeQuota)
+│  ├─ sim/                      # E-commerce flash sale scenario
+│  └─ tools/                    # AI tool definitions
+│
+├─ adapter-drizzle/             # PostgreSQL implementation
+├─ adapter-cron/                # Cron expression parser
+├─ adapter-http/                # HTTP request dispatcher
+├─ adapter-system-clock/        # System time provider
+├─ adapter-ai/                  # Vercel AI SDK integration
+└─ services/                    # Business logic layer (JobsManager)
+
+apps/
+├─ scheduler/                   # Worker composition root
+├─ api/                         # REST API composition root
+└─ test-ai/                     # AI integration tests
 ```
 
-This project intentionally separates **domain** (pure logic & types) from **adapters** (IO, fake infrastructure) and **sim** (usage scenarios).
+This architecture intentionally separates:
+- **Domain** (pure logic & types) from **Adapters** (IO implementations)
+- **Ports** (interfaces) from concrete implementations
+- **Composition roots** (apps) wire everything together
 
 ---
 
@@ -195,7 +214,7 @@ Deterministic clock with `now()` and async `sleep(ms)` that advances time.
 - For CPU endpoint: push a metric sample so the planner has data.
 - For Discord endpoint: pretend to send and succeed.
 
-### 4.3 InMemoryJobsRepo — `adapters/memory-store.ts`
+### 4.3 InMemoryJobsRepo — `packages/domain/src/fixtures/in-memory-jobs-repo.ts`
 
 - Stores endpoints in a `Map<string, JobEndpoint>`.
 - Implements **AI hint writes** and **nudging** (immediate `nextRunAt` set if earlier).
@@ -492,7 +511,7 @@ You don’t need a DB for the sim, but if/when you do:
 
 ```bash
 pnpm --filter @cronicorn/scheduler run sim
-# or from packages/feature-endpoints:
+# or from packages/scheduler:
 pnpm sim
 ```
 
