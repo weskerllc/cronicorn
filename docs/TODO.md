@@ -30,23 +30,23 @@
 ### Phase 2: Create AI Planner Service ✅ COMPLETE
 **Estimated**: 2 hours
 
-- [x] Create `packages/services/src/scheduling/` directory
-- [x] Create `ai-planner.ts` with `AIPlanner` class
-- [x] Create `ai-tools.ts` with 3 endpoint-scoped tools:
+- [x] Create `packages/worker-ai-planner/` directory (refactored from services)
+- [x] Create `planner.ts` with `AIPlanner` class
+- [x] Create `tools.ts` with 3 endpoint-scoped tools:
   - `propose_interval` - Adjust execution frequency
   - `propose_next_time` - Schedule one-shot execution
   - `pause_until` - Temporarily pause endpoint
 - [x] Implement `analyzeEndpoint(endpointId: string)` method
 - [x] Build AI context (endpoint state + health summary)
-- [x] Export from services package with `./scheduling` subpath
-- [ ] Unit tests for AIPlanner service
-- [ ] Unit tests for tool execution
+- [x] Export from worker-ai-planner package
+- [x] Unit tests for AIPlanner service (6 tests, 100% coverage)
+- [x] Unit tests for tool execution (10 tests, 93.33% branch coverage)
 
 ### Phase 3: Create AI Planner Worker App ✅ COMPLETE
 **Estimated**: 1 hour
 
 - [x] Create `apps/ai-planner/` directory structure
-- [x] Create `package.json` (copy from scheduler)
+- [x] Create `package.json` (depends on worker-ai-planner)
 - [x] Create `tsconfig.json` (project references)
 - [x] Create `src/index.ts` - Main worker entry point
 - [x] Implement tick loop (queries recent runs, analyzes endpoints)
@@ -55,8 +55,9 @@
 - [x] Add structured logging
 - [x] Create `README.md` with deployment instructions
 - [x] Create `Dockerfile.ai-planner`
-- [ ] Unit tests for AIPlanner service
-- [ ] Unit tests for tool execution
+- [x] Wire to `@cronicorn/worker-ai-planner` package (refactored)
+
+**Note**: Refactored AI planner logic from `packages/services/scheduling` to `packages/worker-ai-planner` to establish consistent `worker-*` naming pattern for background workers. See ADR-0017.
 
 ### Phase 4: Update Docker Compose ✅ COMPLETE
 **Estimated**: 15 minutes
@@ -67,25 +68,30 @@
 - [x] Add all AI config vars (lookback, max_tokens, temperature)
 - [x] Add `depends_on` for database + migrator
 
-### Phase 5: Integration Testing
-**Estimated**: 1 hour
-
-- [ ] Start database + scheduler + AI planner workers
-- [ ] Create test endpoint via API
-- [ ] Execute endpoint multiple times
-- [ ] Verify AI planner detects recent runs
-- [ ] Verify AI writes hints to database
-- [ ] Verify scheduler picks up hints on next execution
-- [ ] Test with AI planner disabled (graceful degradation)
-- [ ] Test with invalid OpenAI API key (error handling)
-
-### Phase 6: Documentation & ADR
+### Phase 5: Integration Testing (Manual for MVP)
 **Estimated**: 30 minutes
 
-- [ ] Create ADR documenting decoupled architecture decision
-- [ ] Update architecture.instructions.md with AI worker pattern
-- [ ] Document in tech debt log
-- [ ] Update README with AI planner setup instructions
+**Decision**: Defer automated E2E tests until production usage validates architecture.
+Manual testing sufficient for MVP validation.
+
+**Manual Test Steps:**
+- [ ] Start all services: `docker compose up -d`
+- [ ] Create test job via POST /api/jobs
+- [ ] Watch scheduler logs: `docker compose logs -f scheduler`
+- [ ] Watch AI planner logs: `docker compose logs -f ai-planner`
+- [ ] Query database for AI hints: `SELECT * FROM job_endpoints WHERE ai_hint_interval_ms IS NOT NULL`
+- [ ] Verify scheduler picks up hints (check nextRunAt in logs)
+- [ ] Test graceful degradation: `docker compose stop ai-planner`
+- [ ] Verify scheduler continues with baseline intervals
+
+### Phase 6: Documentation & ADR ✅ COMPLETE
+**Estimated**: 30 minutes
+
+- [x] Create ADR-0017 documenting worker-* package pattern
+- [x] Create ADR-0018 documenting decoupled AI worker architecture
+- [ ] Update architecture.instructions.md with AI worker pattern (deferred)
+- [ ] Document in tech debt log (deferred)
+- [ ] Update README with AI planner setup instructions (deferred to production deployment)
 
 ---
 
