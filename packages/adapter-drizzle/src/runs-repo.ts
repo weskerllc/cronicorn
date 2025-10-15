@@ -1,4 +1,4 @@
-import type { HealthSummary, RunsRepo } from "@cronicorn/domain";
+import type { HealthSummary, JsonValue, RunsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
 import { and, avg, count, desc, eq, gte, sql } from "drizzle-orm";
@@ -45,6 +45,8 @@ export class DrizzleRunsRepo implements RunsRepo {
       status: "success" | "failed" | "canceled";
       durationMs: number;
       err?: unknown;
+      responseBody?: JsonValue;
+      statusCode?: number;
     },
   ): Promise<void> {
     const updates: Partial<typeof runs.$inferInsert> = {
@@ -53,6 +55,8 @@ export class DrizzleRunsRepo implements RunsRepo {
       durationMs: patch.durationMs,
       errorMessage: patch.err ? String(patch.err) : undefined,
       errorDetails: patch.err ? (typeof patch.err === "object" ? patch.err : { error: patch.err }) : undefined,
+      responseBody: patch.responseBody,
+      statusCode: patch.statusCode,
     };
 
     await this.tx
@@ -75,16 +79,16 @@ export class DrizzleRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-      runs: Array<{
-        runId: string;
-        endpointId: string;
-        startedAt: Date;
-        status: string;
-        durationMs?: number;
-        source?: string;
-      }>;
-      total: number;
-    }> {
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }> {
     // Build conditions
     // Build query conditions
     const conditions = [];
@@ -265,5 +269,127 @@ export class DrizzleRunsRepo implements RunsRepo {
       .where(gte(runs.startedAt, since));
 
     return results.map(r => r.endpointId);
+  }
+
+  // ============================================================================
+  // AI Query Tools: Response Data Retrieval
+  // ============================================================================
+
+  async getLatestResponse(endpointId: string): Promise<{
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+  } | null> {
+    const rows = await this.tx
+      .select({
+        responseBody: runs.responseBody,
+        timestamp: runs.startedAt,
+        status: runs.status,
+      })
+      .from(runs)
+      .where(eq(runs.endpointId, endpointId))
+      .orderBy(desc(runs.startedAt))
+      .limit(1);
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const row = rows[0];
+    return {
+      responseBody: row.responseBody ?? null,
+      timestamp: row.timestamp,
+      status: row.status,
+    };
+  }
+
+  async getResponseHistory(
+    endpointId: string,
+    limit: number,
+  ): Promise<Array<{
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+    durationMs: number;
+  }>> {
+    // Clamp limit to max 50
+    const clampedLimit = Math.min(limit, 50);
+
+    const rows = await this.tx
+      .select({
+        responseBody: runs.responseBody,
+        timestamp: runs.startedAt,
+        status: runs.status,
+        durationMs: runs.durationMs,
+      })
+      .from(runs)
+      .where(and(
+        eq(runs.endpointId, endpointId),
+        // Only include finished runs (those with durationMs)
+        sql`${runs.durationMs} IS NOT NULL`,
+      ))
+      .orderBy(desc(runs.startedAt))
+      .limit(clampedLimit);
+
+    return rows.map(row => ({
+      responseBody: row.responseBody ?? null,
+      timestamp: row.timestamp,
+      status: row.status,
+      durationMs: row.durationMs!, // Safe because we filtered out nulls
+    }));
+  }
+
+  async getSiblingLatestResponses(
+    jobId: string,
+    excludeEndpointId: string,
+  ): Promise<Array<{
+    endpointId: string;
+    endpointName: string;
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+  }>> {
+    // This requires a lateral join to get latest run per endpoint.
+    // We'll use a window function approach instead (simpler with Drizzle).
+
+    // First get all endpoints for the job (excluding current)
+    const endpoints = await this.tx
+      .select({
+        id: jobEndpoints.id,
+        name: jobEndpoints.name,
+      })
+      .from(jobEndpoints)
+      .where(and(
+        eq(jobEndpoints.jobId, jobId),
+        sql`${jobEndpoints.id} != ${excludeEndpointId}`,
+      ));
+
+    // For each endpoint, get latest run
+    const results = [];
+    for (const endpoint of endpoints) {
+      const latestRun = await this.tx
+        .select({
+          responseBody: runs.responseBody,
+          timestamp: runs.startedAt,
+          status: runs.status,
+        })
+        .from(runs)
+        .where(eq(runs.endpointId, endpoint.id))
+        .orderBy(desc(runs.startedAt))
+        .limit(1);
+
+      if (latestRun.length > 0) {
+        const run = latestRun[0];
+        results.push({
+          endpointId: endpoint.id,
+          endpointName: endpoint.name,
+          responseBody: run.responseBody ?? null,
+          timestamp: run.timestamp,
+          status: run.status,
+        });
+      }
+    }
+
+    return results;
   }
 }

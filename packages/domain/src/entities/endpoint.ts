@@ -49,4 +49,5 @@ export type JobEndpoint = {
   headersJson?: Record<string, string>;
   bodyJson?: JsonValue;
   timeoutMs?: number;
+  maxResponseSizeKb?: number; // Max response body size to store (default: 100 KB)
 };

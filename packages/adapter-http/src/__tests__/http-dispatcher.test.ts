@@ -259,4 +259,176 @@ describe("httpDispatcher", () => {
       expect(result.durationMs).toBeLessThan(200); // Sanity check
     });
   });
+
+  describe("response body capture", () => {
+    it("captures JSON response body and status code on success", async () => {
+      const responseData = { status: "ok", count: 42 };
+
+      server.use(
+        http.post("http://example.com/webhook", () => HttpResponse.json(responseData)),
+      );
+
+      const result = await dispatcher.execute(createEndpoint());
+
+      expect(result.status).toBe("success");
+      expect(result.statusCode).toBe(200);
+      expect(result.responseBody).toEqual(responseData);
+    });
+
+    it("captures JSON response body on error responses", async () => {
+      const errorData = { error: "Not found", code: "RESOURCE_MISSING" };
+
+      server.use(
+        http.post("http://example.com/webhook", () =>
+          HttpResponse.json(errorData, { status: 404 })),
+      );
+
+      const result = await dispatcher.execute(createEndpoint());
+
+      expect(result.status).toBe("failed");
+      expect(result.statusCode).toBe(404);
+      expect(result.responseBody).toEqual(errorData);
+      expect(result.errorMessage).toBe("HTTP 404 Not Found");
+    });
+
+    it("skips response body for non-JSON Content-Type", async () => {
+      server.use(
+        http.post("http://example.com/webhook", () =>
+          new HttpResponse("<html>OK</html>", {
+            status: 200,
+            headers: { "Content-Type": "text/html" },
+          })),
+      );
+
+      const result = await dispatcher.execute(createEndpoint());
+
+      expect(result.status).toBe("success");
+      expect(result.statusCode).toBe(200);
+      expect(result.responseBody).toBeUndefined();
+    });
+
+    it("enforces size limit using Content-Length header", async () => {
+      // Create response body that's 101KB (exceeds 100KB default limit)
+      const largeBody = { data: "x".repeat(101 * 1024) };
+
+      server.use(
+        http.post("http://example.com/webhook", () =>
+          HttpResponse.json(largeBody, {
+            headers: {
+              "Content-Length": String(JSON.stringify(largeBody).length),
+            },
+          })),
+      );
+
+      const result = await dispatcher.execute(createEndpoint());
+
+      expect(result.status).toBe("success");
+      expect(result.statusCode).toBe(200);
+      expect(result.responseBody).toBeUndefined(); // Should be skipped due to size
+    });
+
+    it("enforces size limit by checking actual body size", async () => {
+      // Create response body that's 101KB (exceeds 100KB default limit)
+      const largeBody = { data: "x".repeat(101 * 1024) };
+
+      server.use(
+        http.post("http://example.com/webhook", () =>
+          // Don't set Content-Length to test fallback size check
+          HttpResponse.json(largeBody)),
+      );
+
+      const result = await dispatcher.execute(createEndpoint());
+
+      expect(result.status).toBe("success");
+      expect(result.statusCode).toBe(200);
+      expect(result.responseBody).toBeUndefined(); // Should be skipped due to size
+    });
+
+    it("respects custom maxResponseSizeKb limit", async () => {
+      // Create response body that's 50KB
+      const mediumBody = { data: "x".repeat(50 * 1024) };
+
+      server.use(
+        http.post("http://example.com/webhook", () => HttpResponse.json(mediumBody)),
+      );
+
+      // Set limit to 25KB - body should be rejected
+      const result = await dispatcher.execute(
+        createEndpoint({ maxResponseSizeKb: 25 }),
+      );
+
+      expect(result.status).toBe("success");
+      expect(result.statusCode).toBe(200);
+      expect(result.responseBody).toBeUndefined(); // Should be skipped due to size
+    });
+
+    it("captures response body within size limit", async () => {
+      // Create response body that's ~10KB (within 100KB default)
+      const smallBody = { data: "x".repeat(10 * 1024), status: "ok" };
+
+      server.use(
+        http.post("http://example.com/webhook", () => HttpResponse.json(smallBody)),
+      );
+
+      const result = await dispatcher.execute(createEndpoint());
+
+      expect(result.status).toBe("success");
+      expect(result.statusCode).toBe(200);
+      expect(result.responseBody).toEqual(smallBody);
+    });
+
+    it("skips response body when JSON parse fails", async () => {
+      server.use(
+        http.post("http://example.com/webhook", () =>
+          new HttpResponse("{invalid json}", {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          })),
+      );
+
+      const result = await dispatcher.execute(createEndpoint());
+
+      expect(result.status).toBe("success");
+      expect(result.statusCode).toBe(200);
+      expect(result.responseBody).toBeUndefined(); // Parse failed, skipped
+    });
+
+    it("handles Content-Type with charset parameter", async () => {
+      const responseData = { message: "hello" };
+
+      server.use(
+        http.post("http://example.com/webhook", () =>
+          HttpResponse.json(responseData, {
+            headers: { "Content-Type": "application/json; charset=utf-8" },
+          })),
+      );
+
+      const result = await dispatcher.execute(createEndpoint());
+
+      expect(result.status).toBe("success");
+      expect(result.statusCode).toBe(200);
+      expect(result.responseBody).toEqual(responseData);
+    });
+
+    it("captures various JSON data types", async () => {
+      const testCases = [
+        { input: null, expected: null },
+        { input: true, expected: true },
+        { input: 42, expected: 42 },
+        { input: "string", expected: "string" },
+        { input: [1, 2, 3], expected: [1, 2, 3] },
+        { input: { nested: { obj: "value" } }, expected: { nested: { obj: "value" } } },
+      ];
+
+      for (const { input, expected } of testCases) {
+        server.use(
+          http.post("http://example.com/webhook", () => HttpResponse.json(input)),
+        );
+
+        const result = await dispatcher.execute(createEndpoint());
+
+        expect(result.responseBody).toEqual(expected);
+      }
+    });
+  });
 });

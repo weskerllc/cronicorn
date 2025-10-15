@@ -147,4 +147,48 @@ export type RunsRepo = {
    * @returns Array of unique endpoint IDs with recent activity
    */
   getEndpointsWithRecentRuns: (since: Date) => Promise<string[]>;
+
+  /**
+   * Get the latest response data from an endpoint execution.
+   * Used by AI query tool: get_latest_response
+   *
+   * @param endpointId - The endpoint to query
+   * @returns Latest response data or null if no runs exist
+   */
+  getLatestResponse: (endpointId: string) => Promise<{
+    responseBody: import("../entities/index.js").JsonValue | null;
+    timestamp: Date;
+    status: string;
+  } | null>;
+
+  /**
+   * Get recent response history for trend analysis.
+   * Used by AI query tool: get_response_history
+   *
+   * @param endpointId - The endpoint to query
+   * @param limit - Maximum number of responses (max 50)
+   * @returns Array of recent responses, ordered newest to oldest
+   */
+  getResponseHistory: (endpointId: string, limit: number) => Promise<Array<{
+    responseBody: import("../entities/index.js").JsonValue | null;
+    timestamp: Date;
+    status: string;
+    durationMs: number;
+  }>>;
+
+  /**
+   * Get latest responses from all sibling endpoints in the same job.
+   * Used by AI query tool: get_sibling_latest_responses
+   *
+   * @param jobId - The job containing the endpoints
+   * @param excludeEndpointId - Exclude this endpoint (current one being analyzed)
+   * @returns Array of sibling endpoint latest responses
+   */
+  getSiblingLatestResponses: (jobId: string, excludeEndpointId: string) => Promise<Array<{
+    endpointId: string;
+    endpointName: string;
+    responseBody: import("../entities/index.js").JsonValue | null;
+    timestamp: Date;
+    status: string;
+  }>>;
 };

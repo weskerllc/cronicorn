@@ -5,7 +5,7 @@
  * Each tool is endpoint-scoped via closure (endpointId bound at creation time).
  */
 
-import type { Clock, JobsRepo } from "@cronicorn/domain";
+import type { Clock, JobsRepo, JsonValue, RunsRepo } from "@cronicorn/domain";
 
 import { defineTools, tool } from "@cronicorn/domain";
 import { z } from "zod";
@@ -16,16 +16,19 @@ import { z } from "zod";
  * Tools write hints to the database via JobsRepo methods.
  * The scheduler picks up these hints on next execution (via governor).
  *
+ * Query tools read response data from RunsRepo to inform scheduling decisions.
+ *
  * @param endpointId - The endpoint being analyzed
- * @param jobs - Repository for writing hints
- * @param clock - For calculating expiry times
- * @returns Tools object with propose_interval, propose_next_time, pause_until
+ * @param jobId - The job this endpoint belongs to (for sibling queries)
+ * @param deps - Dependencies { jobs: JobsRepo, runs: RunsRepo, clock: Clock }
+ * @returns Tools object with 6 tools (3 query + 3 action)
  */
 export function createToolsForEndpoint(
   endpointId: string,
-  jobs: JobsRepo,
-  clock: Clock,
+  jobId: string,
+  deps: { jobs: JobsRepo; runs: RunsRepo; clock: Clock },
 ) {
+  const { jobs, runs, clock } = deps;
   return defineTools({
     propose_interval: tool({
       description: "Adjust endpoint execution interval based on observed patterns (e.g., increase frequency if failures detected, decrease if stable)",
@@ -96,6 +99,86 @@ export function createToolsForEndpoint(
         else {
           return `Resumed execution${args.reason ? `: ${args.reason}` : ""}`;
         }
+      },
+    }),
+
+    // ============================================================================
+    // Query Tools: Response Data Retrieval
+    // ============================================================================
+
+    get_latest_response: tool({
+      description: "Get the latest response body from this endpoint's most recent execution. Use this to check current state (e.g., error rate, queue depth, data availability).",
+      schema: z.object({}),
+      execute: async () => {
+        const result = await runs.getLatestResponse(endpointId);
+
+        if (!result) {
+          return {
+            found: false,
+            message: "No executions found for this endpoint",
+          };
+        }
+
+        return {
+          found: true,
+          responseBody: result.responseBody,
+          timestamp: result.timestamp.toISOString(),
+          status: result.status,
+        };
+      },
+    }),
+
+    get_response_history: tool({
+      description: "Get recent response bodies from this endpoint to identify trends (e.g., increasing error rates, growing queue sizes, performance degradation). Returns up to 50 most recent responses.",
+      schema: z.object({
+        limit: z.number().int().min(1).max(50).default(10).describe("Number of recent responses to retrieve (max 50)"),
+      }),
+      execute: async (args) => {
+        const history = await runs.getResponseHistory(endpointId, args.limit);
+
+        if (history.length === 0) {
+          return {
+            count: 0,
+            message: "No execution history found for this endpoint",
+          };
+        }
+
+        return {
+          count: history.length,
+          responses: history.map(r => ({
+            responseBody: r.responseBody,
+            timestamp: r.timestamp.toISOString(),
+            status: r.status,
+            durationMs: r.durationMs,
+          })),
+        };
+      },
+    }),
+
+    get_sibling_latest_responses: tool({
+      description: "Get latest responses from all sibling endpoints in the same job. Use this for coordinating across endpoints (e.g., ETL pipeline dependencies, cross-endpoint monitoring).",
+      schema: z.object({}),
+      execute: async () => {
+        const siblings = await runs.getSiblingLatestResponses(jobId, endpointId);
+
+        if (siblings.length === 0) {
+          return {
+            count: 0,
+            message: "No sibling endpoints found or no executions yet",
+            siblings: [],
+          };
+        }
+
+        return {
+          count: siblings.length,
+          siblings: siblings.map(s => ({
+            endpointId: s.endpointId,
+            endpointName: s.endpointName,
+            responseBody: s.responseBody,
+            timestamp: s.timestamp.toISOString(),
+            status: s.status,
+          })),
+        };
       },
     }),
   });

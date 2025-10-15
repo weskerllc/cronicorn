@@ -1,4 +1,4 @@
-import type { Clock, JobsRepo } from "@cronicorn/domain";
+import type { Clock, JobsRepo, RunsRepo } from "@cronicorn/domain";
 
 import { callTool } from "@cronicorn/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -7,6 +7,7 @@ import { createToolsForEndpoint } from "../tools.js";
 
 describe("aiTools", () => {
   let mockJobsRepo: JobsRepo;
+  let mockRunsRepo: RunsRepo;
   let fakeClock: Clock;
   let now: Date;
 
@@ -39,11 +40,23 @@ describe("aiTools", () => {
       resetFailureCount: vi.fn(),
       updateAfterRun: vi.fn(),
     };
+
+    mockRunsRepo = {
+      create: vi.fn(),
+      finish: vi.fn(),
+      listRuns: vi.fn(),
+      getRunDetails: vi.fn(),
+      getHealthSummary: vi.fn(),
+      getEndpointsWithRecentRuns: vi.fn(),
+      getLatestResponse: vi.fn(),
+      getResponseHistory: vi.fn(),
+      getSiblingLatestResponses: vi.fn(),
+    };
   });
 
   describe("propose_interval", () => {
     it("writes AI hint with interval and expiry", async () => {
-      const tools = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
       vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
@@ -74,7 +87,7 @@ describe("aiTools", () => {
     });
 
     it("uses default TTL when not specified", async () => {
-      const tools = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
       vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
@@ -91,7 +104,7 @@ describe("aiTools", () => {
     });
 
     it("omits reason from message when not provided", async () => {
-      const tools = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
       vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
@@ -109,7 +122,7 @@ describe("aiTools", () => {
 
   describe("propose_next_time", () => {
     it("writes AI hint with one-shot timestamp", async () => {
-      const tools = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
       vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
@@ -141,7 +154,7 @@ describe("aiTools", () => {
     });
 
     it("uses default TTL when not specified", async () => {
-      const tools = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
       vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
@@ -158,7 +171,7 @@ describe("aiTools", () => {
     });
 
     it("parses ISO timestamp correctly", async () => {
-      const tools = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
       vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
@@ -184,7 +197,7 @@ describe("aiTools", () => {
 
   describe("pause_until", () => {
     it("pauses endpoint until specific timestamp", async () => {
-      const tools = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.setPausedUntil).mockResolvedValue(undefined);
 
@@ -205,7 +218,7 @@ describe("aiTools", () => {
     });
 
     it("resumes endpoint when untilIso is null", async () => {
-      const tools = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.setPausedUntil).mockResolvedValue(undefined);
 
@@ -221,7 +234,7 @@ describe("aiTools", () => {
     });
 
     it("omits reason from message when not provided", async () => {
-      const tools = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.setPausedUntil).mockResolvedValue(undefined);
 
@@ -237,8 +250,8 @@ describe("aiTools", () => {
 
   describe("tool binding to endpointId", () => {
     it("creates tools bound to specific endpoint", async () => {
-      const toolsEp1 = createToolsForEndpoint("ep-1", mockJobsRepo, fakeClock);
-      const toolsEp2 = createToolsForEndpoint("ep-2", mockJobsRepo, fakeClock);
+      const toolsEp1 = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
+      const toolsEp2 = createToolsForEndpoint("ep-2", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
 
       vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
       vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
