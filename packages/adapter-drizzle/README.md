@@ -54,11 +54,12 @@ To run contract tests against the real Drizzle adapter:
 1. **Set up test database:**
 
    ```bash
-   # Create test database
-   createdb cronicorn_test
+   # Start dev database
+   docker-compose up cronicorn-dev-db -d
 
-   # Run migrations (see Migrations section below)
-   DATABASE_URL="postgresql://localhost:5432/cronicorn_test" pnpm migrate
+   # Run migrations using the migrator app
+   cd apps/migrator
+   DATABASE_URL="postgresql://user:password@localhost:6666/db" tsx src/index.ts
    ```
 
 2. **Configure environment:**
@@ -81,7 +82,7 @@ To run contract tests against the real Drizzle adapter:
 **Alternative:** Set DATABASE_URL inline:
 
 ```bash
-DATABASE_URL="postgresql://localhost:5432/cronicorn_test" pnpm test
+DATABASE_URL="postgresql://user:password@localhost:6666/db" pnpm test
 ```
 
 ### Contract Tests
@@ -111,6 +112,8 @@ Adapter-specific fields (e.g., `_locked_until`) are prefixed with underscore and
 
 ## Migrations
 
+**Note:** Database migrations are now managed by the `@cronicorn/migrator` composition root. See `apps/migrator/README.md` for usage.
+
 ### Generating Migrations
 
 When you modify `src/schema.ts`, generate a new migration file:
@@ -127,50 +130,16 @@ This uses `drizzle-kit` to:
 
 ### Applying Migrations
 
-#### For Development
-
-Use the programmatic migration script (recommended for CI/CD):
+Use the migrator app to apply migrations:
 
 ```bash
-DATABASE_URL="postgresql://localhost:5432/yourdb" pnpm migrate
+# Development
+cd apps/migrator
+DATABASE_URL="postgresql://user:password@localhost:6666/db" tsx src/index.ts
+
+# Production (via docker-compose)
+docker-compose -f docker-compose-prod.yml up
+# Migrations run automatically before API/Scheduler start
 ```
 
-This runs `src/migrate.ts` which uses Drizzle's runtime `migrate()` function to:
-
-- Connect to the database
-- Track applied migrations in `__drizzle_migrations` table
-- Apply only pending migrations
-- Handle failures gracefully
-
-#### For CI/CD Environments
-
-The `migrate` script is designed for automated deployments:
-
-```yaml
-# Example GitHub Actions workflow
-- name: Run Database Migrations
-  env:
-    DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  run: pnpm -F @cronicorn/adapter-drizzle migrate
-```
-
-**Benefits of programmatic migrations:**
-
-- No need to install `drizzle-kit` in production
-- Faster execution (only runtime dependencies)
-- Better error handling and logging
-- Works in containerized environments
-
-### Migration Files
-
-Migrations are stored in `./migrations/` and tracked by Drizzle:
-
-```
-migrations/
-├── 0001_initial_schema.sql
-├── 0002_add_ai_hints.sql  (example)
-└── meta/
-    └── _journal.json
-```
-
-**Important:** Never modify or delete migration files after they've been applied in production.
+See `apps/migrator/README.md` for complete documentation.

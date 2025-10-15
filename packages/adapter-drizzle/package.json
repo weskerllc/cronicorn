@@ -13,7 +13,6 @@
   "files": ["dist"],
   "scripts": {
     "generate": "drizzle-kit generate",
-    "migrate": "tsx src/migrate.ts",
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
