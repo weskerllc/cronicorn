@@ -1000,3 +1000,94 @@ Tests       1 passed (1)
 - ⏭️ Consider extracting test helpers to shared package if needed by other apps
 
 `````
+
+``````
+
+---
+
+## Environment File Consolidation (2025-10-15)
+
+**Status**: ✅ Complete
+
+**Problem**: Multiple env files were confusing and duplicative:
+- `.env.example` (root) - for local dev
+- `.env.docker.dev` - for Docker dev 
+- `.env.docker.prod.example` - for Docker prod
+- `apps/api/.env.example` - outdated API-specific
+
+**Question**: Do we really need different env vars for local dev vs Docker dev?
+
+**Solution**: **One `.env` file for everything!**
+
+**Key Insight**:
+The only difference between local and Docker is the database hostname:
+- **Local apps**: Connect via exposed port → `postgresql://user:password@localhost:6666/db`
+- **Docker containers**: Use internal hostname → `postgresql://user:password@cronicorn-dev-db:5432/db`
+
+Only the migrator container needs the internal hostname, which we override via docker-compose environment section.
+
+**Implementation**:
+
+1. **Single `.env.example`** (committed):
+```bash
+# Docker Compose
+COMPOSE_PROJECT_NAME=cronicorn-dev
+DB_PORT=6666
+DB_RESTART=unless-stopped
+
+# Postgres Container
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password
+POSTGRES_DB=db
+
+# Local App Connection (points to Docker DB on localhost:6666)
+DATABASE_URL=postgresql://user:password@localhost:6666/db
+
+# App Config (optional)
+GITHUB_CLIENT_ID=...
+OPENAI_API_KEY=...
+```
+
+2. **docker-compose.yml override** for migrator:
+```yaml
+migrator:
+  environment:
+    # Override DATABASE_URL to use container hostname (local .env uses localhost:6666)
+    DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${COMPOSE_PROJECT_NAME}-db:5432/${POSTGRES_DB}
+```
+
+3. **Simplified package.json scripts** (no `--env-file` flags needed):
+```bash
+pnpm db           # was: docker compose --env-file .env.docker.dev up -d
+pnpm db:migrate   # was: docker compose --env-file .env.docker.dev --profile dev up migrator
+```
+
+**Benefits**:
+1. ✅ **Less confusion**: One file to manage
+2. ✅ **DRY**: No duplicate vars between files
+3. ✅ **Simpler commands**: Docker Compose reads `.env` automatically
+4. ✅ **Works for both**: Docker AND local dev use same file
+5. ✅ **Clearer separation**: `.env` = dev, `.env.production` = prod
+
+**Files Removed**:
+- `.env.docker.dev` → merged into `.env.example`
+- `.env.docker.prod.example` → use `.env.production` instead
+
+**Files Updated**:
+- `.env.example` - now includes Docker Compose + Postgres vars
+- `docker-compose.yml` - migrator overrides DATABASE_URL for container hostname
+- `package.json` - removed `--env-file` flags from db/docker scripts
+- `.gitignore` - removed `.env.docker.prod`
+- `docs/docker-compose-setup.md` - updated with simplified workflow
+- `docs/env-consolidation.md` - documented migration guide
+
+**Validation**:
+- ✅ Tested `pnpm db && pnpm db:migrate` - migrations completed successfully
+- ✅ Container uses correct DATABASE_URL: `postgresql://user:password@cronicorn-dev-db:5432/db`
+- ✅ All tables created (8 tables including __drizzle_migrations)
+
+**No Tech Debt**: Clean consolidation following "boring solutions" principle.
+
+**Reference**: See `docs/env-consolidation.md` for complete migration guide.
+
+`````

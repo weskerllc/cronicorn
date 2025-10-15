@@ -31,7 +31,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      # Override DATABASE_URL to use container hostname (local .env uses localhost:6666)
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@${COMPOSE_PROJECT_NAME:-cronicorn}-db:5432/${POSTGRES_DB:-db}
 
   api:
     profiles: ["prod"]
