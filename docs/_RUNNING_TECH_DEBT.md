@@ -2,13 +2,32 @@
 
 ## AI Worker Process - Decoupled Architecture (2025-10-15)
 
-**Status**: ⏳ In Progress
+**Status**: ⏳ Phase 1-4 Complete, Testing Pending
 
-**What We're Building**:
-- 📦 Separate AI Planner worker process (apps/ai-planner)
-- ✅ **Discovery method added**: `getEndpointsWithRecentRuns(since: Date)`
-- ⏭️ AI Planner service with endpoint analysis
-- ⏭️ AI tools for adaptive scheduling (propose_interval, propose_next_time, pause_until)
+**What We Built**:
+- ✅ **Phase 1**: Discovery method `getEndpointsWithRecentRuns(since: Date)` added to RunsRepo
+- ✅ **Phase 2**: AI Planner service with 3 tools (propose_interval, propose_next_time, pause_until)
+- ✅ **Phase 3**: AI Planner worker app complete (package.json, tsconfig, main worker, README, build verified)
+- ✅ **Phase 4**: Docker Compose integration (Dockerfile.ai-planner, service added to docker-compose.yml)
+
+**Implementation Summary**:
+
+📦 **packages/services/src/scheduling/**
+- `ai-planner.ts`: AIPlanner class with analyzeEndpoint(id) and analyzeEndpoints(ids[]) methods
+- `ai-tools.ts`: 3 Zod-based endpoint-scoped tools for adaptive scheduling
+- `index.ts`: Module exports (AIPlanner, AIPlannerDeps, createToolsForEndpoint)
+
+📦 **apps/ai-planner/**
+- `package.json`: Dependencies (@ai-sdk/openai, adapter-ai, adapter-drizzle, services)
+- `tsconfig.json`: Project references to workspace packages
+- `src/index.ts`: Main worker (185 lines) - config schema, database setup, AI client, analysis tick loop, graceful shutdown
+- `README.md`: Complete deployment guide with architecture diagrams, cost analysis, troubleshooting
+- `Dockerfile.ai-planner`: Multi-stage build following scheduler pattern
+
+📋 **docker-compose.yml**
+- `ai-planner` service added to prod profile
+- Environment variables: DATABASE_URL, OPENAI_API_KEY, AI_MODEL, AI_ANALYSIS_INTERVAL_MS, AI_LOOKBACK_MINUTES, AI_MAX_TOKENS, AI_TEMPERATURE
+- Depends on: db (health check), migrator (completion)
 
 **Architecture Decision: Complete Decoupling**
 
@@ -33,23 +52,26 @@ Scheduler Worker          AI Planner Worker
 
 **Flow:**
 1. Scheduler executes endpoint → writes run to database
-2. AI Planner queries recent runs → analyzes patterns
-3. AI calls tools → writes hints to database
-4. Scheduler re-reads endpoint → picks up hints
-5. Governor plans next run → respects hints
+2. AI Planner queries recent runs → discovers active endpoints
+3. AI analyzes patterns → calls tools to write hints
+4. Scheduler re-reads endpoint → picks up hints via governor
+5. Governor plans next run → respects AI interval hints, one-shot hints, or paused state
 
 **Domain Changes:**
 - ✅ Added `RunsRepo.getEndpointsWithRecentRuns(since: Date)` - Discovery method
-- ✅ Implemented in DrizzleRunsRepo with `SELECT DISTINCT endpointId`
+- ✅ Implemented in DrizzleRunsRepo with `SELECT DISTINCT endpointId WHERE started_at >= since`
+- ✅ Implemented in InMemoryRunsRepo (test fixture)
 - ❌ No scheduler changes needed (already designed for async AI)
 
 **Next Steps:**
-1. Create AI Planner service in packages/services/src/scheduling/
-2. Define 3 AI tools (propose_interval, propose_next_time, pause_until)
-3. Create apps/ai-planner worker composition root
-4. Wire into docker-compose.yml
+1. ⏭️ **Phase 5**: Integration testing (start both workers, verify hint flow)
+2. ⏭️ **Phase 6**: Documentation & ADR (create ADR documenting decoupled architecture)
+3. ⏭️ Unit tests for AIPlanner service and tools
+4. ⏭️ Contract tests for getEndpointsWithRecentRuns
 
-**No Tech Debt**: Clean separation of concerns, follows hexagonal architecture.
+**Build Verification**: ✅ `pnpm --filter @cronicorn/ai-planner-app build` passes
+
+**No Tech Debt**: Clean separation of concerns, follows hexagonal architecture, complete documentation.
 
 ---
 

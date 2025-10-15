@@ -37,16 +37,16 @@ export class InMemoryRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-      runs: Array<{
-        runId: string;
-        endpointId: string;
-        startedAt: Date;
-        status: string;
-        durationMs?: number;
-        source?: string;
-      }>;
-      total: number;
-    }> {
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }> {
     let filtered = this.runs;
 
     if (filters.endpointId) {
@@ -145,5 +145,18 @@ export class InMemoryRunsRepo implements RunsRepo {
       lastRun,
       failureStreak,
     };
+  }
+
+  async getEndpointsWithRecentRuns(since: Date): Promise<string[]> {
+    const sinceMs = since.getTime();
+    const endpointIds = new Set<string>();
+
+    for (const run of this.runs) {
+      if (run.startedAt >= sinceMs) {
+        endpointIds.add(run.endpointId);
+      }
+    }
+
+    return Array.from(endpointIds);
   }
 }

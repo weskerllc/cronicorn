@@ -42,28 +42,30 @@
 - [ ] Unit tests for AIPlanner service
 - [ ] Unit tests for tool execution
 
-### Phase 3: Create AI Planner Worker App
+### Phase 3: Create AI Planner Worker App ✅ COMPLETE
 **Estimated**: 1 hour
 
-- [ ] Create `apps/ai-planner/` directory structure
-- [ ] Create `package.json` (copy from scheduler)
-- [ ] Create `tsconfig.json` (project references)
-- [ ] Create `src/index.ts` - Main worker entry point
-- [ ] Implement tick loop (queries recent runs, analyzes endpoints)
-- [ ] Add configuration schema (interval, API key, etc.)
-- [ ] Add graceful shutdown handlers
-- [ ] Add structured logging
-- [ ] Create `README.md` with deployment instructions
-- [ ] Create `Dockerfile.ai-planner`
+- [x] Create `apps/ai-planner/` directory structure
+- [x] Create `package.json` (copy from scheduler)
+- [x] Create `tsconfig.json` (project references)
+- [x] Create `src/index.ts` - Main worker entry point
+- [x] Implement tick loop (queries recent runs, analyzes endpoints)
+- [x] Add configuration schema (interval, API key, etc.)
+- [x] Add graceful shutdown handlers
+- [x] Add structured logging
+- [x] Create `README.md` with deployment instructions
+- [x] Create `Dockerfile.ai-planner`
+- [ ] Unit tests for AIPlanner service
+- [ ] Unit tests for tool execution
 
-### Phase 4: Update Docker Compose
+### Phase 4: Update Docker Compose ✅ COMPLETE
 **Estimated**: 15 minutes
 
-- [ ] Add `ai-planner` service to `docker-compose.yml`
-- [ ] Add `OPENAI_API_KEY` environment variable
-- [ ] Add `AI_ANALYSIS_INTERVAL_MS` config (default: 5min)
-- [ ] Optional: Add `depends_on` for database
-- [ ] Update `.env.example` with AI-related vars
+- [x] Add `ai-planner` service to `docker-compose.yml`
+- [x] Add `OPENAI_API_KEY` environment variable
+- [x] Add `AI_ANALYSIS_INTERVAL_MS` config (default: 5min)
+- [x] Add all AI config vars (lookback, max_tokens, temperature)
+- [x] Add `depends_on` for database + migrator
 
 ### Phase 5: Integration Testing
 **Estimated**: 1 hour

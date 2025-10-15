@@ -46,8 +46,8 @@ describe("jobsManager", () => {
       listRuns: vi.fn(),
       getRunDetails: vi.fn(),
       getHealthSummary: vi.fn(),
+      getEndpointsWithRecentRuns: vi.fn(),
     };
-
     const now = new Date("2025-01-14T12:00:00Z");
     fakeClock = { now: () => now, sleep: async () => { } };
     fakeCron = { next: (_cron: string, from: Date) => new Date(from.getTime() + 3600_000) };

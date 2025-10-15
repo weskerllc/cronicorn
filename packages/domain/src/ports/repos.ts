@@ -138,4 +138,13 @@ export type RunsRepo = {
    * @returns Aggregated health metrics
    */
   getHealthSummary: (endpointId: string, since: Date) => Promise<HealthSummary>;
+
+  /**
+   * Get unique endpoint IDs that have runs after the specified timestamp.
+   * Used by AI Planner to discover endpoints needing analysis.
+   *
+   * @param since - Only include endpoints with runs starting after this date
+   * @returns Array of unique endpoint IDs with recent activity
+   */
+  getEndpointsWithRecentRuns: (since: Date) => Promise<string[]>;
 };
