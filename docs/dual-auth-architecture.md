@@ -1,5 +1,7 @@
 # Dual Authentication Architecture
 
+> **Implementation Decision**: See `.adr/0011-dual-auth-implementation.md` for the full architectural decision record.
+
 ## Overview
 
 Our API supports **two authentication methods** using Better Auth:
