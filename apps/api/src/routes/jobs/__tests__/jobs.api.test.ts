@@ -45,7 +45,6 @@ describe("jobs API", () => {
     db = testDb.db;
     cleanup = testDb.cleanup;
   });
-
   afterEach(async () => {
     await cleanup();
   });

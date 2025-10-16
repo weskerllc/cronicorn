@@ -82,6 +82,12 @@ export type JobsRepo = {
   // Endpoint relationship operations (Phase 3)
   listEndpointsByJob: (jobId: string) => Promise<JobEndpoint[]>;
   deleteEndpoint: (id: string) => Promise<void>;
+
+  /**
+   * Get user's tier for quota enforcement.
+   * Returns tier level ("free" | "pro" | "enterprise") for the given user ID.
+   */
+  getUserTier: (userId: string) => Promise<"free" | "pro" | "enterprise">;
 };
 
 export type RunsRepo = {

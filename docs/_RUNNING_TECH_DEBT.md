@@ -1364,3 +1364,7 @@ pnpm db:migrate   # was: docker compose --env-file .env.docker.dev --profile dev
 **Reference**: See `docs/env-consolidation.md` for complete migration guide.
 
 `````
+
+
+## TODO
+Ensure api tests run with a transaction per test and rollback after
