@@ -12,6 +12,12 @@ const envSchema = z.object({
   GITHUB_CLIENT_SECRET: z.string().min(1, "GITHUB_CLIENT_SECRET is required"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   API_URL: z.string().url("API_URL must be a valid URL"),
+  // Stripe configuration
+  STRIPE_SECRET_KEY: z.string().min(1, "STRIPE_SECRET_KEY is required"),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1, "STRIPE_WEBHOOK_SECRET is required"),
+  STRIPE_PRICE_PRO: z.string().min(1, "STRIPE_PRICE_PRO is required"),
+  STRIPE_PRICE_ENTERPRISE: z.string().min(1, "STRIPE_PRICE_ENTERPRISE is required"),
+  BASE_URL: z.string().url("BASE_URL must be a valid URL"),
 });
 
 export type Env = z.infer<typeof envSchema>;

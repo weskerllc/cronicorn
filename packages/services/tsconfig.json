@@ -13,6 +13,7 @@
     { "path": "../domain" },
     { "path": "../adapter-cron" },
     { "path": "../adapter-drizzle" },
-    { "path": "../adapter-system-clock" }
+    { "path": "../adapter-system-clock" },
+    { "path": "../adapter-stripe" }
   ]
 }

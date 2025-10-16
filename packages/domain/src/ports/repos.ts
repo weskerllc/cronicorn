@@ -88,6 +88,46 @@ export type JobsRepo = {
    * Returns tier level ("free" | "pro" | "enterprise") for the given user ID.
    */
   getUserTier: (userId: string) => Promise<"free" | "pro" | "enterprise">;
+
+  /**
+   * Get user by ID for subscription operations.
+   *
+   * @param userId - User ID
+   * @returns User details including email and Stripe customer ID
+   */
+  getUserById: (userId: string) => Promise<{
+    id: string;
+    email: string;
+    tier: "free" | "pro" | "enterprise";
+    stripeCustomerId: string | null;
+  } | null>;
+
+  /**
+   * Get user by Stripe customer ID (for webhook lookups).
+   *
+   * @param customerId - Stripe customer ID
+   * @returns User ID and email if found
+   */
+  getUserByStripeCustomerId: (customerId: string) => Promise<{
+    id: string;
+    email: string;
+  } | null>;
+
+  /**
+   * Update user's subscription details (called by webhook handler).
+   *
+   * This method is idempotent - safe to call multiple times with same data.
+   *
+   * @param userId - User ID
+   * @param patch - Fields to update
+   */
+  updateUserSubscription: (userId: string, patch: {
+    tier?: "free" | "pro" | "enterprise";
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    subscriptionStatus?: string;
+    subscriptionEndsAt?: Date | null;
+  }) => Promise<void>;
 };
 
 export type RunsRepo = {

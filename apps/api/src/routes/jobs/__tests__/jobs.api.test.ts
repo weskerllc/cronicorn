@@ -32,8 +32,13 @@ const testConfig: Env = {
   WEB_URL: "http://localhost:5173",
   BETTER_AUTH_SECRET: "test-secret",
   BETTER_AUTH_URL: "http://localhost:3000/api/auth",
-  GITHUB_CLIENT_ID: "test-id",
-  GITHUB_CLIENT_SECRET: "test-secret",
+  GITHUB_CLIENT_ID: "test_client_id",
+  GITHUB_CLIENT_SECRET: "test_client_secret",
+  STRIPE_SECRET_KEY: "sk_test_fake_key_for_testing",
+  STRIPE_WEBHOOK_SECRET: "whsec_test_fake_secret",
+  STRIPE_PRICE_PRO: "price_test_pro",
+  STRIPE_PRICE_ENTERPRISE: "price_test_enterprise",
+  BASE_URL: "http://localhost:5173",
 };
 
 describe("jobs API", () => {

@@ -1,5 +1,7 @@
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
+import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
+import { SubscriptionsManager } from "@cronicorn/services";
 import { cors } from "hono/cors";
 
 import type { Auth } from "./auth/config.js";
@@ -8,9 +10,12 @@ import type { Database } from "./lib/db.js";
 
 import { createAuth } from "./auth/config.js";
 import { createJobsManager } from "./lib/create-jobs-manager.js";
+import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.js";
 import { errorHandler } from "./lib/error-handler.js";
 import configureOpenAPI from "./lib/openapi.js";
 import jobs from "./routes/jobs/jobs.index.js";
+import subscriptions from "./routes/subscriptions/subscriptions.index.js";
+import webhooks from "./routes/webhooks.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
 
 export async function createApp(
@@ -25,6 +30,13 @@ export async function createApp(
   // Create stateless singletons (safe to reuse across requests)
   const clock = new SystemClock();
   const cron = new CronParserAdapter();
+
+  // Initialize Stripe payment provider
+  const stripeProvider = new StripePaymentProvider({
+    secretKey: config.STRIPE_SECRET_KEY,
+    proPriceId: config.STRIPE_PRICE_PRO,
+    enterprisePriceId: config.STRIPE_PRICE_ENTERPRISE,
+  });
 
   // Create main OpenAPI app
   // eslint-disable-next-line ts/consistent-type-assertions
@@ -52,6 +64,8 @@ export async function createApp(
     c.set("clock", clock);
     c.set("cron", cron);
     c.set("auth", auth);
+    c.set("paymentProvider", stripeProvider);
+    c.set("webhookSecret", config.STRIPE_WEBHOOK_SECRET);
 
     // Provide transaction wrapper that auto-creates JobsManager
     c.set("withJobsManager", (fn) => {
@@ -60,6 +74,16 @@ export async function createApp(
         return fn(manager);
       });
     });
+
+    // Create SubscriptionsManager using composition helper
+    // Note: This creates a new instance per request with proper transaction handling
+    const subscriptionsManager = createSubscriptionsManager(
+      db,
+      stripeProvider,
+      stripeProvider,
+      config.BASE_URL,
+    );
+    c.set("subscriptionsManager", subscriptionsManager);
 
     await next();
   });
@@ -78,6 +102,8 @@ export async function createApp(
   // Mount job routes (protected by auth middleware)
   const routes = [
     jobs,
+    subscriptions,
+    webhooks,
   ] as const;
 
   routes.forEach((route) => {

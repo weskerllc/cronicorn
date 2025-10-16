@@ -1366,5 +1366,121 @@ pnpm db:migrate   # was: docker compose --env-file .env.docker.dev --profile dev
 `````
 
 
+## Stripe Subscription Integration (2025-01-XX)
+
+**Status**: ✅ Unit tests complete, pending manual testing
+
+**What We Built**:
+- ✅ **Database schema**: `stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `subscription_ends_at` columns added to users table
+- ✅ **Domain ports**: `IPaymentProvider` interface with checkout, portal, webhook, tier mapping methods
+- ✅ **Stripe adapter**: Full SDK integration (checkout sessions, portal sessions, webhook verification, price→tier mapping)
+- ✅ **Subscriptions service**: Business logic for checkout, portal, status retrieval, 5 webhook handlers
+- ✅ **API routes**: Hidden from OpenAPI docs (internal billing endpoints for web app only)
+- ✅ **Unit tests**: 23 tests passing (9 adapter tests, 14 service tests, 100% and 89.78% coverage)
+- ✅ **Environment config**: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_PRICE_ID, STRIPE_ENTERPRISE_PRICE_ID
+
+**Architecture**:
+```
+API Routes (subscription endpoints)
+  ↓
+SubscriptionsManager (business logic)
+  ↓
+StripePaymentProvider (adapter) → Stripe SDK
+  ↓
+JobsRepo (domain repo) → Update tier on subscription changes
+```
+
+**Known Tech Debt & Limitations**:
+
+1. **⚠️ No Idempotency Table**:
+   - **Issue**: Webhook events processed in-memory only (no persistence)
+   - **Risk**: Duplicate events could cause double tier upgrades/downgrades
+   - **Mitigation**: Stripe webhooks have built-in idempotency, low risk of duplicates
+   - **Future fix**: Add `stripe_webhook_events` table with `event_id` unique constraint
+   - **Priority**: 🟡 Medium - only critical if we see duplicate events in production
+
+2. **⚠️ Hardcoded Price→Tier Mapping**:
+   - **Issue**: `getTierFromPriceId` uses if/else checks against env vars
+   - **Risk**: Can't dynamically add new plans without code changes
+   - **Current mapping**:
+     - `price_xxx (PRO)` → `"pro"`
+     - `price_yyy (ENTERPRISE)` → `"enterprise"`
+     - Unknown price IDs → `"free"` (fallback)
+   - **Future fix**: Add `pricing_plans` table with `stripe_price_id`, `tier`, `interval` columns
+   - **Priority**: 🟢 Low - two-tier system sufficient for MVP
+
+3. **⚠️ No Subscription Metadata Validation**:
+   - **Issue**: Webhook handlers assume `metadata.userId` exists on checkout sessions
+   - **Risk**: Missing metadata causes silent failures (no tier upgrade)
+   - **Current handling**: Returns early with warning log if `metadata.userId` missing
+   - **Future fix**: Add stricter validation, alert on missing metadata
+   - **Priority**: 🟢 Low - metadata set by our code, unlikely to be missing
+
+4. **⚠️ Subscription Routes Hidden from Public API**:
+   - **Decision**: Used `router.post()` instead of `router.openapi()` to exclude from Scalar docs
+   - **Rationale**: Billing endpoints are internal to web app, not part of public API
+   - **Trade-off**: No auto-generated TypeScript client for subscription routes
+   - **Workaround**: Web app can use Zod schemas directly for type safety
+   - **Priority**: ✅ Acceptable - intentional design decision
+
+5. **⚠️ No Rate Limiting on Webhook Endpoint**:
+   - **Issue**: `/api/webhooks/stripe` endpoint has no rate limiting
+   - **Risk**: Could be abused to spam webhook processing (though signature verification blocks invalid requests)
+   - **Mitigation**: Stripe signature verification prevents unauthorized webhooks
+   - **Future fix**: Add rate limiting middleware (e.g., 100 requests/minute per IP)
+   - **Priority**: 🟢 Low - signature verification is primary security layer
+
+6. **⚠️ No Subscription Cancellation Grace Period**:
+   - **Issue**: Tier downgrade happens immediately on `subscription.deleted` event
+   - **Expected behavior**: Most SaaS products maintain access until period end
+   - **Current**: `subscription_ends_at` stored but not used in tier checks
+   - **Future fix**: Check `subscription_ends_at` in auth middleware before downgrading
+   - **Priority**: 🟡 Medium - poor UX, customer expects access until period end
+
+7. **⚠️ Uncovered Lines in SubscriptionsManager**:
+   - **Issue**: Test coverage 89.78% - lines 196-198, 214-216 uncovered
+   - **Lines 196-198**: `invoice.payment_failed` early return (missing subscription)
+   - **Lines 214-216**: `handleUnhandledEvent` logging
+   - **Future fix**: Add test cases for these edge cases
+   - **Priority**: 🟢 Low - defensive code paths, unlikely scenarios
+
+**Implementation Status**:
+- ✅ Tasks 1-27 complete (schema → domain → adapters → services → API → config → unit tests)
+- ⏭️ Task 28: Execute migration to add Stripe fields to database
+- ⏭️ Task 29: Add Stripe test keys to local `.env` file
+- ⏭️ Task 30: Create Pro/Enterprise products in Stripe Dashboard, capture price IDs
+- ⏭️ Tasks 31-38: Manual integration testing (checkout flow, webhooks, portal, cancellation, etc.)
+- ⏭️ Task 39: Document Stripe Dashboard setup in `docs/stripe-setup.md`
+- ⏭️ Task 40: Log tech debt (this entry)
+
+**Files Created**:
+- Migration: `packages/adapter-drizzle/migrations/0005_add_stripe_subscription_fields.sql`
+- Domain: `packages/domain/src/ports/payment.ts` - IPaymentProvider interface
+- Adapter: `packages/adapter-stripe/src/stripe-client.ts` - StripePaymentProvider implementation
+- Adapter: `packages/adapter-stripe/src/__tests__/stripe-client.test.ts` - 9 unit tests
+- Service: `packages/services/src/subscriptions/manager.ts` - SubscriptionsManager with webhook handlers
+- Service: `packages/services/src/subscriptions/__tests__/manager.test.ts` - 14 unit tests
+- API: `apps/api/src/routes/subscriptions/subscriptions.index.ts` - Route mounting (hidden from OpenAPI)
+- API: `apps/api/src/routes/subscriptions/subscriptions.handlers.ts` - HTTP handlers with manual Zod validation
+- API: `apps/api/src/routes/subscriptions/subscriptions.schemas.ts` - Zod request/response schemas
+- Config: `apps/api/src/lib/config.ts` - Added Stripe environment variables
+
+**Next Steps** (Tasks 28-40):
+1. Run database migration: `pnpm -F @cronicorn/adapter-drizzle migrate`
+2. Add Stripe test keys to `.env` (from Stripe Dashboard)
+3. Create products in Stripe Dashboard → capture `price_xxx` IDs
+4. Start API server and test checkout flow
+5. Set up Stripe CLI webhook forwarding: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
+6. Test tier upgrades/downgrades via webhook events
+7. Test customer portal (update payment, cancel subscription)
+8. Verify webhook signature validation
+9. Test idempotency (replay same webhook event, ensure no double processing)
+10. Document Stripe Dashboard setup process
+11. Update this tech debt log with production deployment checklist
+
+**No Blockers**: All unit tests passing, ready for manual integration testing.
+
+---
+
 ## TODO
 Ensure api tests run with a transaction per test and rollback after

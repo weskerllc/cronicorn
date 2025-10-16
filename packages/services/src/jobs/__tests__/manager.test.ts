@@ -39,6 +39,9 @@ describe("jobsManager", () => {
       resetFailureCount: vi.fn(),
       setPausedUntil: vi.fn(),
       updateAfterRun: vi.fn(),
+      getUserById: vi.fn(),
+      getUserByStripeCustomerId: vi.fn(),
+      updateUserSubscription: vi.fn(),
     };
     mockRunsRepo = {
       create: vi.fn(),

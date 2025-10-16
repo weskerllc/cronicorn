@@ -1,5 +1,6 @@
-import type { Clock, Cron } from "@cronicorn/domain";
+import type { Clock, Cron, PaymentProvider } from "@cronicorn/domain";
 import type { JobsManager } from "@cronicorn/services/jobs";
+import type { SubscriptionsManager } from "@cronicorn/services";
 import type { RouteConfig, RouteHandler } from "@hono/zod-openapi";
 
 import { OpenAPIHono } from "@hono/zod-openapi";
@@ -16,6 +17,10 @@ export type AppBindings = {
     cron: Cron;
     auth: Auth;
     withJobsManager: <T extends Response>(fn: (manager: JobsManager) => Promise<T>) => Promise<T>;
+    // Stripe services
+    subscriptionsManager: SubscriptionsManager;
+    paymentProvider: PaymentProvider;
+    webhookSecret: string;
     // Set by requireAuth middleware
     session?: AuthContext["session"];
     userId?: string;
