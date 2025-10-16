@@ -102,6 +102,12 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at").notNull(),
   isAnonymous: boolean("is_anonymous").default(false),
   tier: text("tier").notNull().default("free"), // "free" | "pro" | "enterprise"
+
+  // Stripe subscription fields
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  subscriptionStatus: text("subscription_status"), // 'active' | 'trialing' | 'canceled' | 'past_due' | 'incomplete'
+  subscriptionEndsAt: timestamp("subscription_ends_at", { mode: "date" }),
 });
 
 export const session = pgTable("session", {

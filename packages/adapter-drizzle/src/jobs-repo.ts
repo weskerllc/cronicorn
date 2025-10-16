@@ -504,4 +504,98 @@ export class DrizzleJobsRepo implements JobsRepo {
       archivedAt: row.archivedAt ?? undefined,
     };
   }
+
+  // ============================================================================
+  // Subscription Management (Stripe Integration)
+  // ============================================================================
+
+  async getUserById(userId: string): Promise<{
+    id: string;
+    email: string;
+    tier: "free" | "pro" | "enterprise";
+    stripeCustomerId: string | null;
+  } | null> {
+    const result = await this.tx
+      .select({
+        id: user.id,
+        email: user.email,
+        tier: user.tier,
+        stripeCustomerId: user.stripeCustomerId,
+      })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (!result[0]) {
+      return null;
+    }
+
+    const row = result[0];
+    const tier = (row.tier === "pro" || row.tier === "enterprise") ? row.tier : "free";
+
+    return {
+      id: row.id,
+      email: row.email,
+      tier,
+      stripeCustomerId: row.stripeCustomerId ?? null,
+    };
+  }
+
+  async getUserByStripeCustomerId(customerId: string): Promise<{
+    id: string;
+    email: string;
+  } | null> {
+    const result = await this.tx
+      .select({
+        id: user.id,
+        email: user.email,
+      })
+      .from(user)
+      .where(eq(user.stripeCustomerId, customerId))
+      .limit(1);
+
+    if (!result[0]) {
+      return null;
+    }
+
+    return result[0];
+  }
+
+  async updateUserSubscription(userId: string, patch: {
+    tier?: "free" | "pro" | "enterprise";
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    subscriptionStatus?: string;
+    subscriptionEndsAt?: Date | null;
+  }): Promise<void> {
+    const now = this.now();
+
+    // Build update object with only defined fields
+    const updates: Partial<typeof user.$inferInsert> = {
+      updatedAt: now,
+    };
+
+    if (patch.tier !== undefined) {
+      updates.tier = patch.tier;
+    }
+    if (patch.stripeCustomerId !== undefined) {
+      updates.stripeCustomerId = patch.stripeCustomerId;
+    }
+    if (patch.stripeSubscriptionId !== undefined) {
+      updates.stripeSubscriptionId = patch.stripeSubscriptionId;
+    }
+    if (patch.subscriptionStatus !== undefined) {
+      updates.subscriptionStatus = patch.subscriptionStatus;
+    }
+    if (patch.subscriptionEndsAt !== undefined) {
+      updates.subscriptionEndsAt = patch.subscriptionEndsAt;
+    }
+
+    await this.tx
+      .update(user)
+      .set(updates)
+      .where(eq(user.id, userId));
+
+    // Note: Idempotent - safe to call multiple times with same data
+  }
 }

@@ -12,3 +12,5 @@
  */
 
 export * from "./jobs/manager.js";
+export * from "./subscriptions/manager.js";
+export * from "./subscriptions/types.js";

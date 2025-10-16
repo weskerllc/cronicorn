@@ -256,4 +256,30 @@ export class InMemoryJobsRepo implements JobsRepo {
     // Tests can mock this method if different tier behavior needed
     return "free";
   }
+
+  // Subscription management methods (not implemented in fixture)
+  async getUserById(_userId: string): Promise<{ id: string; email: string; tier: "free" | "pro" | "enterprise"; stripeCustomerId: string | null } | null> {
+    // In-memory fixture: return minimal user for testing
+    // Real tests should mock this method
+    return null;
+  }
+
+  async getUserByStripeCustomerId(_customerId: string): Promise<{ id: string; email: string; tier: "free" | "pro" | "enterprise" } | null> {
+    // In-memory fixture: not implemented
+    return null;
+  }
+
+  async updateUserSubscription(
+    _userId: string,
+    _update: {
+      tier?: "free" | "pro" | "enterprise";
+      stripeCustomerId?: string;
+      stripeSubscriptionId?: string;
+      subscriptionStatus?: string;
+      subscriptionEndsAt?: Date | null;
+    },
+  ): Promise<void> {
+    // In-memory fixture: no-op
+    // Real tests should mock this method
+  }
 }
