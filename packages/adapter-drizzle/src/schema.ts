@@ -101,6 +101,7 @@ export const user = pgTable("user", {
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
   isAnonymous: boolean("is_anonymous").default(false),
+  tier: text("tier").notNull().default("free"), // "free" | "pro" | "enterprise"
 });
 
 export const session = pgTable("session", {
