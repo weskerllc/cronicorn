@@ -21,6 +21,7 @@ describe("aiPlanner", () => {
     };
 
     mockJobsRepo = {
+      getUserTier: vi.fn(),
       getEndpoint: vi.fn(),
       writeAIHint: vi.fn(),
       setNextRunAtIfEarlier: vi.fn(),

@@ -3,7 +3,7 @@ import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgre
 
 import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 
-import { type JobEndpointRow, jobEndpoints, type JobRow, jobs } from "./schema.js";
+import { type JobEndpointRow, jobEndpoints, type JobRow, jobs, user } from "./schema.js";
 
 /**
  * PostgreSQL implementation of JobsRepo using Drizzle ORM.
@@ -466,6 +466,26 @@ export class DrizzleJobsRepo implements JobsRepo {
 
     // Note: Drizzle doesn't return rowCount, optimistically assume success
     // getEndpoint will throw if row doesn't exist
+  }
+
+  async getUserTier(userId: string): Promise<"free" | "pro" | "enterprise"> {
+    const result = await this.tx
+      .select({ tier: user.tier })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    // Default to "free" tier if user not found (safest/most restrictive default)
+    // This gracefully handles edge cases like session-user mismatches in tests
+    if (!result[0]) {
+      return "free";
+    }
+
+    const tier = result[0].tier;
+    if (tier === "pro" || tier === "enterprise") {
+      return tier;
+    }
+    return "free";
   }
 
   /**

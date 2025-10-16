@@ -147,15 +147,73 @@ Future: When true multi-tenancy is implemented, tenantId will remain the correct
 **Tests**: New unit test added to planner.test.ts ("skips analysis when quota exceeded")  
 **Integration**: QuotaGuard wired into ai-planner worker composition root  
 
+### Execution Limits (Extension)
+
+**Date Extended:** 2025-10-16
+
+After implementing AI token quotas, we identified a second attack vector: **endpoint spam and interval manipulation**. A malicious or misconfigured user could:
+
+1. **Endpoint count attack**: Create thousands of endpoints to overwhelm the scheduler, consuming database/compute resources even without AI usage
+2. **Interval spam attack**: Set sub-second intervals (e.g., 100ms) to trigger 36,000 requests/hour from a single endpoint
+
+These attacks bypass token quotas entirely since they abuse the baseline scheduling system.
+
+#### Execution Limit Design
+
+**Constants** (`packages/domain/src/quota/tier-limits.ts`):
+
+```typescript
+export const TIER_EXECUTION_LIMITS = {
+  free: { maxEndpoints: 10, minIntervalMs: 60_000 },      // 14,400 req/day max
+  pro: { maxEndpoints: 100, minIntervalMs: 10_000 },     // 864,000 req/day max
+  enterprise: { maxEndpoints: 1_000, minIntervalMs: 1_000 } // 86.4M req/day max
+};
+```
+
+**Limit Rationale**:
+- Free tier: Sufficient for hobbyists/demos (10 endpoints × 1 req/min)
+- Pro tier: Supports small businesses (100 endpoints × 6 req/min)
+- Enterprise: High-volume production workloads (1000 endpoints × 1 req/sec)
+
+**Enforcement Location**: `packages/services/src/jobs/manager.ts`
+
+Three enforcement points in service layer:
+1. **`addEndpointToJob()`**: Validates `maxEndpoints` count before creation; validates `baselineIntervalMs >= minIntervalMs`
+2. **`updateEndpointConfig()`**: Validates `baselineIntervalMs >= minIntervalMs` when updating interval
+3. **`applyIntervalHint()`**: Validates AI hint `intervalMs >= minIntervalMs` to prevent AI from suggesting spam intervals
+
+**Error Messages**: Include tier name, current limit, and upgrade path (e.g., "Endpoint limit reached: free tier allows maximum 10 endpoints. Upgrade to Pro for 100 endpoints or Enterprise for 1,000 endpoints.")
+
+**Architecture Notes**:
+- Enforcement is **synchronous** (unlike soft-limit token quotas)
+- Hard rejection prevents attack at creation time
+- No race conditions possible (single transaction per creation)
+- getUserTier() returns "free" default for missing users (defensive, most restrictive)
+
+**Test Coverage**:
+- 10 new unit tests in `packages/services/src/jobs/__tests__/manager.test.ts`
+- Tests validate endpoint count limits (free/pro/enterprise)
+- Tests validate interval enforcement at all three checkpoints
+- Tests verify error messages include upgrade suggestions
+
+#### Why Service Layer Instead of Domain?
+
+Execution limits enforce **business rules** (tier restrictions) rather than **scheduling logic** (when to run). The domain's `governor` and `scheduler` remain pure—they calculate next runs based on policy, not quotas. Service layer (`JobsManager`) owns authorization and tier enforcement, making it the correct boundary.
+
 ### What Changed (File Inventory)
 
-- **Domain**: `packages/domain/src/quota/tier-limits.ts` (new)
+- **Domain**: `packages/domain/src/quota/tier-limits.ts` (new - includes TIER_LIMITS and TIER_EXECUTION_LIMITS)
 - **Schema**: `packages/adapter-drizzle/src/schema.ts` (added `user.tier` field)
 - **Migration**: `packages/adapter-drizzle/migrations/0003_huge_carmella_unuscione.sql` (new)
-- **Adapter**: `packages/adapter-drizzle/src/quota-guard.ts` (new, 96 lines)
+- **Adapter**: `packages/adapter-drizzle/src/quota-guard.ts` (new, 106 lines)
+- **Adapter Tests**: `packages/adapter-drizzle/src/__tests__/quota-guard.test.ts` (new, comprehensive test coverage)
+- **Repos**: `packages/domain/src/ports/repos.ts` (added getUserTier() to JobsRepo interface)
+- **Repos Impl**: `packages/adapter-drizzle/src/jobs-repo.ts` (implemented getUserTier() with defensive defaults)
+- **Service**: `packages/services/src/jobs/manager.ts` (three enforcement points for execution limits)
+- **Service Tests**: `packages/services/src/jobs/__tests__/manager.test.ts` (10 new tests for execution limits)
 - **Exports**: `packages/adapter-drizzle/src/index.ts` (export DrizzleQuotaGuard)
 - **Worker**: `packages/worker-ai-planner/src/planner.ts` (quota check before AI call)
-- **Tests**: `packages/worker-ai-planner/src/__tests__/planner.test.ts` (new quota test)
+- **Worker Tests**: `packages/worker-ai-planner/src/__tests__/planner.test.ts` (quota test)
 - **Composition**: `apps/ai-planner/src/index.ts` (instantiate + inject QuotaGuard)
 
 ## References

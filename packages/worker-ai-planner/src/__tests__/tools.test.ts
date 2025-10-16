@@ -19,6 +19,7 @@ describe("aiTools", () => {
     };
 
     mockJobsRepo = {
+      getUserTier: vi.fn(),
       writeAIHint: vi.fn(),
       setNextRunAtIfEarlier: vi.fn(),
       setPausedUntil: vi.fn(),

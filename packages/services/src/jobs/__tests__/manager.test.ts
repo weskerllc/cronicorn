@@ -19,6 +19,7 @@ describe("jobsManager", () => {
   beforeEach(() => {
     // Setup mock repositories with all required methods
     mockJobsRepo = {
+      getUserTier: vi.fn(),
       createJob: vi.fn(),
       getJob: vi.fn(),
       listJobs: vi.fn(),
@@ -39,7 +40,6 @@ describe("jobsManager", () => {
       setPausedUntil: vi.fn(),
       updateAfterRun: vi.fn(),
     };
-
     mockRunsRepo = {
       create: vi.fn(),
       finish: vi.fn(),
@@ -195,17 +195,207 @@ describe("jobsManager", () => {
       const input: AddEndpointInput = {
         name: "Health Check",
         jobId: "job-1",
-        baselineIntervalMs: 30_000,
+        baselineIntervalMs: 60_000, // 60s - meets free tier minimum
         url: "https://api.example.com/health",
         method: "GET",
       };
 
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
+      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.addEndpoint).mockResolvedValue(undefined);
 
       await manager.addEndpointToJob("user-1", input);
 
       expect(mockJobsRepo.addEndpoint).toHaveBeenCalled();
+    });
+
+    it("rejects endpoint creation when free tier limit (10) exceeded", async () => {
+      const mockJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const input: AddEndpointInput = {
+        name: "Endpoint 11",
+        jobId: "job-1",
+        baselineIntervalMs: 60_000,
+        url: "https://api.example.com/test",
+        method: "GET",
+      };
+
+      // Mock 10 existing endpoints (free tier max)
+      const existingEndpoints: JobEndpoint[] = Array.from({ length: 10 }, (_, i) => ({
+        id: `ep-${i}`,
+        jobId: "job-1",
+        tenantId: "user-1",
+        name: `Endpoint ${i}`,
+        nextRunAt: new Date(),
+        failureCount: 0,
+      }));
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
+      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue(existingEndpoints);
+
+      await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
+        /Endpoint limit reached.*free tier allows maximum 10 endpoints.*Upgrade to Pro/i,
+      );
+    });
+
+    it("allows endpoint creation when under pro tier limit (100)", async () => {
+      const mockJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const input: AddEndpointInput = {
+        name: "Endpoint 51",
+        jobId: "job-1",
+        baselineIntervalMs: 10_000,
+        url: "https://api.example.com/test",
+        method: "GET",
+      };
+
+      // Mock 50 existing endpoints (under pro limit of 100)
+      const existingEndpoints: JobEndpoint[] = Array.from({ length: 50 }, (_, i) => ({
+        id: `ep-${i}`,
+        jobId: "job-1",
+        tenantId: "user-1",
+        name: `Endpoint ${i}`,
+        nextRunAt: new Date(),
+        failureCount: 0,
+      }));
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("pro");
+      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue(existingEndpoints);
+      vi.mocked(mockJobsRepo.addEndpoint).mockResolvedValue(undefined);
+
+      await manager.addEndpointToJob("user-1", input);
+
+      expect(mockJobsRepo.addEndpoint).toHaveBeenCalled();
+    });
+
+    it("rejects endpoint creation when enterprise tier limit (1000) exceeded", async () => {
+      const mockJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const input: AddEndpointInput = {
+        name: "Endpoint 1001",
+        jobId: "job-1",
+        baselineIntervalMs: 1_000,
+        url: "https://api.example.com/test",
+        method: "GET",
+      };
+
+      // Mock 1000 existing endpoints (enterprise tier max)
+      const existingEndpoints: JobEndpoint[] = Array.from({ length: 1000 }, (_, i) => ({
+        id: `ep-${i}`,
+        jobId: "job-1",
+        tenantId: "user-1",
+        name: `Endpoint ${i}`,
+        nextRunAt: new Date(),
+        failureCount: 0,
+      }));
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("enterprise");
+      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue(existingEndpoints);
+
+      await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
+        /Endpoint limit reached.*enterprise tier allows maximum 1000 endpoints/i,
+      );
+    });
+
+    it("rejects endpoint creation when interval below free tier minimum (60s)", async () => {
+      const mockJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const input: AddEndpointInput = {
+        name: "Fast Endpoint",
+        jobId: "job-1",
+        baselineIntervalMs: 30_000, // 30s - below free tier 60s minimum
+        url: "https://api.example.com/test",
+        method: "GET",
+      };
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
+      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([]);
+
+      await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
+        /Interval too short.*free tier requires minimum 60000ms.*60s.*Upgrade to Pro/i,
+      );
+    });
+
+    it("allows endpoint creation when interval meets pro tier minimum (10s)", async () => {
+      const mockJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const input: AddEndpointInput = {
+        name: "Pro Endpoint",
+        jobId: "job-1",
+        baselineIntervalMs: 10_000, // 10s - exactly pro tier minimum
+        url: "https://api.example.com/test",
+        method: "GET",
+      };
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("pro");
+      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.addEndpoint).mockResolvedValue(undefined);
+
+      await manager.addEndpointToJob("user-1", input);
+
+      expect(mockJobsRepo.addEndpoint).toHaveBeenCalled();
+    });
+
+    it("rejects endpoint creation when interval below pro tier minimum (10s)", async () => {
+      const mockJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const input: AddEndpointInput = {
+        name: "Too Fast",
+        jobId: "job-1",
+        baselineIntervalMs: 5_000, // 5s - below pro tier 10s minimum
+        url: "https://api.example.com/test",
+        method: "GET",
+      };
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("pro");
+      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([]);
+
+      await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
+        /Interval too short.*pro tier requires minimum 10000ms.*10s.*Upgrade to Enterprise/i,
+      );
     });
   });
 
@@ -276,6 +466,44 @@ describe("jobsManager", () => {
 
       expect(result.name).toBe("New Name");
     });
+
+    it("rejects interval update when below tier minimum", async () => {
+      const existingEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "Endpoint",
+        baselineIntervalMs: 60_000,
+        nextRunAt: new Date(),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(existingEndpoint);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
+
+      await expect(
+        manager.updateEndpointConfig("user-1", "ep-1", { baselineIntervalMs: 30_000 }),
+      ).rejects.toThrow(/Interval too short.*free tier requires minimum 60000ms/);
+    });
+
+    it("allows interval update when meets tier minimum", async () => {
+      const existingEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "Endpoint",
+        baselineIntervalMs: 60_000,
+        nextRunAt: new Date(),
+        failureCount: 0,
+      };
+      const updatedEndpoint: JobEndpoint = { ...existingEndpoint, baselineIntervalMs: 15_000 };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(existingEndpoint);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("pro");
+      vi.mocked(mockJobsRepo.updateEndpoint).mockResolvedValue(updatedEndpoint);
+
+      const result = await manager.updateEndpointConfig("user-1", "ep-1", { baselineIntervalMs: 15_000 });
+
+      expect(result.baselineIntervalMs).toBe(15_000);
+    });
   });
 
   describe("deleteEndpoint", () => {
@@ -313,10 +541,48 @@ describe("jobsManager", () => {
       };
 
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("enterprise");
       vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
       vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
 
       await manager.applyIntervalHint("user-1", "ep-1", { intervalMs: 300_000 });
+
+      expect(mockJobsRepo.writeAIHint).toHaveBeenCalled();
+    });
+
+    it("rejects AI hint when interval below tier minimum", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "My Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
+
+      await expect(
+        manager.applyIntervalHint("user-1", "ep-1", { intervalMs: 30_000 }),
+      ).rejects.toThrow(/AI hint interval too short.*free tier requires minimum 60000ms/);
+    });
+
+    it("allows AI hint when interval meets tier minimum", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "My Endpoint",
+        lastRunAt: new Date(),
+        nextRunAt: new Date(),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("pro");
+      vi.mocked(mockJobsRepo.writeAIHint).mockResolvedValue(undefined);
+      vi.mocked(mockJobsRepo.setNextRunAtIfEarlier).mockResolvedValue(undefined);
+
+      await manager.applyIntervalHint("user-1", "ep-1", { intervalMs: 10_000 });
 
       expect(mockJobsRepo.writeAIHint).toHaveBeenCalled();
     });

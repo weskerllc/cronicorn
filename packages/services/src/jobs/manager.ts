@@ -1,5 +1,6 @@
 import type { Clock, Cron, Job, JobEndpoint, JobsRepo, RunsRepo } from "@cronicorn/domain";
 
+import { getExecutionLimits } from "@cronicorn/domain";
 import { nanoid } from "nanoid";
 
 /**
@@ -258,6 +259,36 @@ export class JobsManager {
       throw new Error("Job not found or unauthorized");
     }
 
+    // Check endpoint count quota against tier limits
+    const userTier = await this.jobsRepo.getUserTier(userId);
+    const executionLimits = getExecutionLimits(userTier);
+    const existingEndpoints = await this.jobsRepo.listEndpointsByJob(input.jobId);
+
+    if (existingEndpoints.length >= executionLimits.maxEndpoints) {
+      const upgradeMsg = userTier === "free"
+        ? " Upgrade to Pro for 100 endpoints or Enterprise for 1,000 endpoints."
+        : userTier === "pro"
+          ? " Upgrade to Enterprise for 1,000 endpoints."
+          : "";
+
+      throw new Error(
+        `Endpoint limit reached: ${userTier} tier allows maximum ${executionLimits.maxEndpoints} endpoints.${upgradeMsg}`,
+      );
+    }
+
+    // Enforce minimum interval constraint per tier
+    if (input.baselineIntervalMs && input.baselineIntervalMs < executionLimits.minIntervalMs) {
+      const upgradeMsg = userTier === "free"
+        ? ` Upgrade to Pro (10s minimum) or Enterprise (1s minimum) for shorter intervals.`
+        : userTier === "pro"
+          ? ` Upgrade to Enterprise for 1s minimum interval.`
+          : "";
+
+      throw new Error(
+        `Interval too short: ${userTier} tier requires minimum ${executionLimits.minIntervalMs}ms (${executionLimits.minIntervalMs / 1000}s) between runs.${upgradeMsg}`,
+      );
+    }
+
     // Build JobEndpoint domain entity
     const endpoint: JobEndpoint = {
       id: nanoid(),
@@ -354,6 +385,24 @@ export class JobsManager {
       throw new Error("Endpoint not found or unauthorized");
     }
 
+    // Enforce minimum interval constraint if changing baselineIntervalMs
+    if (input.baselineIntervalMs !== undefined) {
+      const userTier = await this.jobsRepo.getUserTier(userId);
+      const executionLimits = getExecutionLimits(userTier);
+
+      if (input.baselineIntervalMs < executionLimits.minIntervalMs) {
+        const upgradeMsg = userTier === "free"
+          ? ` Upgrade to Pro (10s minimum) or Enterprise (1s minimum) for shorter intervals.`
+          : userTier === "pro"
+            ? ` Upgrade to Enterprise for 1s minimum interval.`
+            : "";
+
+        throw new Error(
+          `Interval too short: ${userTier} tier requires minimum ${executionLimits.minIntervalMs}ms (${executionLimits.minIntervalMs / 1000}s) between runs.${upgradeMsg}`,
+        );
+      }
+    }
+
     // Build update object
     const updates: Partial<JobEndpoint> = { ...input };
 
@@ -416,16 +465,16 @@ export class JobsManager {
       offset?: number;
     },
   ): Promise<{
-      runs: Array<{
-        runId: string;
-        endpointId: string;
-        startedAt: Date;
-        status: string;
-        durationMs?: number;
-        source?: string;
-      }>;
-      total: number;
-    }> {
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }> {
     return this.runsRepo.listRuns({
       userId,
       ...filters,
@@ -489,7 +538,23 @@ export class JobsManager {
       throw new Error("Endpoint not found or unauthorized");
     }
 
-    // Validate intervalMs is within min/max bounds if set
+    // Enforce tier-based minimum interval
+    const userTier = await this.jobsRepo.getUserTier(userId);
+    const executionLimits = getExecutionLimits(userTier);
+
+    if (input.intervalMs < executionLimits.minIntervalMs) {
+      const upgradeMsg = userTier === "free"
+        ? ` Upgrade to Pro (10s minimum) or Enterprise (1s minimum) for shorter intervals.`
+        : userTier === "pro"
+          ? ` Upgrade to Enterprise for 1s minimum interval.`
+          : "";
+
+      throw new Error(
+        `AI hint interval too short: ${userTier} tier requires minimum ${executionLimits.minIntervalMs}ms (${executionLimits.minIntervalMs / 1000}s) between runs.${upgradeMsg}`,
+      );
+    }
+
+    // Validate intervalMs is within endpoint-specific min/max bounds if set
     if (endpoint.minIntervalMs && input.intervalMs < endpoint.minIntervalMs) {
       throw new ValidationError(
         `Interval hint (${input.intervalMs}ms) is below minimum (${endpoint.minIntervalMs}ms)`,
@@ -661,12 +726,12 @@ export class JobsManager {
     endpointId: string,
     sinceHours = 24,
   ): Promise<{
-      successCount: number;
-      failureCount: number;
-      avgDurationMs: number | null;
-      lastRun: { status: string; at: Date } | null;
-      failureStreak: number;
-    }> {
+    successCount: number;
+    failureCount: number;
+    avgDurationMs: number | null;
+    lastRun: { status: string; at: Date } | null;
+    failureStreak: number;
+  }> {
     // Authorization check
     const endpoint = await this.getEndpoint(userId, endpointId);
     if (!endpoint) {
