@@ -5,7 +5,7 @@
  * Runs independently from the scheduler worker - communicates via database.
  */
 
-import type { AIClient, Clock, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
+import type { AIClient, Clock, JobsRepo, QuotaGuard, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { createToolsForEndpoint } from "./tools.js";
 
@@ -14,6 +14,7 @@ export type AIPlannerDeps = {
   jobs: JobsRepo;
   runs: RunsRepo;
   sessions: SessionsRepo;
+  quota: QuotaGuard;
   clock: Clock;
 };
 
@@ -136,23 +137,30 @@ export class AIPlanner {
    * @param endpointId - The endpoint to analyze
    */
   async analyzeEndpoint(endpointId: string): Promise<void> {
-    const { aiClient, jobs, runs, sessions, clock } = this.deps;
+    const { aiClient, jobs, runs, sessions, quota, clock } = this.deps;
 
     // 1. Get current endpoint state
     const endpoint = await jobs.getEndpoint(endpointId);
 
-    // 2. Get health summary (last 24 hours)
+    // 2. Check quota before making AI call
+    const canProceed = await quota.canProceed(endpoint.tenantId);
+    if (!canProceed) {
+      console.warn(`[AI Analysis] Quota exceeded for tenant ${endpoint.tenantId}, skipping analysis for endpoint ${endpoint.name}`);
+      return;
+    }
+
+    // 3. Get health summary (last 24 hours)
     const since = new Date(clock.now().getTime() - 24 * 60 * 60 * 1000);
     const health = await runs.getHealthSummary(endpointId, since);
 
-    // 3. Build AI context
+    // 4. Build AI context
     const prompt = buildAnalysisPrompt(endpoint, health);
 
-    // 4. Create endpoint-scoped tools (3 query + 3 action)
+    // 5. Create endpoint-scoped tools (3 query + 3 action)
     // Note: jobId is required for sibling queries. If missing, sibling tool will return empty.
     const tools = createToolsForEndpoint(endpointId, endpoint.jobId || "", { jobs, runs, clock });
 
-    // 5. Invoke AI with tools and capture session result
+    // 6. Invoke AI with tools and capture session result
     const startTime = clock.now().getTime();
     const session = await aiClient.planWithTools({
       input: prompt,
@@ -161,7 +169,7 @@ export class AIPlanner {
     });
     const durationMs = clock.now().getTime() - startTime;
 
-    // 6. Persist session to database for debugging/cost tracking
+    // 7. Persist session to database for debugging/cost tracking
     await sessions.create({
       endpointId,
       analyzedAt: clock.now(),

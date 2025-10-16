@@ -7,7 +7,7 @@
 
 import { openai } from "@ai-sdk/openai";
 import { createVercelAiClient } from "@cronicorn/adapter-ai";
-import { DrizzleJobsRepo, DrizzleRunsRepo, DrizzleSessionsRepo, schema } from "@cronicorn/adapter-drizzle";
+import { DrizzleJobsRepo, DrizzleQuotaGuard, DrizzleRunsRepo, DrizzleSessionsRepo, schema } from "@cronicorn/adapter-drizzle";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { AIPlanner } from "@cronicorn/worker-ai-planner";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -66,6 +66,7 @@ async function main() {
   const jobsRepo = new DrizzleJobsRepo(db);
   const runsRepo = new DrizzleRunsRepo(db);
   const sessionsRepo = new DrizzleSessionsRepo(db);
+  const quotaGuard = new DrizzleQuotaGuard(db);
 
   // Create AI client
   const aiClient = createVercelAiClient({
@@ -89,6 +90,7 @@ async function main() {
     jobs: jobsRepo,
     runs: runsRepo,
     sessions: sessionsRepo,
+    quota: quotaGuard,
     clock,
   });
 

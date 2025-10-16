@@ -1,4 +1,4 @@
-import type { AIClient, Clock, JobEndpoint, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
+import type { AIClient, Clock, JobEndpoint, JobsRepo, QuotaGuard, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,6 +8,7 @@ describe("aiPlanner", () => {
   let mockJobsRepo: JobsRepo;
   let mockRunsRepo: RunsRepo;
   let mockSessionsRepo: SessionsRepo;
+  let mockQuotaGuard: QuotaGuard;
   let mockAIClient: AIClient;
   let fakeClock: Clock;
   let planner: AIPlanner;
@@ -61,6 +62,11 @@ describe("aiPlanner", () => {
       getTotalTokenUsage: vi.fn(),
     };
 
+    mockQuotaGuard = {
+      canProceed: vi.fn().mockResolvedValue(true), // Default: allow all requests
+      recordUsage: vi.fn(),
+    };
+
     mockAIClient = {
       planWithTools: vi.fn().mockResolvedValue({
         toolCalls: [],
@@ -74,6 +80,7 @@ describe("aiPlanner", () => {
       jobs: mockJobsRepo,
       runs: mockRunsRepo,
       sessions: mockSessionsRepo,
+      quota: mockQuotaGuard,
       clock: fakeClock,
     });
   });
@@ -197,6 +204,38 @@ describe("aiPlanner", () => {
       expect(tools).toHaveProperty("propose_interval");
       expect(tools).toHaveProperty("propose_next_time");
       expect(tools).toHaveProperty("pause_until");
+    });
+
+    it("skips analysis when quota exceeded", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "Test Endpoint",
+        baselineIntervalMs: 60_000,
+        nextRunAt: new Date(),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockQuotaGuard.canProceed).mockResolvedValue(false);
+
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+
+      await planner.analyzeEndpoint("ep-1");
+
+      // Verify quota was checked
+      expect(mockQuotaGuard.canProceed).toHaveBeenCalledWith("user-1");
+
+      // Verify AI was NOT called
+      expect(mockAIClient.planWithTools).not.toHaveBeenCalled();
+      expect(mockSessionsRepo.create).not.toHaveBeenCalled();
+
+      // Verify warning was logged
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Quota exceeded"),
+      );
+
+      consoleWarnSpy.mockRestore();
     });
   });
 
