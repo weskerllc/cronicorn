@@ -1,0 +1,261 @@
+# Architecture Guide
+
+**Cronicorn** is an AI-driven adaptive scheduler built on hexagonal architecture principles with clean separation between domain logic and infrastructure concerns.
+
+## Quick Overview
+
+- **Domain**: Pure scheduling logic (no IO dependencies)
+- **Ports**: Interfaces defining contracts (Clock, Repos, Dispatcher, etc.)
+- **Adapters**: Infrastructure implementations (HTTP, Database, AI SDK, etc.)
+- **Composition Roots**: Apps that wire everything together (API, Scheduler, AI Planner)
+
+## Core Concepts
+
+### JobEndpoint - Scheduling State
+
+Each endpoint tracks:
+- **Baseline cadence**: `baselineCron` or `baselineIntervalMs`
+- **AI hints**: `aiHintIntervalMs`, `aiHintNextRunAt`, `aiHintExpiresAt`
+- **Guards**: `minIntervalMs`, `maxIntervalMs`
+- **Pause state**: `pausedUntil`
+- **Run tracking**: `lastRunAt`, `nextRunAt`, `failureCount`
+
+### Governor - Next Run Planning
+
+The `planNextRun` function chooses the next execution time:
+
+1. **Builds candidates**:
+   - Baseline (cron or `lastRunAt + baselineIntervalMs`)
+   - AI interval hint (if fresh): `lastRunAt + aiHintIntervalMs`
+   - AI one-shot hint (if fresh): `aiHintNextRunAt`
+
+2. **Chooses earliest** future time
+
+3. **Clamps** relative to `lastRunAt` using min/max intervals
+
+4. **Respects pause**: If `pausedUntil > now`, returns paused state
+
+**Result**: `{ nextRunAt, source }` where source indicates which rule won (`"baseline-*"`, `"ai-interval"`, `"ai-oneshot"`, `"clamped-*"`, or `"paused"`).
+
+### Scheduler - Orchestration Loop
+
+The scheduler `tick()` function:
+
+1. **Claims due endpoints** via `claimDueEndpoints(limit, withinMs)`
+2. **For each endpoint**:
+   - Fetches current state
+   - Executes via dispatcher
+   - Records run result
+   - Plans next run via governor
+   - Updates endpoint state
+
+This keeps domain logic focused on orchestration while adapters handle IO.
+
+## Architecture Layers
+
+### Domain Layer (`packages/domain`)
+
+**Pure business logic** - no dependencies on frameworks or infrastructure.
+
+**Key files**:
+- `entities/` - JobEndpoint, Run types
+- `ports/` - Interface contracts
+- `governor/` - Next run planning logic
+- `fixtures/` - In-memory implementations for testing
+
+**Design principle**: Domain never imports from adapters or apps.
+
+### Adapter Layer (`packages/adapter-*`)
+
+**Infrastructure implementations** of domain ports.
+
+Available adapters:
+- `adapter-drizzle` - PostgreSQL via Drizzle ORM
+- `adapter-http` - HTTP request execution
+- `adapter-cron` - Cron expression parsing
+- `adapter-system-clock` - System time
+- `adapter-ai` - Vercel AI SDK integration
+- `adapter-stripe` - Payment processing
+
+Each adapter:
+- Implements one or more ports
+- Contains no business logic
+- Can be swapped without touching domain
+
+### Services Layer (`packages/services`)
+
+**Framework-agnostic business logic** for cross-cutting concerns.
+
+Contains:
+- `JobsManager` - Job CRUD operations
+- `SubscriptionsManager` - Stripe integration
+- Reusable across HTTP API, MCP server, CLI, etc.
+
+**Pattern**: Services orchestrate repos and implement complex workflows. Routes/apps stay thin.
+
+### Composition Roots (Apps)
+
+**Wire concrete implementations** to create runnable applications.
+
+Available apps:
+- `apps/api` - REST API (Hono + Better Auth)
+- `apps/scheduler` - Background worker (claims and executes jobs)
+- `apps/ai-planner` - AI analysis worker (writes adaptive hints)
+- `apps/migrator` - Database migration runner
+- `apps/web` - React frontend
+- `apps/test-ai` - AI integration tests
+
+Each app:
+- Imports domain + adapters + services
+- Configures via environment variables
+- Owns infrastructure setup (DB pools, HTTP server, etc.)
+
+## Key Architecture Decisions
+
+### Hexagonal (Ports & Adapters)
+
+**Why**: Domain rich with complex scheduling logic benefits from clean boundaries.
+
+**Ports are use-case specific**, not generic CRUD:
+- ❌ `save(job)`, `findById(id)` (generic)
+- ✅ `claimDueEndpoints(limit, withinMs)`, `writeAIHint(...)` (domain intent)
+
+**Benefits**:
+- Testable without IO (use fake adapters)
+- Swappable infrastructure (memory, SQL, Redis)
+- Clear dependency flow (domain ← adapters, never reverse)
+
+### Decoupled AI Worker
+
+**Why**: AI analysis is expensive and should scale independently from execution.
+
+**Pattern**: Database as integration point (not events or queues).
+
+```
+Scheduler Worker          AI Planner Worker
+    │                           │
+    ├─ writes runs ─────────────┤
+    ├─ reads hints ─────────────┤
+    └─────────┬─────────────────┘
+              │
+         Database
+```
+
+**Benefits**:
+- Independent scaling (10 schedulers, 1 AI planner)
+- Graceful degradation (scheduler works without AI)
+- Different cadences (scheduler every 5s, AI every 5min)
+- Cost control (disable AI without affecting execution)
+
+See [ADR-0018](../.adr/0018-decoupled-ai-worker-architecture.md) for full rationale.
+
+### Repository vs Service Layer
+
+Our "repos" are actually **ports** (interfaces), not traditional repositories.
+
+**Traditional approach**:
+```typescript
+// Generic CRUD
+interface JobRepo {
+  findById(id): Promise<Job>
+  save(job): Promise<void>
+}
+
+// Service contains all logic
+class JobService {
+  async claim() {
+    const jobs = await repo.findAll()
+    // filter, lock, claim logic here
+  }
+}
+```
+
+**Our approach**:
+```typescript
+// Domain-specific port
+interface JobsRepo {
+  claimDueEndpoints(limit, withinMs): Promise<string[]>
+  writeAIHint(id, hint): Promise<void>
+}
+
+// Scheduler orchestrates (is the service)
+class Scheduler {
+  async tick() {
+    const ids = await jobs.claimDueEndpoints(10, 60000)
+    // focus on workflow
+  }
+}
+```
+
+**Why**: Encapsulates complex operations (claiming with locking) in ports, keeping domain focused on orchestration.
+
+See [docs/architecture-repos-vs-services.md](./archive/architecture-repos-vs-services.md) for detailed comparison.
+
+## Testing Strategy
+
+### Unit Tests (Domain)
+- Pure functions with no IO
+- Governor planning logic
+- Manager business rules
+- Uses `FakeClock` for determinism
+
+### Contract Tests (Adapters)
+- Validate adapter implements port correctly
+- Reusable test suite runs against all implementations
+- Transaction-per-test for DB isolation
+
+### Integration Tests (API)
+- Route validation with real database
+- Mock auth for fast tests
+- Transaction rollback for cleanup
+
+### Simulation Tests (Scheduler)
+- End-to-end scenarios with fake adapters
+- Flash sale scenario validates adaptive behavior
+- Deterministic time ensures reproducibility
+
+See [.github/instructions/testing-strategy.instructions.md](../.github/instructions/testing-strategy.instructions.md) for full details.
+
+## Project Structure
+
+```
+packages/
+├─ domain/              # Pure domain logic
+├─ adapter-*/           # Infrastructure implementations
+├─ services/            # Framework-agnostic business logic
+└─ worker-*/            # Background worker logic
+
+apps/
+├─ api/                 # REST API server
+├─ scheduler/           # Execution worker
+├─ ai-planner/          # AI analysis worker
+├─ migrator/            # DB migration runner
+└─ web/                 # React frontend
+
+.adr/                   # Architectural Decision Records
+.github/instructions/   # AI coding agent guidelines
+docs/                   # Public-facing documentation
+```
+
+## Related Documentation
+
+- [Quickstart Guide](./quickstart.md) - Get up and running
+- [Authentication](./authentication.md) - OAuth & API keys
+- [Use Cases](./use-cases.md) - Real-world scenarios
+- [Contributing](./contributing.md) - Development workflow
+- [ADRs](../.adr/) - Architectural decisions with context
+
+## Design Principles
+
+From [.github/instructions/core-principles.instructions.md](../.github/instructions/core-principles.instructions.md):
+
+- **Prefer boring, proven solutions** over clever abstractions
+- **One clear path > many configurable paths**
+- **YAGNI**: Don't build until third real use case
+- **Request-scoped transactions** at boundaries
+- **Vertical slices** with clear separation
+- **Pragmatic typing** without over-engineering
+
+---
+
+**Questions?** See the [docs/](.) folder for specific guides or [.adr/](../.adr/) for decision rationale.
