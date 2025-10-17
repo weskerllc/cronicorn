@@ -6,9 +6,9 @@
  */
 
 export const TIER_LIMITS = {
-    free: 100_000, // 100k tokens/month
-    pro: 1_000_000, // 1M tokens/month
-    enterprise: 10_000_000, // 10M tokens/month
+  free: 100_000, // 100k tokens/month
+  pro: 1_000_000, // 1M tokens/month
+  enterprise: 10_000_000, // 10M tokens/month
 } as const;
 
 /**
@@ -24,18 +24,18 @@ export const TIER_LIMITS = {
  * - Enterprise: 1,000 endpoints × 1s interval = max 86.4M requests/day
  */
 export const TIER_EXECUTION_LIMITS = {
-    free: {
-        maxEndpoints: 10, // Max 10 endpoints per user
-        minIntervalMs: 60_000, // Must run at least 60s apart (1 minute)
-    },
-    pro: {
-        maxEndpoints: 100,
-        minIntervalMs: 10_000, // 10 seconds
-    },
-    enterprise: {
-        maxEndpoints: 1_000,
-        minIntervalMs: 1_000, // 1 second
-    },
+  free: {
+    maxEndpoints: 10, // Max 10 endpoints per user
+    minIntervalMs: 60_000, // Must run at least 60s apart (1 minute)
+  },
+  pro: {
+    maxEndpoints: 100,
+    minIntervalMs: 10_000, // 10 seconds
+  },
+  enterprise: {
+    maxEndpoints: 1_000,
+    minIntervalMs: 1_000, // 1 second
+  },
 } as const;
 
 export type UserTier = keyof typeof TIER_LIMITS;
@@ -47,7 +47,7 @@ export type UserTier = keyof typeof TIER_LIMITS;
  * @returns Monthly token limit
  */
 export function getTierLimit(tier: UserTier): number {
-    return TIER_LIMITS[tier];
+  return TIER_LIMITS[tier];
 }
 
 /**
@@ -57,5 +57,5 @@ export function getTierLimit(tier: UserTier): number {
  * @returns Execution limits (maxEndpoints, minIntervalMs)
  */
 export function getExecutionLimits(tier: UserTier) {
-    return TIER_EXECUTION_LIMITS[tier];
+  return TIER_EXECUTION_LIMITS[tier];
 }

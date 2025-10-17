@@ -81,7 +81,7 @@ expect(res.status).toBe(201);
 
 ## CI Pipeline
 
-1. **Typecheck & Unit/Integration**: Fast feedback (< 2 min)
+1. **Unit/Integration**: Fast feedback (< 2 min)
 2. **Build**: Compile all packages
 3. **DB Migration**: Test schema changes
 4. **E2E**: Full stack with containers (optional)

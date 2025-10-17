@@ -1,7 +1,6 @@
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
 import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
-import { SubscriptionsManager } from "@cronicorn/services";
 import { cors } from "hono/cors";
 
 import type { Auth } from "./auth/config.js";

@@ -98,8 +98,8 @@ This adapter follows the hexagonal architecture pattern:
 # Run tests
 pnpm test
 
-# Type check
-pnpm typecheck
+# Build
+pnpm build
 
 # Lint
 pnpm lint

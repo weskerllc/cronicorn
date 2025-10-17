@@ -6,8 +6,8 @@ const router = createRouter();
 
 // Protect all subscription routes with auth
 router.use("/subscriptions/*", async (c, next) => {
-    const auth = c.get("auth");
-    return requireAuth(auth)(c, next);
+  const auth = c.get("auth");
+  return requireAuth(auth)(c, next);
 });
 
 // ==================== Subscription Routes ====================
