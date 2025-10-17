@@ -15,6 +15,7 @@
 - **[Requirements Summary](./ui-requirements-summary.md)** - Executive overview of minimal UI needed for MVP
 - **[Full Requirements](./minimal-ui-requirements.md)** - Detailed feature specifications and user flows
 - **[UI Sitemap](./ui-sitemap.md)** - Visual site structure and navigation
+- **[Visual Roadmap](./ui-visual-roadmap.md)** - ASCII diagrams showing architecture and implementation flow
 - **[Implementation Checklist](./ui-implementation-checklist.md)** - Week-by-week task breakdown
 
 ## For Developers
@@ -68,6 +69,7 @@ docs/
 ├─ ui-requirements-summary.md       # UI planning overview (MVP)
 ├─ minimal-ui-requirements.md       # Detailed UI specifications
 ├─ ui-sitemap.md                    # Site structure and navigation
+├─ ui-visual-roadmap.md             # Visual diagrams and architecture
 ├─ ui-implementation-checklist.md   # Implementation task breakdown
 └─ archive/                         # Historical/reference docs
 ```
