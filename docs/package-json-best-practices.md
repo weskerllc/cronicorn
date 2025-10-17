@@ -179,7 +179,6 @@ Use this template for new packages:
     "build": "tsc -b",
     "watch": "tsc -b -w",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
     "clean": "rm -rf node_modules .turbo dist"
   },
   "dependencies": {

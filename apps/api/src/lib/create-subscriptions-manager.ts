@@ -15,23 +15,23 @@ import { SubscriptionsManager } from "@cronicorn/services";
  * @returns Fully-wired SubscriptionsManager instance
  */
 export function createSubscriptionsManager(
-    // eslint-disable-next-line ts/no-explicit-any
-    tx: NodePgDatabase<any> | NodePgTransaction<any, any>,
-    paymentProvider: PaymentProvider,
-    stripeProvider: StripePaymentProvider,
-    baseUrl: string,
+  // eslint-disable-next-line ts/no-explicit-any
+  tx: NodePgDatabase<any> | NodePgTransaction<any, any>,
+  paymentProvider: PaymentProvider,
+  stripeProvider: StripePaymentProvider,
+  baseUrl: string,
 ): SubscriptionsManager {
-    // Instantiate transaction-bound repository
-    // @ts-expect-error - Drizzle type mismatch between pnpm versions
-    const jobsRepo = new DrizzleJobsRepo(tx);
+  // Instantiate transaction-bound repository
+  // @ts-expect-error - Drizzle type mismatch between pnpm versions
+  const jobsRepo = new DrizzleJobsRepo(tx);
 
-    // Wire everything into the manager
-    return new SubscriptionsManager(
-        {
-            jobsRepo,
-            paymentProvider,
-            baseUrl,
-        },
-        stripeProvider,
-    );
+  // Wire everything into the manager
+  return new SubscriptionsManager(
+    {
+      jobsRepo,
+      paymentProvider,
+      baseUrl,
+    },
+    stripeProvider,
+  );
 }

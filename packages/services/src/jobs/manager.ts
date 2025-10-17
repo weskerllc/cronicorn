@@ -465,16 +465,16 @@ export class JobsManager {
       offset?: number;
     },
   ): Promise<{
-    runs: Array<{
-      runId: string;
-      endpointId: string;
-      startedAt: Date;
-      status: string;
-      durationMs?: number;
-      source?: string;
-    }>;
-    total: number;
-  }> {
+      runs: Array<{
+        runId: string;
+        endpointId: string;
+        startedAt: Date;
+        status: string;
+        durationMs?: number;
+        source?: string;
+      }>;
+      total: number;
+    }> {
     return this.runsRepo.listRuns({
       userId,
       ...filters,
@@ -726,12 +726,12 @@ export class JobsManager {
     endpointId: string,
     sinceHours = 24,
   ): Promise<{
-    successCount: number;
-    failureCount: number;
-    avgDurationMs: number | null;
-    lastRun: { status: string; at: Date } | null;
-    failureStreak: number;
-  }> {
+      successCount: number;
+      failureCount: number;
+      avgDurationMs: number | null;
+      lastRun: { status: string; at: Date } | null;
+      failureStreak: number;
+    }> {
     // Authorization check
     const endpoint = await this.getEndpoint(userId, endpointId);
     if (!endpoint) {

@@ -22,7 +22,6 @@
     "test:coverage": "dotenv -e .env.test vitest run --coverage",
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --max-warnings 0 --fix",
-    "typecheck": "tsc -b --noEmit",
     "sim": "pnpm run -r --parallel sim",
     "🚀 ---------- VERSIONING ----------": "",
     "bump": "changeset",
