@@ -1,4 +1,3 @@
-import type { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import type { JobsRepo, PaymentProvider } from "@cronicorn/domain";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -16,7 +15,6 @@ describe("subscriptionsManager", () => {
   let manager: SubscriptionsManager;
   let mockJobsRepo: JobsRepo;
   let mockPaymentProvider: PaymentProvider;
-  let mockStripeProvider: StripePaymentProvider;
 
   beforeEach(() => {
     // Mock JobsRepo
@@ -47,25 +45,19 @@ describe("subscriptionsManager", () => {
       updateAfterRun: vi.fn(),
     };
 
-    // Mock PaymentProvider
+    // Mock PaymentProvider (including extractTierFromSubscription)
     mockPaymentProvider = {
       createCheckoutSession: vi.fn(),
       createPortalSession: vi.fn(),
       verifyWebhook: vi.fn(),
+      extractTierFromSubscription: vi.fn(),
     };
 
-    // Mock StripePaymentProvider (for getTierFromPriceId)
-    // eslint-disable-next-line ts/no-explicit-any, ts/consistent-type-assertions
-    mockStripeProvider = { getTierFromPriceId: vi.fn() } as any;
-
-    manager = new SubscriptionsManager(
-      {
-        jobsRepo: mockJobsRepo,
-        paymentProvider: mockPaymentProvider,
-        baseUrl: "http://localhost:5173",
-      },
-      mockStripeProvider,
-    );
+    manager = new SubscriptionsManager({
+      jobsRepo: mockJobsRepo,
+      paymentProvider: mockPaymentProvider,
+      baseUrl: "http://localhost:5173",
+    });
   });
 
   describe("createCheckout", () => {
@@ -247,7 +239,7 @@ describe("subscriptionsManager", () => {
         };
 
         vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(mockUser);
-        vi.mocked(mockStripeProvider.getTierFromPriceId).mockReturnValue("enterprise");
+        vi.mocked(mockPaymentProvider.extractTierFromSubscription).mockReturnValue("enterprise");
 
         const event = {
           type: "customer.subscription.updated",

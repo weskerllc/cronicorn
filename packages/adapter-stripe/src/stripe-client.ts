@@ -120,8 +120,55 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   /**
-   * Map Stripe price ID back to tier (for webhook handlers).
+   * Extract tier from subscription data.
    *
+   * Implements PaymentProvider port method.
+   * Stripe stores tier in subscription line items → price → id.
+   *
+   * @param subscriptionData - Raw Stripe subscription object
+   * @returns Tier name or null if not found
+   */
+  extractTierFromSubscription(subscriptionData: unknown): "pro" | "enterprise" | null {
+    // Type guard for Stripe subscription structure
+    if (
+      typeof subscriptionData === "object"
+      && subscriptionData !== null
+      && "items" in subscriptionData
+    ) {
+      // Type-safe extraction with runtime checks
+      const subscription: unknown = subscriptionData;
+      if (
+        subscription
+        && typeof subscription === "object"
+        && "items" in subscription
+        && subscription.items
+        && typeof subscription.items === "object"
+        && "data" in subscription.items
+        && Array.isArray(subscription.items.data)
+        && subscription.items.data.length > 0
+      ) {
+        const firstItem = subscription.items.data[0];
+        if (
+          firstItem
+          && typeof firstItem === "object"
+          && "price" in firstItem
+          && firstItem.price
+          && typeof firstItem.price === "object"
+          && "id" in firstItem.price
+          && typeof firstItem.price.id === "string"
+        ) {
+          return this.reversePriceMap.get(firstItem.price.id) ?? null;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Map Stripe price ID back to tier.
+   *
+   * @deprecated Use extractTierFromSubscription instead for port compliance
    * @param priceId - Stripe price ID
    * @returns Tier name or null if not found
    */

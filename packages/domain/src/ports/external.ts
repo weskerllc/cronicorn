@@ -70,4 +70,15 @@ export type PaymentProvider = {
    * @throws Error if signature verification fails
    */
   verifyWebhook: (payload: string, signature: string, secret: string) => Promise<WebhookEvent>;
+
+  /**
+   * Extract tier from subscription price information.
+   *
+   * Payment providers encode tier information in price/plan IDs.
+   * This method provides a provider-agnostic way to determine tier from subscription data.
+   *
+   * @param subscriptionData - Raw subscription data from webhook/API
+   * @returns Tier name or null if tier cannot be determined
+   */
+  extractTierFromSubscription: (subscriptionData: unknown) => "pro" | "enterprise" | null;
 };
