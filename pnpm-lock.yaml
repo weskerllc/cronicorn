@@ -357,24 +357,9 @@ importers:
 
   packages/services:
     dependencies:
-      '@cronicorn/adapter-cron':
-        specifier: workspace:*
-        version: link:../adapter-cron
-      '@cronicorn/adapter-drizzle':
-        specifier: workspace:*
-        version: link:../adapter-drizzle
-      '@cronicorn/adapter-stripe':
-        specifier: workspace:*
-        version: link:../adapter-stripe
-      '@cronicorn/adapter-system-clock':
-        specifier: workspace:*
-        version: link:../adapter-system-clock
       '@cronicorn/domain':
         specifier: workspace:*
         version: link:../domain
-      '@cronicorn/worker-scheduler':
-        specifier: workspace:*
-        version: link:../worker-scheduler
       nanoid:
         specifier: ^5.0.9
         version: 5.1.6

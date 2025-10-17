@@ -1,224 +1,225 @@
-import type { StripePaymentProvider } from "@cronicorn/adapter-stripe";
-
 import type { CreateCheckoutInput, CreatePortalInput, SubscriptionDeps, SubscriptionStatus } from "./types.js";
 
 /**
  * SubscriptionsManager - Business logic for subscription management.
  *
- * Orchestrates between PaymentProvider (Stripe) and JobsRepo (DB).
+ * Orchestrates between PaymentProvider (e.g., Stripe) and JobsRepo (DB).
  * Handles checkout, portal, and webhook events.
+ *
+ * **Architecture**:
+ * - Depends ONLY on domain ports (PaymentProvider, JobsRepo)
+ * - Zero knowledge of concrete adapters (Stripe, Drizzle)
+ * - All payment provider operations go through PaymentProvider port
  */
 export class SubscriptionsManager {
-    constructor(
-        private deps: SubscriptionDeps,
-        private stripeProvider: StripePaymentProvider, // Needed for getTierFromPriceId
-    ) { }
+  constructor(
+    private deps: SubscriptionDeps,
+  ) { }
 
-    /**
-     * Create Stripe Checkout Session for user to subscribe.
-     */
-    async createCheckout(input: CreateCheckoutInput): Promise<{ checkoutUrl: string }> {
-        const { userId, tier } = input;
+  /**
+   * Create Stripe Checkout Session for user to subscribe.
+   */
+  async createCheckout(input: CreateCheckoutInput): Promise<{ checkoutUrl: string }> {
+    const { userId, tier } = input;
 
-        // Get user details
-        const user = await this.deps.jobsRepo.getUserById(userId);
+    // Get user details
+    const user = await this.deps.jobsRepo.getUserById(userId);
 
-        if (!user) {
-            throw new Error(`User not found: ${userId}`);
-        }
-
-        // Create checkout session (reuse existing customer if available)
-        const result = await this.deps.paymentProvider.createCheckoutSession({
-            userId,
-            userEmail: user.email,
-            tier,
-            successUrl: `${this.deps.baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-            cancelUrl: `${this.deps.baseUrl}/pricing`,
-            existingCustomerId: user.stripeCustomerId ?? undefined,
-        });
-
-        return { checkoutUrl: result.checkoutUrl };
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
     }
 
-    /**
-     * Create Customer Portal Session for self-service.
-     */
-    async createPortal(input: CreatePortalInput): Promise<{ portalUrl: string }> {
-        const { userId } = input;
+    // Create checkout session (reuse existing customer if available)
+    const result = await this.deps.paymentProvider.createCheckoutSession({
+      userId,
+      userEmail: user.email,
+      tier,
+      successUrl: `${this.deps.baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${this.deps.baseUrl}/pricing`,
+      existingCustomerId: user.stripeCustomerId ?? undefined,
+    });
 
-        // Get user with Stripe customer ID
-        const user = await this.deps.jobsRepo.getUserById(userId);
+    return { checkoutUrl: result.checkoutUrl };
+  }
 
-        if (!user) {
-            throw new Error(`User not found: ${userId}`);
-        }
+  /**
+   * Create Customer Portal Session for self-service.
+   */
+  async createPortal(input: CreatePortalInput): Promise<{ portalUrl: string }> {
+    const { userId } = input;
 
-        if (!user.stripeCustomerId) {
-            throw new Error("User has no active subscription");
-        }
+    // Get user with Stripe customer ID
+    const user = await this.deps.jobsRepo.getUserById(userId);
 
-        const result = await this.deps.paymentProvider.createPortalSession({
-            customerId: user.stripeCustomerId,
-            returnUrl: `${this.deps.baseUrl}/settings`,
-        });
-
-        return { portalUrl: result.portalUrl };
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
     }
 
-    /**
-     * Get current subscription status for user.
-     */
-    async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
-        const user = await this.deps.jobsRepo.getUserById(userId);
-
-        if (!user) {
-            throw new Error(`User not found: ${userId}`);
-        }
-
-        // Return tier and subscription details
-        // Note: subscriptionStatus and endsAt are on user table but not returned by getUserById
-        // For MVP, just return tier - can enhance later
-        return {
-            tier: user.tier,
-            status: null, // TODO: Add to getUserById return type
-            endsAt: null, // TODO: Add to getUserById return type
-        };
+    if (!user.stripeCustomerId) {
+      throw new Error("User has no active subscription");
     }
 
-    /**
-     * Handle webhook event from Stripe.
-     * This is called after signature verification.
-     */
-    async handleWebhookEvent(event: { type: string; data: any }): Promise<void> {
-        switch (event.type) {
-            case "checkout.session.completed":
-                await this.handleCheckoutCompleted(event.data);
-                break;
+    const result = await this.deps.paymentProvider.createPortalSession({
+      customerId: user.stripeCustomerId,
+      returnUrl: `${this.deps.baseUrl}/settings`,
+    });
 
-            case "customer.subscription.updated":
-                await this.handleSubscriptionUpdated(event.data);
-                break;
+    return { portalUrl: result.portalUrl };
+  }
 
-            case "customer.subscription.deleted":
-                await this.handleSubscriptionDeleted(event.data);
-                break;
+  /**
+   * Get current subscription status for user.
+   */
+  async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
+    const user = await this.deps.jobsRepo.getUserById(userId);
 
-            case "invoice.payment_succeeded":
-                await this.handlePaymentSucceeded(event.data);
-                break;
-
-            case "invoice.payment_failed":
-                await this.handlePaymentFailed(event.data);
-                break;
-
-            default:
-                // Ignore unhandled events (product.created, plan.created, etc.)
-                console.log(`[SubscriptionsManager] Ignoring unhandled webhook event: ${event.type}`);
-        }
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
     }
 
-    /**
-     * User completed checkout - create/update subscription.
-     */
-    private async handleCheckoutCompleted(session: any): Promise<void> {
-        const userId = session.metadata?.userId;
-        const tier = session.metadata?.tier as "pro" | "enterprise";
+    // Return tier and subscription details
+    // Note: subscriptionStatus and endsAt are on user table but not returned by getUserById
+    // For MVP, just return tier - can enhance later
+    return {
+      tier: user.tier,
+      status: null, // TODO: Add to getUserById return type
+      endsAt: null, // TODO: Add to getUserById return type
+    };
+  }
 
-        if (!userId || !tier) {
-            console.error("[SubscriptionsManager] Missing userId or tier in checkout session metadata", session);
-            throw new Error("Missing userId or tier in checkout session metadata");
-        }
+  /**
+   * Handle webhook event from Stripe.
+   * This is called after signature verification.
+   */
+  async handleWebhookEvent(event: { type: string; data: any }): Promise<void> {
+    switch (event.type) {
+      case "checkout.session.completed":
+        await this.handleCheckoutCompleted(event.data);
+        break;
 
-        console.log(`[SubscriptionsManager] Checkout completed: user=${userId}, tier=${tier}, customer=${session.customer}`);
+      case "customer.subscription.updated":
+        await this.handleSubscriptionUpdated(event.data);
+        break;
 
-        await this.deps.jobsRepo.updateUserSubscription(userId, {
-            tier,
-            stripeCustomerId: session.customer,
-            stripeSubscriptionId: session.subscription,
-            subscriptionStatus: "active",
-            subscriptionEndsAt: null, // Will be set by subscription events
-        });
+      case "customer.subscription.deleted":
+        await this.handleSubscriptionDeleted(event.data);
+        break;
+
+      case "invoice.payment_succeeded":
+        await this.handlePaymentSucceeded(event.data);
+        break;
+
+      case "invoice.payment_failed":
+        await this.handlePaymentFailed(event.data);
+        break;
+
+      default:
+        // Ignore unhandled events (product.created, plan.created, etc.)
+        console.log(`[SubscriptionsManager] Ignoring unhandled webhook event: ${event.type}`);
+    }
+  }
+
+  /**
+   * User completed checkout - create/update subscription.
+   */
+  private async handleCheckoutCompleted(session: any): Promise<void> {
+    const userId = session.metadata?.userId;
+    const tier = session.metadata?.tier as "pro" | "enterprise";
+
+    if (!userId || !tier) {
+      console.error("[SubscriptionsManager] Missing userId or tier in checkout session metadata", session);
+      throw new Error("Missing userId or tier in checkout session metadata");
     }
 
-    /**
-     * Subscription updated (tier change, renewal, etc.)
-     */
-    private async handleSubscriptionUpdated(subscription: any): Promise<void> {
-        const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
+    console.log(`[SubscriptionsManager] Checkout completed: user=${userId}, tier=${tier}, customer=${session.customer}`);
 
-        if (!user) {
-            console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${subscription.customer}`);
-            return;
-        }
+    await this.deps.jobsRepo.updateUserSubscription(userId, {
+      tier,
+      stripeCustomerId: session.customer,
+      stripeSubscriptionId: session.subscription,
+      subscriptionStatus: "active",
+      subscriptionEndsAt: null, // Will be set by subscription events
+    });
+  }
 
-        // Determine tier from price ID
-        const priceId = subscription.items?.data?.[0]?.price?.id;
-        const tier = priceId ? this.stripeProvider.getTierFromPriceId(priceId) : null;
+  /**
+   * Subscription updated (tier change, renewal, etc.)
+   */
+  private async handleSubscriptionUpdated(subscription: any): Promise<void> {
+    const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
 
-        console.log(`[SubscriptionsManager] Subscription updated: user=${user.id}, status=${subscription.status}, tier=${tier}`);
-
-        await this.deps.jobsRepo.updateUserSubscription(user.id, {
-            tier: tier ?? undefined,
-            subscriptionStatus: subscription.status,
-            subscriptionEndsAt: subscription.current_period_end
-                ? new Date(subscription.current_period_end * 1000)
-                : null,
-        });
+    if (!user) {
+      console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${subscription.customer}`);
+      return;
     }
 
-    /**
-     * Subscription canceled/deleted.
-     */
-    private async handleSubscriptionDeleted(subscription: any): Promise<void> {
-        const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
+    // Extract tier from subscription data using PaymentProvider port
+    const tier = this.deps.paymentProvider.extractTierFromSubscription(subscription);
 
-        if (!user) {
-            console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${subscription.customer}`);
-            return;
-        }
+    console.log(`[SubscriptionsManager] Subscription updated: user=${user.id}, status=${subscription.status}, tier=${tier}`);
 
-        console.log(`[SubscriptionsManager] Subscription deleted: user=${user.id}, downgrading to free`);
+    await this.deps.jobsRepo.updateUserSubscription(user.id, {
+      tier: tier ?? undefined,
+      subscriptionStatus: subscription.status,
+      subscriptionEndsAt: subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000)
+        : null,
+    });
+  }
 
-        await this.deps.jobsRepo.updateUserSubscription(user.id, {
-            tier: "free",
-            subscriptionStatus: "canceled",
-            subscriptionEndsAt: null,
-        });
+  /**
+   * Subscription canceled/deleted.
+   */
+  private async handleSubscriptionDeleted(subscription: any): Promise<void> {
+    const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
+
+    if (!user) {
+      console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${subscription.customer}`);
+      return;
     }
 
-    /**
-     * Payment succeeded - ensure active status.
-     */
-    private async handlePaymentSucceeded(invoice: any): Promise<void> {
-        const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
+    console.log(`[SubscriptionsManager] Subscription deleted: user=${user.id}, downgrading to free`);
 
-        if (!user) {
-            console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${invoice.customer}`);
-            return;
-        }
+    await this.deps.jobsRepo.updateUserSubscription(user.id, {
+      tier: "free",
+      subscriptionStatus: "canceled",
+      subscriptionEndsAt: null,
+    });
+  }
 
-        console.log(`[SubscriptionsManager] Payment succeeded: user=${user.id}`);
+  /**
+   * Payment succeeded - ensure active status.
+   */
+  private async handlePaymentSucceeded(invoice: any): Promise<void> {
+    const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
 
-        await this.deps.jobsRepo.updateUserSubscription(user.id, {
-            subscriptionStatus: "active",
-        });
+    if (!user) {
+      console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${invoice.customer}`);
+      return;
     }
 
-    /**
-     * Payment failed - mark as past_due.
-     */
-    private async handlePaymentFailed(invoice: any): Promise<void> {
-        const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
+    console.log(`[SubscriptionsManager] Payment succeeded: user=${user.id}`);
 
-        if (!user) {
-            console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${invoice.customer}`);
-            return;
-        }
+    await this.deps.jobsRepo.updateUserSubscription(user.id, {
+      subscriptionStatus: "active",
+    });
+  }
 
-        console.log(`[SubscriptionsManager] Payment failed: user=${user.id}, marking past_due`);
+  /**
+   * Payment failed - mark as past_due.
+   */
+  private async handlePaymentFailed(invoice: any): Promise<void> {
+    const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
 
-        await this.deps.jobsRepo.updateUserSubscription(user.id, {
-            subscriptionStatus: "past_due",
-        });
+    if (!user) {
+      console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${invoice.customer}`);
+      return;
     }
+
+    console.log(`[SubscriptionsManager] Payment failed: user=${user.id}, marking past_due`);
+
+    await this.deps.jobsRepo.updateUserSubscription(user.id, {
+      subscriptionStatus: "past_due",
+    });
+  }
 }
