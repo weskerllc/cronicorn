@@ -1366,9 +1366,9 @@ pnpm db:migrate   # was: docker compose --env-file .env.docker.dev --profile dev
 `````
 
 
-## Stripe Subscription Integration (2025-10-16)
+## Stripe Subscription Integration (2025-01-XX)
 
-**Status**: ✅ COMPLETE - Full end-to-end testing verified
+**Status**: ✅ Unit tests complete, pending manual testing
 
 **What We Built**:
 - ✅ **Database schema**: `stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `subscription_ends_at` columns added to users table
@@ -1378,9 +1378,6 @@ pnpm db:migrate   # was: docker compose --env-file .env.docker.dev --profile dev
 - ✅ **API routes**: Hidden from OpenAPI docs (internal billing endpoints for web app only)
 - ✅ **Unit tests**: 23 tests passing (9 adapter tests, 14 service tests, 100% and 89.78% coverage)
 - ✅ **Environment config**: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_PRICE_ID, STRIPE_ENTERPRISE_PRICE_ID
-- ✅ **Manual testing**: Complete checkout flow, webhook processing, tier upgrades, Customer Portal, subscription cancellation all verified
-- ✅ **Documentation**: Comprehensive README with setup guide, test scripts, troubleshooting, production deployment instructions
-- ✅ **Webhook fix**: Resolved signature verification using Hono's `c.req.text()` pattern for raw body preservation
 
 **Architecture**:
 ```
@@ -1449,18 +1446,12 @@ JobsRepo (domain repo) → Update tier on subscription changes
 
 **Implementation Status**:
 - ✅ Tasks 1-27 complete (schema → domain → adapters → services → API → config → unit tests)
-- ✅ Task 28: Migration executed successfully (stripe fields added to users table)
-- ✅ Task 29: Stripe test keys configured in local `.env` file
-- ✅ Task 30: Pro/Enterprise products created in Stripe Dashboard with price IDs captured
-- ✅ Tasks 31-38: Manual integration testing complete:
-  * ✅ Checkout session creation and completion with test card 4242 4242 4242 4242
-  * ✅ Webhook signature verification (fixed using Hono `c.req.text()` pattern)
-  * ✅ All webhook events returning 200: checkout.completed, subscription.updated, payment.succeeded
-  * ✅ Database tier upgrade verified (tier=enterprise, subscription_status=active)
-  * ✅ Customer Portal access and subscription cancellation tested
-  * ✅ Cancel_at_period_end behavior confirmed (tier stays active until subscription_ends_at)
-- ✅ Task 39: Comprehensive documentation in `scripts/README.md` (200+ lines with 6-step setup, troubleshooting, test cards, production deployment)
-- ✅ Task 40: Tech debt logged and resolved items documented below
+- ⏭️ Task 28: Execute migration to add Stripe fields to database
+- ⏭️ Task 29: Add Stripe test keys to local `.env` file
+- ⏭️ Task 30: Create Pro/Enterprise products in Stripe Dashboard, capture price IDs
+- ⏭️ Tasks 31-38: Manual integration testing (checkout flow, webhooks, portal, cancellation, etc.)
+- ⏭️ Task 39: Document Stripe Dashboard setup in `docs/stripe-setup.md`
+- ⏭️ Task 40: Log tech debt (this entry)
 
 **Files Created**:
 - Migration: `packages/adapter-drizzle/migrations/0005_add_stripe_subscription_fields.sql`
@@ -1474,29 +1465,20 @@ JobsRepo (domain repo) → Update tier on subscription changes
 - API: `apps/api/src/routes/subscriptions/subscriptions.schemas.ts` - Zod request/response schemas
 - Config: `apps/api/src/lib/config.ts` - Added Stripe environment variables
 
-**Resolved During Testing**:
-- ✅ **Webhook Signature Verification**: Fixed by using Hono's `await c.req.text()` to preserve raw body bytes for HMAC validation (multiple iterations with arrayBuffer/raw.text failed)
-- ✅ **Customer Portal Setup**: Added one-time Dashboard configuration step to documentation (critical for portal access)
-- ✅ **Cancellation Behavior Documented**: Verified and documented cancel_at_period_end - tier remains active until subscription_ends_at (expected SaaS behavior)
-- ✅ **Test Helper Script**: Created automated prerequisite checker validating API server, web app, database, and all 4 Stripe env vars
-- ✅ **Comprehensive README**: 200+ line guide with setup, troubleshooting, test cards, production deployment
+**Next Steps** (Tasks 28-40):
+1. Run database migration: `pnpm -F @cronicorn/adapter-drizzle migrate`
+2. Add Stripe test keys to `.env` (from Stripe Dashboard)
+3. Create products in Stripe Dashboard → capture `price_xxx` IDs
+4. Start API server and test checkout flow
+5. Set up Stripe CLI webhook forwarding: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
+6. Test tier upgrades/downgrades via webhook events
+7. Test customer portal (update payment, cancel subscription)
+8. Verify webhook signature validation
+9. Test idempotency (replay same webhook event, ensure no double processing)
+10. Document Stripe Dashboard setup process
+11. Update this tech debt log with production deployment checklist
 
-**Remaining Tech Debt** (acceptable for MVP):
-- ⚠️ No idempotency table for webhook events (Stripe SDK handles deduplication, low priority)
-- ⚠️ Hardcoded price→tier mapping (sufficient for two-tier system, database-driven mapping deferred)
-- ⚠️ No subscription status enum type in database (string type acceptable, TypeScript enforces valid values)
-- ⚠️ Tier downgrade happens immediately on subscription.deleted (should check subscription_ends_at for grace period)
-
-**Production Deployment Checklist**:
-1. Set production Stripe API keys (STRIPE_SECRET_KEY from live mode)
-2. Create production webhook endpoint in Stripe Dashboard: `https://api.yourdomain.com/api/webhooks/stripe`
-3. Configure STRIPE_WEBHOOK_SECRET from production endpoint
-4. Create live mode products and prices, update STRIPE_PRO_PRICE_ID and STRIPE_ENTERPRISE_PRICE_ID
-5. Test production checkout flow with real payment method
-6. Monitor webhook delivery in Stripe Dashboard
-7. Set up alerts for failed webhook deliveries
-
-**No Blockers**: Integration fully tested and production-ready. Documentation complete for future developers.
+**No Blockers**: All unit tests passing, ready for manual integration testing.
 
 ---
 
