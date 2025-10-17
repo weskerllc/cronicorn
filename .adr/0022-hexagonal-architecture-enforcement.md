@@ -85,8 +85,28 @@ The `extractTierFromSubscription` implementation in `StripePaymentProvider` uses
 ```typescript
 extractTierFromSubscription(subscriptionData: unknown): "pro" | "enterprise" | null {
   // Runtime validation of nested structure
-  if (/* checks for items.data[0].price.id */) {
-    return this.reversePriceMap.get(priceId) ?? null;
+  if (
+    subscriptionData
+    && typeof subscriptionData === "object"
+    && "items" in subscriptionData
+    && subscriptionData.items
+    && typeof subscriptionData.items === "object"
+    && "data" in subscriptionData.items
+    && Array.isArray(subscriptionData.items.data)
+    && subscriptionData.items.data.length > 0
+  ) {
+    const firstItem = subscriptionData.items.data[0];
+    if (
+      firstItem
+      && typeof firstItem === "object"
+      && "price" in firstItem
+      && firstItem.price
+      && typeof firstItem.price === "object"
+      && "id" in firstItem.price
+      && typeof firstItem.price.id === "string"
+    ) {
+      return this.reversePriceMap.get(firstItem.price.id) ?? null;
+    }
   }
   return null;
 }
