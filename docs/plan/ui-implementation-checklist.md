@@ -4,6 +4,9 @@
 **Timeline:** 3-4 weeks  
 **Status:** Planning → Implementation
 
+## IMPORTANT INSTRUCTION
+Do not use any css or focus on any styling. Instead we must focus on tanstack router / tanstack start best practices and a clean file / project structure. Adding unnecessary styling will result in FAILURE.
+
 ---
 
 ## Pre-Implementation Setup
