@@ -10,6 +10,13 @@
 - **[Use Cases](./use-cases.md)** - Real-world examples and patterns
 - **[Contributing](./contributing.md)** - Development workflow
 
+## UI Planning (MVP)
+
+- **[Requirements Summary](./ui-requirements-summary.md)** - Executive overview of minimal UI needed for MVP
+- **[Full Requirements](./minimal-ui-requirements.md)** - Detailed feature specifications and user flows
+- **[UI Sitemap](./ui-sitemap.md)** - Visual site structure and navigation
+- **[Implementation Checklist](./ui-implementation-checklist.md)** - Week-by-week task breakdown
+
 ## For Developers
 
 ### Understanding the System
@@ -51,14 +58,18 @@ See [Use Cases](./use-cases.md) for detailed scenarios.
 
 ```
 docs/
-├─ README.md              # This file
-├─ quickstart.md          # Get running quickly
-├─ architecture.md        # System design
-├─ authentication.md      # Auth setup
-├─ use-cases.md          # Examples and patterns
-├─ contributing.md        # Development guide
-├─ TODO.md               # Active work tracking
-└─ archive/              # Historical/reference docs
+├─ README.md                        # This file
+├─ quickstart.md                    # Get running quickly
+├─ architecture.md                  # System design
+├─ authentication.md                # Auth setup
+├─ use-cases.md                     # Examples and patterns
+├─ contributing.md                  # Development guide
+├─ TODO.md                          # Active work tracking
+├─ ui-requirements-summary.md       # UI planning overview (MVP)
+├─ minimal-ui-requirements.md       # Detailed UI specifications
+├─ ui-sitemap.md                    # Site structure and navigation
+├─ ui-implementation-checklist.md   # Implementation task breakdown
+└─ archive/                         # Historical/reference docs
 ```
 
 ## Additional Resources
