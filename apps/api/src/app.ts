@@ -79,7 +79,6 @@ export async function createApp(
     const subscriptionsManager = createSubscriptionsManager(
       db,
       stripeProvider,
-      stripeProvider,
       config.BASE_URL,
     );
     c.set("subscriptionsManager", subscriptionsManager);

@@ -1,17 +1,19 @@
-import type { StripePaymentProvider } from "@cronicorn/adapter-stripe";
-
 import type { CreateCheckoutInput, CreatePortalInput, SubscriptionDeps, SubscriptionStatus } from "./types.js";
 
 /**
  * SubscriptionsManager - Business logic for subscription management.
  *
- * Orchestrates between PaymentProvider (Stripe) and JobsRepo (DB).
+ * Orchestrates between PaymentProvider (e.g., Stripe) and JobsRepo (DB).
  * Handles checkout, portal, and webhook events.
+ *
+ * **Architecture**:
+ * - Depends ONLY on domain ports (PaymentProvider, JobsRepo)
+ * - Zero knowledge of concrete adapters (Stripe, Drizzle)
+ * - All payment provider operations go through PaymentProvider port
  */
 export class SubscriptionsManager {
   constructor(
     private deps: SubscriptionDeps,
-    private stripeProvider: StripePaymentProvider, // Needed for getTierFromPriceId
   ) { }
 
   /**
@@ -89,7 +91,6 @@ export class SubscriptionsManager {
    * Handle webhook event from Stripe.
    * This is called after signature verification.
    */
-  // eslint-disable-next-line ts/no-explicit-any
   async handleWebhookEvent(event: { type: string; data: any }): Promise<void> {
     switch (event.type) {
       case "checkout.session.completed":
@@ -114,7 +115,8 @@ export class SubscriptionsManager {
 
       default:
         // Ignore unhandled events (product.created, plan.created, etc.)
-        console.warn(`[SubscriptionsManager] Ignoring unhandled webhook event: ${event.type}`);
+        // eslint-disable-next-line no-console
+        console.log(`[SubscriptionsManager] Ignoring unhandled webhook event: ${event.type}`);
     }
   }
 
@@ -124,7 +126,6 @@ export class SubscriptionsManager {
   // eslint-disable-next-line ts/no-explicit-any
   private async handleCheckoutCompleted(session: any): Promise<void> {
     const userId = session.metadata?.userId;
-    // eslint-disable-next-line ts/consistent-type-assertions
     const tier = session.metadata?.tier as "pro" | "enterprise";
 
     if (!userId || !tier) {
@@ -132,7 +133,7 @@ export class SubscriptionsManager {
       throw new Error("Missing userId or tier in checkout session metadata");
     }
 
-    console.warn(`[SubscriptionsManager] Checkout completed: user=${userId}, tier=${tier}, customer=${session.customer}`);
+    console.log(`[SubscriptionsManager] Checkout completed: user=${userId}, tier=${tier}, customer=${session.customer}`);
 
     await this.deps.jobsRepo.updateUserSubscription(userId, {
       tier,
@@ -144,9 +145,8 @@ export class SubscriptionsManager {
   }
 
   /**
-   * Subscription updated (tier change, renewal, etc.).
+   * Subscription updated (tier change, renewal, etc.)
    */
-  // eslint-disable-next-line ts/no-explicit-any
   private async handleSubscriptionUpdated(subscription: any): Promise<void> {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
 
@@ -155,11 +155,10 @@ export class SubscriptionsManager {
       return;
     }
 
-    // Determine tier from price ID
-    const priceId = subscription.items?.data?.[0]?.price?.id;
-    const tier = priceId ? this.stripeProvider.getTierFromPriceId(priceId) : null;
+    // Extract tier from subscription data using PaymentProvider port
+    const tier = this.deps.paymentProvider.extractTierFromSubscription(subscription);
 
-    console.warn(`[SubscriptionsManager] Subscription updated: user=${user.id}, status=${subscription.status}, tier=${tier}`);
+    console.log(`[SubscriptionsManager] Subscription updated: user=${user.id}, status=${subscription.status}, tier=${tier}`);
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
       tier: tier ?? undefined,
@@ -173,7 +172,6 @@ export class SubscriptionsManager {
   /**
    * Subscription canceled/deleted.
    */
-  // eslint-disable-next-line ts/no-explicit-any
   private async handleSubscriptionDeleted(subscription: any): Promise<void> {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
 
@@ -182,7 +180,7 @@ export class SubscriptionsManager {
       return;
     }
 
-    console.warn(`[SubscriptionsManager] Subscription deleted: user=${user.id}, downgrading to free`);
+    console.log(`[SubscriptionsManager] Subscription deleted: user=${user.id}, downgrading to free`);
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
       tier: "free",
@@ -194,7 +192,6 @@ export class SubscriptionsManager {
   /**
    * Payment succeeded - ensure active status.
    */
-  // eslint-disable-next-line ts/no-explicit-any
   private async handlePaymentSucceeded(invoice: any): Promise<void> {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
 
@@ -203,7 +200,7 @@ export class SubscriptionsManager {
       return;
     }
 
-    console.warn(`[SubscriptionsManager] Payment succeeded: user=${user.id}`);
+    console.log(`[SubscriptionsManager] Payment succeeded: user=${user.id}`);
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
       subscriptionStatus: "active",
@@ -211,9 +208,8 @@ export class SubscriptionsManager {
   }
 
   /**
-   * Payment failed - might trigger downgrade/pause.
+   * Payment failed - mark as past_due.
    */
-  // eslint-disable-next-line ts/no-explicit-any
   private async handlePaymentFailed(invoice: any): Promise<void> {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
 
@@ -222,7 +218,7 @@ export class SubscriptionsManager {
       return;
     }
 
-    console.warn(`[SubscriptionsManager] Payment failed: user=${user.id}, marking past_due`);
+    console.log(`[SubscriptionsManager] Payment failed: user=${user.id}, marking past_due`);
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
       subscriptionStatus: "past_due",
