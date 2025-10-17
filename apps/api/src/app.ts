@@ -8,6 +8,7 @@ import type { Env } from "./lib/config.js";
 import type { Database } from "./lib/db.js";
 
 import { createAuth } from "./auth/config.js";
+import { requireAuth } from "./auth/middleware.js";
 import { createJobsManager } from "./lib/create-jobs-manager.js";
 import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.js";
 import { errorHandler } from "./lib/error-handler.js";
@@ -84,6 +85,22 @@ export async function createApp(
     c.set("subscriptionsManager", subscriptionsManager);
 
     await next();
+  });
+
+  // Protect all /jobs and /endpoints routes with auth
+  app.use("/jobs/*", async (c, next) => {
+    const auth = c.get("auth");
+    return requireAuth(auth)(c, next);
+  });
+
+  app.use("/endpoints/*", async (c, next) => {
+    const auth = c.get("auth");
+    return requireAuth(auth)(c, next);
+  });
+
+  app.use("/runs/*", async (c, next) => {
+    const auth = c.get("auth");
+    return requireAuth(auth)(c, next);
   });
 
   // Health check endpoint (no auth required)
