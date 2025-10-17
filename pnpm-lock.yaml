@@ -93,6 +93,9 @@ importers:
       '@cronicorn/adapter-system-clock':
         specifier: workspace:*
         version: link:../../packages/adapter-system-clock
+      '@cronicorn/api-contracts':
+        specifier: workspace:*
+        version: link:../../packages/api-contracts
       '@cronicorn/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -250,6 +253,9 @@ importers:
       '@cronicorn/api':
         specifier: workspace:*
         version: link:../api
+      '@cronicorn/api-contracts':
+        specifier: workspace:*
+        version: link:../../packages/api-contracts
       '@tanstack/eslint-config':
         specifier: ^0.3.0
         version: 0.3.2(@typescript-eslint/utils@8.46.1(eslint@9.31.0(jiti@2.6.1))(typescript@5.7.3))(eslint@9.31.0(jiti@2.6.1))(typescript@5.7.3)
@@ -357,6 +363,15 @@ importers:
       '@cronicorn/domain':
         specifier: workspace:*
         version: link:../domain
+
+  packages/api-contracts:
+    dependencies:
+      '@hono/zod-openapi':
+        specifier: 0.18.3
+        version: 0.18.3(hono@4.8.5)(zod@3.25.76)
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
 
   packages/domain:
     dependencies:

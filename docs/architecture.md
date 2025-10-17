@@ -216,10 +216,108 @@ See [docs/architecture-repos-vs-services.md](./archive/architecture-repos-vs-ser
 
 See [.github/instructions/testing-strategy.instructions.md](../.github/instructions/testing-strategy.instructions.md) for full details.
 
+## Shared Type System
+
+### API Contracts Package (`packages/api-contracts`)
+
+**Shared Zod schemas and TypeScript types** for API endpoints.
+
+**Why a separate package?**
+- Single source of truth for API contracts
+- Enable client-side validation (forms with react-hook-form)
+- Maintain clean boundaries (not importing from API app)
+- Follow industry patterns (tRPC, shared validators)
+
+**Structure**:
+```
+packages/api-contracts/
+├─ src/
+│  ├─ jobs/
+│  │  ├─ schemas.ts    # Zod schemas
+│  │  ├─ types.ts      # TypeScript types (z.infer)
+│  │  └─ index.ts      # Barrel export
+│  ├─ subscriptions/
+│  │  └─ ...
+│  └─ index.ts         # Main entry
+└─ package.json
+```
+
+### Usage Patterns
+
+**1. Server-side validation (API routes)**:
+```typescript
+import { CreateJobRequestSchema } from '@cronicorn/api-contracts/jobs'
+import { zValidator } from '@hono/zod-validator'
+
+app.post('/jobs', zValidator('json', CreateJobRequestSchema), async (c) => {
+  const data = c.req.valid('json')  // Type-safe!
+  // ...
+})
+```
+
+**2. Client-side validation (forms)**:
+```typescript
+import { CreateJobRequestSchema } from '@cronicorn/api-contracts/jobs'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+const form = useForm({
+  resolver: zodResolver(CreateJobRequestSchema)  // Runtime validation!
+})
+```
+
+**3. Type-only (function parameters)**:
+```typescript
+import type { CreateJobRequest } from '@cronicorn/api-contracts/jobs'
+
+async function createJob(data: CreateJobRequest) {
+  // Just TypeScript types, no runtime validation
+}
+```
+
+**4. Hono RPC client types (alternative)**:
+```typescript
+import type { InferRequestType, InferResponseType } from 'hono/client'
+import apiClient from './api-client'
+
+const $post = apiClient.api.jobs.$post
+type RequestBody = InferRequestType<typeof $post>['json']
+type Response = InferResponseType<typeof $post>
+
+// Use for typing API consumption logic where you DON'T need runtime validation
+```
+
+### When to Use Each Approach
+
+| Need | Use | Example |
+|------|-----|---------|
+| Form validation | Zod schemas from `api-contracts` | `zodResolver(CreateJobRequestSchema)` |
+| Client-side validation | Zod schemas from `api-contracts` | `schema.safeParse(data)` |
+| API route validation | Zod schemas from `api-contracts` | `zValidator('json', schema)` |
+| Typing function params | `InferRequestType` from Hono | `(query: InferRequestType<...>['query'])` |
+| Typing response data | `InferResponseType` from Hono | `const data: InferResponseType<...>` |
+
+**Rule of thumb**:
+- Need the actual Zod object? → Import from `api-contracts`
+- Just need TypeScript types? → Use `InferRequestType`/`InferResponseType` OR type imports from `api-contracts`
+
+### Adding New Schemas
+
+When creating a new API route:
+
+1. **Define schemas** in `packages/api-contracts/src/<feature>/schemas.ts`
+2. **Export types** in `packages/api-contracts/src/<feature>/types.ts`
+3. **Barrel export** in `packages/api-contracts/src/<feature>/index.ts`
+4. **Use in API routes** via import from `@cronicorn/api-contracts/<feature>`
+5. **Use in web forms** same import path
+
+See existing `jobs/` or `subscriptions/` for examples.
+
 ## Project Structure
 
 ```
 packages/
+├─ api-contracts/       # Shared API schemas & types
 ├─ domain/              # Pure domain logic
 ├─ adapter-*/           # Infrastructure implementations
 ├─ services/            # Framework-agnostic business logic
