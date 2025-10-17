@@ -1,63 +1,72 @@
-# Documentation Index
+# Cronicorn Documentation
 
-This folder contains documentation for the Adaptive AI Scheduler (Cronicorn) project.
+**Adaptive AI-driven scheduler** with hexagonal architecture and intelligent cadence management.
 
-## Quick Start
+## Getting Started
 
-- **[TODO.md](./TODO.md)** - Development roadmap and next steps
-- **[Architecture Guide](./ai-scheduler-architecture.md)** - Comprehensive architecture overview
-- **[Use Cases](./use-cases-and-actions.md)** - 6 diverse use cases with 17 public actions
+- **[Quickstart Guide](./quickstart.md)** - Get running in 5 minutes
+- **[Architecture Guide](./architecture.md)** - System design and principles
+- **[Authentication](./authentication.md)** - OAuth & API key setup
+- **[Use Cases](./use-cases.md)** - Real-world examples and patterns
+- **[Contributing](./contributing.md)** - Development workflow
 
-## Core Architecture
+## For Developers
 
-- **[ai-scheduler-architecture.md](./ai-scheduler-architecture.md)** - Complete architecture guide with patterns and decisions
-- **[domain-architecture-explained.md](./domain-architecture-explained.md)** - Domain layer deep dive
-- **[architecture-repos-vs-services.md](./architecture-repos-vs-services.md)** - Repository vs service layer distinction
+### Understanding the System
+1. Start with [Quickstart](./quickstart.md) to get running locally
+2. Read [Architecture](./architecture.md) to understand the design
+3. Check [ADRs](../.adr/) for key decisions and rationale
+4. See [Contributing](./contributing.md) for development workflow
 
-## Authentication & Security
+### Making Changes
+1. Follow hexagonal architecture patterns
+2. Write tests (unit, contract, integration)
+3. Document decisions in ADRs
+4. Log uncertainty in tech debt
 
-- **[dual-auth-architecture.md](./dual-auth-architecture.md)** - Dual authentication system (OAuth + API keys) with diagrams
-- **[cross-origin-auth-setup.md](./cross-origin-auth-setup.md)** - Cross-origin authentication configuration
+### Key Resources
+- **[Testing Strategy](../.github/instructions/testing-strategy.instructions.md)** - Testing patterns
+- **[Core Principles](../.github/instructions/core-principles.instructions.md)** - Design philosophy
+- **[Tech Debt Log](./TODO.md)** - Active work and open questions
+- **[ADRs](../.adr/)** - Architectural decisions with context
 
-## Use Cases & API Surface
+## For Users
 
-- **[use-cases-and-actions.md](./use-cases-and-actions.md)** - Detailed scenarios for 6 diverse use cases (e-commerce, DevOps, content publishing, data pipelines, SaaS billing, web scraping)
-- **[USE_CASES_SUMMARY.md](./USE_CASES_SUMMARY.md)** - Quick reference for use cases and actions
-- **[flash-sale-scenario.md](./flash-sale-scenario.md)** - E-commerce flash sale monitoring example
-- **[api-action-schemas.md](./api-action-schemas.md)** - Complete API schemas and contracts
+### Authentication
+- **GitHub OAuth** for interactive users
+- **API Keys** for programmatic access
+- See [Authentication Guide](./authentication.md)
 
-## Best Practices & Setup
+### Real-World Examples
+- E-commerce flash sale monitoring
+- DevOps health checks with auto-remediation
+- Content publishing automation
+- Data pipeline coordination
+- SaaS usage monitoring
+- Web scraping with rate limiting
 
-- **[typescript-project-references-setup.md](./typescript-project-references-setup.md)** - TypeScript project references configuration
-- **[package-json-best-practices.md](./package-json-best-practices.md)** - Package.json conventions and patterns
+See [Use Cases](./use-cases.md) for detailed scenarios.
 
-## Tech Debt & Decisions
+## Project Organization
 
-- **[_RUNNING_TECH_DEBT.md](./_RUNNING_TECH_DEBT.md)** - Active technical debt log with decisions and open questions
-- **[../.adr/](../.adr/)** - Architectural Decision Records (ADRs) folder with all major decisions
+```
+docs/
+├─ README.md              # This file
+├─ quickstart.md          # Get running quickly
+├─ architecture.md        # System design
+├─ authentication.md      # Auth setup
+├─ use-cases.md          # Examples and patterns
+├─ contributing.md        # Development guide
+├─ TODO.md               # Active work tracking
+└─ archive/              # Historical/reference docs
+```
 
-## Document Navigation by Role
+## Additional Resources
 
-### New Contributors
-Start here:
-1. [ai-scheduler-architecture.md](./ai-scheduler-architecture.md) - Understand the system
-2. [TODO.md](./TODO.md) - See what's next
-3. [../.adr/](../.adr/) - Learn why decisions were made
+- **GitHub**: [bcanfield/mvpmvp](https://github.com/bcanfield/mvpmvp)
+- **ADRs**: [.adr/](../.adr/) - Architectural Decision Records
+- **Instructions**: [.github/instructions/](../.github/instructions/) - AI agent guidance
 
-### Frontend/API Developers
-Focus on:
-1. [dual-auth-architecture.md](./dual-auth-architecture.md) - Authentication flows
-2. [cross-origin-auth-setup.md](./cross-origin-auth-setup.md) - Cross-origin setup
-3. [api-action-schemas.md](./api-action-schemas.md) - API contracts
+---
 
-### Product/Use Case Research
-Read:
-1. [use-cases-and-actions.md](./use-cases-and-actions.md) - Detailed use cases
-2. [USE_CASES_SUMMARY.md](./USE_CASES_SUMMARY.md) - Quick overview
-3. [flash-sale-scenario.md](./flash-sale-scenario.md) - Example scenario
-
-### Platform/DevOps Engineers
-Check:
-1. [ai-scheduler-architecture.md](./ai-scheduler-architecture.md) - System architecture
-2. [cross-origin-auth-setup.md](./cross-origin-auth-setup.md) - Deployment configuration
-3. [typescript-project-references-setup.md](./typescript-project-references-setup.md) - Build setup
+**Questions?** Check the guides above or open an issue on GitHub.
