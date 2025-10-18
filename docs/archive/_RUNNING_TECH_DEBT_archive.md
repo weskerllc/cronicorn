@@ -1482,5 +1482,6 @@ JobsRepo (domain repo) → Update tier on subscription changes
 
 ---
 
-## TODO
+## TODO (DONT DELETE)
 Ensure api tests run with a transaction per test and rollback after
+HTTPException is being used only in a couple places in api - inconsistent with other error throws

@@ -488,6 +488,52 @@ export class DrizzleJobsRepo implements JobsRepo {
     return "free";
   }
 
+  async getUsage(userId: string, since: Date): Promise<{
+    aiCallsUsed: number;
+    aiCallsLimit: number;
+    endpointsUsed: number;
+    endpointsLimit: number;
+  }> {
+    const { getExecutionLimits, getTierLimit } = await import("@cronicorn/domain");
+
+    // Get user tier
+    const tier = await this.getUserTier(userId);
+
+    // Get tier limits
+    const aiCallsLimit = getTierLimit(tier);
+    const { maxEndpoints: endpointsLimit } = getExecutionLimits(tier);
+
+    // Count endpoints for this user
+    const endpointsResult = await this.tx
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(jobEndpoints)
+      .where(eq(jobEndpoints.tenantId, userId));
+    const endpointsUsed = endpointsResult[0]?.count ?? 0;
+
+    // Sum token usage since specified date
+    const { aiAnalysisSessions } = await import("./schema.js");
+    const usageResult = await this.tx
+      .select({
+        totalUsage: sql<number>`COALESCE(SUM(${aiAnalysisSessions.tokenUsage}), 0)::int`,
+      })
+      .from(aiAnalysisSessions)
+      .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
+      .where(
+        and(
+          eq(jobEndpoints.tenantId, userId),
+          sql`${aiAnalysisSessions.analyzedAt} >= ${since}`,
+        ),
+      );
+    const aiCallsUsed = usageResult[0]?.totalUsage ?? 0;
+
+    return {
+      aiCallsUsed,
+      aiCallsLimit,
+      endpointsUsed,
+      endpointsLimit,
+    };
+  }
+
   /**
    * Convert DB job row to domain entity.
    */

@@ -139,6 +139,29 @@ export const deleteEndpoint: AppRouteHandler<routes.DeleteEndpointRoute> = async
     }
     catch (error) {
       const message = error instanceof Error ? error.message : "Delete failed";
+      // TODO: Remove anywhere that is checking for message content as below in favor of better typed error messages
+      if (message.includes("not found") || message.includes("unauthorized")) {
+        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
+      }
+      throw error;
+    }
+  });
+};
+
+export const getEndpoint: AppRouteHandler<routes.GetEndpointRoute> = async (c) => {
+  const { id } = c.req.valid("param");
+  const { userId } = getAuthContext(c);
+
+  return c.get("withJobsManager")(async (manager) => {
+    try {
+      const endpoint = await manager.getEndpoint(userId, id);
+      if (!endpoint) {
+        return c.json({ message: "Endpoint not found" }, HTTPStatusCodes.NOT_FOUND);
+      }
+      return c.json(mappers.mapEndpointToResponse(endpoint), HTTPStatusCodes.OK);
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : "Fetch failed";
       if (message.includes("not found") || message.includes("unauthorized")) {
         return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
       }

@@ -103,6 +103,11 @@ export async function createApp(
     return requireAuth(auth)(c, next);
   });
 
+  app.use("/subscriptions/*", async (c, next) => {
+    const auth = c.get("auth");
+    return requireAuth(auth)(c, next);
+  });
+
   // Health check endpoint (no auth required)
   app.get("/health", (c) => {
     return c.json({ status: "ok", timestamp: new Date().toISOString() });

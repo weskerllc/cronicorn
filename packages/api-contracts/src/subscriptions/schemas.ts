@@ -40,6 +40,25 @@ export const SubscriptionStatusResponseSchema = z.object({
     }),
 });
 
+export const UsageResponseSchema = z.object({
+    aiCallsUsed: z.number().int().openapi({
+        description: "Total AI tokens consumed this month",
+        example: 45000,
+    }),
+    aiCallsLimit: z.number().int().openapi({
+        description: "Monthly AI token limit for current tier",
+        example: 100000,
+    }),
+    endpointsUsed: z.number().int().openapi({
+        description: "Total number of endpoints created",
+        example: 5,
+    }),
+    endpointsLimit: z.number().int().openapi({
+        description: "Maximum endpoints allowed for current tier",
+        example: 10,
+    }),
+});
+
 export const ErrorSchema = z.object({
     error: z.string(),
 });

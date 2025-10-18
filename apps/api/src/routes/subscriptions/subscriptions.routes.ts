@@ -1,4 +1,3 @@
-import { createRoute, z } from "@hono/zod-openapi";
 import {
   CreateCheckoutRequestSchema,
   CreateCheckoutResponseSchema,
@@ -6,7 +5,9 @@ import {
   CreatePortalResponseSchema,
   ErrorSchema,
   SubscriptionStatusResponseSchema,
+  UsageResponseSchema,
 } from "@cronicorn/api-contracts/subscriptions";
+import { createRoute, z } from "@hono/zod-openapi";
 
 /**
  * API Route Definitions for Subscription Management
@@ -126,6 +127,43 @@ export const getStatus = createRoute({
       content: {
         "application/json": {
           schema: SubscriptionStatusResponseSchema,
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized - authentication required",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: "Internal server error",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+  },
+  security: [{ cookieAuth: [] }],
+});
+
+// ==================== GET /subscriptions/usage ====================
+
+export const getUsage = createRoute({
+  method: "get",
+  path: "/subscriptions/usage",
+  tags: ["subscriptions"],
+  summary: "Get Usage and Quota",
+  description: "Get current usage vs quota limits for AI calls and endpoints",
+  responses: {
+    200: {
+      description: "Usage data retrieved successfully",
+      content: {
+        "application/json": {
+          schema: UsageResponseSchema,
         },
       },
     },
