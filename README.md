@@ -6,6 +6,7 @@
 
 **A scheduler that thinks like a DevOps engineer—tightening monitoring during incidents, relaxing during calm periods, and attempting recovery before waking you up at 3 AM.**
 
+[![GitHub stars](https://img.shields.io/github/stars/bcanfield/mvpmvp?style=social)](https://github.com/bcanfield/mvpmvp/stargazers)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D24.0.0-brightgreen)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
@@ -33,14 +34,29 @@ Cronicorn uses **AI to dynamically adjust scheduling** based on real-time condit
 - 🚨 **Smart Alerts**: Escalation ladder with cooldowns—no notification spam
 
 ```
-During Flash Sale
-─────────────────
-Traffic Monitor:    5min → 30sec    (adaptive tightening)
-Page Analyzer:      Paused → Active  (conditional activation)
-Cache Warm-Up:      Triggers once    (auto-recovery)
-Slack Alert:        One notification (smart cooldown)
-Result: Problems resolved, team informed—not overwhelmed
+🎬 During Flash Sale
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Traffic Monitor     5min → 30sec      (adaptive tightening)
+🔍 Page Analyzer       Paused → Active   (conditional activation)
+🔧 Cache Warm-Up       Triggers once     (auto-recovery)
+📢 Slack Alert         One notification  (smart cooldown)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Result: Problems resolved, team informed—not overwhelmed
 ```
+
+---
+
+## 💡 What Makes This Special?
+
+Unlike traditional schedulers that blindly execute on fixed intervals, Cronicorn:
+
+- **Learns from patterns** → Notices when failures cluster or performance degrades
+- **Adapts automatically** → Tightens monitoring during incidents, relaxes during recovery  
+- **Orchestrates workflows** → Health checks trigger investigation, which triggers recovery
+- **Reduces noise** → Smart cooldowns prevent alert spam
+- **Explains decisions** → Every AI adjustment includes clear reasoning
+
+**Think of it as having a senior DevOps engineer watching your systems 24/7.**
 
 ---
 
@@ -375,10 +391,16 @@ We welcome contributions! Here's how to get started:
 
 <div align="center">
 
+---
+
 **Built by engineers, for engineers.**
 
-If Cronicorn saves you from a 3 AM page, give us a ⭐️
+*Stop fighting your scheduler. Let it adapt to you.*
 
-[Get Started](#-quick-start) • [Documentation](./docs) • [Community](https://github.com/bcanfield/mvpmvp/discussions)
+### If Cronicorn saves you from a 3 AM page, give us a ⭐️
+
+[![Star History Chart](https://api.star-history.com/svg?repos=bcanfield/mvpmvp&type=Date)](https://star-history.com/#bcanfield/mvpmvp&Date)
+
+[🚀 Get Started](#-quick-start) • [📖 Documentation](./docs) • [💬 Join Community](https://github.com/bcanfield/mvpmvp/discussions)
 
 </div>
