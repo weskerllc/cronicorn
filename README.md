@@ -14,6 +14,15 @@
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Use Cases](#-real-world-use-cases) • [Architecture](#-architecture) • [Documentation](./docs)
 
+---
+
+### At a Glance
+
+**🎯 Purpose:** AI-powered job scheduler that adapts to real-time conditions  
+**🏗️ Architecture:** Hexagonal/Clean Architecture with TypeScript  
+**🚀 Status:** Production-ready with transaction guarantees  
+**📦 Stack:** Node.js 24+, PostgreSQL, TypeScript 5.7, OpenAI SDK
+
 </div>
 
 ---
@@ -47,6 +56,12 @@ Cronicorn uses **AI to dynamically adjust scheduling** based on real-time condit
 ---
 
 ## 💡 What Makes This Special?
+
+<div align="center">
+
+**Traditional Scheduler** ❌ → Fixed intervals, blind execution → **Cronicorn** ✅ → Adaptive, intelligent, self-healing
+
+</div>
 
 Unlike traditional schedulers that blindly execute on fixed intervals, Cronicorn:
 
@@ -331,11 +346,16 @@ We welcome contributions! Here's how to get started:
 
 ## 📚 Documentation
 
+### Core Guides
 - 📖 [Architecture Guide](./docs/architecture.md) - System design deep dive
 - 🚀 [Quick Start Guide](./docs/quickstart.md) - Get running in 5 minutes
 - 🎯 [Use Cases](./docs/use-cases.md) - Real-world scenarios
 - 🔐 [Authentication](./docs/authentication.md) - API keys & OAuth setup
+
+### Reference
 - 🏛️ [ADRs](./.adr/) - Architectural decision records
+- 📋 [API Reference](./docs/api-reference.md) - Endpoint documentation (coming soon)
+- 🧪 [Testing Guide](./docs/testing.md) - How we test (coming soon)
 
 ---
 
