@@ -1,49 +1,26 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { useSession } from "../lib/auth-client";
+import { useSession } from "../../lib/auth-client";
+import { subscriptionStatusQueryOptions, usageQueryOptions } from "../../lib/api-client/queries/subscriptions.queries";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/settings/")({
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(subscriptionStatusQueryOptions()),
+      context.queryClient.ensureQueryData(usageQueryOptions()),
+    ]);
+  },
   component: Settings,
 });
 
-interface SubscriptionStatus {
-  tier: string;
-  status: string | null;
-  endsAt: string | null;
-}
-
 function Settings() {
   const { data: session } = useSession();
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: subscription } = useSuspenseQuery(subscriptionStatusQueryOptions());
+  const { data: usage } = useSuspenseQuery(usageQueryOptions());
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (session) {
-      fetchSubscriptionStatus();
-    }
-  }, [session]);
-
-  const fetchSubscriptionStatus = async () => {
-    try {
-      const response = await fetch("/api/subscriptions/status", {
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSubscription(data);
-      }
-    }
-    catch (err) {
-      console.error("Failed to fetch subscription:", err);
-    }
-    finally {
-      setLoading(false);
-    }
-  };
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
@@ -100,23 +77,17 @@ function Settings() {
       </div>
 
       {/* Subscription Section */}
-      <div className="p-6 border rounded-lg">
+      <div className="mb-8 p-6 border rounded-lg">
         <h2 className="text-xl font-semibold mb-4">Subscription</h2>
 
-        {loading
-          ? (
-              <p className="text-gray-600">Loading subscription...</p>
-            )
-          : subscription
-            ? (
-                <div className="space-y-4">
-                  <div>
-                    <span className="font-medium">Current Plan:</span>
-                    {" "}
-                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold capitalize">
-                      {subscription.tier}
-                    </span>
-                  </div>
+        <div className="space-y-4">
+          <div>
+            <span className="font-medium">Current Plan:</span>
+            {" "}
+            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold capitalize">
+              {subscription.tier}
+            </span>
+          </div>
 
                   {subscription.tier !== "free" && (
                     <>
@@ -141,21 +112,39 @@ function Settings() {
                     </>
                   )}
 
-                  {subscription.tier === "free" && (
-                    <div className="pt-4">
-                      <a
-                        href="/pricing"
-                        className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                      >
-                        Upgrade Plan
-                      </a>
-                    </div>
-                  )}
-                </div>
-              )
-            : (
-                <p className="text-gray-600">No subscription information available.</p>
-              )}
+          {subscription.tier === "free" && (
+            <div className="pt-4">
+              <a
+                href="/pricing"
+                className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Upgrade Plan
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Quota Usage */}
+      <div className="mb-8 p-6 border rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">Quota Usage</h2>
+        <pre className="bg-gray-100 p-4 rounded text-sm overflow-x-auto">
+          {JSON.stringify(usage, null, 2)}
+        </pre>
+      </div>
+
+      {/* API Keys Section */}
+      <div className="p-6 border rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">API Keys</h2>
+        <p className="text-gray-600 mb-4">
+          Manage your API keys for programmatic access to Cronicorn.
+        </p>
+        <a
+          href="/settings/api-keys"
+          className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Manage API Keys
+        </a>
       </div>
     </div>
   );

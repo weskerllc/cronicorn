@@ -148,6 +148,20 @@ export const deleteEndpoint = createRoute({
   },
 });
 
+export const getEndpoint = createRoute({
+  path: "/jobs/:jobId/endpoints/:id",
+  method: "get",
+  tags: ["Endpoints"],
+  summary: "Get a single endpoint by ID",
+  request: {
+    params: z.object({ jobId: z.string(), id: z.string() }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(schemas.EndpointResponseSchema, "Endpoint details"),
+    ...errorResponses,
+  },
+});
+
 export const listEndpoints = createRoute({
   path: "/jobs/:jobId/endpoints",
   method: "get",
@@ -296,6 +310,7 @@ export type ArchiveJobRoute = typeof archiveJob;
 export type AddEndpointRoute = typeof addEndpoint;
 export type UpdateEndpointRoute = typeof updateEndpoint;
 export type DeleteEndpointRoute = typeof deleteEndpoint;
+export type GetEndpointRoute = typeof getEndpoint;
 export type ListEndpointsRoute = typeof listEndpoints;
 
 export type ApplyIntervalHintRoute = typeof applyIntervalHint;

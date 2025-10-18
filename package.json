@@ -12,6 +12,7 @@
   "scripts": {
     "🚀 ---------- MONOREPO ----------": "",
     "build": "tsc -b",
+    "build:web": "tsc -b apps/web",
     "start": "dotenv -e .env -- pnpm run -r --parallel start",
     "dev": "dotenv -e .env -- pnpm run -r --parallel dev",
     "dev:api": "dotenv -e .env -- pnpm --filter @cronicorn/api run dev",

@@ -68,6 +68,18 @@ export const EndpointResponseSchema = z.object({
     headersJson: z.record(z.string()).optional(),
     bodyJson: z.any().optional(),
     timeoutMs: z.number().optional(),
+    aiHintIntervalMs: z.number().int().optional().openapi({
+        description: "AI-suggested interval in milliseconds",
+    }),
+    aiHintNextRunAt: z.string().datetime().optional().openapi({
+        description: "AI-suggested next run time",
+    }),
+    aiHintExpiresAt: z.string().datetime().optional().openapi({
+        description: "When the AI hint expires",
+    }),
+    aiHintReason: z.string().optional().openapi({
+        description: "Reason for AI hint",
+    }),
 });
 
 // ==================== Adaptive Scheduling Schemas ====================
@@ -126,6 +138,20 @@ export const RunDetailsResponseSchema = z.object({
     errorMessage: z.string().optional(),
     source: z.string().optional(),
     attempt: z.number().int(),
+    responseBody: z.any().nullable().optional().openapi({
+        description: "Response body from endpoint execution (if JSON and within size limit)",
+    }),
+    statusCode: z.number().int().optional().openapi({
+        description: "HTTP status code from endpoint response",
+    }),
+    endpoint: z.object({
+        id: z.string(),
+        name: z.string(),
+        url: z.string().optional(),
+        method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).optional(),
+    }).optional().openapi({
+        description: "Endpoint details for debugging",
+    }),
 });
 
 export const HealthSummaryQuerySchema = z.object({
