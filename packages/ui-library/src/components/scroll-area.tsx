@@ -3,7 +3,7 @@
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import * as React from "react";
 
-import { cn } from "@cronicorn/ui/lib/utils";
+import { cn } from "@cronicorn/ui-library/lib/utils";
 
 function ScrollArea({
   className,

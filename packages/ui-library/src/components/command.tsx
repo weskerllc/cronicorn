@@ -10,8 +10,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@cronicorn/ui/components/dialog";
-import { cn } from "@cronicorn/ui/lib/utils";
+} from "@cronicorn/ui-library/components/dialog";
+import { cn } from "@cronicorn/ui-library/lib/utils";
 
 function Command({
   className,

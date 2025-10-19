@@ -111,12 +111,13 @@ export const archiveJob = async (id: string): Promise<ArchiveJobResponse> => {
 
 // ==================== Query Options Factories ====================
 
+export const JOBS_QUERY_KEY = ["jobs"] as const;
 /**
  * Query options for listing jobs
  * Usage: useQuery(jobsQueryOptions()), useSuspenseQuery(jobsQueryOptions())
  */
 export const jobsQueryOptions = (query: GetJobsQuery = {}) => queryOptions({
-    queryKey: ["jobs", query] as const,
+    queryKey: [JOBS_QUERY_KEY, query] as const,
     queryFn: () => getJobs(query),
     staleTime: 30000, // 30 seconds
 });
@@ -126,7 +127,7 @@ export const jobsQueryOptions = (query: GetJobsQuery = {}) => queryOptions({
  * Usage: useQuery(jobQueryOptions(jobId)), useSuspenseQuery(jobQueryOptions(jobId))
  */
 export const jobQueryOptions = (id: string) => queryOptions({
-    queryKey: ["jobs", id] as const,
+    queryKey: [JOBS_QUERY_KEY, id] as const,
     queryFn: () => getJob(id),
     staleTime: 30000, // 30 seconds
 });
@@ -136,7 +137,7 @@ export const jobQueryOptions = (id: string) => queryOptions({
  * Usage: useQuery(endpointsQueryOptions(jobId))
  */
 export const endpointsQueryOptions = (jobId: string) => queryOptions({
-    queryKey: ["jobs", jobId, "endpoints"] as const,
+    queryKey: [JOBS_QUERY_KEY, jobId, "endpoints"] as const,
     queryFn: async () => {
         const resp = await apiClient.api.jobs[":jobId"].endpoints.$get({ param: { jobId } });
         const json = await resp.json();

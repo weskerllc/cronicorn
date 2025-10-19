@@ -1,37 +1,34 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { createJob } from "../lib/api-client/queries/jobs.queries";
+import { createJob, JOBS_QUERY_KEY } from "../lib/api-client/queries/jobs.queries";
+import type { CreateJobRequest } from "@cronicorn/api-contracts/jobs";
 
 export const Route = createFileRoute("/jobs/new")({
   component: CreateJobPage,
 });
 
 function CreateJobPage() {
-  const navigate = useNavigate();
+//   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+
+    const { mutateAsync } = useMutation({
+    mutationFn: async (data: CreateJobRequest) => createJob(data),
+    onSuccess: async (data) => {
+      queryClient.invalidateQueries({ queryKey: JOBS_QUERY_KEY });
+    //   await navigate({ to: "/dashboard/api-keys", params: { apiKeyId: data.id } });
+  
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
-
-    try {
-      const job = await createJob({ name, description: description || undefined });
-      await queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      navigate({ to: `/jobs/${job.id}` });
-    }
-    catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create job");
-      setLoading(false);
-    }
+    await mutateAsync({ name, description });
   };
 
   return (

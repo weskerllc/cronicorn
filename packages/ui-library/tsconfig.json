@@ -1,16 +1,18 @@
 {
-  "extends": "../../tsconfig.json",
-  
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "outDir": "dist",
     "composite": true,
     "jsx": "react-jsx",
     "lib": ["ESNext", "DOM"],
-    "baseUrl": ".",
+    "rootDir": "src",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
     "paths": {
       "@cronicorn/ui-library/*": ["./src/*"]
     }
-
   },
-  "include": ["."],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
