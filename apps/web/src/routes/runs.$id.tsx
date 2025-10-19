@@ -1,9 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { runQueryOptions } from "../../../lib/api-client/queries/runs.queries";
+import { runQueryOptions } from "../lib/api-client/queries/runs.queries";
 
-export const Route = createFileRoute("/runs/$id/")({
+export const Route = createFileRoute("/runs/$id")({
   loader: async ({ params, context }) => {
     await context.queryClient.ensureQueryData(runQueryOptions(params.id));
   },

@@ -13,17 +13,17 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SettingsIndexRouteImport } from './routes/settings/index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as SettingsApiKeysRouteImport } from './routes/settings/api-keys'
-import { Route as JobsNewRouteImport } from './routes/jobs/new'
-import { Route as SettingsApiKeysIndexRouteImport } from './routes/settings/api-keys/index'
-import { Route as RunsIdIndexRouteImport } from './routes/runs/$id/index'
-import { Route as JobsIdIndexRouteImport } from './routes/jobs/$id/index'
-import { Route as EndpointsIdRunsIndexRouteImport } from './routes/endpoints/$id/runs/index'
-import { Route as EndpointsIdHealthIndexRouteImport } from './routes/endpoints/$id/health/index'
-import { Route as JobsJobIdEndpointsNewRouteImport } from './routes/jobs/$jobId/endpoints/new'
-import { Route as JobsJobIdEndpointsIdEditRouteImport } from './routes/jobs/$jobId/endpoints/$id/edit'
+import { Route as SettingsIndexRouteImport } from './routes/settings.index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as SettingsApiKeysRouteImport } from './routes/settings.api-keys'
+import { Route as RunsIdRouteImport } from './routes/runs.$id'
+import { Route as JobsNewRouteImport } from './routes/jobs.new'
+import { Route as JobsIdIndexRouteImport } from './routes/jobs.$id.index'
+import { Route as JobsIdEditRouteImport } from './routes/jobs.$id.edit'
+import { Route as EndpointsIdRunsRouteImport } from './routes/endpoints.$id.runs'
+import { Route as EndpointsIdHealthRouteImport } from './routes/endpoints.$id.health'
+import { Route as JobsJobIdEndpointsNewRouteImport } from './routes/jobs.$jobId.endpoints.new'
+import { Route as JobsJobIdEndpointsIdEditRouteImport } from './routes/jobs.$jobId.endpoints.$id.edit'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -60,19 +60,14 @@ const SettingsApiKeysRoute = SettingsApiKeysRouteImport.update({
   path: '/settings/api-keys',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RunsIdRoute = RunsIdRouteImport.update({
+  id: '/runs/$id',
+  path: '/runs/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JobsNewRoute = JobsNewRouteImport.update({
   id: '/jobs/new',
   path: '/jobs/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsApiKeysIndexRoute = SettingsApiKeysIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SettingsApiKeysRoute,
-} as any)
-const RunsIdIndexRoute = RunsIdIndexRouteImport.update({
-  id: '/runs/$id/',
-  path: '/runs/$id/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JobsIdIndexRoute = JobsIdIndexRouteImport.update({
@@ -80,14 +75,19 @@ const JobsIdIndexRoute = JobsIdIndexRouteImport.update({
   path: '/jobs/$id/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EndpointsIdRunsIndexRoute = EndpointsIdRunsIndexRouteImport.update({
-  id: '/endpoints/$id/runs/',
-  path: '/endpoints/$id/runs/',
+const JobsIdEditRoute = JobsIdEditRouteImport.update({
+  id: '/jobs/$id/edit',
+  path: '/jobs/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EndpointsIdHealthIndexRoute = EndpointsIdHealthIndexRouteImport.update({
-  id: '/endpoints/$id/health/',
-  path: '/endpoints/$id/health/',
+const EndpointsIdRunsRoute = EndpointsIdRunsRouteImport.update({
+  id: '/endpoints/$id/runs',
+  path: '/endpoints/$id/runs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EndpointsIdHealthRoute = EndpointsIdHealthRouteImport.update({
+  id: '/endpoints/$id/health',
+  path: '/endpoints/$id/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JobsJobIdEndpointsNewRoute = JobsJobIdEndpointsNewRouteImport.update({
@@ -108,15 +108,15 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/jobs/new': typeof JobsNewRoute
-  '/settings/api-keys': typeof SettingsApiKeysRouteWithChildren
+  '/runs/$id': typeof RunsIdRoute
+  '/settings/api-keys': typeof SettingsApiKeysRoute
   '/dashboard': typeof DashboardIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/endpoints/$id/health': typeof EndpointsIdHealthRoute
+  '/endpoints/$id/runs': typeof EndpointsIdRunsRoute
+  '/jobs/$id/edit': typeof JobsIdEditRoute
   '/jobs/$id': typeof JobsIdIndexRoute
-  '/runs/$id': typeof RunsIdIndexRoute
-  '/settings/api-keys/': typeof SettingsApiKeysIndexRoute
   '/jobs/$jobId/endpoints/new': typeof JobsJobIdEndpointsNewRoute
-  '/endpoints/$id/health': typeof EndpointsIdHealthIndexRoute
-  '/endpoints/$id/runs': typeof EndpointsIdRunsIndexRoute
   '/jobs/$jobId/endpoints/$id/edit': typeof JobsJobIdEndpointsIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -125,14 +125,15 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/jobs/new': typeof JobsNewRoute
+  '/runs/$id': typeof RunsIdRoute
+  '/settings/api-keys': typeof SettingsApiKeysRoute
   '/dashboard': typeof DashboardIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/endpoints/$id/health': typeof EndpointsIdHealthRoute
+  '/endpoints/$id/runs': typeof EndpointsIdRunsRoute
+  '/jobs/$id/edit': typeof JobsIdEditRoute
   '/jobs/$id': typeof JobsIdIndexRoute
-  '/runs/$id': typeof RunsIdIndexRoute
-  '/settings/api-keys': typeof SettingsApiKeysIndexRoute
   '/jobs/$jobId/endpoints/new': typeof JobsJobIdEndpointsNewRoute
-  '/endpoints/$id/health': typeof EndpointsIdHealthIndexRoute
-  '/endpoints/$id/runs': typeof EndpointsIdRunsIndexRoute
   '/jobs/$jobId/endpoints/$id/edit': typeof JobsJobIdEndpointsIdEditRoute
 }
 export interface FileRoutesById {
@@ -142,15 +143,15 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/jobs/new': typeof JobsNewRoute
-  '/settings/api-keys': typeof SettingsApiKeysRouteWithChildren
+  '/runs/$id': typeof RunsIdRoute
+  '/settings/api-keys': typeof SettingsApiKeysRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/endpoints/$id/health': typeof EndpointsIdHealthRoute
+  '/endpoints/$id/runs': typeof EndpointsIdRunsRoute
+  '/jobs/$id/edit': typeof JobsIdEditRoute
   '/jobs/$id/': typeof JobsIdIndexRoute
-  '/runs/$id/': typeof RunsIdIndexRoute
-  '/settings/api-keys/': typeof SettingsApiKeysIndexRoute
   '/jobs/$jobId/endpoints/new': typeof JobsJobIdEndpointsNewRoute
-  '/endpoints/$id/health/': typeof EndpointsIdHealthIndexRoute
-  '/endpoints/$id/runs/': typeof EndpointsIdRunsIndexRoute
   '/jobs/$jobId/endpoints/$id/edit': typeof JobsJobIdEndpointsIdEditRoute
 }
 export interface FileRouteTypes {
@@ -161,15 +162,15 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/register'
     | '/jobs/new'
+    | '/runs/$id'
     | '/settings/api-keys'
     | '/dashboard'
     | '/settings'
-    | '/jobs/$id'
-    | '/runs/$id'
-    | '/settings/api-keys/'
-    | '/jobs/$jobId/endpoints/new'
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
+    | '/jobs/$id/edit'
+    | '/jobs/$id'
+    | '/jobs/$jobId/endpoints/new'
     | '/jobs/$jobId/endpoints/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -178,14 +179,15 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/register'
     | '/jobs/new'
-    | '/dashboard'
-    | '/settings'
-    | '/jobs/$id'
     | '/runs/$id'
     | '/settings/api-keys'
-    | '/jobs/$jobId/endpoints/new'
+    | '/dashboard'
+    | '/settings'
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
+    | '/jobs/$id/edit'
+    | '/jobs/$id'
+    | '/jobs/$jobId/endpoints/new'
     | '/jobs/$jobId/endpoints/$id/edit'
   id:
     | '__root__'
@@ -194,15 +196,15 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/register'
     | '/jobs/new'
+    | '/runs/$id'
     | '/settings/api-keys'
     | '/dashboard/'
     | '/settings/'
+    | '/endpoints/$id/health'
+    | '/endpoints/$id/runs'
+    | '/jobs/$id/edit'
     | '/jobs/$id/'
-    | '/runs/$id/'
-    | '/settings/api-keys/'
     | '/jobs/$jobId/endpoints/new'
-    | '/endpoints/$id/health/'
-    | '/endpoints/$id/runs/'
     | '/jobs/$jobId/endpoints/$id/edit'
   fileRoutesById: FileRoutesById
 }
@@ -212,14 +214,15 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
   JobsNewRoute: typeof JobsNewRoute
-  SettingsApiKeysRoute: typeof SettingsApiKeysRouteWithChildren
+  RunsIdRoute: typeof RunsIdRoute
+  SettingsApiKeysRoute: typeof SettingsApiKeysRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
+  EndpointsIdHealthRoute: typeof EndpointsIdHealthRoute
+  EndpointsIdRunsRoute: typeof EndpointsIdRunsRoute
+  JobsIdEditRoute: typeof JobsIdEditRoute
   JobsIdIndexRoute: typeof JobsIdIndexRoute
-  RunsIdIndexRoute: typeof RunsIdIndexRoute
   JobsJobIdEndpointsNewRoute: typeof JobsJobIdEndpointsNewRoute
-  EndpointsIdHealthIndexRoute: typeof EndpointsIdHealthIndexRoute
-  EndpointsIdRunsIndexRoute: typeof EndpointsIdRunsIndexRoute
   JobsJobIdEndpointsIdEditRoute: typeof JobsJobIdEndpointsIdEditRoute
 }
 
@@ -274,25 +277,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsApiKeysRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/runs/$id': {
+      id: '/runs/$id'
+      path: '/runs/$id'
+      fullPath: '/runs/$id'
+      preLoaderRoute: typeof RunsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jobs/new': {
       id: '/jobs/new'
       path: '/jobs/new'
       fullPath: '/jobs/new'
       preLoaderRoute: typeof JobsNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings/api-keys/': {
-      id: '/settings/api-keys/'
-      path: '/'
-      fullPath: '/settings/api-keys/'
-      preLoaderRoute: typeof SettingsApiKeysIndexRouteImport
-      parentRoute: typeof SettingsApiKeysRoute
-    }
-    '/runs/$id/': {
-      id: '/runs/$id/'
-      path: '/runs/$id'
-      fullPath: '/runs/$id'
-      preLoaderRoute: typeof RunsIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/jobs/$id/': {
@@ -302,18 +298,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JobsIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/endpoints/$id/runs/': {
-      id: '/endpoints/$id/runs/'
-      path: '/endpoints/$id/runs'
-      fullPath: '/endpoints/$id/runs'
-      preLoaderRoute: typeof EndpointsIdRunsIndexRouteImport
+    '/jobs/$id/edit': {
+      id: '/jobs/$id/edit'
+      path: '/jobs/$id/edit'
+      fullPath: '/jobs/$id/edit'
+      preLoaderRoute: typeof JobsIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/endpoints/$id/health/': {
-      id: '/endpoints/$id/health/'
+    '/endpoints/$id/runs': {
+      id: '/endpoints/$id/runs'
+      path: '/endpoints/$id/runs'
+      fullPath: '/endpoints/$id/runs'
+      preLoaderRoute: typeof EndpointsIdRunsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/endpoints/$id/health': {
+      id: '/endpoints/$id/health'
       path: '/endpoints/$id/health'
       fullPath: '/endpoints/$id/health'
-      preLoaderRoute: typeof EndpointsIdHealthIndexRouteImport
+      preLoaderRoute: typeof EndpointsIdHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/jobs/$jobId/endpoints/new': {
@@ -333,32 +336,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface SettingsApiKeysRouteChildren {
-  SettingsApiKeysIndexRoute: typeof SettingsApiKeysIndexRoute
-}
-
-const SettingsApiKeysRouteChildren: SettingsApiKeysRouteChildren = {
-  SettingsApiKeysIndexRoute: SettingsApiKeysIndexRoute,
-}
-
-const SettingsApiKeysRouteWithChildren = SettingsApiKeysRoute._addFileChildren(
-  SettingsApiKeysRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,
   JobsNewRoute: JobsNewRoute,
-  SettingsApiKeysRoute: SettingsApiKeysRouteWithChildren,
+  RunsIdRoute: RunsIdRoute,
+  SettingsApiKeysRoute: SettingsApiKeysRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
+  EndpointsIdHealthRoute: EndpointsIdHealthRoute,
+  EndpointsIdRunsRoute: EndpointsIdRunsRoute,
+  JobsIdEditRoute: JobsIdEditRoute,
   JobsIdIndexRoute: JobsIdIndexRoute,
-  RunsIdIndexRoute: RunsIdIndexRoute,
   JobsJobIdEndpointsNewRoute: JobsJobIdEndpointsNewRoute,
-  EndpointsIdHealthIndexRoute: EndpointsIdHealthIndexRoute,
-  EndpointsIdRunsIndexRoute: EndpointsIdRunsIndexRoute,
   JobsJobIdEndpointsIdEditRoute: JobsJobIdEndpointsIdEditRoute,
 }
 export const routeTree = rootRouteImport

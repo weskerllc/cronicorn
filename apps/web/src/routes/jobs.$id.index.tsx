@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { endpointsQueryOptions, jobQueryOptions } from "../../../lib/api-client/queries/jobs.queries";
+import { endpointsQueryOptions, jobQueryOptions } from "../lib/api-client/queries/jobs.queries";
 
 export const Route = createFileRoute("/jobs/$id/")({
   loader: async ({ params, context }) => {
@@ -32,7 +32,13 @@ function JobDetailsPage() {
           >
             Add Endpoint
           </a>
-          {/* TODO: Edit, Archive, Delete actions */}
+          <a
+            href={`/jobs/${id}/edit`}
+            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+          >
+            Edit Job
+          </a>
+          {/* TODO: Archive, Delete actions */}
         </div>
       </div>
 
