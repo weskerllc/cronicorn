@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { createJob } from "../../lib/api-client/queries/jobs.queries";
+import { createJob } from "../lib/api-client/queries/jobs.queries";
 
 export const Route = createFileRoute("/jobs/new")({
   component: CreateJobPage,

@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { jobsQueryOptions } from "../../lib/api-client/queries/jobs.queries";
+import { jobsQueryOptions } from "../lib/api-client/queries/jobs.queries";
 
 export const Route = createFileRoute("/dashboard/")({
   loader: async ({ context }) => {

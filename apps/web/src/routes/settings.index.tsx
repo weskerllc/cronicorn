@@ -2,8 +2,8 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { useSession } from "../../lib/auth-client";
-import { subscriptionStatusQueryOptions, usageQueryOptions } from "../../lib/api-client/queries/subscriptions.queries";
+import { useSession } from "../lib/auth-client";
+import { subscriptionStatusQueryOptions, usageQueryOptions } from "../lib/api-client/queries/subscriptions.queries";
 
 export const Route = createFileRoute("/settings/")({
   loader: async ({ context }) => {
