@@ -7,25 +7,25 @@ import { cva } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
 
-import { Button } from "@cronicorn/ui/components/button";
-import { Input } from "@cronicorn/ui/components/input";
-import { Separator } from "@cronicorn/ui/components/separator";
+import { Button } from "@cronicorn/ui-library/components/button";
+import { Input } from "@cronicorn/ui-library/components/input";
+import { Separator } from "@cronicorn/ui-library/components/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@cronicorn/ui/components/sheet";
-import { Skeleton } from "@cronicorn/ui/components/skeleton";
+} from "@cronicorn/ui-library/components/sheet";
+import { Skeleton } from "@cronicorn/ui-library/components/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@cronicorn/ui/components/tooltip";
-import { useIsMobile } from "@cronicorn/ui/hooks/use-mobile";
-import { cn } from "@cronicorn/ui/lib/utils";
+} from "@cronicorn/ui-library/components/tooltip";
+import { useIsMobile } from "@cronicorn/ui-library/hooks/use-mobile";
+import { cn } from "@cronicorn/ui-library/lib/utils";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

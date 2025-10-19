@@ -5,10 +5,10 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
-import type { Button } from "@cronicorn/ui/components/button";
+import type { Button } from "@cronicorn/ui-library/components/button";
 
-import { buttonVariants } from "@cronicorn/ui/components/button";
-import { cn } from "@cronicorn/ui/lib/utils";
+import { buttonVariants } from "@cronicorn/ui-library/components/button";
+import { cn } from "@cronicorn/ui-library/lib/utils";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (

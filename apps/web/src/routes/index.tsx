@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { signOut, useSession } from "../lib/auth-client";
-
+import {Button} from "@cronicorn/ui-library/components/button"
 export const Route = createFileRoute("/")({
   component: Index,
 });
@@ -22,7 +22,9 @@ function Index() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-4xl font-bold mb-8">Welcome to Cronicorn! 🦄</h1>
-      
+      <Button>
+Test Shad
+      </Button>
       {session
         ? (
             <div className="space-y-6">
