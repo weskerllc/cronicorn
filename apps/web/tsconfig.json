@@ -32,6 +32,9 @@
     },
     {
       "path": "../../packages/api-contracts"
+    },
+    {
+      "path": "../../packages/ui-library"
     }
   ]
 }
