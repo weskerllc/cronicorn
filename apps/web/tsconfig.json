@@ -1,5 +1,6 @@
 {
-  "include": ["**/*.ts", "**/*.tsx", "eslint.config.js", "prettier.config.js", "vite.config.js"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
+  "exclude": ["node_modules", "dist"],
 
   "compilerOptions": {
     "target": "ES2022",
@@ -21,12 +22,19 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    // "baseUrl": ".",
-      "paths": {
-      "@/web/*": ["./src/*"],
-      "@cronicorn/ui-library/*": ["../../packages/ui-library/src/*"]
+    
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      // "@cronicorn/ui-library": ["../../packages/ui-library/src/index.ts"],
+      "@cronicorn/ui-library/*": ["../../packages/ui-library/src/*"],
+      // "@cronicorn/api-contracts": ["../../packages/api-contracts/src/index.ts"],
+      // "@cronicorn/api-contracts/*": ["../../packages/api-contracts/src/*"],
+      // "@cronicorn/api/client": ["../../apps/api/src/client.ts"]
     }
+    
   },
+
    "references": [
     {
       "path": "../api"
