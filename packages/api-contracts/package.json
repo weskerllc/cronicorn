@@ -15,6 +15,10 @@
     "./subscriptions": {
       "types": "./dist/subscriptions/index.d.ts",
       "import": "./dist/subscriptions/index.js"
+    },
+    "./dashboard": {
+      "types": "./dist/dashboard/index.d.ts",
+      "import": "./dist/dashboard/index.js"
     }
   },
   "scripts": {

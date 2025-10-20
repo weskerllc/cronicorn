@@ -1483,5 +1483,6 @@ JobsRepo (domain repo) → Update tier on subscription changes
 ---
 
 ## TODO (DONT DELETE)
-Ensure api tests run with a transaction per test and rollback after
-HTTPException is being used only in a couple places in api - inconsistent with other error throws
+- Ensure api tests run with a transaction per test and rollback after
+- HTTPException is being used only in a couple places in api - inconsistent with other error throws
+- optimize dashboard manager queries - adding these functions to the domain types and new repo
