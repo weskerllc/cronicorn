@@ -9,6 +9,7 @@
 
 import { hc } from "hono/client";
 
+import dashboard from "./routes/dashboard/dashboard.index.js";
 import jobs from "./routes/jobs/jobs.index.js";
 import subscriptions from "./routes/subscriptions/subscriptions.index.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
@@ -16,7 +17,8 @@ import { type AppOpenAPI, createRouter } from "./types.js";
 function registerClientRoutes(app: AppOpenAPI) {
   return app
     .route("/", jobs)
-    .route("/", subscriptions);
+    .route("/", subscriptions)
+    .route("/", dashboard);
 }
 
 // stand alone router type used for api client
