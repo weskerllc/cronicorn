@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { jobsQueryOptions } from "../lib/api-client/queries/jobs.queries";
-import { ChartAreaInteractive, DataTable, SectionCards } from "../components/dashboard-new";
+import { ChartAreaInteractive, DashboardTables, SectionCards } from "../components/dashboard-new";
 
 export const Route = createFileRoute("/dashboard/")({
   loader: async ({ context }) => {
@@ -11,13 +11,19 @@ export const Route = createFileRoute("/dashboard/")({
 });
 
 function DashboardPage() {
-
   return (
-<div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <SectionCards />
-              <div className="px-4 lg:px-6">
-                <ChartAreaInteractive />
-              </div>
-              <DataTable/>
-            </div>  );
+    <div className="@container/main flex flex-1 flex-col gap-4 py-4 sm:gap-6 sm:py-6">
+      <div className="flex items-center justify-between px-4 lg:px-6">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+      </div>
+      
+      <SectionCards />
+      
+      <div className="px-4 lg:px-6">
+        <ChartAreaInteractive />
+      </div>
+      
+      <DashboardTables />
+    </div>
+  );
 }

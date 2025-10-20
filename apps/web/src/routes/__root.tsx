@@ -66,8 +66,6 @@ function RootComponent() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-          {/* <Header />
-          <Outlet /> */}
         </Suspense>
       </ErrorBoundary>
       <TanStackDevtools
