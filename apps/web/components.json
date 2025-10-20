@@ -11,9 +11,9 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@/web/components",
-    "hooks": "@/web/hooks",
-    "lib": "@/web/lib",
+    "components": "@/components",
+    "hooks": "@/hooks",
+    "lib": "@/lib",
     "utils": "@cronicorn/ui-library/lib/utils",
     "ui": "@cronicorn/ui-library/components"
   }
