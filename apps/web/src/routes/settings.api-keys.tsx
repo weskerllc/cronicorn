@@ -2,14 +2,14 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import type { CreateApiKeyInput } from "../lib/api-client/queries/api-keys.queries";
-
 import {
 
   apiKeysQueryOptions,
   createApiKey,
   deleteApiKey,
 } from "../lib/api-client/queries/api-keys.queries";
+import type { CreateApiKeyInput } from "../lib/api-client/queries/api-keys.queries";
+
 
 export const Route = createFileRoute("/settings/api-keys")({
   loader: ({ context: { queryClient } }) => {

@@ -5,9 +5,9 @@
  * Only imports the TYPE of the API, maintaining architectural boundaries.
  */
 
+import apiClient from "@cronicorn/api/client";
 import type { ErrorSchema } from "@cronicorn/api/client";
 
-import apiClient from "@cronicorn/api/client";
 
 export type { ErrorSchema };
 export default apiClient("/");

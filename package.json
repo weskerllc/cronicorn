@@ -21,8 +21,9 @@
     "🚀 ---------- QUALITY ----------": "",
     "test": "dotenv -e .env.test vitest run",
     "test:coverage": "dotenv -e .env.test vitest run --coverage",
-    "lint": "eslint \"{apps,packages}/**/*.{js,ts,jsx,tsx}\"",
+    "lint": "eslint . --cache",
     "lint:fix": "eslint . --max-warnings 0 --fix",
+    "lint:web": "pnpm -F @cronicorn/web lint",
     "sim": "pnpm run -r --parallel sim",
     "🚀 ---------- VERSIONING ----------": "",
     "bump": "changeset",
@@ -58,6 +59,8 @@
     "stripe": "^14.25.0",
     "tsx": "^4.20.5",
     "typescript": "~5.7.2",
-    "vitest": "~3.2.4"
+    "vitest": "~3.2.4",
+    "@tanstack/eslint-config": "^0.3.2"
+
   }
 }
