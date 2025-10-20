@@ -46,5 +46,6 @@
  * ```
  */
 
+export * as dashboard from "./dashboard/index.js";
 export * as jobs from "./jobs/index.js";
 export * as subscriptions from "./subscriptions/index.js";
