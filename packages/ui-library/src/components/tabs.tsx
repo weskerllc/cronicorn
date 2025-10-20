@@ -1,9 +1,8 @@
 "use client";
 
+import { cn } from "@cronicorn/ui-library/lib/utils";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as React from "react";
-
-import { cn } from "@cronicorn/ui-library/lib/utils";
 
 function Tabs({
   className,

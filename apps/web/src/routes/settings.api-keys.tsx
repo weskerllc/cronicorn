@@ -1,13 +1,15 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+
+import type { CreateApiKeyInput } from "../lib/api-client/queries/api-keys.queries";
+
 import {
-  
+
   apiKeysQueryOptions,
   createApiKey,
-  deleteApiKey
+  deleteApiKey,
 } from "../lib/api-client/queries/api-keys.queries";
-import type {CreateApiKeyInput} from "../lib/api-client/queries/api-keys.queries";
 
 export const Route = createFileRoute("/settings/api-keys")({
   loader: ({ context: { queryClient } }) => {
@@ -75,75 +77,81 @@ function APIKeysPage() {
         </button>
       </div>
 
-      {apiKeys.length === 0 ? (
-        <div className="border rounded-lg p-8 text-center text-gray-600">
-          <p className="mb-2">No API keys yet</p>
-          <p className="text-sm">Create your first API key to get started</p>
-        </div>
-      ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Key Preview</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Created</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Expires</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {apiKeys.map((key) => (
-                <tr key={key.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <span className="font-medium">{key.name || "Unnamed"}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                      {key.prefix && key.start
-                        ? `${key.prefix}${key.start}...`
-                        : key.start
-                          ? `${key.start}...`
-                          : "••••••••"}
-                    </code>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
-                    {new Date(key.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
-                    {key.expiresAt ? (
-                      <span
-                        className={
-                          new Date(key.expiresAt) < new Date()
-                            ? "text-red-600"
-                            : "text-gray-600"
-                        }
-                      >
-                        {new Date(key.expiresAt).toLocaleDateString()}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">Never</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleDelete(key.id)}
-                      disabled={deleteMutation.isPending}
-                      className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {apiKeys.length === 0
+        ? (
+            <div className="border rounded-lg p-8 text-center text-gray-600">
+              <p className="mb-2">No API keys yet</p>
+              <p className="text-sm">Create your first API key to get started</p>
+            </div>
+          )
+        : (
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Key Preview</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Created</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Expires</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {apiKeys.map(key => (
+                    <tr key={key.id} className="border-t hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <span className="font-medium">{key.name || "Unnamed"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                          {key.prefix && key.start
+                            ? `${key.prefix}${key.start}...`
+                            : key.start
+                              ? `${key.start}...`
+                              : "••••••••"}
+                        </code>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {new Date(key.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {key.expiresAt
+                          ? (
+                              <span
+                                className={
+                                  new Date(key.expiresAt) < new Date()
+                                    ? "text-red-600"
+                                    : "text-gray-600"
+                                }
+                              >
+                                {new Date(key.expiresAt).toLocaleDateString()}
+                              </span>
+                            )
+                          : (
+                              <span className="text-gray-400">Never</span>
+                            )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleDelete(key.id)}
+                          disabled={deleteMutation.isPending}
+                          className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
       <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded">
         <p className="text-sm text-yellow-800">
-          <strong>Important:</strong> API keys are only shown once upon creation. Make sure to
+          <strong>Important:</strong>
+          {" "}
+          API keys are only shown once upon creation. Make sure to
           copy and save them securely.
         </p>
       </div>
@@ -152,7 +160,7 @@ function APIKeysPage() {
       {showCreateModal && (
         <CreateApiKeyModal
           onClose={() => setShowCreateModal(false)}
-          onSubmit={(input) => createMutation.mutate(input)}
+          onSubmit={input => createMutation.mutate(input)}
           isLoading={createMutation.isPending}
         />
       )}
@@ -190,7 +198,7 @@ function CreateApiKeyModal({
 
     // Convert expiration selection to seconds
     if (expiresIn !== "never") {
-      const days = parseInt(expiresIn);
+      const days = Number.parseInt(expiresIn);
       input.expiresIn = days * 24 * 60 * 60; // days to seconds
     }
 
@@ -210,7 +218,7 @@ function CreateApiKeyModal({
               id="key-name"
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               placeholder="My API Key"
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -223,7 +231,7 @@ function CreateApiKeyModal({
             <select
               id="expires-in"
               value={expiresIn}
-              onChange={(e) => setExpiresIn(e.target.value)}
+              onChange={e => setExpiresIn(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="never">Never</option>
@@ -313,7 +321,9 @@ function GeneratedKeyModal({
 
         <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
           <p className="text-xs text-yellow-800">
-            <strong>Security Warning:</strong> Store this key securely. Anyone with this key can
+            <strong>Security Warning:</strong>
+            {" "}
+            Store this key securely. Anyone with this key can
             access your API with your permissions.
           </p>
         </div>

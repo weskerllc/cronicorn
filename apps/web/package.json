@@ -5,14 +5,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsc",
-    "serve": "vite preview",
-    "test": "vitest run",
-    "lint": "eslint",
-    "format": "prettier",
-    "check": "prettier --write . && eslint --fix"
+    "serve": "vite preview"
   },
   "dependencies": {
-        "@hookform/resolvers": "5.2.2",
+    "@hookform/resolvers": "5.2.2",
 
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-devtools": "^0.7.0",
@@ -42,7 +38,6 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "jsdom": "^27.0.0",
-    "prettier": "^3.5.3",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
     "vitest": "^3.0.5",

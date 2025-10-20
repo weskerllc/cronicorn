@@ -20,31 +20,31 @@ function EndpointHealthPage() {
 
       {/* TODO: HealthMetrics cards - success rate, total runs, avg duration, failure count */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-sm text-gray-600 mb-2">Success Rate</h3>
-        <p className="text-2xl font-bold">
-          {health.successCount + health.failureCount > 0
-            ? `${((health.successCount / (health.successCount + health.failureCount)) * 100).toFixed(1)}%`
-            : "N/A"}
-        </p>
-      </div>
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-sm text-gray-600 mb-2">Total Runs</h3>
-        <p className="text-2xl font-bold">{health.successCount + health.failureCount}</p>
-      </div>
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-sm text-gray-600 mb-2">Avg Duration</h3>
-        <p className="text-2xl font-bold">
-          {health.avgDurationMs ? `${health.avgDurationMs.toFixed(0)}ms` : "N/A"}
-        </p>
-      </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm text-gray-600 mb-2">Success Rate</h3>
+          <p className="text-2xl font-bold">
+            {health.successCount + health.failureCount > 0
+              ? `${((health.successCount / (health.successCount + health.failureCount)) * 100).toFixed(1)}%`
+              : "N/A"}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm text-gray-600 mb-2">Total Runs</h3>
+          <p className="text-2xl font-bold">{health.successCount + health.failureCount}</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm text-gray-600 mb-2">Avg Duration</h3>
+          <p className="text-2xl font-bold">
+            {health.avgDurationMs ? `${health.avgDurationMs.toFixed(0)}ms` : "N/A"}
+          </p>
+        </div>
         <div className="p-4 border rounded-lg">
           <p className="text-sm text-gray-600">Failures</p>
           <p className="text-2xl font-bold text-red-600">{health.failureCount || 0}</p>
         </div>
       </div>
 
-            {/* Raw Health Data */}
+      {/* Raw Health Data */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4">Health Summary Data</h2>
         <pre className="bg-gray-100 p-4 rounded text-sm overflow-x-auto">

@@ -1,10 +1,9 @@
 "use client";
 
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
-import * as React from "react";
-
 import { buttonVariants } from "@cronicorn/ui-library/components/button";
 import { cn } from "@cronicorn/ui-library/lib/utils";
+import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
+import * as React from "react";
 
 function AlertDialog({
   ...props

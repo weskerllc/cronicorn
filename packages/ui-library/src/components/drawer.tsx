@@ -1,9 +1,8 @@
 "use client";
 
+import { cn } from "@cronicorn/ui-library/lib/utils";
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
-
-import { cn } from "@cronicorn/ui-library/lib/utils";
 
 function Drawer({
   ...props

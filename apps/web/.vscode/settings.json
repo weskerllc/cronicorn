@@ -9,7 +9,7 @@
   },
   "files.readonlyInclude": {
     "**/routeTree.gen.ts": true
-  },
+  }
   // "typescript.tsserver.maxTsServerMemory": 4096,
   // "typescript.preferences.includePackageJsonAutoImports": "off"
 }

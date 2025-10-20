@@ -1,13 +1,12 @@
 "use client";
 
+import { Button } from "@cronicorn/ui-library/components/button";
+import { cn } from "@cronicorn/ui-library/lib/utils";
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import * as React from "react";
-
-import { Button } from "@cronicorn/ui-library/components/button";
-import { cn } from "@cronicorn/ui-library/lib/utils";
 
 type CarouselApi = UseEmblaCarouselType[1];
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;

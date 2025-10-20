@@ -91,6 +91,7 @@ export class SubscriptionsManager {
    * Handle webhook event from Stripe.
    * This is called after signature verification.
    */
+  // eslint-disable-next-line ts/no-explicit-any
   async handleWebhookEvent(event: { type: string; data: any }): Promise<void> {
     switch (event.type) {
       case "checkout.session.completed":
@@ -126,6 +127,7 @@ export class SubscriptionsManager {
   // eslint-disable-next-line ts/no-explicit-any
   private async handleCheckoutCompleted(session: any): Promise<void> {
     const userId = session.metadata?.userId;
+    // eslint-disable-next-line ts/consistent-type-assertions
     const tier = session.metadata?.tier as "pro" | "enterprise";
 
     if (!userId || !tier) {
@@ -133,6 +135,7 @@ export class SubscriptionsManager {
       throw new Error("Missing userId or tier in checkout session metadata");
     }
 
+    // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Checkout completed: user=${userId}, tier=${tier}, customer=${session.customer}`);
 
     await this.deps.jobsRepo.updateUserSubscription(userId, {
@@ -147,6 +150,7 @@ export class SubscriptionsManager {
   /**
    * Subscription updated (tier change, renewal, etc.)
    */
+  // eslint-disable-next-line ts/no-explicit-any
   private async handleSubscriptionUpdated(subscription: any): Promise<void> {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
 
@@ -158,6 +162,7 @@ export class SubscriptionsManager {
     // Extract tier from subscription data using PaymentProvider port
     const tier = this.deps.paymentProvider.extractTierFromSubscription(subscription);
 
+    // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Subscription updated: user=${user.id}, status=${subscription.status}, tier=${tier}`);
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
@@ -172,6 +177,7 @@ export class SubscriptionsManager {
   /**
    * Subscription canceled/deleted.
    */
+  // eslint-disable-next-line ts/no-explicit-any
   private async handleSubscriptionDeleted(subscription: any): Promise<void> {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
 
@@ -180,6 +186,7 @@ export class SubscriptionsManager {
       return;
     }
 
+    // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Subscription deleted: user=${user.id}, downgrading to free`);
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
@@ -192,6 +199,7 @@ export class SubscriptionsManager {
   /**
    * Payment succeeded - ensure active status.
    */
+  // eslint-disable-next-line ts/no-explicit-any
   private async handlePaymentSucceeded(invoice: any): Promise<void> {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
 
@@ -200,6 +208,7 @@ export class SubscriptionsManager {
       return;
     }
 
+    // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Payment succeeded: user=${user.id}`);
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
@@ -210,6 +219,7 @@ export class SubscriptionsManager {
   /**
    * Payment failed - mark as past_due.
    */
+  // eslint-disable-next-line ts/no-explicit-any
   private async handlePaymentFailed(invoice: any): Promise<void> {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
 
@@ -218,6 +228,7 @@ export class SubscriptionsManager {
       return;
     }
 
+    // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Payment failed: user=${user.id}, marking past_due`);
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {

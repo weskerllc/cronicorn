@@ -14,14 +14,14 @@ import subscriptions from "./routes/subscriptions/subscriptions.index.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
 
 function registerClientRoutes(app: AppOpenAPI) {
-    return app
-        .route("/", jobs)
-        .route("/", subscriptions);
+  return app
+    .route("/", jobs)
+    .route("/", subscriptions);
 }
 
 // stand alone router type used for api client
 const router = registerClientRoutes(
-    createRouter().basePath("/api"),
+  createRouter().basePath("/api"),
 );
 // eslint-disable-next-line ts/no-redeclare
 type router = typeof router;
@@ -34,16 +34,16 @@ const client = hc<router>("");
 type Client = typeof client;
 
 export default (...args: Parameters<typeof hc>): Client =>
-    hc<router>(...args);
+  hc<router>(...args);
 
 export type ErrorSchema = {
-    error: {
-        issues: {
-            code: string;
-            path: (string | number)[];
-            message?: string | undefined;
-        }[];
-        name: string;
-    };
-    success: boolean;
+  error: {
+    issues: {
+      code: string;
+      path: (string | number)[];
+      message?: string | undefined;
+    }[];
+    name: string;
+  };
+  success: boolean;
 };

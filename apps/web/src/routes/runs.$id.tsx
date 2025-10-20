@@ -28,7 +28,10 @@ function RunDetailsPage() {
           </div>
           <div>
             <p className="text-sm text-gray-600">Duration</p>
-            <p className="font-medium">{run.durationMs}ms</p>
+            <p className="font-medium">
+              {run.durationMs}
+              ms
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Started At</p>
@@ -69,47 +72,53 @@ function RunDetailsPage() {
       )}
 
       {/* Request Details */}
-        <div className="mb-8 p-6 border rounded-lg">
-          <h2 className="text-xl font-semibold mb-4">Request Details</h2>
-          <div className="space-y-2">
-            <div>
-              <span className="text-gray-600">Endpoint ID:</span> 
-              <span className="ml-2 font-mono text-sm">{run.endpointId}</span>
-            </div>
+      <div className="mb-8 p-6 border rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">Request Details</h2>
+        <div className="space-y-2">
+          <div>
+            <span className="text-gray-600">Endpoint ID:</span>
+            <span className="ml-2 font-mono text-sm">{run.endpointId}</span>
           </div>
         </div>
+      </div>
 
       {/* Response Details */}
       <div className="mb-8 p-6 border rounded-lg">
         <h2 className="text-xl font-semibold mb-4">Response Details</h2>
-        
+
         {run.statusCode && (
           <div className="mb-4">
             <span className="text-sm text-gray-600">Status Code:</span>
             <span className={`ml-2 font-medium ${
-              run.statusCode >= 200 && run.statusCode < 300 ? "text-green-600" :
-              run.statusCode >= 400 ? "text-red-600" : "text-gray-900"
-            }`}>
+              run.statusCode >= 200 && run.statusCode < 300
+                ? "text-green-600"
+                : run.statusCode >= 400 ? "text-red-600" : "text-gray-900"
+            }`}
+            >
               {run.statusCode}
             </span>
           </div>
         )}
-        
-        {run.errorMessage ? (
-          <div className="p-4 bg-red-50 border border-red-200 rounded">
-            <p className="text-red-800 font-medium">Error</p>
-            <pre className="text-sm mt-2 whitespace-pre-wrap">{run.errorMessage}</pre>
-          </div>
-        ) : run.responseBody ? (
-          <div>
-            <p className="text-sm text-gray-600 mb-2">Response Body:</p>
-            <pre className="bg-gray-50 p-4 rounded text-xs overflow-x-auto max-h-96">
-              {JSON.stringify(run.responseBody, null, 2)}
-            </pre>
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500 italic">No response body captured</p>
-        )}
+
+        {run.errorMessage
+          ? (
+              <div className="p-4 bg-red-50 border border-red-200 rounded">
+                <p className="text-red-800 font-medium">Error</p>
+                <pre className="text-sm mt-2 whitespace-pre-wrap">{run.errorMessage}</pre>
+              </div>
+            )
+          : run.responseBody
+            ? (
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Response Body:</p>
+                  <pre className="bg-gray-50 p-4 rounded text-xs overflow-x-auto max-h-96">
+                    {JSON.stringify(run.responseBody, null, 2)}
+                  </pre>
+                </div>
+              )
+            : (
+                <p className="text-sm text-gray-500 italic">No response body captured</p>
+              )}
       </div>
 
       {/* TODO: SchedulingInfo - next run time, current interval, active AI hints */}

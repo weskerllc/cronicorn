@@ -21,7 +21,7 @@
     "🚀 ---------- QUALITY ----------": "",
     "test": "dotenv -e .env.test vitest run",
     "test:coverage": "dotenv -e .env.test vitest run --coverage",
-    "lint": "eslint . --cache",
+    "lint": "eslint \"{apps,packages}/**/*.{js,ts,jsx,tsx}\"",
     "lint:fix": "eslint . --max-warnings 0 --fix",
     "sim": "pnpm run -r --parallel sim",
     "🚀 ---------- VERSIONING ----------": "",

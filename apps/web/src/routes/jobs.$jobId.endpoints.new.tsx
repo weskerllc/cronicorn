@@ -1,9 +1,9 @@
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { jobQueryOptions } from "../lib/api-client/queries/jobs.queries";
 import { createEndpoint } from "../lib/api-client/queries/endpoints.queries";
+import { jobQueryOptions } from "../lib/api-client/queries/jobs.queries";
 
 export const Route = createFileRoute("/jobs/$jobId/endpoints/new")({
   loader: async ({ params, context }) => {
@@ -51,7 +51,9 @@ function CreateEndpointPage() {
     <div className="p-8 max-w-2xl mx-auto">
       <div className="mb-6">
         <a href={`/jobs/${jobId}`} className="text-blue-600 hover:underline text-sm">
-          ← Back to {job.name}
+          ← Back to
+          {" "}
+          {job.name}
         </a>
       </div>
 
