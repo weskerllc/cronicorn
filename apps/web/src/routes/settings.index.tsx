@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { subscriptionStatusQueryOptions, usageQueryOptions } from "../lib/api-client/queries/subscriptions.queries";
-import { useSession } from "../lib/auth-client";
+import { useSession } from "../lib/auth-client.js";
 
 export const Route = createFileRoute("/settings/")({
   loader: async ({ context }) => {
