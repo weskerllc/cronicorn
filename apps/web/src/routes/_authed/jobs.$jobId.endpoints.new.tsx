@@ -2,10 +2,10 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { createEndpoint } from "../lib/api-client/queries/endpoints.queries";
-import { jobQueryOptions } from "../lib/api-client/queries/jobs.queries";
+import { createEndpoint } from "@/lib/api-client/queries/endpoints.queries";
+import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
 
-export const Route = createFileRoute("/jobs/$jobId/endpoints/new")({
+export const Route = createFileRoute("/_authed/jobs/$jobId/endpoints/new")({
   loader: async ({ params, context }) => {
     await context.queryClient.ensureQueryData(jobQueryOptions(params.jobId));
   },

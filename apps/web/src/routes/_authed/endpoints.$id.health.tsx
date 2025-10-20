@@ -1,9 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { healthQueryOptions } from "../lib/api-client/queries/runs.queries";
+import { healthQueryOptions } from "@/lib/api-client/queries/runs.queries";
 
-export const Route = createFileRoute("/endpoints/$id/health")({
+export const Route = createFileRoute("/_authed/endpoints/$id/health")({
   loader: async ({ params, context }) => {
     await context.queryClient.ensureQueryData(healthQueryOptions(params.id));
   },

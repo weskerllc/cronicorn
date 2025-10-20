@@ -9,7 +9,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@cronicorn/ui-library/components/tabs";
-import { dashboardStatsQueryOptions } from "../../lib/api-client/queries/dashboard.queries";
+import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
 import { RecentRunsTable } from "./recent-runs-table";
 import { TopEndpointsTable } from "./top-endpoints-table";
 

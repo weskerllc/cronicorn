@@ -7,11 +7,11 @@ import {
   apiKeysQueryOptions,
   createApiKey,
   deleteApiKey,
-} from "../lib/api-client/queries/api-keys.queries";
-import type { CreateApiKeyInput } from "../lib/api-client/queries/api-keys.queries";
+} from "@/lib/api-client/queries/api-keys.queries";
+import type { CreateApiKeyInput } from "@/lib/api-client/queries/api-keys.queries";
 
 
-export const Route = createFileRoute("/settings/api-keys")({
+export const Route = createFileRoute("/_authed/settings/api-keys")({
   loader: ({ context: { queryClient } }) => {
     return queryClient.ensureQueryData(apiKeysQueryOptions());
   },

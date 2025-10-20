@@ -2,10 +2,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { clearHints, endpointQueryOptions, pauseEndpoint, resetFailures } from "../lib/api-client/queries/endpoints.queries";
-import { jobQueryOptions } from "../lib/api-client/queries/jobs.queries";
+import { clearHints, endpointQueryOptions, pauseEndpoint, resetFailures, updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
+import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
 
-export const Route = createFileRoute("/jobs/$jobId/endpoints/$id/edit")({
+export const Route = createFileRoute("/_authed/jobs/$jobId/endpoints/$id/edit")({
   loader: async ({ params, context }) => {
     const jobPromise = context.queryClient.ensureQueryData(jobQueryOptions(params.jobId));
     const endpointPromise = context.queryClient.ensureQueryData(
@@ -99,7 +99,6 @@ function EditEndpointPage() {
     const method = formData.get("method") as "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
     try {
-      const { updateEndpoint } = await import("../lib/api-client/queries/endpoints.queries");
       await updateEndpoint(jobId, id, { name, url, method });
       setEditSuccess("Endpoint updated successfully");
       setTimeout(() => window.location.reload(), 1000);

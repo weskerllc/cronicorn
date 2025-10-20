@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@cronicorn/ui-library/components/card";
-import { dashboardStatsQueryOptions } from "../../lib/api-client/queries/dashboard.queries";
+import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
 
 export function SectionCards() {
   const { data, isLoading, error } = useQuery(dashboardStatsQueryOptions({ days: 7 }));

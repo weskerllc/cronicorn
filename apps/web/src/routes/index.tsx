@@ -2,7 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { Button } from "@cronicorn/ui-library/components/button";
 
-import { signOut, useSession } from "../lib/auth-client";
+import { signOut, useSession } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/")({
   component: Index,

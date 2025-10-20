@@ -11,10 +11,10 @@ import { Input } from "@cronicorn/ui-library/components/input";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { Textarea } from "@cronicorn/ui-library/components/textarea";
 
-import { JOBS_QUERY_KEY, createJob } from "../lib/api-client/queries/jobs.queries";
+import { JOBS_QUERY_KEY, createJob } from "@/lib/api-client/queries/jobs.queries";
 import type {CreateJobRequest} from "@cronicorn/api-contracts/jobs";
 
-export const Route = createFileRoute("/jobs/new")({
+export const Route = createFileRoute("/_authed/jobs/new")({
   component: CreateJobPage,
 });
 

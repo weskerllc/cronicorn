@@ -1,13 +1,11 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Outlet, createRootRoute } from "@tanstack/react-router";
+import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Suspense } from "react";
 
-import { SidebarInset, SidebarProvider } from "@cronicorn/ui-library/components/sidebar";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { AppSidebar } from "../components/app-sidebar";
-import { SiteHeader } from "../components/site-header";
+import type { AuthContextValue } from "../lib/auth-context";
 
 // Create QueryClient instance (shared across all routes)
 const queryClient = new QueryClient({
@@ -20,8 +18,10 @@ const queryClient = new QueryClient({
 });
 
 // Define router context type for loader access
-export const Route = createRootRoute({
-  beforeLoad: () => ({
+export const Route = createRootRouteWithContext<{
+  auth: Promise<AuthContextValue>;
+}>()({
+    beforeLoad: () => ({
     queryClient,
   }),
   component: RootComponent,
@@ -30,7 +30,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary
+        <ErrorBoundary
         fallback={(
           <div className="p-8 max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
@@ -48,24 +48,7 @@ function RootComponent() {
             </div>
           )}
         >
-           <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-           <Outlet />
-           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+          <Outlet />
         </Suspense>
       </ErrorBoundary>
       <TanStackDevtools
