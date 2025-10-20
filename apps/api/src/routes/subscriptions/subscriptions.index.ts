@@ -1,4 +1,3 @@
-import { requireAuth } from "../../auth/middleware.js";
 import { createRouter } from "../../types.js";
 import * as handlers from "./subscriptions.handlers.js";
 import * as routes from "./subscriptions.routes.js";

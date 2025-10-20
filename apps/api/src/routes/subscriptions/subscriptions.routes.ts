@@ -7,7 +7,7 @@ import {
   SubscriptionStatusResponseSchema,
   UsageResponseSchema,
 } from "@cronicorn/api-contracts/subscriptions";
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
 /**
  * API Route Definitions for Subscription Management

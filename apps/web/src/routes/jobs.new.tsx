@@ -1,95 +1,108 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, useCanGoBack, useRouter } from "@tanstack/react-router";
 
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@cronicorn/ui-library/components/form";
+import { Separator } from "@cronicorn/ui-library/components/separator";
+
+import { Input } from "@cronicorn/ui-library/components/input";
+import { Textarea } from "@cronicorn/ui-library/components/textarea";
+
+import { CreateJobRequestSchema, type CreateJobRequest } from "@cronicorn/api-contracts/jobs";
+import { useForm } from "react-hook-form";
 import { createJob, JOBS_QUERY_KEY } from "../lib/api-client/queries/jobs.queries";
-import type { CreateJobRequest } from "@cronicorn/api-contracts/jobs";
+import { Button } from "@cronicorn/ui-library/components/button";
+import { Save, X } from "lucide-react";
 
 export const Route = createFileRoute("/jobs/new")({
   component: CreateJobPage,
 });
 
 function CreateJobPage() {
-//   const navigate = useNavigate();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-
-    const { mutateAsync } = useMutation({
+  const form = useForm<CreateJobRequest>({
+    resolver: zodResolver(CreateJobRequestSchema),
+    defaultValues: {
+      name: "",
+      description: '',
+    },
+  });
+    const { mutateAsync, isPending } = useMutation({
     mutationFn: async (data: CreateJobRequest) => createJob(data),
     onSuccess: async (data) => {
+      console.log({data})
       queryClient.invalidateQueries({ queryKey: JOBS_QUERY_KEY });
+      await navigate({ to: "/jobs/$id", params: { id: data.id } });
     //   await navigate({ to: "/dashboard/api-keys", params: { apiKeyId: data.id } });
   
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string;
-    await mutateAsync({ name, description });
+   const router = useRouter()
+  const canGoBack = useCanGoBack()
+
+  const onCancel = () => {
+    router.history.back();
+  }
+
+  const handleFormSubmit = async (data: CreateJobRequest) => {
+    await mutateAsync(data);
   };
 
+  console.log({isPending, isDirty: form.formState.isDirty})
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Create New Job</h1>
 
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
-          {error}
-        </div>
-      )}
-
-      {/* TODO: CreateJobForm with name/description fields */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium mb-2">
-            Job Name *
-          </label>
-          <input
-            type="text"
-            id="name"
+            <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
             name="name"
-            required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., Data Sync Job"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter job name" {...field} disabled={isPending} />
+                </FormControl>
+                <FormDescription>Give the job a name.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium mb-2">
-            Description
-          </label>
-          <textarea
-            id="description"
+           <FormField
+            control={form.control}
             name="description"
-            rows={4}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="What does this job do?"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Enter job description" {...field} disabled={isPending} />
+                </FormControl>
+                <FormDescription>Describe the job prompt.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
+          <Separator />
+          <div className="flex items-center justify-between space-x-2">
+         
+            <div className="flex items-center gap-2 flex-auto justify-end">
+              <Button variant="outline" disabled={isPending || !canGoBack} onClick={onCancel}>
+                <X className="size-4" />
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending || !form.formState.isDirty}>
+                <Save className="size-4" />
+                {isPending ? "Saving..." : "Create Job"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Form>
 
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {loading ? "Creating..." : "Create Job"}
-          </button>
-          <a
-            href="/dashboard"
-            className="px-4 py-2 border rounded hover:bg-gray-50"
-          >
-            Cancel
-          </a>
-        </div>
-      </form>
-
-      <p className="text-sm text-gray-500 mt-4">
-        TODO: Implement form submission with useMutation, validation with Zod
-      </p>
     </div>
   );
 }
