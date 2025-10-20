@@ -29,16 +29,16 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    
+
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@cronicorn/ui-library/*": ["../../packages/ui-library/src/*"]
     }
-    
+
   },
 
-   "references": [
+  "references": [
     {
       "path": "../../packages/api-contracts"
     },

@@ -77,16 +77,19 @@ function RunsListPage() {
               </tr>
             </thead>
             <tbody>
-            {data.runs.map((run) => (
-              <tr key={run.runId} className="border-t">
-                <td className="px-4 py-2 font-mono text-xs">{run.runId.substring(0, 8)}</td>
+              {data.runs.map(run => (
+                <tr key={run.runId} className="border-t">
+                  <td className="px-4 py-2 font-mono text-xs">{run.runId.substring(0, 8)}</td>
                   <td className="px-4 py-2">
                     {/* TODO: Status badge with color coding */}
                     <span className={`px-2 py-1 text-xs rounded ${run.status === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
                       {run.status}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-sm">{run.durationMs}ms</td>
+                  <td className="px-4 py-2 text-sm">
+                    {run.durationMs}
+                    ms
+                  </td>
                   <td className="px-4 py-2 text-sm">{new Date(run.startedAt).toLocaleString()}</td>
                   <td className="px-4 py-2">
                     <a

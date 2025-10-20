@@ -2,11 +2,6 @@
 
 import type { VariantProps } from "class-variance-authority";
 
-import { Slot } from "@radix-ui/react-slot";
-import { cva } from "class-variance-authority";
-import { PanelLeftIcon } from "lucide-react";
-import * as React from "react";
-
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Input } from "@cronicorn/ui-library/components/input";
 import { Separator } from "@cronicorn/ui-library/components/separator";
@@ -26,6 +21,10 @@ import {
 } from "@cronicorn/ui-library/components/tooltip";
 import { useIsMobile } from "@cronicorn/ui-library/hooks/use-mobile";
 import { cn } from "@cronicorn/ui-library/lib/utils";
+import { Slot } from "@radix-ui/react-slot";
+import { cva } from "class-variance-authority";
+import { PanelLeftIcon } from "lucide-react";
+import * as React from "react";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

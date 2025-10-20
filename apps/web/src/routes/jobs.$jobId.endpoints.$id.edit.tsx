@@ -2,8 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { clearHints, pauseEndpoint, resetFailures } from "../lib/api-client/queries/endpoints.queries";
-import { endpointQueryOptions } from "../lib/api-client/queries/endpoints.queries";
+import { clearHints, endpointQueryOptions, pauseEndpoint, resetFailures } from "../lib/api-client/queries/endpoints.queries";
 import { jobQueryOptions } from "../lib/api-client/queries/jobs.queries";
 
 export const Route = createFileRoute("/jobs/$jobId/endpoints/$id/edit")({
@@ -21,7 +20,7 @@ function EditEndpointPage() {
   const { jobId, id } = Route.useParams();
   const { data: job } = useSuspenseQuery(jobQueryOptions(jobId));
   const { data: endpoint } = useSuspenseQuery(endpointQueryOptions(jobId, id));
-  
+
   const [pauseLoading, setPauseLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [clearLoading, setClearLoading] = useState(false);
@@ -83,7 +82,7 @@ function EditEndpointPage() {
   };
 
   const isPaused = endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date();
-  
+
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
@@ -119,7 +118,9 @@ function EditEndpointPage() {
     <div className="p-8 max-w-2xl mx-auto">
       <div className="mb-6">
         <a href={`/jobs/${jobId}`} className="text-blue-600 hover:underline text-sm">
-          ← Back to {job.name}
+          ← Back to
+          {" "}
+          {job.name}
         </a>
       </div>
 
@@ -132,20 +133,24 @@ function EditEndpointPage() {
             </svg>
             <h2 className="text-xl font-semibold text-purple-900">AI Scheduling Hint Active</h2>
           </div>
-          
+
           <div className="space-y-3">
             {endpoint.aiHintIntervalMs && (
               <div className="bg-white p-3 rounded border border-purple-200">
                 <p className="text-sm text-gray-600">Suggested Interval</p>
                 <p className="font-medium text-purple-900">
-                  {Math.round(endpoint.aiHintIntervalMs / 60000)} minutes
+                  {Math.round(endpoint.aiHintIntervalMs / 60000)}
+                  {" "}
+                  minutes
                   <span className="text-sm text-gray-500 ml-2">
-                    ({endpoint.aiHintIntervalMs}ms)
+                    (
+                    {endpoint.aiHintIntervalMs}
+                    ms)
                   </span>
                 </p>
               </div>
             )}
-            
+
             {endpoint.aiHintNextRunAt && (
               <div className="bg-white p-3 rounded border border-purple-200">
                 <p className="text-sm text-gray-600">Suggested Next Run</p>
@@ -154,15 +159,16 @@ function EditEndpointPage() {
                 </p>
               </div>
             )}
-            
+
             {endpoint.aiHintExpiresAt && (
               <div className="bg-white p-3 rounded border border-purple-200">
                 <p className="text-sm text-gray-600">Hint Expires</p>
                 <p className={`font-medium ${
-                  new Date(endpoint.aiHintExpiresAt) < new Date() 
-                    ? "text-red-600" 
+                  new Date(endpoint.aiHintExpiresAt) < new Date()
+                    ? "text-red-600"
                     : "text-purple-900"
-                }`}>
+                }`}
+                >
                   {new Date(endpoint.aiHintExpiresAt).toLocaleString()}
                   {new Date(endpoint.aiHintExpiresAt) < new Date() && (
                     <span className="ml-2 text-sm">(Expired)</span>
@@ -170,7 +176,7 @@ function EditEndpointPage() {
                 </p>
               </div>
             )}
-            
+
             {endpoint.aiHintReason && (
               <div className="bg-white p-3 rounded border border-purple-200">
                 <p className="text-sm text-gray-600">Reason</p>
@@ -188,7 +194,7 @@ function EditEndpointPage() {
           {editError}
         </div>
       )}
-      
+
       {editSuccess && (
         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded text-green-700">
           {editSuccess}
@@ -258,19 +264,19 @@ function EditEndpointPage() {
       {/* Endpoint Actions */}
       <div className="mt-8 pt-8 border-t">
         <h2 className="text-lg font-semibold mb-4">Endpoint Actions</h2>
-        
+
         {actionError && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
             {actionError}
           </div>
         )}
-        
+
         {actionSuccess && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded text-green-700">
             {actionSuccess}
           </div>
         )}
-        
+
         <div className="space-y-2">
           <button
             onClick={handlePause}
@@ -294,15 +300,15 @@ function EditEndpointPage() {
             {clearLoading ? "Loading..." : "Clear AI Hints"}
           </button>
         </div>
-        
+
         <div className="mt-6 bg-gray-50 p-4 rounded">
           <h3 className="text-sm font-semibold mb-2">Endpoint State</h3>
           <pre className="text-xs overflow-x-auto">
-            {JSON.stringify({ 
+            {JSON.stringify({
               pausedUntil: endpoint.pausedUntil,
               failureCount: endpoint.failureCount,
               lastRunAt: endpoint.lastRunAt,
-              nextRunAt: endpoint.nextRunAt
+              nextRunAt: endpoint.nextRunAt,
             }, null, 2)}
           </pre>
         </div>

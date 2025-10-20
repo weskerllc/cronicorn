@@ -67,7 +67,7 @@ function JobDetailsPage() {
                 </tr>
               </thead>
               <tbody>
-                {endpointsData.endpoints.map((endpoint) => (
+                {endpointsData.endpoints.map(endpoint => (
                   <tr key={endpoint.id} className="border-t">
                     <td className="px-4 py-2">{endpoint.name}</td>
                     <td className="px-4 py-2 text-sm text-gray-600">{endpoint.url}</td>

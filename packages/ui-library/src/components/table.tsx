@@ -1,8 +1,7 @@
 "use client";
 
-import * as React from "react";
-
 import { cn } from "@cronicorn/ui-library/lib/utils";
+import * as React from "react";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (

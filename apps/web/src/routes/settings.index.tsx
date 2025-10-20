@@ -2,8 +2,8 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { useSession } from "../lib/auth-client";
 import { subscriptionStatusQueryOptions, usageQueryOptions } from "../lib/api-client/queries/subscriptions.queries";
+import { useSession } from "../lib/auth-client";
 
 export const Route = createFileRoute("/settings/")({
   loader: async ({ context }) => {
@@ -89,28 +89,28 @@ function Settings() {
             </span>
           </div>
 
-                  {subscription.tier !== "free" && (
-                    <>
-                      {error && (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
-                          {error}
-                        </div>
-                      )}
+          {subscription.tier !== "free" && (
+            <>
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
+                  {error}
+                </div>
+              )}
 
-                      <div className="pt-4">
-                        <button
-                          onClick={handleManageSubscription}
-                          disabled={portalLoading}
-                          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                        >
-                          {portalLoading ? "Loading..." : "Manage Subscription"}
-                        </button>
-                        <p className="text-sm text-gray-600 mt-2">
-                          Update payment method, view invoices, or cancel subscription
-                        </p>
-                      </div>
-                    </>
-                  )}
+              <div className="pt-4">
+                <button
+                  onClick={handleManageSubscription}
+                  disabled={portalLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {portalLoading ? "Loading..." : "Manage Subscription"}
+                </button>
+                <p className="text-sm text-gray-600 mt-2">
+                  Update payment method, view invoices, or cancel subscription
+                </p>
+              </div>
+            </>
+          )}
 
           {subscription.tier === "free" && (
             <div className="pt-4">

@@ -35,12 +35,14 @@ function DashboardPage() {
           ) : (
             <div className="grid gap-4">
               {/* TODO: Map jobs to JobCard components */}
-              {data.jobs.map((job) => (
+              {data.jobs.map(job => (
                 <div key={job.id} className="p-4 border rounded-lg">
                   <h3 className="font-semibold">{job.name}</h3>
                   <p className="text-sm text-gray-500">{job.description}</p>
                   <p className="text-sm mt-2">
-                    Endpoints: {job.endpointCount || 0}
+                    Endpoints:
+                    {" "}
+                    {job.endpointCount || 0}
                   </p>
                 </div>
               ))}
