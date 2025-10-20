@@ -14,16 +14,15 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
-      // "@cronicorn/ui-library": resolve(__dirname, "../../packages/ui-library/src/index.ts"),
-      // "@cronicorn/api-contracts": resolve(__dirname, "../../packages/api-contracts/src/index.ts"),
-      // "@cronicorn/api-contracts/jobs": resolve(__dirname, "../../packages/api-contracts/src/jobs/index.ts"),
-      // "@cronicorn/api-contracts/subscriptions": resolve(__dirname, "../../packages/api-contracts/src/subscriptions/index.ts"),
-      // "@cronicorn/api/client": resolve(__dirname, "../api/src/client.ts"),
     },
   },
   server: {
     proxy: {
       "/api": "http://localhost:3333",
+    },
+    // File watcher optimization
+    watch: {
+      ignored: ["**/.tanstack/**", "**/node_modules/**", "**/dist/**"],
     },
   },
 });
