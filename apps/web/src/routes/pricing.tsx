@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { useSession } from "../lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/pricing")({
   component: Pricing,

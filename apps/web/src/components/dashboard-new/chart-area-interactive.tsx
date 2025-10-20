@@ -28,7 +28,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@cronicorn/ui-library/components/toggle-group";
-import { dashboardStatsQueryOptions } from "../../lib/api-client/queries/dashboard.queries";
+import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
 
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import { useIsMobile } from "@/hooks/use-mobile";

@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { jobsQueryOptions } from "../lib/api-client/queries/jobs.queries";
-import { ChartAreaInteractive, DashboardTables, SectionCards } from "../components/dashboard-new";
+import { ChartAreaInteractive, DashboardTables, SectionCards } from "../../components/dashboard-new";
+import { jobsQueryOptions } from "@/lib/api-client/queries/jobs.queries";
 
-export const Route = createFileRoute("/dashboard/")({
+export const Route = createFileRoute("/_authed/dashboard/")({
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(jobsQueryOptions());
   },

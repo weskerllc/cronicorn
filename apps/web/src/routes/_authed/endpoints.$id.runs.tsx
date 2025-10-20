@@ -2,7 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { runsQueryOptions } from "../lib/api-client/queries/runs.queries";
+import { runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
 
 // Validate search params for filtering
 const runsSearchSchema = z.object({
@@ -10,7 +10,7 @@ const runsSearchSchema = z.object({
   dateRange: z.string().optional(),
 });
 
-export const Route = createFileRoute("/endpoints/$id/runs")({
+export const Route = createFileRoute("/_authed/endpoints/$id/runs")({
   validateSearch: runsSearchSchema,
   loaderDeps: ({ search }) => ({ search }),
   loader: async ({ params, context, deps }) => {
