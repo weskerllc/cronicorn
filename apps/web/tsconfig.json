@@ -1,6 +1,6 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
-  "exclude": ["node_modules", "dist"],
+  "exclude": ["node_modules", "dist", ".tanstack"],
 
   "compilerOptions": {
     "target": "ES2022",
@@ -15,6 +15,13 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
+    /* Composite project for faster builds */
+    "composite": true,
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+
     /* Linting */
     "skipLibCheck": true,
     "strict": true,
@@ -26,19 +33,12 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      // "@cronicorn/ui-library": ["../../packages/ui-library/src/index.ts"],
-      "@cronicorn/ui-library/*": ["../../packages/ui-library/src/*"],
-      // "@cronicorn/api-contracts": ["../../packages/api-contracts/src/index.ts"],
-      // "@cronicorn/api-contracts/*": ["../../packages/api-contracts/src/*"],
-      // "@cronicorn/api/client": ["../../apps/api/src/client.ts"]
+      "@cronicorn/ui-library/*": ["../../packages/ui-library/src/*"]
     }
     
   },
 
    "references": [
-    {
-      "path": "../api"
-    },
     {
       "path": "../../packages/api-contracts"
     },

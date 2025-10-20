@@ -29,6 +29,7 @@ function CreateJobPage() {
       description: '',
     },
   });
+  
     const { mutateAsync, isPending } = useMutation({
     mutationFn: async (data: CreateJobRequest) => createJob(data),
     onSuccess: async (data) => {
