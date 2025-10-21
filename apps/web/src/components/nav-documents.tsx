@@ -1,11 +1,11 @@
 "use client"
 
 import {
+  
   IconDots,
   IconFolder,
   IconShare3,
-  IconTrash,
-  type Icon,
+  IconTrash
 } from "@tabler/icons-react"
 
 import {
@@ -24,15 +24,16 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@cronicorn/ui-library/components/sidebar"
+import type {Icon} from "@tabler/icons-react";
 
 export function NavDocuments({
   items,
 }: {
-  items: {
+  items: Array<{
     name: string
     url: string
     icon: Icon
-  }[]
+  }>
 }) {
   const { isMobile } = useSidebar()
 

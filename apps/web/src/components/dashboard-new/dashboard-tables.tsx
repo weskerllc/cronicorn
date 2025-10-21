@@ -9,9 +9,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@cronicorn/ui-library/components/tabs";
-import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
 import { RecentRunsTable } from "./recent-runs-table";
 import { TopEndpointsTable } from "./top-endpoints-table";
+import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
 
 export function DashboardTables() {
   const { data, isLoading } = useQuery(dashboardStatsQueryOptions({ days: 7 }));

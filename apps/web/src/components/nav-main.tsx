@@ -1,6 +1,6 @@
 "use client"
 
-import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
+import {  IconCirclePlusFilled, IconMail } from "@tabler/icons-react"
 
 import { Button } from "@cronicorn/ui-library/components/button"
 import {
@@ -10,15 +10,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cronicorn/ui-library/components/sidebar"
+import type {Icon} from "@tabler/icons-react";
 
 export function NavMain({
   items,
 }: {
-  items: {
+  items: Array<{
     title: string
     url: string
     icon?: Icon
-  }[]
+  }>
 }) {
   return (
     <SidebarGroup>
