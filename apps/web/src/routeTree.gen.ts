@@ -14,9 +14,11 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthedUsageRouteImport } from './routes/_authed/usage'
+import { Route as AuthedPlanRouteImport } from './routes/_authed/plan'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedApiKeysRouteImport } from './routes/_authed/api-keys'
 import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings.index'
-import { Route as AuthedDashboardIndexRouteImport } from './routes/_authed/dashboard.index'
-import { Route as AuthedSettingsApiKeysRouteImport } from './routes/_authed/settings.api-keys'
 import { Route as AuthedRunsIdRouteImport } from './routes/_authed/runs.$id'
 import { Route as AuthedJobsNewRouteImport } from './routes/_authed/jobs.new'
 import { Route as AuthedJobsIdIndexRouteImport } from './routes/_authed/jobs.$id.index'
@@ -50,19 +52,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedUsageRoute = AuthedUsageRouteImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedPlanRoute = AuthedPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedApiKeysRoute = AuthedApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedSettingsIndexRoute = AuthedSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedDashboardIndexRoute = AuthedDashboardIndexRouteImport.update({
-  id: '/dashboard/',
-  path: '/dashboard/',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedSettingsApiKeysRoute = AuthedSettingsApiKeysRouteImport.update({
-  id: '/settings/api-keys',
-  path: '/settings/api-keys',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedRunsIdRoute = AuthedRunsIdRouteImport.update({
@@ -113,10 +125,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/api-keys': typeof AuthedApiKeysRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/plan': typeof AuthedPlanRoute
+  '/usage': typeof AuthedUsageRoute
   '/jobs/new': typeof AuthedJobsNewRoute
   '/runs/$id': typeof AuthedRunsIdRoute
-  '/settings/api-keys': typeof AuthedSettingsApiKeysRoute
-  '/dashboard': typeof AuthedDashboardIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
@@ -130,10 +144,12 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/api-keys': typeof AuthedApiKeysRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/plan': typeof AuthedPlanRoute
+  '/usage': typeof AuthedUsageRoute
   '/jobs/new': typeof AuthedJobsNewRoute
   '/runs/$id': typeof AuthedRunsIdRoute
-  '/settings/api-keys': typeof AuthedSettingsApiKeysRoute
-  '/dashboard': typeof AuthedDashboardIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
@@ -149,10 +165,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
+  '/_authed/api-keys': typeof AuthedApiKeysRoute
+  '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/plan': typeof AuthedPlanRoute
+  '/_authed/usage': typeof AuthedUsageRoute
   '/_authed/jobs/new': typeof AuthedJobsNewRoute
   '/_authed/runs/$id': typeof AuthedRunsIdRoute
-  '/_authed/settings/api-keys': typeof AuthedSettingsApiKeysRoute
-  '/_authed/dashboard/': typeof AuthedDashboardIndexRoute
   '/_authed/settings/': typeof AuthedSettingsIndexRoute
   '/_authed/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/_authed/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
@@ -168,10 +186,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/register'
+    | '/api-keys'
+    | '/dashboard'
+    | '/plan'
+    | '/usage'
     | '/jobs/new'
     | '/runs/$id'
-    | '/settings/api-keys'
-    | '/dashboard'
     | '/settings'
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
@@ -185,10 +205,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/register'
+    | '/api-keys'
+    | '/dashboard'
+    | '/plan'
+    | '/usage'
     | '/jobs/new'
     | '/runs/$id'
-    | '/settings/api-keys'
-    | '/dashboard'
     | '/settings'
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
@@ -203,10 +225,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/pricing'
     | '/register'
+    | '/_authed/api-keys'
+    | '/_authed/dashboard'
+    | '/_authed/plan'
+    | '/_authed/usage'
     | '/_authed/jobs/new'
     | '/_authed/runs/$id'
-    | '/_authed/settings/api-keys'
-    | '/_authed/dashboard/'
     | '/_authed/settings/'
     | '/_authed/endpoints/$id/health'
     | '/_authed/endpoints/$id/runs'
@@ -261,25 +285,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/usage': {
+      id: '/_authed/usage'
+      path: '/usage'
+      fullPath: '/usage'
+      preLoaderRoute: typeof AuthedUsageRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/plan': {
+      id: '/_authed/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof AuthedPlanRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/api-keys': {
+      id: '/_authed/api-keys'
+      path: '/api-keys'
+      fullPath: '/api-keys'
+      preLoaderRoute: typeof AuthedApiKeysRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/settings/': {
       id: '/_authed/settings/'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthedSettingsIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/dashboard/': {
-      id: '/_authed/dashboard/'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthedDashboardIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/settings/api-keys': {
-      id: '/_authed/settings/api-keys'
-      path: '/settings/api-keys'
-      fullPath: '/settings/api-keys'
-      preLoaderRoute: typeof AuthedSettingsApiKeysRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/runs/$id': {
@@ -342,10 +380,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
+  AuthedApiKeysRoute: typeof AuthedApiKeysRoute
+  AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedPlanRoute: typeof AuthedPlanRoute
+  AuthedUsageRoute: typeof AuthedUsageRoute
   AuthedJobsNewRoute: typeof AuthedJobsNewRoute
   AuthedRunsIdRoute: typeof AuthedRunsIdRoute
-  AuthedSettingsApiKeysRoute: typeof AuthedSettingsApiKeysRoute
-  AuthedDashboardIndexRoute: typeof AuthedDashboardIndexRoute
   AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
   AuthedEndpointsIdHealthRoute: typeof AuthedEndpointsIdHealthRoute
   AuthedEndpointsIdRunsRoute: typeof AuthedEndpointsIdRunsRoute
@@ -356,10 +396,12 @@ interface AuthedRouteChildren {
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedApiKeysRoute: AuthedApiKeysRoute,
+  AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedPlanRoute: AuthedPlanRoute,
+  AuthedUsageRoute: AuthedUsageRoute,
   AuthedJobsNewRoute: AuthedJobsNewRoute,
   AuthedRunsIdRoute: AuthedRunsIdRoute,
-  AuthedSettingsApiKeysRoute: AuthedSettingsApiKeysRoute,
-  AuthedDashboardIndexRoute: AuthedDashboardIndexRoute,
   AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
   AuthedEndpointsIdHealthRoute: AuthedEndpointsIdHealthRoute,
   AuthedEndpointsIdRunsRoute: AuthedEndpointsIdRunsRoute,

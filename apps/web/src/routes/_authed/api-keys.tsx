@@ -11,7 +11,7 @@ import {
 } from "@/lib/api-client/queries/api-keys.queries";
 
 
-export const Route = createFileRoute("/_authed/settings/api-keys")({
+export const Route = createFileRoute("/_authed/api-keys")({
   loader: ({ context: { queryClient } }) => {
     return queryClient.ensureQueryData(apiKeysQueryOptions());
   },
