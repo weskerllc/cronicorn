@@ -1,8 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { type Icon } from "@tabler/icons-react"
-
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -10,16 +8,18 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cronicorn/ui-library/components/sidebar"
+import type {Icon} from "@tabler/icons-react";
+
 
 export function NavSecondary({
   items,
   ...props
 }: {
-  items: {
+  items: Array<{
     title: string
     url: string
     icon: Icon
-  }[]
+  }>
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
     <SidebarGroup {...props}>
