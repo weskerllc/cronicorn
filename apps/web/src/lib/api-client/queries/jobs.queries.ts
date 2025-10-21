@@ -37,7 +37,7 @@ type SuccessResponse<T> = Exclude<T, { message: string }>;
 // Type-safe function using InferRequestType/InferResponseType
 const $get = apiClient.api.jobs.$get;
 type GetJobsQuery = InferRequestType<typeof $get>["query"];
-type GetJobsResponse = SuccessResponse<InferResponseType<typeof $get>>;
+export type GetJobsResponse = SuccessResponse<InferResponseType<typeof $get>>;
 
 export async function getJobs(query: GetJobsQuery = {}): Promise<GetJobsResponse> {
   const resp = await apiClient.api.jobs.$get({ query, param: {} });
