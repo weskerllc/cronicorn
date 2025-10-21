@@ -19,6 +19,7 @@ import { Route as AuthedPlanRouteImport } from './routes/_authed/plan'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedApiKeysRouteImport } from './routes/_authed/api-keys'
 import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings.index'
+import { Route as AuthedJobsIndexRouteImport } from './routes/_authed/jobs.index'
 import { Route as AuthedRunsIdRouteImport } from './routes/_authed/runs.$id'
 import { Route as AuthedJobsNewRouteImport } from './routes/_authed/jobs.new'
 import { Route as AuthedJobsIdIndexRouteImport } from './routes/_authed/jobs.$id.index'
@@ -77,6 +78,11 @@ const AuthedSettingsIndexRoute = AuthedSettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedJobsIndexRoute = AuthedJobsIndexRouteImport.update({
+  id: '/jobs/',
+  path: '/jobs/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedRunsIdRoute = AuthedRunsIdRouteImport.update({
   id: '/runs/$id',
   path: '/runs/$id',
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/usage': typeof AuthedUsageRoute
   '/jobs/new': typeof AuthedJobsNewRoute
   '/runs/$id': typeof AuthedRunsIdRoute
+  '/jobs': typeof AuthedJobsIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/usage': typeof AuthedUsageRoute
   '/jobs/new': typeof AuthedJobsNewRoute
   '/runs/$id': typeof AuthedRunsIdRoute
+  '/jobs': typeof AuthedJobsIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/_authed/usage': typeof AuthedUsageRoute
   '/_authed/jobs/new': typeof AuthedJobsNewRoute
   '/_authed/runs/$id': typeof AuthedRunsIdRoute
+  '/_authed/jobs/': typeof AuthedJobsIndexRoute
   '/_authed/settings/': typeof AuthedSettingsIndexRoute
   '/_authed/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/_authed/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/usage'
     | '/jobs/new'
     | '/runs/$id'
+    | '/jobs'
     | '/settings'
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/usage'
     | '/jobs/new'
     | '/runs/$id'
+    | '/jobs'
     | '/settings'
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/_authed/usage'
     | '/_authed/jobs/new'
     | '/_authed/runs/$id'
+    | '/_authed/jobs/'
     | '/_authed/settings/'
     | '/_authed/endpoints/$id/health'
     | '/_authed/endpoints/$id/runs'
@@ -320,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSettingsIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/jobs/': {
+      id: '/_authed/jobs/'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof AuthedJobsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/runs/$id': {
       id: '/_authed/runs/$id'
       path: '/runs/$id'
@@ -386,6 +405,7 @@ interface AuthedRouteChildren {
   AuthedUsageRoute: typeof AuthedUsageRoute
   AuthedJobsNewRoute: typeof AuthedJobsNewRoute
   AuthedRunsIdRoute: typeof AuthedRunsIdRoute
+  AuthedJobsIndexRoute: typeof AuthedJobsIndexRoute
   AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
   AuthedEndpointsIdHealthRoute: typeof AuthedEndpointsIdHealthRoute
   AuthedEndpointsIdRunsRoute: typeof AuthedEndpointsIdRunsRoute
@@ -402,6 +422,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedUsageRoute: AuthedUsageRoute,
   AuthedJobsNewRoute: AuthedJobsNewRoute,
   AuthedRunsIdRoute: AuthedRunsIdRoute,
+  AuthedJobsIndexRoute: AuthedJobsIndexRoute,
   AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
   AuthedEndpointsIdHealthRoute: AuthedEndpointsIdHealthRoute,
   AuthedEndpointsIdRunsRoute: AuthedEndpointsIdRunsRoute,
