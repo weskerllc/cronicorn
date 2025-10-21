@@ -10,6 +10,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cronicorn/ui-library/components/sidebar"
+import { Link, useLocation } from "@tanstack/react-router";
+import { cn } from "@cronicorn/ui-library/lib/utils";
 import type {Icon} from "@tabler/icons-react";
 
 export function NavMain({
@@ -21,6 +23,9 @@ export function NavMain({
     icon?: Icon
   }>
 }) {
+    const location = useLocation()
+    console.log({location})
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -46,9 +51,11 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
+              <SidebarMenuButton className={cn({'bg-sidebar-accent text-sidebar-accent-foreground': location.pathname === item.url})} tooltip={item.title} asChild>
+                  <Link to={item.url}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
