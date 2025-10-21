@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  IconBriefcase,
   IconCamera,
   IconChartBar,
   IconDashboard,
@@ -34,6 +35,11 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: IconDashboard,
+    },
+    {
+      title: "Jobs",
+      url: "/jobs",
+      icon: IconBriefcase,
     },
     {
       title: "API Keys",
@@ -169,7 +175,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
             >
               <a href="#">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">{siteConfig.siteName}</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
