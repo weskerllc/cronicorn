@@ -20,10 +20,24 @@ export const Route = createFileRoute("/_authed")({
       })
     }
   },
+    async loader({ context }) {
+    const auth = await context.auth;
+      // The following check should never be necessary since the `beforeLoad` already checks for authentication,
+      // but this ensures type safety when accessing the session from loader deps
+      if (!auth.user) {
+        throw redirect({ to: "/login", search: { redirect: location.href } });
+      }
+      return auth;
+  },
   component: AuthenticatedLayout,
 });
 
 function AuthenticatedLayout() {
+    const { user } = Route.useLoaderData();
+    if (!user) {
+      throw redirect({ to: "/login", search: { redirect: location.href } });
+    }
+
   return (
     <SidebarProvider
       style={
@@ -33,7 +47,12 @@ function AuthenticatedLayout() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar user={{
+        name: user.name,
+        email: user.email,
+        avatar: user.image,
+
+      }} variant="inset" />
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">
