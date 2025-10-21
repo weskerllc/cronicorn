@@ -1,14 +1,28 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Archive, Plus } from "lucide-react";
+import { Archive, Edit, Plus } from "lucide-react";
 
+import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@cronicorn/ui-library/components/dropdown-menu";
+import { IconDotsVertical } from "@tabler/icons-react";
+import type { ColumnDef } from "@tanstack/react-table";
 
+import type { GetJobsResponse } from "@/lib/api-client/queries/jobs.queries";
 import {
   JOBS_QUERY_KEY,
   archiveJob,
   jobsQueryOptions,
 } from "@/lib/api-client/queries/jobs.queries";
+import { DataTable } from "@/components/data-table";
+
+type JobRow = GetJobsResponse["jobs"][number];
 
 export const Route = createFileRoute("/_authed/jobs/")({
   loader: ({ context: { queryClient } }) => {
@@ -38,6 +52,94 @@ function JobsListPage() {
       archiveMutation.mutate(jobId);
     }
   };
+
+  const columns: Array<ColumnDef<JobRow>> = [
+    {
+      accessorKey: "name",
+      header: "Job Name",
+      cell: ({ row }) => (
+        <Link
+          to="/jobs/$id"
+          params={{ id: row.original.id }}
+          className="font-medium text-blue-600 hover:underline"
+        >
+          {row.original.name}
+        </Link>
+      ),
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => (
+        <div className="max-w-md">
+          {row.original.description ? (
+            <span className="text-sm text-gray-600 line-clamp-2">{row.original.description}</span>
+          ) : (
+            <span className="text-sm text-gray-400 italic">No description</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "endpointCount",
+      header: () => <div className="text-right">Endpoints</div>,
+      cell: ({ row }) => (
+        <div className="text-right">
+          <Badge variant="outline">
+            {row.original.endpointCount} {row.original.endpointCount === 1 ? "endpoint" : "endpoints"}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === "active" ? "default" : "secondary"}>
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+            >
+              <IconDotsVertical className="size-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/jobs/$id" params={{ id: row.original.id }}>
+                View Details
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/jobs/$id/edit" params={{ id: row.original.id }}>
+                <Edit className="size-4" />
+                Edit
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => handleArchive(row.original.id, row.original.name)}
+              disabled={archiveMutation.isPending}
+              className="text-red-600"
+            >
+              <Archive className="size-4" />
+              Archive
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
@@ -72,77 +174,24 @@ function JobsListPage() {
           </div>
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold hidden sm:table-cell">
-                    Description
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold hidden md:table-cell">
-                    Endpoints
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map(job => (
-                  <tr key={job.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <Link
-                        to="/jobs/$id"
-                        params={{ id: job.id }}
-                        className="font-medium text-blue-600 hover:underline"
-                      >
-                        {job.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">
-                      {job.description ? (
-                        <span className="line-clamp-2">{job.description}</span>
-                      ) : (
-                        <span className="text-gray-400 italic">No description</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">
-                      {job.endpointCount} {job.endpointCount === 1 ? "endpoint" : "endpoints"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Button asChild variant="outline" size="sm">
-                          <Link to="/jobs/$id/edit" params={{ id: job.id }}>
-                            Edit
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleArchive(job.id, job.name)}
-                          disabled={archiveMutation.isPending}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Archive className="size-4" />
-                          <span className="sr-only sm:not-sr-only sm:ml-1">Archive</span>
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          <DataTable
+            columns={columns}
+            data={jobs}
+            searchKey="name"
+            searchPlaceholder="Search jobs..."
+            emptyMessage="No jobs found."
+            enablePagination={true}
+            defaultPageSize={10}
+          />
+          
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Tip:</strong> Click on a job name to view its details, endpoints, and recent
+              activity.
+            </p>
           </div>
-        </div>
-      )}
-
-      {jobs.length > 0 && (
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Tip:</strong> Click on a job name to view its details, endpoints, and recent
-            activity.
-          </p>
-        </div>
+        </>
       )}
     </div>
   );
