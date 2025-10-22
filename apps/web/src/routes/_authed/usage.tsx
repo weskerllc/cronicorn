@@ -53,8 +53,8 @@ function RouteComponent() {
                   </span>
                 </div>
                 {metric.limit > 0 && (
-                  <Progress 
-                    value={(metric.used / metric.limit) * 100} 
+                  <Progress
+                    value={(metric.used / metric.limit) * 100}
                   />
                 )}
               </div>
@@ -62,18 +62,6 @@ function RouteComponent() {
           </Card>
         ))}
       </div>
-
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>Raw Usage Data</CardTitle>
-          <CardDescription>Complete usage information for debugging</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="text-sm overflow-x-auto bg-muted p-4 rounded-lg">
-            {JSON.stringify(usage, null, 2)}
-          </pre>
-        </CardContent>
-      </Card>
     </>
   );
 }
