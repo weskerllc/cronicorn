@@ -36,9 +36,8 @@ export const Route = createFileRoute("/_authed/endpoints/$id/runs")({
 type RunRow = {
   runId: string;
   status: "success" | "failure" | "timeout" | "cancelled";
-  durationMs: number | null;
+  durationMs?: number;
   startedAt: Date;
-  finishedAt: Date | null;
 };
 
 function RunsListPage() {
@@ -156,7 +155,11 @@ function RunsListPage() {
 
       <DataTable
         columns={columns}
-        data={data.runs}
+        data={data.runs.map(run => ({
+          ...run,
+          status: run.status as "success" | "failure" | "timeout" | "cancelled",
+          startedAt: new Date(run.startedAt),
+        }))}
         searchKey="runId"
         searchPlaceholder="Search run ID..."
         emptyMessage="No runs found for the selected filters."

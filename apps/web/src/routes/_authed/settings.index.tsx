@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-
-import { Card } from "@cronicorn/ui-library/components/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
 import { PageHeader } from "@/components/page-header";
 import { subscriptionStatusQueryOptions, usageQueryOptions } from "@/lib/api-client/queries/subscriptions.queries";
 import { useSession } from "@/lib/auth-client.js";
@@ -18,8 +17,6 @@ export const Route = createFileRoute("/_authed/settings/")({
 function Settings() {
   const { data: session } = useSession();
 
-
-
   if (!session) {
     return (
       <div>
@@ -29,27 +26,28 @@ function Settings() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         text="Account Settings"
         description="Manage your profile and preferences"
       />
 
       <Card>
-        <h2 className="text-xl font-semibold mb-4">Profile</h2>
-        <div className="space-y-2">
-          <p>
-            <span className="font-medium">Name:</span>
-            {" "}
-            {session.user.name}
-          </p>
-          <p>
-            <span className="font-medium">Email:</span>
-            {" "}
-            {session.user.email}
-          </p>
-        </div>
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+          <CardDescription>Your account information</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-1">
+            <p className="text-sm font-medium text-muted-foreground">Name</p>
+            <p className="text-sm">{session.user.name}</p>
+          </div>
+          <div className="grid gap-1">
+            <p className="text-sm font-medium text-muted-foreground">Email</p>
+            <p className="text-sm">{session.user.email}</p>
+          </div>
+        </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

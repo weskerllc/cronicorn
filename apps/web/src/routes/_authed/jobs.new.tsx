@@ -13,6 +13,7 @@ import { Textarea } from "@cronicorn/ui-library/components/textarea";
 
 import type {CreateJobRequest} from "@cronicorn/api-contracts/jobs";
 import { JOBS_QUERY_KEY, createJob } from "@/lib/api-client/queries/jobs.queries";
+import { PageHeader } from "@/components/page-header";
 
 export const Route = createFileRoute("/_authed/jobs/new")({
   component: CreateJobPage,
@@ -33,10 +34,8 @@ function CreateJobPage() {
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (data: CreateJobRequest) => createJob(data),
     onSuccess: async (data) => {
-      console.log({ data });
       queryClient.invalidateQueries({ queryKey: JOBS_QUERY_KEY });
       await navigate({ to: "/jobs/$id", params: { id: data.id } });
-      //   await navigate({ to: "/dashboard/api-keys", params: { apiKeyId: data.id } });
     },
   });
 
@@ -51,45 +50,46 @@ function CreateJobPage() {
     await mutateAsync(data);
   };
 
-  console.log({ isPending, isDirty: form.formState.isDirty });
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Create New Job</h1>
+    <>
+      <PageHeader
+        text="Create New Job"
+        description="Add a new job to start scheduling endpoints"
+      />
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter job name" {...field} disabled={isPending} />
-                </FormControl>
-                <FormDescription>Give the job a name.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea placeholder="Enter job description" {...field} disabled={isPending} />
-                </FormControl>
-                <FormDescription>Describe the job prompt.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Separator />
-          <div className="flex items-center justify-between space-x-2">
-
-            <div className="flex items-center gap-2 flex-auto justify-end">
+      <div className="max-w-2xl">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter job name" {...field} disabled={isPending} />
+                  </FormControl>
+                  <FormDescription>Give the job a descriptive name.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Enter job description" {...field} disabled={isPending} />
+                  </FormControl>
+                  <FormDescription>Describe the job purpose.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Separator />
+            <div className="flex items-center justify-end gap-2">
               <Button variant="outline" disabled={isPending || !canGoBack} onClick={onCancel}>
                 <X className="size-4" />
                 Cancel
@@ -99,10 +99,9 @@ function CreateJobPage() {
                 {isPending ? "Saving..." : "Create Job"}
               </Button>
             </div>
-          </div>
-        </form>
-      </Form>
-
-    </div>
+          </form>
+        </Form>
+      </div>
+    </>
   );
 }

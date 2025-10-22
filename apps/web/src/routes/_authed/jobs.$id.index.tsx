@@ -12,9 +12,9 @@ import {
 } from "@cronicorn/ui-library/components/dropdown-menu";
 import { IconDotsVertical } from "@tabler/icons-react";
 
-import { PageHeader } from "../../../components/page-header";
-import { EmptyCTA } from "../../../components/empty-cta";
-import { DataTable } from "../../../components/data-table";
+import { PageHeader } from "@/components/page-header";
+import { EmptyCTA } from "@/components/empty-cta";
+import { DataTable } from "@/components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { endpointsQueryOptions, jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
 
@@ -156,7 +156,13 @@ function JobDetailsPage() {
       ) : (
         <DataTable
           columns={columns}
-          data={endpointsData.endpoints}
+          data={endpointsData.endpoints.map(ep => ({
+            id: ep.id,
+            name: ep.name,
+            url: ep.url || '',
+            method: ep.method || 'GET',
+            status: 'active',
+          }))}
           searchKey="name"
           searchPlaceholder="Search endpoints..."
           emptyMessage="No endpoints found."
