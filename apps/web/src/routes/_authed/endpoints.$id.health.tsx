@@ -107,13 +107,6 @@ function EndpointHealthPage() {
           </pre>
         </CardContent>
       </Card>
-      {/* TODO: Add health metrics visualization (charts) */}
-      {/* TODO: Add configurable time range filter */}
-      {/* TODO: Add recent failures section - need to fetch from runs API */}
-      {/* TODO: Show failure streak info using health.failureStreak */}
-      {/* TODO: Show last run status using health.lastRun */}
-
     </>
-
   );
 }

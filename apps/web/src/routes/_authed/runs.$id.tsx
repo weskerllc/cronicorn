@@ -153,7 +153,7 @@ function RunDetailsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              TODO: Next scheduled run, current interval, AI hints if any
+              Scheduling information is available on the endpoint configuration page.
             </p>
           </CardContent>
         </Card>
