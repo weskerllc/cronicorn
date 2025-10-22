@@ -1,30 +1,29 @@
-"use client"
+"use client";
 
-import {  IconCirclePlusFilled, IconMail } from "@tabler/icons-react"
+import { IconCirclePlusFilled, IconMail } from "@tabler/icons-react";
 
-import { Button } from "@cronicorn/ui-library/components/button"
+import { Button } from "@cronicorn/ui-library/components/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@cronicorn/ui-library/components/sidebar"
-import { Link, useLocation } from "@tanstack/react-router";
+} from "@cronicorn/ui-library/components/sidebar";
 import { cn } from "@cronicorn/ui-library/lib/utils";
-import type {Icon} from "@tabler/icons-react";
+import { Link, useLocation } from "@tanstack/react-router";
+import type { Icon } from "@tabler/icons-react";
 
-export function NavMain({
-  items,
-}: {
+interface NavMainProps {
   items: Array<{
-    title: string
-    url: string
-    icon?: Icon
-  }>
-}) {
-    const location = useLocation()
-    console.log({location})
+    title: string;
+    url: string;
+    icon?: Icon;
+  }>;
+}
+
+export function NavMain({ items }: NavMainProps) {
+  const location = useLocation();
 
   return (
     <SidebarGroup>
@@ -51,8 +50,15 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton className={cn({'bg-sidebar-accent text-sidebar-accent-foreground': location.pathname === item.url})} tooltip={item.title} asChild>
-                  <Link to={item.url}>
+              <SidebarMenuButton
+                className={cn({
+                  "bg-sidebar-accent text-sidebar-accent-foreground":
+                    location.pathname === item.url,
+                })}
+                tooltip={item.title}
+                asChild
+              >
+                <Link to={item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>
@@ -62,5 +68,5 @@ export function NavMain({
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 }

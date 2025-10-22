@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   IconCreditCard,
@@ -6,13 +6,13 @@ import {
   IconLogout,
   IconNotification,
   IconUserCircle,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@cronicorn/ui-library/components/avatar"
+} from "@cronicorn/ui-library/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,35 +21,35 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@cronicorn/ui-library/components/dropdown-menu"
+} from "@cronicorn/ui-library/components/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@cronicorn/ui-library/components/sidebar"
-import { signOut } from "../lib/auth-client"
+} from "@cronicorn/ui-library/components/sidebar";
+import { signOut } from "../lib/auth-client";
 
-export function NavUser({
-  user,
-}: {
+interface NavUserProps {
   user: {
-    name: string
-    email: string
-    avatar?: string
-  }
-}) {
-  const { isMobile } = useSidebar()
-    const handleLogout = async () => {
-      await signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            window.location.href = "/login";
-          },
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+}
+
+export function NavUser({ user }: NavUserProps) {
+  const { isMobile } = useSidebar();
+
+  const handleLogout = async () => {
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/login";
         },
-      });
-    };
-  
+      },
+    });
+  };
 
   return (
     <SidebarMenu>
@@ -117,5 +117,5 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

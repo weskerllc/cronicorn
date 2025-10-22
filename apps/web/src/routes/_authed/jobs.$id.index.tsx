@@ -12,10 +12,10 @@ import {
 } from "@cronicorn/ui-library/components/dropdown-menu";
 import { IconDotsVertical } from "@tabler/icons-react";
 
+import type { ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/page-header";
 import { EmptyCTA } from "@/components/empty-cta";
 import { DataTable } from "@/components/data-table";
-import type { ColumnDef } from "@tanstack/react-table";
 import { endpointsQueryOptions, jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
 
 export const Route = createFileRoute("/_authed/jobs/$id/")({
