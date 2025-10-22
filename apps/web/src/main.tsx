@@ -1,12 +1,9 @@
-import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import "@cronicorn/ui-library/styles/globals.css";
 
 import reportWebVitals from "./reportWebVitals.ts";
-import { router } from "./router.tsx";
-import App from "./App.tsx";
-// Import the generated route tree
+import App from "./app.tsx";
 
 
 // Render the app

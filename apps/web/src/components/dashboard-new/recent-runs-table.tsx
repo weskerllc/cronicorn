@@ -2,13 +2,11 @@
 
 import * as React from "react";
 import {
-  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconChevronsLeft,
   IconChevronsRight,
   IconDotsVertical,
-  IconLayoutColumns,
 } from "@tabler/icons-react";
 import {
   flexRender,
@@ -26,7 +24,6 @@ import { Button } from "@cronicorn/ui-library/components/button";
 import { Checkbox } from "@cronicorn/ui-library/components/checkbox";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,

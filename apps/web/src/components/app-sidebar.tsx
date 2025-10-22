@@ -2,15 +2,11 @@
 
 import {
   IconBriefcase,
-  IconCamera,
   IconChartBar,
   IconDashboard,
-  IconFileAi,
-  IconFileDescription,
   IconHelp,
   IconInnerShadowTop,
   IconKey,
-  IconSearch,
   IconSettings
 } from "@tabler/icons-react"
 import * as React from "react"
@@ -46,77 +42,15 @@ const data = {
       url: "/api-keys",
       icon: IconKey,
     },
-      {
+    {
       title: "Usage",
       url: "/usage",
       icon: IconChartBar,
-    },  {
+    },
+    {
       title: "Plan",
       url: "/plan",
       icon: IconChartBar,
-    },
-    // {
-    //   title: "Analytics",
-    //   url: "#",
-    //   icon: IconChartBar,
-    // },
-    // {
-    //   title: "Projects",
-    //   url: "#",
-    //   icon: IconFolder,
-    // },
-    // {
-    //   title: "Team",
-    //   url: "#",
-    //   icon: IconUsers,
-    // },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
     },
   ],
   navSecondary: [
@@ -130,29 +64,7 @@ const data = {
       url: siteConfig.supportUrl,
       icon: IconHelp,
     },
-    // {
-    //   title: "Search",
-    //   url: "#",
-    //   icon: IconSearch,
-    // },
   ],
-  // documents: [
-  //   {
-  //     name: "Data Library",
-  //     url: "#",
-  //     icon: IconDatabase,
-  //   },
-  //   {
-  //     name: "Reports",
-  //     url: "#",
-  //     icon: IconReport,
-  //   },
-  //   {
-  //     name: "Word Assistant",
-  //     url: "#",
-  //     icon: IconFileWord,
-  //   },
-  // ],
 }
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -183,7 +95,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavDocuments items={data.documents} /> */}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
