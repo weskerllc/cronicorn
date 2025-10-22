@@ -14,21 +14,12 @@ export const Route = createFileRoute("/_authed/dashboard")({
 function DashboardPage() {
   return (
     <>
-    
-    
-        <PageHeader
-        text="Dashboard"
-       
-      />
-      
+      <PageHeader text="Dashboard" />
       <SectionCards />
-      
       <div>
         <ChartAreaInteractive />
       </div>
-      
       <DashboardTables />
-          </>
-
+    </>
   );
 }

@@ -1,27 +1,26 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
+
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@cronicorn/ui-library/components/sidebar"
+} from "@cronicorn/ui-library/components/sidebar";
 import { Link } from "@tanstack/react-router";
-import type {Icon} from "@tabler/icons-react";
+import type { Icon } from "@tabler/icons-react";
 
-
-export function NavSecondary({
-  items,
-  ...props
-}: {
+interface NavSecondaryProps extends React.ComponentPropsWithoutRef<typeof SidebarGroup> {
   items: Array<{
-    title: string
-    url: string
-    icon: Icon
-  }>
-} & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
+    title: string;
+    url: string;
+    icon: Icon;
+  }>;
+}
+
+export function NavSecondary({ items, ...props }: NavSecondaryProps) {
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
@@ -30,7 +29,7 @@ export function NavSecondary({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
                 <Link to={item.url}>
-                 <item.icon />
+                  <item.icon />
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
@@ -39,5 +38,5 @@ export function NavSecondary({
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 }
