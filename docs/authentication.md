@@ -4,7 +4,7 @@ Cronicorn supports two authentication methods via Better Auth:
 1. **GitHub OAuth** - For interactive users
 2. **API Keys** - For programmatic access
 
-Both methods use a **unified middleware** with zero custom dual-auth logic.
+Both methods use a unified middleware with zero custom dual-auth logic.
 
 ## Quick Start
 
@@ -18,30 +18,6 @@ Both methods use a **unified middleware** with zero custom dual-auth logic.
 2. Navigate to Settings → API Keys → Create
 3. Copy key (shown only once!)
 4. Add to service: `x-api-key: cron_abc123...`
-
-## How It Works
-
-### OAuth Flow
-```
-1. User clicks "Login with GitHub"
-   → Redirects to GitHub
-2. User authorizes app
-   → GitHub redirects back to API server
-3. Better Auth creates session
-   → Sets HTTP-only cookie
-4. Redirects to frontend
-   → User authenticated
-```
-
-### API Key Flow
-```
-1. User creates key via authenticated request
-   → Better Auth generates and hashes key
-2. Service includes key in header
-   → Better Auth validates signature
-3. Middleware creates session from key
-   → Domain receives { userId, tenantId }
-```
 
 ## Configuration
 
@@ -76,64 +52,13 @@ GITHUB_CLIENT_ID=prod-client-id
 GITHUB_CLIENT_SECRET=prod-client-secret
 ```
 
-**Web UI**:
-```bash
-VITE_API_URL=https://api.yourdomain.com
-```
-
 **GitHub OAuth App**:
 - Homepage URL: `https://yourdomain.com`
 - Callback URL: `https://api.yourdomain.com/api/auth/callback/github`
 
-## Cross-Origin Setup
-
-### CORS Configuration
-
-The API allows cross-origin requests from the web UI:
-
-```typescript
-app.use("/auth/**", cors({
-    origin: config.WEB_URL,
-    credentials: true,
-    allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["POST", "GET", "OPTIONS"],
-}));
-```
-
-### Client Configuration
-
-Web client sends credentials with every request:
-
-```typescript
-export const authClient = createAuthClient({
-    baseURL: apiUrl,
-    fetchOptions: {
-        credentials: "include",  // Send cookies
-    },
-});
-```
-
-### Trusted Origins
-
-Better Auth validates client origin:
-
-```typescript
-betterAuth({
-    baseURL: config.BETTER_AUTH_URL,
-    trustedOrigins: [config.WEB_URL],
-    socialProviders: {
-        github: {
-            redirectURI: `${config.BETTER_AUTH_URL}/api/auth/callback/github`,
-        },
-    },
-});
-```
-
 ## API Key Management
 
-### Built-in Endpoints
-
-Better Auth provides these automatically:
+Better Auth provides these endpoints automatically:
 
 | Endpoint | Method | Auth | Purpose |
 |----------|--------|------|---------|
@@ -173,12 +98,11 @@ curl -X POST http://localhost:3000/api/v1/jobs \
 
 ## Security Features
 
-### GitHub OAuth
+### OAuth
 - ✅ HTTP-only cookies (XSS protection)
 - ✅ Secure flag in production (HTTPS only)
 - ✅ CSRF protection built-in
 - ✅ OAuth state validation
-- ✅ Short-lived tokens
 
 ### API Keys
 - ✅ Keys hashed in database (bcrypt)
@@ -186,44 +110,14 @@ curl -X POST http://localhost:3000/api/v1/jobs \
 - ✅ Per-key rate limiting
 - ✅ Expiration supported
 - ✅ Easy revocation
-- ⚠️ **User responsibility**: Store keys securely (env vars, secrets manager)
 
 ### Best Practices
-1. **GitHub OAuth**: For any interactive UI
-2. **API Keys**: For programmatic access only
-3. **Never** expose keys in client-side code
-4. **Rotate** API keys regularly
-5. **Set expiration** for API keys (e.g., 30 days)
-6. **Monitor** API key usage via rate limits
-7. **Revoke** immediately if compromised
-
-## Implementation Details
-
-### Unified Middleware
-
-```typescript
-export async function authMiddleware(c: Context, next: Next) {
-  // Better Auth checks BOTH:
-  // 1. Session cookies (GitHub OAuth)
-  // 2. x-api-key header (API keys)
-  const session = await auth.api.getSession({ 
-    headers: c.req.raw.headers 
-  })
-  
-  if (!session?.user) {
-    return c.json({ error: 'Unauthorized' }, 401)
-  }
-  
-  c.set('session', { 
-    userId: session.user.id, 
-    tenantId: session.user.tenantId 
-  })
-  
-  return next()
-}
-```
-
-**Why this works**: Better Auth's `apiKey` plugin with `sessionForAPIKeys: true` creates a mock session from API keys, so `getSession()` returns a session for both auth types.
+1. Use GitHub OAuth for interactive UI
+2. Use API keys for programmatic access only
+3. Never expose keys in client-side code
+4. Rotate API keys regularly
+5. Set expiration for API keys (e.g., 30 days)
+6. Revoke immediately if compromised
 
 ## Troubleshooting
 
@@ -239,10 +133,6 @@ export async function authMiddleware(c: Context, next: Next) {
 - Verify `credentials: "include"` in auth client
 - Check browser allows cookies
 - Ensure HTTPS in production
-
-### Redirects to wrong URL
-- Verify `callbackURL` is set in `signIn.social()` calls
-- Check Better Auth `baseURL` configuration
 
 ## Related Documentation
 

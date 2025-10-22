@@ -8,15 +8,8 @@
 - **[Architecture Guide](./architecture.md)** - System design and principles
 - **[Authentication](./authentication.md)** - OAuth & API key setup
 - **[Use Cases](./use-cases.md)** - Real-world examples and patterns
+- **[Web UI Guide](./web-ui.md)** - Frontend application overview
 - **[Contributing](./contributing.md)** - Development workflow
-
-## UI Planning (MVP)
-
-- **[Requirements Summary](./ui-requirements-summary.md)** - Executive overview of minimal UI needed for MVP
-- **[Full Requirements](./minimal-ui-requirements.md)** - Detailed feature specifications and user flows
-- **[UI Sitemap](./ui-sitemap.md)** - Visual site structure and navigation
-- **[Visual Roadmap](./ui-visual-roadmap.md)** - ASCII diagrams showing architecture and implementation flow
-- **[Implementation Checklist](./ui-implementation-checklist.md)** - Week-by-week task breakdown
 
 ## For Developers
 
@@ -35,7 +28,7 @@
 ### Key Resources
 - **[Testing Strategy](../.github/instructions/testing-strategy.instructions.md)** - Testing patterns
 - **[Core Principles](../.github/instructions/core-principles.instructions.md)** - Design philosophy
-- **[Tech Debt Log](./TODO.md)** - Active work and open questions
+- **[Tech Debt & Active Work](./TODO.md)** - Current work items and known issues
 - **[ADRs](../.adr/)** - Architectural decisions with context
 
 ## For Users
@@ -59,19 +52,15 @@ See [Use Cases](./use-cases.md) for detailed scenarios.
 
 ```
 docs/
-├─ README.md                        # This file
-├─ quickstart.md                    # Get running quickly
-├─ architecture.md                  # System design
-├─ authentication.md                # Auth setup
-├─ use-cases.md                     # Examples and patterns
-├─ contributing.md                  # Development guide
-├─ TODO.md                          # Active work tracking
-├─ ui-requirements-summary.md       # UI planning overview (MVP)
-├─ minimal-ui-requirements.md       # Detailed UI specifications
-├─ ui-sitemap.md                    # Site structure and navigation
-├─ ui-visual-roadmap.md             # Visual diagrams and architecture
-├─ ui-implementation-checklist.md   # Implementation task breakdown
-└─ archive/                         # Historical/reference docs
+├─ README.md              # This file
+├─ quickstart.md          # Quick setup guide
+├─ architecture.md        # System design and patterns
+├─ authentication.md      # Auth setup and configuration
+├─ use-cases.md           # Real-world examples
+├─ web-ui.md              # Web UI guide and architecture
+├─ contributing.md        # Development workflow
+├─ TODO.md                # Active work and tech debt
+└─ archive/               # Historical/reference documentation
 ```
 
 ## Additional Resources
