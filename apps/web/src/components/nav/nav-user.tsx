@@ -28,7 +28,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@cronicorn/ui-library/components/sidebar";
-import { signOut } from "../lib/auth-client";
+import { signOut } from "../../lib/auth-client";
 
 interface NavUserProps {
   user: {
