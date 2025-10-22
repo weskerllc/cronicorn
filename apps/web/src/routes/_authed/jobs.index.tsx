@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@cronicorn/ui-library/components/dropdown-menu";
 import { IconDotsVertical } from "@tabler/icons-react";
+import { EmptyCTA } from "../../components/empty-cta";
+import { PageHeader } from "../../components/page-header";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { GetJobsResponse } from "@/lib/api-client/queries/jobs.queries";
@@ -61,7 +63,7 @@ function JobsListPage() {
         <Link
           to="/jobs/$id"
           params={{ id: row.original.id }}
-          className="font-medium text-blue-600 hover:underline"
+          className="font-medium text-accent hover:underline"
         >
           {row.original.name}
         </Link>
@@ -130,9 +132,9 @@ function JobsListPage() {
             <DropdownMenuItem
               onClick={() => handleArchive(row.original.id, row.original.name)}
               disabled={archiveMutation.isPending}
-              className="text-red-600"
+              className="text-destructive"
             >
-              <Archive className="size-4" />
+              <Archive className="size-4 text-destructive" />
               Archive
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -142,37 +144,27 @@ function JobsListPage() {
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Jobs</h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Manage your scheduled jobs and their endpoints
-          </p>
-        </div>
-        <Button asChild>
-          <Link to="/jobs/new">
-            <Plus className="size-4" />
-            Create Job
-          </Link>
-        </Button>
-      </div>
+    <>
+
+      <PageHeader
+        text="Jobs"
+        description="Manage your scheduled jobs and their endpoints"
+        slotRight={
+          <Button asChild>
+            <Link to="/jobs/new">
+              <Plus className="size-4" />
+              Create Job
+            </Link>
+          </Button>
+        }
+      />
 
       {jobs.length === 0 ? (
-        <div className="border rounded-lg p-8 sm:p-12 text-center bg-gray-50">
-          <div className="max-w-md mx-auto">
-            <h3 className="text-lg font-semibold mb-2">No jobs yet</h3>
-            <p className="text-gray-600 mb-6 text-sm">
-              Create your first job to start scheduling API calls and tasks
-            </p>
-            <Button asChild>
-              <Link to="/jobs/new">
-                <Plus className="size-4" />
-                Create Your First Job
-              </Link>
-            </Button>
-          </div>
-        </div>
+        <EmptyCTA
+          title="No Jobs Yet"
+          description="Create your first job to start scheduling"
+
+        />
       ) : (
         <>
           <DataTable
@@ -184,15 +176,8 @@ function JobsListPage() {
             enablePagination={true}
             defaultPageSize={10}
           />
-          
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Tip:</strong> Click on a job name to view its details, endpoints, and recent
-              activity.
-            </p>
-          </div>
         </>
       )}
-    </div>
+    </>
   );
 }

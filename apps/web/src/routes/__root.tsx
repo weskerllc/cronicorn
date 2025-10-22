@@ -33,7 +33,7 @@ function RootComponent() {
         <ErrorBoundary
         fallback={(
           <div className="p-8 max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
+            <h1 className="text-2xl font-bold text-destructive mb-4">Something went wrong</h1>
             <p className="text-gray-600">Please try refreshing the page.</p>
           </div>
         )}
