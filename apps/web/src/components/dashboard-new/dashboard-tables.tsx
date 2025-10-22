@@ -55,8 +55,8 @@ export function DashboardTables() {
   }));
 
   return (
-    <Tabs defaultValue="endpoints" className="w-full flex-col justify-start gap-6">
-      <div className="flex items-center justify-between px-4 lg:px-6">
+    <Tabs defaultValue="endpoints" className="w-full flex flex-col justify-start gap-4">
+      <div className="flex items-center justify-between">
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1">
           <TabsTrigger value="endpoints">Top Endpoints</TabsTrigger>
           <TabsTrigger value="recent">Recent Runs</TabsTrigger>
@@ -65,12 +65,12 @@ export function DashboardTables() {
       
       <TabsContent
         value="endpoints"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
+        className="relative flex flex-col gap-4 overflow-auto"
       >
         <TopEndpointsTable data={endpointsData} />
       </TabsContent>
       
-      <TabsContent value="recent" className="flex flex-col px-4 lg:px-6">
+      <TabsContent value="recent" className="flex flex-col">
         <RecentRunsTable data={runsData} />
       </TabsContent>
     </Tabs>

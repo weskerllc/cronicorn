@@ -2,6 +2,10 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { Button } from "@cronicorn/ui-library/components/button";
+import { Plus } from "lucide-react";
+import { PageHeader } from "../../components/page-header";
+import { EmptyCTA } from "../../components/empty-cta";
 import type { CreateApiKeyInput } from "@/lib/api-client/queries/api-keys.queries";
 import {
 
@@ -59,93 +63,97 @@ function APIKeysPage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">API Keys</h1>
-        <p className="text-gray-600">
-          Manage API keys for programmatic access to your scheduled jobs
-        </p>
-      </div>
+    <>
 
-      <div className="mb-6">
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          disabled={createMutation.isPending}
-        >
-          Generate New Key
-        </button>
-      </div>
+      <PageHeader
+        text="API Keys"
+        description="Manage API keys for programmatic access to your scheduled jobs"
+        slotRight={
+          <Button onClick={() => setShowCreateModal(true)}
+            disabled={createMutation.isPending}
+          >
+            <Plus className="size-4" />
+
+            Generate New Key
+
+
+          </Button>
+        }
+      />
+
+
 
       {apiKeys.length === 0
         ? (
-            <div className="border rounded-lg p-8 text-center text-gray-600">
-              <p className="mb-2">No API keys yet</p>
-              <p className="text-sm">Create your first API key to get started</p>
-            </div>
-          )
+          <EmptyCTA
+            title="No API Keys Yet"
+            description="Create your first API key to get started"
+          />
+
+
+        )
         : (
-            <div className="border rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Key Preview</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Created</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Expires</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+          <div className="border rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Key Preview</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Created</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Expires</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {apiKeys.map(key => (
+                  <tr key={key.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <span className="font-medium">{key.name || "Unnamed"}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        {key.prefix && key.start
+                          ? `${key.prefix}${key.start}...`
+                          : key.start
+                            ? `${key.start}...`
+                            : "••••••••"}
+                      </code>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {new Date(key.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {key.expiresAt
+                        ? (
+                          <span
+                            className={
+                              new Date(key.expiresAt) < new Date()
+                                ? "text-red-600"
+                                : "text-gray-600"
+                            }
+                          >
+                            {new Date(key.expiresAt).toLocaleDateString()}
+                          </span>
+                        )
+                        : (
+                          <span className="text-gray-400">Never</span>
+                        )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleDelete(key.id)}
+                        disabled={deleteMutation.isPending}
+                        className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {apiKeys.map(key => (
-                    <tr key={key.id} className="border-t hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <span className="font-medium">{key.name || "Unnamed"}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                          {key.prefix && key.start
-                            ? `${key.prefix}${key.start}...`
-                            : key.start
-                              ? `${key.start}...`
-                              : "••••••••"}
-                        </code>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {new Date(key.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {key.expiresAt
-                          ? (
-                              <span
-                                className={
-                                  new Date(key.expiresAt) < new Date()
-                                    ? "text-red-600"
-                                    : "text-gray-600"
-                                }
-                              >
-                                {new Date(key.expiresAt).toLocaleDateString()}
-                              </span>
-                            )
-                          : (
-                              <span className="text-gray-400">Never</span>
-                            )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleDelete(key.id)}
-                          disabled={deleteMutation.isPending}
-                          className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
       <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded">
         <p className="text-sm text-yellow-800">
@@ -173,7 +181,7 @@ function APIKeysPage() {
           onClose={handleCloseKeyModal}
         />
       )}
-    </div>
+    </>
   );
 }
 
