@@ -39,9 +39,8 @@ function RouteComponent() {
         onSuccess: () => {
           navigate({ to: "/dashboard" });
         },
-        onError: (error) => {
-          console.error(error);
-          setError((error as any)?.message || "Failed to create account. Please try again.");
+        onError: (ctx) => {
+          setError((ctx as any)?.message || "Failed to create account. Please try again.");
           setIsLoading(false);
         },
       },

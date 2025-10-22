@@ -1,5 +1,6 @@
-"use client"
+"use client";
 
+import * as React from "react";
 import {
   IconBriefcase,
   IconChartBar,
@@ -7,9 +8,8 @@ import {
   IconHelp,
   IconInnerShadowTop,
   IconKey,
-  IconSettings
-} from "@tabler/icons-react"
-import * as React from "react"
+  IconSettings,
+} from "@tabler/icons-react";
 
 import {
   Sidebar,
@@ -19,11 +19,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@cronicorn/ui-library/components/sidebar"
-import siteConfig from "../site-config"
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+} from "@cronicorn/ui-library/components/sidebar";
+import siteConfig from "../site-config";
+import { NavMain } from "@/components/nav-main";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
 
 const data = {
   navMain: [
@@ -65,14 +65,14 @@ const data = {
       icon: IconHelp,
     },
   ],
-}
+};
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-   user: {
-    name: string
-    email: string
-    avatar?: string
-  }
+  user: {
+    name: string;
+    email: string;
+    avatar?: string;
+  };
 }
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
@@ -101,5 +101,5 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
