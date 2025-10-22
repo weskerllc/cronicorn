@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsc --watch"
+    "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.46",
