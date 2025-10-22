@@ -32,9 +32,8 @@ function RouteComponent() {
         onSuccess: () => {
           navigate({ to: "/dashboard" });
         },
-        onError: (error) => {
-          console.error(error);
-          setError((error as any)?.message || "Failed to sign in. Please check your credentials.");
+        onError: (ctx) => {
+          setError((ctx as any)?.message || "Failed to sign in. Please check your credentials.");
           setIsLoading(false);
         },
       },
@@ -55,8 +54,7 @@ function RouteComponent() {
         onSuccess: () => {
           navigate({ to: "/dashboard" });
         },
-        onError: (error) => {
-          console.error(error);
+        onError: () => {
           setError("Failed to sign in with Google.");
           setIsLoading(false);
         },
@@ -78,8 +76,7 @@ function RouteComponent() {
         onSuccess: () => {
           navigate({ to: "/dashboard" });
         },
-        onError: (error) => {
-          console.error(error);
+        onError: () => {
           setError("Failed to sign in with GitHub.");
           setIsLoading(false);
         },
