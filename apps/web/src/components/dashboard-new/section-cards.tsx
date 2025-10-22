@@ -1,6 +1,8 @@
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
 
+import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import {
   Card,
@@ -21,8 +23,8 @@ export function SectionCards() {
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="@container/card animate-pulse">
             <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-              <div className="h-8 bg-gray-300 rounded w-32"></div>
+              <div className="h-4 bg-muted rounded w-24 mb-2"></div>
+              <div className="h-8 bg-muted rounded w-32"></div>
             </CardHeader>
           </Card>
         ))}
@@ -32,9 +34,12 @@ export function SectionCards() {
 
   if (error || !data) {
     return (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
           Failed to load dashboard stats
-        </div>
+        </AlertDescription>
+      </Alert>
     );
   }
 

@@ -75,9 +75,9 @@ function JobsListPage() {
       cell: ({ row }) => (
         <div className="max-w-md">
           {row.original.description ? (
-            <span className="text-sm text-gray-600 line-clamp-2">{row.original.description}</span>
+            <span className="text-sm text-muted-foreground line-clamp-2">{row.original.description}</span>
           ) : (
-            <span className="text-sm text-gray-400 italic">No description</span>
+            <span className="text-sm text-muted-foreground italic">No description</span>
           )}
         </div>
       ),

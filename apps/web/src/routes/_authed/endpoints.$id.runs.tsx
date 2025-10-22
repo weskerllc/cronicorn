@@ -1,7 +1,20 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
+import { Badge } from "@cronicorn/ui-library/components/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@cronicorn/ui-library/components/select";
+import { Button } from "@cronicorn/ui-library/components/button";
+
+import { PageHeader } from "../../components/page-header";
+import { DataTable } from "../../components/data-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
 
 // Validate search params for filtering
@@ -20,96 +33,136 @@ export const Route = createFileRoute("/_authed/endpoints/$id/runs")({
   component: RunsListPage,
 });
 
+type RunRow = {
+  runId: string;
+  status: "success" | "failure" | "timeout" | "cancelled";
+  durationMs: number | null;
+  startedAt: Date;
+  finishedAt: Date | null;
+};
+
 function RunsListPage() {
   const { id } = Route.useParams();
   const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const filters = search.status !== "all" ? { status: search.status } : undefined;
   const { data } = useSuspenseQuery(runsQueryOptions(id, filters));
 
-  return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Run History</h1>
+  const columns: Array<ColumnDef<RunRow>> = [
+    {
+      accessorKey: "runId",
+      header: "Run ID",
+      cell: ({ row }) => (
+        <code className="text-xs font-mono">{row.original.runId.substring(0, 8)}</code>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const variant =
+          status === "success"
+            ? "default"
+            : status === "failure"
+              ? "destructive"
+              : "secondary";
+        return (
+          <Badge variant={variant} className="capitalize">
+            {status}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "durationMs",
+      header: "Duration",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.durationMs ? `${row.original.durationMs}ms` : "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "startedAt",
+      header: "Started At",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {new Date(row.original.startedAt).toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <Button variant="link" size="sm" asChild>
+          <Link to="/runs/$id" params={{ id: row.original.runId }}>
+            View Details
+          </Link>
+        </Button>
+      ),
+    },
+  ];
 
-      {/* TODO: Filters UI - status dropdown, date range picker */}
-      <div className="mb-6 flex gap-4">
-        <div>
-          <label htmlFor="status" className="block text-sm font-medium mb-2">
+  return (
+    <>
+      <PageHeader
+        text="Run History"
+        description="View execution history for this endpoint"
+      />
+
+      <div className="mb-6 flex gap-4 items-end">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="status" className="text-sm font-medium">
             Status
           </label>
-          <select
-            id="status"
+          <Select
             value={search.status}
-            className="px-3 py-2 border rounded-lg"
+            onValueChange={(value) => {
+              navigate({
+                search: (prev) => ({ ...prev, status: value as typeof search.status }),
+              });
+            }}
           >
-            <option value="all">All</option>
-            <option value="success">Success</option>
-            <option value="failure">Failure</option>
-          </select>
+            <SelectTrigger id="status" className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="success">Success</SelectItem>
+              <SelectItem value="failure">Failure</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div>
-          <label htmlFor="dateRange" className="block text-sm font-medium mb-2">
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="dateRange" className="text-sm font-medium">
             Date Range
           </label>
-          <select id="dateRange" className="px-3 py-2 border rounded-lg">
-            <option value="24h">Last 24 hours</option>
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="all">All time</option>
-          </select>
+          <Select defaultValue="all">
+            <SelectTrigger id="dateRange" className="w-[180px]">
+              <SelectValue placeholder="Select date range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="24h">Last 24 hours</SelectItem>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="all">All time</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* TODO: RunsTable with status badges, duration, timestamp */}
-      {data.runs.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-600">No runs found for the selected filters.</p>
-        </div>
-      ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left">Run ID</th>
-                <th className="px-4 py-2 text-left">Status</th>
-                <th className="px-4 py-2 text-left">Duration</th>
-                <th className="px-4 py-2 text-left">Timestamp</th>
-                <th className="px-4 py-2 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.runs.map(run => (
-                <tr key={run.runId} className="border-t">
-                  <td className="px-4 py-2 font-mono text-xs">{run.runId.substring(0, 8)}</td>
-                  <td className="px-4 py-2">
-                    {/* TODO: Status badge with color coding */}
-                    <span className={`px-2 py-1 text-xs rounded ${run.status === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-                      {run.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-sm">
-                    {run.durationMs}
-                    ms
-                  </td>
-                  <td className="px-4 py-2 text-sm">{new Date(run.startedAt).toLocaleString()}</td>
-                  <td className="px-4 py-2">
-                    <a
-                      href={`/runs/${run.runId}`}
-                      className="text-blue-600 hover:underline text-sm"
-                    >
-                      View Details
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* TODO: Pagination - simple prev/next (50 runs per page) */}
-      <div className="mt-6 text-sm text-gray-600">
-        TODO: Pagination controls
-      </div>
-    </div>
+      <DataTable
+        columns={columns}
+        data={data.runs}
+        searchKey="runId"
+        searchPlaceholder="Search run ID..."
+        emptyMessage="No runs found for the selected filters."
+        enablePagination={true}
+        defaultPageSize={50}
+      />
+    </>
   );
 }

@@ -1,8 +1,32 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { Save, X } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import { Button } from "@cronicorn/ui-library/components/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@cronicorn/ui-library/components/form";
+import { Input } from "@cronicorn/ui-library/components/input";
+import { Textarea } from "@cronicorn/ui-library/components/textarea";
+import { Separator } from "@cronicorn/ui-library/components/separator";
+import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
+
+import { PageHeader } from "../../components/page-header";
 import { jobQueryOptions, updateJob } from "@/lib/api-client/queries/jobs.queries";
+
+const updateJobSchema = z.object({
+  name: z.string().min(1, "Name is required").max(255, "Name must be less than 255 characters"),
+  description: z.string().optional(),
+});
 
 export const Route = createFileRoute("/_authed/jobs/$id/edit")({
   loader: async ({ params, context }) => {
@@ -11,92 +35,103 @@ export const Route = createFileRoute("/_authed/jobs/$id/edit")({
   component: EditJobPage,
 });
 
+type UpdateJobForm = z.infer<typeof updateJobSchema>;
+
 function EditJobPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { data: job } = useSuspenseQuery(jobQueryOptions(id));
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  const form = useForm<UpdateJobForm>({
+    resolver: zodResolver(updateJobSchema),
+    defaultValues: {
+      name: job.name,
+      description: job.description || "",
+    },
+  });
 
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string;
-
-    try {
-      await updateJob(id, { name, description: description || undefined });
+  const { mutateAsync, isPending, error } = useMutation({
+    mutationFn: async (data: UpdateJobForm) => updateJob(id, data),
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["jobs"] });
       await queryClient.invalidateQueries({ queryKey: ["jobs", id] });
-      navigate({ to: `/jobs/${id}` });
-    }
-    catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update job");
-      setLoading(false);
-    }
+      navigate({ to: "/jobs/$id", params: { id } });
+    },
+  });
+
+  const handleFormSubmit = async (data: UpdateJobForm) => {
+    await mutateAsync(data);
+  };
+
+  const onCancel = () => {
+    router.history.back();
   };
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Edit Job</h1>
+    <>
+      <PageHeader text="Edit Job" description={`Update details for ${job.name}`} />
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
-          {error}
-        </div>
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>
+            {error instanceof Error ? error.message : "Failed to update job"}
+          </AlertDescription>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium mb-2">
-            Job Name *
-          </label>
-          <input
-            type="text"
-            id="name"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
             name="name"
-            required
-            defaultValue={job.name}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., Data Sync Job"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Job Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Data Sync Job" {...field} disabled={isPending} />
+                </FormControl>
+                <FormDescription>A descriptive name for this job</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium mb-2">
-            Description
-          </label>
-          <textarea
-            id="description"
+          <FormField
+            control={form.control}
             name="description"
-            rows={4}
-            defaultValue={job.description || ""}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="What does this job do?"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="What does this job do?"
+                    rows={4}
+                    {...field}
+                    disabled={isPending}
+                  />
+                </FormControl>
+                <FormDescription>Optional description of what this job does</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {loading ? "Saving..." : "Save Changes"}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate({ to: `/jobs/${id}` })}
-            className="px-4 py-2 border rounded hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+          <Separator />
+
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" disabled={isPending} onClick={onCancel}>
+              <X className="size-4" />
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending || !form.formState.isDirty}>
+              <Save className="size-4" />
+              {isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </>
   );
 }
