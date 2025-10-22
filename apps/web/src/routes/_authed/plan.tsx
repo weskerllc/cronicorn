@@ -4,7 +4,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { Alert, AlertDescription } from '@cronicorn/ui-library/components/alert';
 import { Badge } from '@cronicorn/ui-library/components/badge';
 import { Button } from '@cronicorn/ui-library/components/button';
-import { Card } from '@cronicorn/ui-library/components/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@cronicorn/ui-library/components/card';
 import { PageHeader } from '../../components/page-header';
 import { subscriptionStatusQueryOptions } from '../../lib/api-client/queries/subscriptions.queries';
 
@@ -19,7 +19,6 @@ function RouteComponent() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data: subscription } = useSuspenseQuery(subscriptionStatusQueryOptions());
-
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
@@ -47,22 +46,20 @@ function RouteComponent() {
   };
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         text="Subscription Plan"
         description="Manage your subscription and billing"
       />
 
       <Card>
-        <div className="space-y-4">
-          <div>
-            <span className="font-medium">Current Plan:</span>
-            {" "}
-            <Badge variant="secondary" className="capitalize">
-              {subscription.tier}
-            </Badge>
-          </div>
-
+        <CardHeader>
+          <CardTitle>Current Plan</CardTitle>
+          <CardDescription>
+            You are currently on the <Badge variant="secondary" className="capitalize">{subscription.tier}</Badge> plan
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           {subscription.tier !== "free" && (
             <>
               {error && (
@@ -71,7 +68,7 @@ function RouteComponent() {
                 </Alert>
               )}
 
-              <div className="pt-4 space-y-2">
+              <div className="space-y-2">
                 <Button
                   onClick={handleManageSubscription}
                   disabled={portalLoading}
@@ -86,15 +83,17 @@ function RouteComponent() {
           )}
 
           {subscription.tier === "free" && (
-            <div className="pt-4">
+            <div className="space-y-2">
               <Button asChild>
                 <a href="/pricing">Upgrade Plan</a>
               </Button>
+              <p className="text-sm text-muted-foreground">
+                Unlock more features with a paid plan
+              </p>
             </div>
           )}
-        </div>
+        </CardContent>
       </Card>
-    </div>
+    </>
   );
-
 }

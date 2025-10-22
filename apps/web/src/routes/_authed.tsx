@@ -50,8 +50,7 @@ function AuthenticatedLayout() {
       <AppSidebar user={{
         name: user.name,
         email: user.email,
-        avatar: user.image,
-
+        avatar: user.image || undefined,
       }} variant="inset" />
       <SidebarInset>
         <SiteHeader />
