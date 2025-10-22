@@ -4,7 +4,7 @@ import { AlertCircle } from "lucide-react";
 
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Badge } from "@cronicorn/ui-library/components/badge";
-import { Card } from "@cronicorn/ui-library/components/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
 import { PageHeader } from "@/components/page-header";
 import { runQueryOptions } from "@/lib/api-client/queries/runs.queries";
 
@@ -26,121 +26,138 @@ function RunDetailsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         text="Run Details"
         description={`Run #${id}`}
       />
 
-      <Card>
-        <h2 className="text-xl font-semibold mb-4">Summary</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Status</p>
-            <Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Duration</p>
-            <p className="font-medium">{run.durationMs}ms</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Started At</p>
-            <p className="font-medium">{new Date(run.startedAt).toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Finished At</p>
-            <p className="font-medium">
-              {run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "N/A"}
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      {run.endpoint && (
+      <div className="space-y-6">
         <Card>
-          <h2 className="text-xl font-semibold mb-4">Endpoint Details</h2>
-          <div className="space-y-2">
-            <div>
-              <span className="text-sm text-muted-foreground">Name:</span>
-              <span className="ml-2 font-medium">{run.endpoint.name}</span>
+          <CardHeader>
+            <CardTitle>Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Status</p>
+                <Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Duration</p>
+                <p className="font-medium">{run.durationMs}ms</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Started At</p>
+                <p className="font-medium">{new Date(run.startedAt).toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Finished At</p>
+                <p className="font-medium">
+                  {run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "N/A"}
+                </p>
+              </div>
             </div>
-            {run.endpoint.url && (
-              <div>
-                <span className="text-sm text-muted-foreground">URL:</span>
-                <span className="ml-2 font-mono text-sm">{run.endpoint.url}</span>
-              </div>
-            )}
-            {run.endpoint.method && (
-              <div>
-                <span className="text-sm text-muted-foreground">Method:</span>
-                <Badge variant="outline" className="ml-2">{run.endpoint.method}</Badge>
-              </div>
-            )}
-          </div>
+          </CardContent>
         </Card>
-      )}
 
-      <Card>
-        <h2 className="text-xl font-semibold mb-4">Request Details</h2>
-        <div className="space-y-2">
-          <div>
-            <span className="text-muted-foreground">Endpoint ID:</span>
-            <span className="ml-2 font-mono text-sm">{run.endpointId}</span>
-          </div>
-        </div>
-      </Card>
-
-      <Card>
-        <h2 className="text-xl font-semibold mb-4">Response Details</h2>
-
-        {run.statusCode && (
-          <div className="mb-4">
-            <span className="text-sm text-muted-foreground">Status Code:</span>
-            <Badge
-              variant={
-                run.statusCode >= 200 && run.statusCode < 300
-                  ? "default"
-                  : run.statusCode >= 400
-                    ? "destructive"
-                    : "secondary"
-              }
-              className="ml-2"
-            >
-              {run.statusCode}
-            </Badge>
-          </div>
+        {run.endpoint && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Endpoint Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div>
+                <span className="text-sm text-muted-foreground">Name:</span>
+                <span className="ml-2 font-medium">{run.endpoint.name}</span>
+              </div>
+              {run.endpoint.url && (
+                <div>
+                  <span className="text-sm text-muted-foreground">URL:</span>
+                  <span className="ml-2 font-mono text-sm">{run.endpoint.url}</span>
+                </div>
+              )}
+              {run.endpoint.method && (
+                <div>
+                  <span className="text-sm text-muted-foreground">Method:</span>
+                  <Badge variant="outline" className="ml-2">{run.endpoint.method}</Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
-        {run.errorMessage
-          ? (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <p className="font-medium mb-2">Error</p>
-                <pre className="text-sm whitespace-pre-wrap">{run.errorMessage}</pre>
-              </AlertDescription>
-            </Alert>
-          )
-          : run.responseBody
-            ? (
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Response Body:</p>
-                <pre className="bg-muted p-4 rounded text-xs overflow-x-auto max-h-96">
-                  {JSON.stringify(run.responseBody, null, 2)}
-                </pre>
-              </div>
-            )
-            : (
-              <p className="text-sm text-muted-foreground italic">No response body captured</p>
-            )}
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Request Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div>
+              <span className="text-muted-foreground">Endpoint ID:</span>
+              <span className="ml-2 font-mono text-sm">{run.endpointId}</span>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <h2 className="text-xl font-semibold mb-4">Scheduling Info</h2>
-        <p className="text-sm text-muted-foreground">
-          TODO: Next scheduled run, current interval, AI hints if any
-        </p>
-      </Card>
-    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Response Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {run.statusCode && (
+              <div className="mb-4">
+                <span className="text-sm text-muted-foreground">Status Code:</span>
+                <Badge
+                  variant={
+                    run.statusCode >= 200 && run.statusCode < 300
+                      ? "default"
+                      : run.statusCode >= 400
+                        ? "destructive"
+                        : "secondary"
+                  }
+                  className="ml-2"
+                >
+                  {run.statusCode}
+                </Badge>
+              </div>
+            )}
+
+            {run.errorMessage
+              ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="font-medium mb-2">Error</p>
+                    <pre className="text-sm whitespace-pre-wrap">{run.errorMessage}</pre>
+                  </AlertDescription>
+                </Alert>
+              )
+              : run.responseBody
+                ? (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Response Body:</p>
+                    <pre className="bg-muted p-4 rounded text-xs overflow-x-auto max-h-96">
+                      {JSON.stringify(run.responseBody, null, 2)}
+                    </pre>
+                  </div>
+                )
+                : (
+                  <p className="text-sm text-muted-foreground italic">No response body captured</p>
+                )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Scheduling Info</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              TODO: Next scheduled run, current interval, AI hints if any
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }
