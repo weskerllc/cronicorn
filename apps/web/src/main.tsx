@@ -5,7 +5,7 @@ import "@cronicorn/ui-library/styles/globals.css";
 
 import reportWebVitals from "./reportWebVitals.ts";
 import { router } from "./router.tsx";
-import App from "./App.tsx";
+import App from "./app.tsx";
 // Import the generated route tree
 
 
