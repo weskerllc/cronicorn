@@ -198,4 +198,21 @@ Got questions? Open an issue or discussion on GitHub.
 
 ## 📄 License
 
-ISC License.
+This project is licensed under the Fair Source License, Version 0.9.
+
+**TL;DR:** You can freely use, modify, and self-host this software for any purpose. However, you cannot offer it as a commercial hosted service to compete with the original project.
+
+**Permitted:**
+- ✅ Use for personal, business, or organizational purposes
+- ✅ Self-host for your own infrastructure
+- ✅ Modify and distribute the source code
+- ✅ Include as a component in larger services
+
+**Not Permitted:**
+- ❌ Sell hosted access to this software as a standalone product
+- ❌ Offer "Cronicorn-as-a-Service" commercially
+- ❌ Compete directly by hosting this as a paid service
+
+See the [LICENSE](./LICENSE) file for full details.
+
+For commercial hosting licenses, please contact the repository maintainer.

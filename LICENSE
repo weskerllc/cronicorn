@@ -1,0 +1,36 @@
+Fair Source License, Version 0.9
+
+Copyright (c) 2025 Cronicorn Contributors
+
+License Grant: This software and associated documentation files (the "Software") may be used, copied, modified, and distributed, subject to the following conditions:
+
+1. Use Limitation: The Software may be used by any number of users for any lawful purpose, EXCEPT that you may not use the Software to provide a commercial hosted or managed service to third parties (a "Commercial Hosting Service"), where the primary value of the service is the functionality of the Software itself.
+
+2. Free to Use and Self-Host: You are free to:
+   - Use the Software for personal, internal business, educational, or non-profit purposes
+   - Self-host the Software for your own use or your organization's use
+   - Modify and distribute the Software
+   - Use the Software as part of a larger service where the Software is not the primary value proposition
+
+3. Prohibited Use: You may NOT:
+   - Offer the Software as a commercial hosted service where users pay primarily for access to the Software's scheduling and job management functionality
+   - Sell access to a hosted instance of this Software as a standalone product or service
+   - Compete directly with the original author by offering a commercial hosting service of this Software
+
+4. Source Code: The above copyright notice and this license shall be included in all copies or substantial portions of the Software.
+
+5. No Warranty: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Examples of Permitted Uses:
+- Using the Software to schedule jobs for your own applications
+- Self-hosting for your company's internal infrastructure
+- Including the Software as a component in a larger SaaS product
+- Using it for educational or research purposes
+- Modifying and distributing the source code
+
+Examples of Prohibited Uses:
+- Selling "Cronicorn-as-a-Service" where customers pay to use your hosted version
+- Offering managed Cronicorn hosting as a standalone commercial product
+- Rebranding and selling hosted instances of this Software
+
+For commercial hosting licenses or questions, please contact the repository maintainer.
