@@ -20,10 +20,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cronicorn/ui-library/components/sidebar";
-import siteConfig from "../site-config";
-import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
+import siteConfig from "../../site-config";
+import { NavMain } from "@/components/nav/nav-main";
+import { NavSecondary } from "@/components/nav/nav-secondary";
+import { NavUser } from "@/components/nav/nav-user";
 
 const data = {
   navMain: [

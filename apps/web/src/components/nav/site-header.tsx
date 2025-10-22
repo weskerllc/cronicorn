@@ -1,7 +1,7 @@
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { SidebarTrigger } from "@cronicorn/ui-library/components/sidebar";
-import siteConfig from "../site-config";
+import siteConfig from "../../site-config";
 
 export function SiteHeader() {
   return (
