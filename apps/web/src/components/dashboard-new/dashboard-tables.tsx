@@ -2,7 +2,9 @@
 
 import { IconLoader } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
 
+import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import {
   Tabs,
   TabsContent,
@@ -29,9 +31,12 @@ export function DashboardTables() {
   if (!data) {
     return (
       <div className="px-4 lg:px-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          Failed to load dashboard data
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load dashboard data
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -62,14 +67,14 @@ export function DashboardTables() {
           <TabsTrigger value="recent">Recent Runs</TabsTrigger>
         </TabsList>
       </div>
-      
+
       <TabsContent
         value="endpoints"
         className="relative flex flex-col gap-4 overflow-auto"
       >
         <TopEndpointsTable data={endpointsData} />
       </TabsContent>
-      
+
       <TabsContent value="recent" className="flex flex-col">
         <RecentRunsTable data={runsData} />
       </TabsContent>

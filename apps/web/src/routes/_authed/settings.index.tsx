@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { Card } from "@cronicorn/ui-library/components/card";
+import { PageHeader } from "@/components/page-header";
 import { subscriptionStatusQueryOptions, usageQueryOptions } from "@/lib/api-client/queries/subscriptions.queries";
 import { useSession } from "@/lib/auth-client.js";
 
@@ -20,18 +22,20 @@ function Settings() {
 
   if (!session) {
     return (
-      <div className="p-8 max-w-4xl mx-auto">
+      <div>
         <p>Please log in to view settings.</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
+    <div className="space-y-6">
+      <PageHeader
+        text="Account Settings"
+        description="Manage your profile and preferences"
+      />
 
-      {/* Profile Section */}
-      <div className="mb-8 p-6 border rounded-lg">
+      <Card>
         <h2 className="text-xl font-semibold mb-4">Profile</h2>
         <div className="space-y-2">
           <p>
@@ -45,8 +49,7 @@ function Settings() {
             {session.user.email}
           </p>
         </div>
-      </div>
-
+      </Card>
     </div>
   );
 }

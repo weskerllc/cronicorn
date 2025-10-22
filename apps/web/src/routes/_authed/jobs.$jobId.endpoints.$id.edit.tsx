@@ -1,9 +1,44 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { AlertCircle, Zap } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
+import { Badge } from "@cronicorn/ui-library/components/badge";
+import { Button } from "@cronicorn/ui-library/components/button";
+import { Card } from "@cronicorn/ui-library/components/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@cronicorn/ui-library/components/form";
+import { Input } from "@cronicorn/ui-library/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@cronicorn/ui-library/components/select";
+import { Separator } from "@cronicorn/ui-library/components/separator";
+import { toast } from "@cronicorn/ui-library/lib/utils";
+
+import { PageHeader } from "../../components/page-header";
 import { clearHints, endpointQueryOptions, pauseEndpoint, resetFailures, updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
+
+const updateEndpointSchema = z.object({
+  name: z.string().min(1, "Name is required").max(255, "Name must be less than 255 characters"),
+  url: z.string().url("Must be a valid URL"),
+  method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
+});
+
+type UpdateEndpointForm = z.infer<typeof updateEndpointSchema>;
 
 export const Route = createFileRoute("/_authed/jobs/$jobId/endpoints/$id/edit")({
   loader: async ({ params, context }) => {
@@ -18,289 +53,248 @@ export const Route = createFileRoute("/_authed/jobs/$jobId/endpoints/$id/edit")(
 
 function EditEndpointPage() {
   const { jobId, id } = Route.useParams();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: job } = useSuspenseQuery(jobQueryOptions(jobId));
   const { data: endpoint } = useSuspenseQuery(endpointQueryOptions(jobId, id));
 
-  const [pauseLoading, setPauseLoading] = useState(false);
-  const [resetLoading, setResetLoading] = useState(false);
-  const [clearLoading, setClearLoading] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const form = useForm<UpdateEndpointForm>({
+    resolver: zodResolver(updateEndpointSchema),
+    defaultValues: {
+      name: endpoint.name,
+      url: endpoint.url,
+      method: endpoint.method,
+    },
+  });
+
+  const { mutateAsync: updateMutate, isPending: updatePending, error: updateError } = useMutation({
+    mutationFn: async (data: UpdateEndpointForm) => updateEndpoint(jobId, id, data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["jobs", jobId, "endpoints", id] });
+      toast.success("Endpoint updated successfully");
+    },
+  });
+
+  const { mutateAsync: pauseMutate, isPending: pausePending } = useMutation({
+    mutationFn: async (pausedUntil: string | null) => pauseEndpoint(id, { pausedUntil }),
+    onSuccess: async (_, pausedUntil) => {
+      await queryClient.invalidateQueries({ queryKey: ["jobs", jobId, "endpoints", id] });
+      toast.success(pausedUntil ? "Endpoint paused for 24 hours" : "Endpoint resumed");
+    },
+  });
+
+  const { mutateAsync: resetMutate, isPending: resetPending } = useMutation({
+    mutationFn: async () => resetFailures(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["jobs", jobId, "endpoints", id] });
+      toast.success("Failure count reset");
+    },
+  });
+
+  const { mutateAsync: clearMutate, isPending: clearPending } = useMutation({
+    mutationFn: async () => clearHints(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["jobs", jobId, "endpoints", id] });
+      toast.success("AI hints cleared");
+    },
+  });
+
+  const handleFormSubmit = async (data: UpdateEndpointForm) => {
+    await updateMutate(data);
+  };
 
   const handlePause = async () => {
-    setPauseLoading(true);
-    setActionError(null);
-    setActionSuccess(null);
-    try {
-      const isPaused = endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date();
-      await pauseEndpoint(id, {
-        pausedUntil: isPaused ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      });
-      setActionSuccess(isPaused ? "Endpoint resumed" : "Endpoint paused for 24 hours");
-      setTimeout(() => window.location.reload(), 1000);
-    }
-    catch (error) {
-      setActionError(error instanceof Error ? error.message : "Failed to pause endpoint");
-    }
-    finally {
-      setPauseLoading(false);
-    }
+    const isPaused = endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date();
+    const pausedUntil = isPaused ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await pauseMutate(pausedUntil);
   };
 
   const handleResetFailures = async () => {
-    setResetLoading(true);
-    setActionError(null);
-    setActionSuccess(null);
-    try {
-      await resetFailures(id);
-      setActionSuccess("Failure count reset");
-      setTimeout(() => window.location.reload(), 1000);
-    }
-    catch (error) {
-      setActionError(error instanceof Error ? error.message : "Failed to reset failures");
-    }
-    finally {
-      setResetLoading(false);
-    }
+    await resetMutate();
   };
 
   const handleClearHints = async () => {
-    setClearLoading(true);
-    setActionError(null);
-    setActionSuccess(null);
-    try {
-      await clearHints(id);
-      setActionSuccess("AI hints cleared");
-      setTimeout(() => window.location.reload(), 1000);
-    }
-    catch (error) {
-      setActionError(error instanceof Error ? error.message : "Failed to clear hints");
-    }
-    finally {
-      setClearLoading(false);
-    }
+    await clearMutate();
+  };
+
+  const onCancel = () => {
+    router.history.back();
   };
 
   const isPaused = endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date();
-
-  const [editLoading, setEditLoading] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
-  const [editSuccess, setEditSuccess] = useState<string | null>(null);
-
-  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setEditLoading(true);
-    setEditError(null);
-    setEditSuccess(null);
-
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const url = formData.get("url") as string;
-    const method = formData.get("method") as "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-
-    try {
-      await updateEndpoint(jobId, id, { name, url, method });
-      setEditSuccess("Endpoint updated successfully");
-      setTimeout(() => window.location.reload(), 1000);
-    }
-    catch (error) {
-      setEditError(error instanceof Error ? error.message : "Failed to update endpoint");
-    }
-    finally {
-      setEditLoading(false);
-    }
-  };
-
-  // TODO: Complete form validation with Zod
+  const hasAIHints = !!(endpoint.aiHintIntervalMs || endpoint.aiHintNextRunAt || endpoint.aiHintReason);
+  const isHintExpired = endpoint.aiHintExpiresAt && new Date(endpoint.aiHintExpiresAt) < new Date();
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <div className="mb-6">
-        <a href={`/jobs/${jobId}`} className="text-blue-600 hover:underline text-sm">
-          ← Back to
-          {" "}
-          {job.name}
-        </a>
+    <>
+      <div className="mb-4">
+        <Button variant="link" asChild>
+          <Link to="/jobs/$id" params={{ id: jobId }}>
+            ← Back to {job.name}
+          </Link>
+        </Button>
       </div>
 
-      {/* AI Hint Visualization */}
-      {(endpoint.aiHintIntervalMs || endpoint.aiHintNextRunAt || endpoint.aiHintReason) && (
-        <div className="mb-8 p-6 border-2 border-purple-200 rounded-lg bg-purple-50">
+      <PageHeader
+        text="Edit Endpoint"
+        description={`Update configuration for ${endpoint.name}`}
+      />
+
+      {hasAIHints && (
+        <Card className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <h2 className="text-xl font-semibold text-purple-900">AI Scheduling Hint Active</h2>
+            <Zap className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">AI Scheduling Hint Active</h2>
+            {isHintExpired && (
+              <Badge variant="destructive">Expired</Badge>
+            )}
           </div>
 
           <div className="space-y-3">
             {endpoint.aiHintIntervalMs && (
-              <div className="bg-white p-3 rounded border border-purple-200">
-                <p className="text-sm text-gray-600">Suggested Interval</p>
-                <p className="font-medium text-purple-900">
-                  {Math.round(endpoint.aiHintIntervalMs / 60000)}
-                  {" "}
-                  minutes
-                  <span className="text-sm text-gray-500 ml-2">
-                    (
-                    {endpoint.aiHintIntervalMs}
-                    ms)
+              <div>
+                <p className="text-sm text-muted-foreground">Suggested Interval</p>
+                <p className="font-medium">
+                  {Math.round(endpoint.aiHintIntervalMs / 60000)} minutes
+                  <span className="text-sm text-muted-foreground ml-2">
+                    ({endpoint.aiHintIntervalMs}ms)
                   </span>
                 </p>
               </div>
             )}
 
             {endpoint.aiHintNextRunAt && (
-              <div className="bg-white p-3 rounded border border-purple-200">
-                <p className="text-sm text-gray-600">Suggested Next Run</p>
-                <p className="font-medium text-purple-900">
+              <div>
+                <p className="text-sm text-muted-foreground">Suggested Next Run</p>
+                <p className="font-medium">
                   {new Date(endpoint.aiHintNextRunAt).toLocaleString()}
                 </p>
               </div>
             )}
 
             {endpoint.aiHintExpiresAt && (
-              <div className="bg-white p-3 rounded border border-purple-200">
-                <p className="text-sm text-gray-600">Hint Expires</p>
-                <p className={`font-medium ${
-                  new Date(endpoint.aiHintExpiresAt) < new Date()
-                    ? "text-red-600"
-                    : "text-purple-900"
-                }`}
-                >
+              <div>
+                <p className="text-sm text-muted-foreground">Hint Expires</p>
+                <p className={`font-medium ${isHintExpired ? "text-destructive" : ""}`}>
                   {new Date(endpoint.aiHintExpiresAt).toLocaleString()}
-                  {new Date(endpoint.aiHintExpiresAt) < new Date() && (
-                    <span className="ml-2 text-sm">(Expired)</span>
-                  )}
+                  {isHintExpired && <span className="ml-2 text-sm">(Expired)</span>}
                 </p>
               </div>
             )}
 
             {endpoint.aiHintReason && (
-              <div className="bg-white p-3 rounded border border-purple-200">
-                <p className="text-sm text-gray-600">Reason</p>
-                <p className="text-sm text-gray-700 italic">{endpoint.aiHintReason}</p>
+              <div>
+                <p className="text-sm text-muted-foreground">Reason</p>
+                <p className="text-sm italic">{endpoint.aiHintReason}</p>
               </div>
             )}
           </div>
-        </div>
+        </Card>
       )}
 
-      <h1 className="text-3xl font-bold mb-8">Edit Endpoint</h1>
-
-      {editError && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
-          {editError}
-        </div>
+      {updateError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{updateError.message}</AlertDescription>
+        </Alert>
       )}
 
-      {editSuccess && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded text-green-700">
-          {editSuccess}
-        </div>
-      )}
-
-      {/* TODO: EditEndpointForm pre-populated with endpoint data */}
-      <form onSubmit={handleEditSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium mb-2">
-            Endpoint Name *
-          </label>
-          <input
-            type="text"
-            id="name"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
             name="name"
-            defaultValue={endpoint.name}
-            required
-            className="w-full px-3 py-2 border rounded-lg"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Endpoint Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label htmlFor="url" className="block text-sm font-medium mb-2">
-            URL *
-          </label>
-          <input
-            type="url"
-            id="url"
+          <FormField
+            control={form.control}
             name="url"
-            defaultValue={endpoint.url}
-            required
-            className="w-full px-3 py-2 border rounded-lg"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>URL</FormLabel>
+                <FormControl>
+                  <Input type="url" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label htmlFor="method" className="block text-sm font-medium mb-2">
-            HTTP Method *
-          </label>
-          <select id="method" name="method" defaultValue={endpoint.method} className="w-full px-3 py-2 border rounded-lg">
-            <option value="GET">GET</option>
-            <option value="POST">POST</option>
-            <option value="PUT">PUT</option>
-            <option value="PATCH">PATCH</option>
-            <option value="DELETE">DELETE</option>
-          </select>
-        </div>
+          <FormField
+            control={form.control}
+            name="method"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>HTTP Method</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select method" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="GET">GET</SelectItem>
+                    <SelectItem value="POST">POST</SelectItem>
+                    <SelectItem value="PUT">PUT</SelectItem>
+                    <SelectItem value="PATCH">PATCH</SelectItem>
+                    <SelectItem value="DELETE">DELETE</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={editLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {editLoading ? "Saving..." : "Save Changes"}
-          </button>
-          <a
-            href={`/jobs/${jobId}`}
-            className="px-4 py-2 border rounded hover:bg-gray-50"
-          >
-            Cancel
-          </a>
-        </div>
-      </form>
-
-      {/* Endpoint Actions */}
-      <div className="mt-8 pt-8 border-t">
-        <h2 className="text-lg font-semibold mb-4">Endpoint Actions</h2>
-
-        {actionError && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
-            {actionError}
+          <div className="flex gap-4">
+            <Button type="submit" disabled={updatePending}>
+              {updatePending ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
           </div>
-        )}
+        </form>
+      </Form>
 
-        {actionSuccess && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded text-green-700">
-            {actionSuccess}
-          </div>
-        )}
+      <Separator className="my-8" />
 
-        <div className="space-y-2">
-          <button
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Endpoint Actions</h2>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
             onClick={handlePause}
-            disabled={pauseLoading}
-            className="block px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            disabled={pausePending}
           >
-            {pauseLoading ? "Loading..." : isPaused ? "Resume Endpoint" : "Pause Endpoint"}
-          </button>
-          <button
+            {pausePending ? "Loading..." : isPaused ? "Resume Endpoint" : "Pause Endpoint"}
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleResetFailures}
-            disabled={resetLoading}
-            className="block px-4 py-2 border rounded hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            disabled={resetPending}
           >
-            {resetLoading ? "Loading..." : "Reset Failure Count"}
-          </button>
-          <button
+            {resetPending ? "Loading..." : "Reset Failure Count"}
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleClearHints}
-            disabled={clearLoading}
-            className="block px-4 py-2 border rounded hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            disabled={clearPending}
           >
-            {clearLoading ? "Loading..." : "Clear AI Hints"}
-          </button>
+            {clearPending ? "Loading..." : "Clear AI Hints"}
+          </Button>
         </div>
 
-        <div className="mt-6 bg-gray-50 p-4 rounded">
+        <Card>
           <h3 className="text-sm font-semibold mb-2">Endpoint State</h3>
           <pre className="text-xs overflow-x-auto">
             {JSON.stringify({
@@ -310,8 +304,8 @@ function EditEndpointPage() {
               nextRunAt: endpoint.nextRunAt,
             }, null, 2)}
           </pre>
-        </div>
+        </Card>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,18 +1,75 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { IconDotsVertical } from "@tabler/icons-react";
+import { CheckCircle2, Copy, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@cronicorn/ui-library/components/alert-dialog";
+import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
-import { Plus } from "lucide-react";
-import { PageHeader } from "../../components/page-header";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@cronicorn/ui-library/components/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@cronicorn/ui-library/components/dropdown-menu";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@cronicorn/ui-library/components/form";
+import { Input } from "@cronicorn/ui-library/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@cronicorn/ui-library/components/select";
+import { toast } from "@cronicorn/ui-library/lib/utils";
+
+import { DataTable } from "../../components/data-table";
 import { EmptyCTA } from "../../components/empty-cta";
+import { PageHeader } from "../../components/page-header";
+import type { ColumnDef } from "@tanstack/react-table";
 import type { CreateApiKeyInput } from "@/lib/api-client/queries/api-keys.queries";
 import {
-
   apiKeysQueryOptions,
   createApiKey,
   deleteApiKey,
 } from "@/lib/api-client/queries/api-keys.queries";
+
+const createApiKeySchema = z.object({
+  name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  expiresIn: z.string(),
+});
+
+type CreateApiKeyForm = z.infer<typeof createApiKeySchema>;
 
 
 export const Route = createFileRoute("/_authed/api-keys")({
@@ -22,12 +79,22 @@ export const Route = createFileRoute("/_authed/api-keys")({
   component: APIKeysPage,
 });
 
+type ApiKeyRow = {
+  id: string;
+  name: string | null;
+  prefix: string | null;
+  start: string | null;
+  createdAt: Date;
+  expiresAt: Date | null;
+};
+
 function APIKeysPage() {
   const queryClient = useQueryClient();
   const { data: apiKeys } = useSuspenseQuery(apiKeysQueryOptions());
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: createApiKey,
@@ -42,309 +109,330 @@ function APIKeysPage() {
     mutationFn: deleteApiKey,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+      setDeleteKeyId(null);
+      toast.success("API key deleted successfully");
     },
   });
-
-  const handleDelete = (keyId: string) => {
-    if (confirm("Are you sure you want to delete this API key? This action cannot be undone.")) {
-      deleteMutation.mutate(keyId);
-    }
-  };
 
   const handleCopyKey = async () => {
     if (generatedKey) {
       await navigator.clipboard.writeText(generatedKey);
-      alert("API key copied to clipboard!");
+      toast.success("API key copied to clipboard!");
     }
   };
 
-  const handleCloseKeyModal = () => {
-    setGeneratedKey(null);
-  };
+  const columns: Array<ColumnDef<ApiKeyRow>> = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.name || "Unnamed"}</span>
+      ),
+    },
+    {
+      accessorKey: "start",
+      header: "Key Preview",
+      cell: ({ row }) => (
+        <code className="text-xs bg-muted px-2 py-1 rounded">
+          {row.original.prefix && row.original.start
+            ? `${row.original.prefix}${row.original.start}...`
+            : row.original.start
+              ? `${row.original.start}...`
+              : "••••••••"}
+        </code>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {new Date(row.original.createdAt).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "expiresAt",
+      header: "Expires",
+      cell: ({ row }) => {
+        if (!row.original.expiresAt) {
+          return <span className="text-sm text-muted-foreground">Never</span>;
+        }
+        const isExpired = new Date(row.original.expiresAt) < new Date();
+        return (
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${isExpired ? "text-destructive" : "text-muted-foreground"}`}>
+              {new Date(row.original.expiresAt).toLocaleDateString()}
+            </span>
+            {isExpired && <Badge variant="destructive">Expired</Badge>}
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="size-8">
+              <IconDotsVertical className="size-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => setDeleteKeyId(row.original.id)}
+              className="text-destructive"
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
   return (
     <>
-
       <PageHeader
         text="API Keys"
         description="Manage API keys for programmatic access to your scheduled jobs"
         slotRight={
-          <Button onClick={() => setShowCreateModal(true)}
+          <Button
+            onClick={() => setShowCreateModal(true)}
             disabled={createMutation.isPending}
           >
             <Plus className="size-4" />
-
             Generate New Key
-
-
           </Button>
         }
       />
 
-
-
-      {apiKeys.length === 0
-        ? (
-          <EmptyCTA
-            title="No API Keys Yet"
-            description="Create your first API key to get started"
+      {apiKeys.length === 0 ? (
+        <EmptyCTA
+          title="No API Keys Yet"
+          description="Create your first API key to get started"
+        />
+      ) : (
+        <>
+          <DataTable
+            columns={columns}
+            data={apiKeys}
+            searchKey="name"
+            searchPlaceholder="Search API keys..."
+            emptyMessage="No API keys found."
+            enablePagination={true}
+            defaultPageSize={10}
           />
 
-
-        )
-        : (
-          <div className="border rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Key Preview</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Created</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Expires</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {apiKeys.map(key => (
-                  <tr key={key.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <span className="font-medium">{key.name || "Unnamed"}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                        {key.prefix && key.start
-                          ? `${key.prefix}${key.start}...`
-                          : key.start
-                            ? `${key.start}...`
-                            : "••••••••"}
-                      </code>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {new Date(key.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {key.expiresAt
-                        ? (
-                          <span
-                            className={
-                              new Date(key.expiresAt) < new Date()
-                                ? "text-red-600"
-                                : "text-gray-600"
-                            }
-                          >
-                            {new Date(key.expiresAt).toLocaleDateString()}
-                          </span>
-                        )
-                        : (
-                          <span className="text-gray-400">Never</span>
-                        )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleDelete(key.id)}
-                        disabled={deleteMutation.isPending}
-                        className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-      <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded">
-        <p className="text-sm text-yellow-800">
-          <strong>Important:</strong>
-          {" "}
-          API keys are only shown once upon creation. Make sure to
-          copy and save them securely.
-        </p>
-      </div>
-
-      {/* Create API Key Modal */}
-      {showCreateModal && (
-        <CreateApiKeyModal
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={input => createMutation.mutate(input)}
-          isLoading={createMutation.isPending}
-        />
+          <Alert className="mt-6">
+            <AlertDescription>
+              <strong>Important:</strong> API keys are only shown once upon creation. Make
+              sure to copy and save them securely.
+            </AlertDescription>
+          </Alert>
+        </>
       )}
 
-      {/* Show Generated Key Modal */}
-      {generatedKey && (
-        <GeneratedKeyModal
-          apiKey={generatedKey}
-          onCopy={handleCopyKey}
-          onClose={handleCloseKeyModal}
-        />
-      )}
+      {/* Create API Key Dialog */}
+      <CreateApiKeyDialog
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onSubmit={(input) => createMutation.mutate(input)}
+        isLoading={createMutation.isPending}
+      />
+
+      {/* Generated Key Dialog */}
+      <GeneratedKeyDialog
+        open={!!generatedKey}
+        onOpenChange={(open) => !open && setGeneratedKey(null)}
+        apiKey={generatedKey || ""}
+        onCopy={handleCopyKey}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteKeyId} onOpenChange={(open) => !open && setDeleteKeyId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this API key
+              and revoke its access.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteKeyId && deleteMutation.mutate(deleteKeyId)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
 
-function CreateApiKeyModal({
-  onClose,
+function CreateApiKeyDialog({
+  open,
+  onOpenChange,
   onSubmit,
   isLoading,
 }: {
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSubmit: (input: CreateApiKeyInput) => void;
   isLoading: boolean;
 }) {
-  const [name, setName] = useState("");
-  const [expiresIn, setExpiresIn] = useState<string>("never");
+  const form = useForm<CreateApiKeyForm>({
+    resolver: zodResolver(createApiKeySchema),
+    defaultValues: {
+      name: "",
+      expiresIn: "never",
+    },
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = (data: CreateApiKeyForm) => {
     const input: CreateApiKeyInput = {
-      name: name.trim() || "Unnamed Key",
+      name: data.name.trim() || "Unnamed Key",
     };
 
     // Convert expiration selection to seconds
-    if (expiresIn !== "never") {
-      const days = Number.parseInt(expiresIn);
-      input.expiresIn = days * 24 * 60 * 60; // days to seconds
+    if (data.expiresIn !== "never") {
+      const days = Number.parseInt(data.expiresIn);
+      input.expiresIn = days * 24 * 60 * 60;
     }
 
     onSubmit(input);
+    form.reset();
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h2 className="text-xl font-bold mb-4">Create API Key</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="key-name" className="block text-sm font-medium mb-2">
-              Key Name
-            </label>
-            <input
-              id="key-name"
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="My API Key"
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create API Key</DialogTitle>
+          <DialogDescription>
+            Create a new API key for programmatic access. The key will be shown only once.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Key Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="My API Key" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormDescription>A descriptive name for this API key</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="mb-6">
-            <label htmlFor="expires-in" className="block text-sm font-medium mb-2">
-              Expiration
-            </label>
-            <select
-              id="expires-in"
-              value={expiresIn}
-              onChange={e => setExpiresIn(e.target.value)}
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="never">Never</option>
-              <option value="7">7 days</option>
-              <option value="30">30 days</option>
-              <option value="90">90 days</option>
-              <option value="365">1 year</option>
-            </select>
-          </div>
+            <FormField
+              control={form.control}
+              name="expiresIn"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expiration</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={isLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select expiration" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="never">Never</SelectItem>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                      <SelectItem value="90">90 days</SelectItem>
+                      <SelectItem value="365">1 year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>When this key should expire</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isLoading}
-              className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isLoading ? "Creating..." : "Create Key"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Creating..." : "Create Key"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function GeneratedKeyModal({
+function GeneratedKeyDialog({
+  open,
+  onOpenChange,
   apiKey,
   onCopy,
-  onClose,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   apiKey: string;
   onCopy: () => void;
-  onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <svg
-              className="w-6 h-6 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <h2 className="text-xl font-bold">API Key Created</h2>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="size-6 text-primary" />
+            <DialogTitle>API Key Created</DialogTitle>
           </div>
-          <p className="text-sm text-gray-600">
+          <DialogDescription>
             Make sure to copy your API key now. You won&apos;t be able to see it again!
-          </p>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="mb-6">
-          <div className="bg-gray-50 border rounded p-3 mb-3">
+        <div className="space-y-4">
+          <div className="bg-muted border rounded p-3">
             <code className="text-sm break-all block">{apiKey}</code>
           </div>
-          <button
-            onClick={onCopy}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
+
+          <Button onClick={onCopy} className="w-full">
+            <Copy className="size-4" />
             Copy to Clipboard
-          </button>
+          </Button>
+
+          <Alert>
+            <AlertDescription>
+              <strong>Security Warning:</strong> Store this key securely. Anyone with this
+              key can access your API with your permissions.
+            </AlertDescription>
+          </Alert>
         </div>
 
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
-          <p className="text-xs text-yellow-800">
-            <strong>Security Warning:</strong>
-            {" "}
-            Store this key securely. Anyone with this key can
-            access your API with your permissions.
-          </p>
-        </div>
-
-        <div className="flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-          >
-            I&apos;ve Saved My Key
-          </button>
-        </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>I&apos;ve Saved My Key</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

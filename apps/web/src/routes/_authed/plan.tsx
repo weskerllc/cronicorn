@@ -1,6 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
+import { Alert, AlertDescription } from '@cronicorn/ui-library/components/alert';
+import { Badge } from '@cronicorn/ui-library/components/badge';
+import { Button } from '@cronicorn/ui-library/components/button';
+import { Card } from '@cronicorn/ui-library/components/card';
+import { PageHeader } from '../../components/page-header';
 import { subscriptionStatusQueryOptions } from '../../lib/api-client/queries/subscriptions.queries';
 
 export const Route = createFileRoute('/_authed/plan')({
@@ -11,12 +16,12 @@ export const Route = createFileRoute('/_authed/plan')({
 })
 
 function RouteComponent() {
-     const [portalLoading, setPortalLoading] = useState(false);
-       const [error, setError] = useState<string | null>(null);
-       const { data: subscription } = useSuspenseQuery(subscriptionStatusQueryOptions());
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { data: subscription } = useSuspenseQuery(subscriptionStatusQueryOptions());
 
 
-      const handleManageSubscription = async () => {
+  const handleManageSubscription = async () => {
     setPortalLoading(true);
     setError(null);
 
@@ -41,35 +46,39 @@ function RouteComponent() {
     }
   };
 
-  return       <div className="mb-8 p-6 border rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">Subscription</h2>
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        text="Subscription Plan"
+        description="Manage your subscription and billing"
+      />
 
+      <Card>
         <div className="space-y-4">
           <div>
             <span className="font-medium">Current Plan:</span>
             {" "}
-            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold capitalize">
+            <Badge variant="secondary" className="capitalize">
               {subscription.tier}
-            </span>
+            </Badge>
           </div>
 
           {subscription.tier !== "free" && (
             <>
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
-                  {error}
-                </div>
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
 
-              <div className="pt-4">
-                <button
+              <div className="pt-4 space-y-2">
+                <Button
                   onClick={handleManageSubscription}
                   disabled={portalLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   {portalLoading ? "Loading..." : "Manage Subscription"}
-                </button>
-                <p className="text-sm text-gray-600 mt-2">
+                </Button>
+                <p className="text-sm text-muted-foreground">
                   Update payment method, view invoices, or cancel subscription
                 </p>
               </div>
@@ -78,15 +87,14 @@ function RouteComponent() {
 
           {subscription.tier === "free" && (
             <div className="pt-4">
-              <a
-                href="/pricing"
-                className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Upgrade Plan
-              </a>
+              <Button asChild>
+                <a href="/pricing">Upgrade Plan</a>
+              </Button>
             </div>
           )}
         </div>
-      </div>
+      </Card>
+    </div>
+  );
 
 }
