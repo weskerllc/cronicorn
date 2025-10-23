@@ -6,6 +6,7 @@
  */
 
 import type { Cron, Dispatcher, JobEndpoint, JobsRepo, RunsRepo } from "@cronicorn/domain";
+import { FakeLogger } from "@cronicorn/domain";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -42,6 +43,7 @@ describe("scheduler - timing edge cases", () => {
     let runs: RunsRepo;
     let dispatcher: Dispatcher;
     let cron: Cron;
+    let logger: FakeLogger;
     let scheduler: Scheduler;
 
     let mockEndpoint: JobEndpoint;
@@ -49,6 +51,7 @@ describe("scheduler - timing edge cases", () => {
 
     beforeEach(() => {
         clock = new FakeClock(new Date("2025-01-01T12:00:00Z"));
+        logger = new FakeLogger();
         executionDurationMs = 0;
 
         mockEndpoint = {
@@ -99,6 +102,7 @@ describe("scheduler - timing edge cases", () => {
             runs,
             dispatcher,
             cron,
+            logger,
         });
     });
 
