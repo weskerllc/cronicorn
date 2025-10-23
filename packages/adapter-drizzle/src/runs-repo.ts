@@ -3,7 +3,7 @@ import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgre
 
 import { and, avg, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
-import { jobEndpoints, runs } from "./schema.js";
+import { jobEndpoints, jobs, runs } from "./schema.js";
 
 /**
  * PostgreSQL implementation of RunsRepo using Drizzle ORM.
@@ -93,6 +93,9 @@ export class DrizzleRunsRepo implements RunsRepo {
     // Build query conditions
     const conditions = [];
 
+    // CRITICAL: Always filter by userId to ensure data isolation
+    conditions.push(eq(jobs.userId, filters.userId));
+
     if (filters.endpointId) {
       conditions.push(eq(runs.endpointId, filters.endpointId));
     }
@@ -117,10 +120,10 @@ export class DrizzleRunsRepo implements RunsRepo {
       })
       .from(runs);
 
-    // Add join if filtering by jobId
-    const withJoin = filters.jobId
-      ? baseSelect.innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
-      : baseSelect;
+    // CRITICAL: Always join with jobEndpoints and jobs to filter by userId
+    const withJoin = baseSelect
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id));
 
     // Add where conditions
     const withWhere = conditions.length > 0
@@ -136,9 +139,12 @@ export class DrizzleRunsRepo implements RunsRepo {
       : await withOrder.offset(filters.offset ?? 0);
 
     // Get total count (TODO: optimize with single query using window functions)
-    const countQuery = filters.jobId
-      ? this.tx.select({ count: count() }).from(runs).innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
-      : this.tx.select({ count: count() }).from(runs);
+    // CRITICAL: Always join with jobEndpoints and jobs to filter by userId
+    const countQuery = this.tx
+      .select({ count: count() })
+      .from(runs)
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id));
 
     const countWithWhere = conditions.length > 0
       ? countQuery.where(and(...conditions))

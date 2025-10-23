@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Archive, Edit, Plus } from "lucide-react";
@@ -22,6 +23,7 @@ import {
   archiveJob,
   jobsQueryOptions,
 } from "@/lib/api-client/queries/jobs.queries";
+import { DASHBOARD_QUERY_KEY } from "@/lib/api-client/queries/dashboard.queries";
 import { DataTable } from "@/components/data-table";
 
 type JobRow = GetJobsResponse["jobs"][number];
@@ -36,19 +38,30 @@ export const Route = createFileRoute("/_authed/jobs/")({
 function JobsListPage() {
   const queryClient = useQueryClient();
   const { data: jobsData } = useSuspenseQuery(jobsQueryOptions());
-  const jobs = jobsData.jobs;
+  const [showArchived, setShowArchived] = useState(false);
+
+  // Filter jobs based on archived status
+  const jobs = useMemo(() => {
+    return showArchived
+      ? jobsData.jobs
+      : jobsData.jobs.filter(job => job.status !== "archived");
+  }, [jobsData.jobs, showArchived]);
 
   const archiveMutation = useMutation({
     mutationFn: archiveJob,
     onSuccess: () => {
+      // Invalidate both jobs and dashboard queries to update all views
       queryClient.invalidateQueries({ queryKey: JOBS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
     },
   });
 
-  const handleArchive = (jobId: string, jobName: string) => {
+  const handleArchive = (jobId: string, jobName: string, isArchived: boolean) => {
     if (
       confirm(
-        `Are you sure you want to archive "${jobName}"? This will archive all associated endpoints.`,
+        isArchived
+          ? `Are you sure you want to unarchive "${jobName}"?`
+          : `Are you sure you want to archive "${jobName}"? This will archive all associated endpoints.`,
       )
     ) {
       archiveMutation.mutate(jobId);
@@ -130,12 +143,12 @@ function JobsListPage() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => handleArchive(row.original.id, row.original.name)}
+              onClick={() => handleArchive(row.original.id, row.original.name, row.original.status === "archived")}
               disabled={archiveMutation.isPending}
-              className="text-destructive"
+              className={row.original.status === "archived" ? "" : "text-destructive"}
             >
-              <Archive className="size-4 text-destructive" />
-              Archive
+              <Archive className={`size-4 ${row.original.status === "archived" ? "" : "text-destructive"}`} />
+              {row.original.status === "archived" ? "Unarchive" : "Archive"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -150,12 +163,20 @@ function JobsListPage() {
         text="Jobs"
         description="Manage your scheduled jobs and their endpoints"
         slotRight={
-          <Button asChild>
-            <Link to="/jobs/new">
-              <Plus className="size-4" />
-              Create Job
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowArchived(!showArchived)}
+            >
+              {showArchived ? "Hide Archived" : "Show Archived"}
+            </Button>
+            <Button asChild>
+              <Link to="/jobs/new">
+                <Plus className="size-4" />
+                Create Job
+              </Link>
+            </Button>
+          </div>
         }
       />
 
