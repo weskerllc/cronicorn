@@ -60,6 +60,7 @@ describe("dashboardManager", () => {
             getLatestResponse: vi.fn(),
             getResponseHistory: vi.fn(),
             getSiblingLatestResponses: vi.fn(),
+            cleanupZombieRuns: vi.fn(),
         };
 
         // Fake clock for deterministic time-based tests

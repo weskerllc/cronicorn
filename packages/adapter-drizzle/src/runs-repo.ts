@@ -1,7 +1,7 @@
 import type { HealthSummary, JsonValue, RunsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, avg, count, desc, eq, gte, sql } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 import { jobEndpoints, runs } from "./schema.js";
 
@@ -393,5 +393,40 @@ export class DrizzleRunsRepo implements RunsRepo {
     }
 
     return results;
+  }
+
+  // ============================================================================
+  // Cleanup Operations
+  // ============================================================================
+
+  async cleanupZombieRuns(olderThanMs: number): Promise<number> {
+    const threshold = new Date(Date.now() - olderThanMs);
+
+    // Find zombie runs (stuck in "running" state longer than threshold)
+    const zombies = await this.tx
+      .select({ id: runs.id })
+      .from(runs)
+      .where(and(
+        eq(runs.status, "running"),
+        lte(runs.startedAt, threshold),
+      ));
+
+    if (zombies.length === 0) {
+      return 0;
+    }
+
+    const zombieIds = zombies.map(z => z.id);
+
+    // Mark them as failed with descriptive error message
+    await this.tx
+      .update(runs)
+      .set({
+        status: "failed",
+        finishedAt: new Date(),
+        errorMessage: "Worker crashed or timed out (no response after threshold)",
+      })
+      .where(inArray(runs.id, zombieIds));
+
+    return zombies.length;
   }
 }

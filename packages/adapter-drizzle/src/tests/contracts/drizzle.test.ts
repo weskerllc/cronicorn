@@ -647,5 +647,118 @@ describe("drizzle Repos (PostgreSQL)", () => {
 
       expect(siblings.length).toBe(0);
     });
+
+    test("should clean up zombie runs older than threshold", async ({ tx }) => {
+      const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
+      const repo = new DrizzleRunsRepo(tx);
+
+      const job = await jobsRepo.createJob({
+        userId: "user1",
+        name: "Test Job",
+        status: "active",
+      });
+
+      await jobsRepo.addEndpoint({
+        id: "ep1",
+        tenantId: "user1",
+        jobId: job.id,
+        name: "Test Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
+
+      // Create runs at different times
+      const now = new Date();
+      const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+
+      // Old zombie run (should be cleaned)
+      const oldRun = await repo.create({ endpointId: "ep1", status: "running", attempt: 1 });
+      await tx.execute(`UPDATE runs SET started_at = '${twoHoursAgo.toISOString()}' WHERE id = '${oldRun}'`);
+
+      // Recent run still running (should NOT be cleaned)
+      await repo.create({ endpointId: "ep1", status: "running", attempt: 2 });
+
+      // Old but finished run (should NOT be cleaned)
+      const finishedRun = await repo.create({ endpointId: "ep1", status: "running", attempt: 3 });
+      await tx.execute(`UPDATE runs SET started_at = '${twoHoursAgo.toISOString()}' WHERE id = '${finishedRun}'`);
+      await repo.finish(finishedRun, { status: "success", durationMs: 100 });
+
+      // Clean up runs older than 1 hour
+      const count = await repo.cleanupZombieRuns(60 * 60 * 1000);
+
+      expect(count).toBe(1); // Only the old zombie run
+
+      // Verify the zombie was marked as failed
+      const details = await repo.getRunDetails(oldRun);
+      expect(details?.status).toBe("failed");
+      expect(details?.errorMessage).toContain("Worker crashed or timed out");
+    });
+
+    test("should return 0 when no zombie runs exist", async ({ tx }) => {
+      const repo = new DrizzleRunsRepo(tx);
+
+      const count = await repo.cleanupZombieRuns(60 * 60 * 1000);
+
+      expect(count).toBe(0);
+    });
+  });
+
+  describe("drizzleJobsRepo - lock duration", () => {
+    test("should use maxExecutionTimeMs for lock duration when claiming endpoints", async ({ tx }) => {
+      const now = new Date("2025-01-01T12:00:00.000Z");
+      const repo = new DrizzleJobsRepo(tx, () => now);
+
+      const job = await repo.createJob({
+        userId: "user1",
+        name: "Test Job",
+        status: "active",
+      });
+
+      // Add endpoint with custom maxExecutionTimeMs (5 minutes = 300,000ms)
+      await repo.addEndpoint({
+        id: "ep1",
+        tenantId: "user1",
+        jobId: job.id,
+        name: "Long Running Endpoint",
+        nextRunAt: new Date("2025-01-01T11:59:00.000Z"), // Due
+        failureCount: 0,
+        maxExecutionTimeMs: 5 * 60 * 1000, // 5 minutes
+      });
+
+      // Add another endpoint with default (should use 60s fallback)
+      await repo.addEndpoint({
+        id: "ep2",
+        tenantId: "user1",
+        jobId: job.id,
+        name: "Normal Endpoint",
+        nextRunAt: new Date("2025-01-01T11:59:30.000Z"), // Due
+        failureCount: 0,
+        // No maxExecutionTimeMs specified
+      });
+
+      // Claim with horizon (batch should use max of 5 minutes)
+      const claimed = await repo.claimDueEndpoints(10, 10000);
+
+      expect(claimed).toContain("ep1");
+      expect(claimed).toContain("ep2");
+
+      // Verify locks were set by querying DB directly
+      const ep1Result = await tx.execute<{ _locked_until: string }>(
+        `SELECT _locked_until FROM job_endpoints WHERE id = 'ep1'`,
+      );
+      const ep2Result = await tx.execute<{ _locked_until: string }>(
+        `SELECT _locked_until FROM job_endpoints WHERE id = 'ep2'`,
+      );
+
+      const ep1Row = ep1Result.rows[0];
+      const ep2Row = ep2Result.rows[0];
+
+      // Both should be locked
+      expect(ep1Row?._locked_until).toBeDefined();
+      expect(ep2Row?._locked_until).toBeDefined();
+
+      // Both should have same lock time (using max of batch = 5 minutes)
+      expect(ep1Row?._locked_until).toBe(ep2Row?._locked_until);
+    });
   });
 });

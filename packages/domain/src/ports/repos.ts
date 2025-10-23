@@ -254,6 +254,17 @@ export type RunsRepo = {
     timestamp: Date;
     status: string;
   }>>;
+
+  /**
+   * Clean up zombie runs (stuck in "running" state).
+   *
+   * Finds runs older than threshold and marks them as failed.
+   * Used by background cleanup task to handle worker crashes.
+   *
+   * @param olderThanMs - Mark runs as failed if running longer than this (milliseconds)
+   * @returns Number of runs cleaned up
+   */
+  cleanupZombieRuns: (olderThanMs: number) => Promise<number>;
 };
 
 /**

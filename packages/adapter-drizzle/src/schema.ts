@@ -56,6 +56,7 @@ export const jobEndpoints = pgTable("job_endpoints", {
   headersJson: jsonb("headers_json").$type<Record<string, string>>(),
   bodyJson: jsonb("body_json").$type<import("@cronicorn/domain").JsonValue>(),
   timeoutMs: integer("timeout_ms"),
+  maxExecutionTimeMs: integer("max_execution_time_ms"), // Expected max execution time for lock duration
   maxResponseSizeKb: integer("max_response_size_kb"), // Max response body size to store (default: 100 KB)
 
   // Adapter-specific (not in domain entity)

@@ -35,6 +35,8 @@ const configSchema = z.object({
   BATCH_SIZE: z.coerce.number().int().positive().default(10),
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
   CLAIM_HORIZON_MS: z.coerce.number().int().positive().default(10000),
+  CLEANUP_INTERVAL_MS: z.coerce.number().int().positive().default(300000), // 5 minutes
+  ZOMBIE_RUN_THRESHOLD_MS: z.coerce.number().int().positive().default(3600000), // 1 hour
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -75,6 +77,8 @@ async function main() {
     batchSize: config.BATCH_SIZE,
     pollIntervalMs: config.POLL_INTERVAL_MS,
     claimHorizonMs: config.CLAIM_HORIZON_MS,
+    cleanupIntervalMs: config.CLEANUP_INTERVAL_MS,
+    zombieRunThresholdMs: config.ZOMBIE_RUN_THRESHOLD_MS,
   });
 
   // Main tick loop
@@ -96,11 +100,35 @@ async function main() {
     }
   }, config.POLL_INTERVAL_MS);
 
+  // Zombie run cleanup loop
+  const cleanupIntervalId = setInterval(async () => {
+    if (isShuttingDown)
+      return;
+
+    try {
+      const count = await scheduler.cleanupZombieRuns(config.ZOMBIE_RUN_THRESHOLD_MS);
+      if (count > 0) {
+        logger("info", "Zombie run cleanup completed", {
+          count,
+          thresholdMs: config.ZOMBIE_RUN_THRESHOLD_MS,
+        });
+      }
+    }
+    catch (err) {
+      logger("error", "Zombie run cleanup failed", {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      // Continue - don't crash worker
+    }
+  }, config.CLEANUP_INTERVAL_MS);
+
   // Graceful shutdown handler
   async function shutdown(signal: string) {
     logger("info", "Shutdown signal received", { signal });
     isShuttingDown = true;
     clearInterval(intervalId);
+    clearInterval(cleanupIntervalId);
 
     if (currentTick) {
       logger("info", "Waiting for current tick to complete");

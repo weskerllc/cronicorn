@@ -49,5 +49,6 @@ export type JobEndpoint = {
   headersJson?: Record<string, string>;
   bodyJson?: JsonValue;
   timeoutMs?: number;
+  maxExecutionTimeMs?: number; // Expected max execution time for lock duration (default: 60000ms / 1 min)
   maxResponseSizeKb?: number; // Max response body size to store (default: 100 KB)
 };

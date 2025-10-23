@@ -54,6 +54,7 @@ describe("jobsManager", () => {
       getLatestResponse: vi.fn(),
       getResponseHistory: vi.fn(),
       getSiblingLatestResponses: vi.fn(),
+      cleanupZombieRuns: vi.fn(),
     };
     const now = new Date("2025-01-14T12:00:00Z");
     fakeClock = { now: () => now, sleep: async () => { } };
