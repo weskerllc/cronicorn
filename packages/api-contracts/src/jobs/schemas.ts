@@ -1,4 +1,5 @@
 import { z } from "@hono/zod-openapi";
+import cronParser from "cron-parser";
 
 // ==================== Job Lifecycle Schemas ====================
 
@@ -32,9 +33,26 @@ export const JobWithCountResponseSchema = JobResponseSchema.extend({
 
 // ==================== Endpoint Orchestration Schemas ====================
 
+// Helper function to validate cron expressions
+function validateCronExpression(expr: string): boolean {
+  try {
+    cronParser.parseExpression(expr, { utc: true });
+    return true;
+  }
+  catch {
+    return false;
+  }
+}
+
 const EndpointFieldsSchema = z.object({
   name: z.string().min(1).max(255),
-  baselineCron: z.string().optional(),
+  baselineCron: z
+    .string()
+    .optional()
+    .refine(
+      val => !val || validateCronExpression(val),
+      { message: "Invalid cron expression. Use standard 5-field format (minute hour day month weekday)" },
+    ),
   baselineIntervalMs: z.number().int().positive().optional(),
   minIntervalMs: z.number().int().positive().optional(),
   maxIntervalMs: z.number().int().positive().optional(),
@@ -46,8 +64,14 @@ const EndpointFieldsSchema = z.object({
 });
 
 export const AddEndpointRequestSchema = EndpointFieldsSchema.refine(
-  data => data.baselineCron || data.baselineIntervalMs,
-  { message: "Either baselineCron or baselineIntervalMs required", path: ["baselineCron"] },
+  data =>
+    // XOR condition: exactly one must be provided
+    (data.baselineCron && !data.baselineIntervalMs)
+    || (!data.baselineCron && data.baselineIntervalMs),
+  {
+    message: "Provide either baselineCron or baselineIntervalMs, but not both.",
+    path: ["baselineCron"],
+  },
 );
 
 export const UpdateEndpointRequestSchema = EndpointFieldsSchema.partial();

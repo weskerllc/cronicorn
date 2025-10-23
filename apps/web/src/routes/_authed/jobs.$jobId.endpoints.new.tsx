@@ -30,6 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@cronicorn/ui-library/components/select";
+import { RadioGroup, RadioGroupItem } from "@cronicorn/ui-library/components/radio-group";
+import { Label } from "@cronicorn/ui-library/components/label";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 
@@ -37,12 +39,35 @@ import { PageHeader } from "../../components/page-header";
 import { createEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
 
-const createEndpointSchema = z.object({
-  name: z.string().min(1, "Name is required").max(255, "Name must be less than 255 characters"),
-  url: z.string().url("Must be a valid URL"),
-  method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
-  baselineIntervalMinutes: z.number().int().min(1, "Must be at least 1 minute").optional(),
-});
+// Helper to validate cron expressions
+const validateCron = (expr: string): boolean => {
+  // Basic validation: must have 5 fields
+  const fields = expr.trim().split(/\s+/);
+  if (fields.length !== 5) return false;
+
+  // Each field must be valid (numbers, ranges, asterisks, etc.)
+  const cronRegex = /^[0-9*,\-/]+$/;
+  return fields.every(field => cronRegex.test(field) || /^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC|SUN|MON|TUE|WED|THU|FRI|SAT)$/i.test(field));
+};
+
+const createEndpointSchema = z.discriminatedUnion("scheduleType", [
+  z.object({
+    scheduleType: z.literal("interval"),
+    name: z.string().min(1, "Name is required").max(255, "Name must be less than 255 characters"),
+    url: z.string().url("Must be a valid URL"),
+    method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
+    baselineIntervalMinutes: z.number().int().min(1, "Must be at least 1 minute"),
+  }),
+  z.object({
+    scheduleType: z.literal("cron"),
+    name: z.string().min(1, "Name is required").max(255, "Name must be less than 255 characters"),
+    url: z.string().url("Must be a valid URL"),
+    method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
+    baselineCron: z.string().min(1, "Cron expression is required").refine(validateCron, {
+      message: "Invalid cron expression. Use 5-field format: minute hour day month weekday (e.g., '0 * * * *' for hourly)",
+    }),
+  }),
+]);
 
 export const Route = createFileRoute("/_authed/jobs/$jobId/endpoints/new")({
   loader: async ({ params, context }) => {
@@ -63,23 +88,29 @@ function CreateEndpointPage() {
   const form = useForm<CreateEndpointForm>({
     resolver: zodResolver(createEndpointSchema),
     defaultValues: {
+      scheduleType: "interval",
       name: "",
       url: "",
       method: "GET",
-      baselineIntervalMinutes: undefined,
     },
   });
 
+  const scheduleType = form.watch("scheduleType");
+
   const { mutateAsync, isPending, error } = useMutation({
     mutationFn: async (data: CreateEndpointForm) => {
-      const payload = {
+      const payload: any = {
         name: data.name,
         url: data.url,
         method: data.method,
-        baselineIntervalMs: data.baselineIntervalMinutes
-          ? data.baselineIntervalMinutes * 60 * 1000
-          : undefined,
       };
+
+      if (data.scheduleType === "interval") {
+        payload.baselineIntervalMs = data.baselineIntervalMinutes * 60 * 1000;
+      } else {
+        payload.baselineCron = data.baselineCron;
+      }
+
       return createEndpoint(jobId, payload);
     },
     onSuccess: async () => {
@@ -187,28 +218,89 @@ function CreateEndpointPage() {
 
           <FormField
             control={form.control}
-            name="baselineIntervalMinutes"
+            name="scheduleType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Baseline Interval (minutes)</FormLabel>
+                <FormLabel>Schedule Type</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="5"
-                    min="1"
-                    {...field}
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex flex-col space-y-1"
                     disabled={isPending}
-                    value={field.value ?? ""}
-                    onChange={(e) =>
-                      field.onChange(e.target.value ? Number(e.target.value) : undefined)
-                    }
-                  />
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="interval" id="interval" />
+                      <Label htmlFor="interval" className="font-normal cursor-pointer">
+                        Fixed Interval
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="cron" id="cron" />
+                      <Label htmlFor="cron" className="font-normal cursor-pointer">
+                        Cron Expression
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </FormControl>
-                <FormDescription>How often should this endpoint run?</FormDescription>
+                <FormDescription>
+                  Choose how you want to schedule this endpoint
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {scheduleType === "interval" && (
+            <FormField
+              control={form.control}
+              name="baselineIntervalMinutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Interval (minutes)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="5"
+                      min="1"
+                      {...field}
+                      disabled={isPending}
+                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                      }
+                    />
+                  </FormControl>
+                  <FormDescription>How often should this endpoint run?</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          {scheduleType === "cron" && (
+            <FormField
+              control={form.control}
+              name="baselineCron"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cron Expression</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="0 * * * *"
+                      {...field}
+                      disabled={isPending}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    5-field format: minute hour day month weekday (e.g., "0 * * * *" for hourly)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <Card>
             <CardHeader>
