@@ -28,6 +28,12 @@ function RouteComponent() {
       used: usage.endpointsUsed || 0,
       limit: usage.endpointsLimit || 0,
     },
+    {
+      title: "AI Tokens",
+      description: "Number of endpoints across all jobs",
+      used: usage.aiCallsUsed || 0,
+      limit: usage.aiCallsLimit || 0,
+    },
   ];
 
   return (
@@ -37,7 +43,7 @@ function RouteComponent() {
         description="View your current usage and limits"
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         {metrics.map((metric) => (
           <Card key={metric.title}>
             <CardHeader>
