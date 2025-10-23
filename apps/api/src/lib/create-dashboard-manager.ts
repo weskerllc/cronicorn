@@ -29,16 +29,16 @@ import { DashboardManager } from "@cronicorn/services";
  * @returns Fully-wired DashboardManager instance
  */
 export function createDashboardManager(
-    // eslint-disable-next-line ts/no-explicit-any
-    tx: NodePgDatabase<any> | NodePgTransaction<any, any>,
-    clock: Clock,
+  // eslint-disable-next-line ts/no-explicit-any
+  tx: NodePgDatabase<any> | NodePgTransaction<any, any>,
+  clock: Clock,
 ): DashboardManager {
-    // Instantiate transaction-bound repositories
-    // @ts-expect-error - Drizzle type mismatch between pnpm versions
-    const jobsRepo = new DrizzleJobsRepo(tx);
-    // @ts-expect-error - Drizzle type mismatch between pnpm versions
-    const runsRepo = new DrizzleRunsRepo(tx);
+  // Instantiate transaction-bound repositories
+  // @ts-expect-error - Drizzle type mismatch between pnpm versions
+  const jobsRepo = new DrizzleJobsRepo(tx);
+  // @ts-expect-error - Drizzle type mismatch between pnpm versions
+  const runsRepo = new DrizzleRunsRepo(tx);
 
-    // Wire everything into the manager (pure DI)
-    return new DashboardManager(jobsRepo, runsRepo, clock);
+  // Wire everything into the manager (pure DI)
+  return new DashboardManager(jobsRepo, runsRepo, clock);
 }

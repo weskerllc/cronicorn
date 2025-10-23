@@ -9,11 +9,11 @@ import * as mappers from "./dashboard.mappers.js";
 // ==================== Dashboard Stats Handler ====================
 
 export const getDashboardStats: AppRouteHandler<routes.GetDashboardStatsRoute> = async (c) => {
-    const query = c.req.valid("query");
-    const { userId } = getAuthContext(c);
+  const query = c.req.valid("query");
+  const { userId } = getAuthContext(c);
 
-    return c.get("withDashboardManager")(async (manager) => {
-        const stats = await manager.getDashboardStats(userId, { days: query.days });
-        return c.json(mappers.mapDashboardStatsToResponse(stats), HTTPStatusCodes.OK);
-    });
+  return c.get("withDashboardManager")(async (manager) => {
+    const stats = await manager.getDashboardStats(userId, { days: query.days });
+    return c.json(mappers.mapDashboardStatsToResponse(stats), HTTPStatusCodes.OK);
+  });
 };

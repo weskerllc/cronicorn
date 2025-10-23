@@ -13,7 +13,8 @@ export class PinoLoggerAdapter implements Logger {
   info: Logger["info"] = (msgOrObj: string | Record<string, unknown>, msg?: string): void => {
     if (typeof msgOrObj === "string") {
       this.pino.info(msgOrObj);
-    } else {
+    }
+    else {
       this.pino.info(msgOrObj, msg);
     }
   };
@@ -21,7 +22,8 @@ export class PinoLoggerAdapter implements Logger {
   warn: Logger["warn"] = (msgOrObj: string | Record<string, unknown>, msg?: string): void => {
     if (typeof msgOrObj === "string") {
       this.pino.warn(msgOrObj);
-    } else {
+    }
+    else {
       this.pino.warn(msgOrObj, msg);
     }
   };
@@ -29,7 +31,8 @@ export class PinoLoggerAdapter implements Logger {
   error: Logger["error"] = (msgOrObj: string | Record<string, unknown>, msg?: string): void => {
     if (typeof msgOrObj === "string") {
       this.pino.error(msgOrObj);
-    } else {
+    }
+    else {
       this.pino.error(msgOrObj, msg);
     }
   };
@@ -37,7 +40,8 @@ export class PinoLoggerAdapter implements Logger {
   debug: Logger["debug"] = (msgOrObj: string | Record<string, unknown>, msg?: string): void => {
     if (typeof msgOrObj === "string") {
       this.pino.debug(msgOrObj);
-    } else {
+    }
+    else {
       this.pino.debug(msgOrObj, msg);
     }
   };

@@ -86,7 +86,7 @@ export class FakeLogger implements Logger {
    * Get logs filtered by level
    */
   getLogsByLevel(level: LogLevel): LogEntry[] {
-    return this.logs.filter((entry) => entry.level === level);
+    return this.logs.filter(entry => entry.level === level);
   }
 
   private capture(
@@ -102,7 +102,8 @@ export class FakeLogger implements Logger {
         entry.obj = this.bindings;
       }
       this.logs.push(entry);
-    } else {
+    }
+    else {
       // Structured form with bindings merged
       const mergedObj = { ...this.bindings, ...msgOrObj };
       this.logs.push({ level, obj: mergedObj, msg });

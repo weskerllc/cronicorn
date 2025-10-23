@@ -1,8 +1,8 @@
 import type { z } from "@hono/zod-openapi";
 
 import type {
-    DashboardStatsQuerySchema,
-    DashboardStatsResponseSchema,
+  DashboardStatsQuerySchema,
+  DashboardStatsResponseSchema,
 } from "./schemas.js";
 
 // ==================== Inferred TypeScript Types ====================

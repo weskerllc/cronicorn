@@ -16,7 +16,6 @@ export class HttpDispatcher implements Dispatcher {
   async execute(ep: JobEndpoint): Promise<ExecutionResult> {
     // Validate URL early
     if (!ep.url) {
-      console.log(`[Brandin] No URL configured for endpoint`);
       return {
         status: "failed",
         durationMs: 0,
@@ -79,8 +78,6 @@ export class HttpDispatcher implements Dispatcher {
       };
     }
     catch (error) {
-      console.log(`[Brandin] Error occurred while fetching ${ep.url}: ${error}`);
-
       // Clear timeout
       clearTimeout(timeoutId);
 
