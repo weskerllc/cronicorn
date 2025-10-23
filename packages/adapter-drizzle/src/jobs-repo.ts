@@ -270,11 +270,16 @@ export class DrizzleJobsRepo implements JobsRepo {
       && ep.aiHintExpiresAt
       && ep.aiHintExpiresAt <= now;
 
+    // Don't clear lock immediately - keep it until nextRunAt to prevent re-claiming
+    // during the claim horizon window. This ensures an endpoint isn't claimed multiple
+    // times before its scheduled time when using horizon-based claiming.
+    const lockUntil = patch.nextRunAt > now ? patch.nextRunAt : null;
+
     const updates: Partial<JobEndpointRow> = {
       lastRunAt: patch.lastRunAt,
       nextRunAt: patch.nextRunAt,
       failureCount: newFailureCount,
-      _lockedUntil: null,
+      _lockedUntil: lockUntil,
     };
 
     if (clearHints) {

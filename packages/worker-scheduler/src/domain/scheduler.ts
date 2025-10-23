@@ -45,7 +45,13 @@ export class Scheduler implements IScheduler {
     });
 
     const result = await dispatcher.execute(ep);
-    await runs.finish(runId, { status: result.status, durationMs: result.durationMs });
+    await runs.finish(runId, {
+      status: result.status,
+      durationMs: result.durationMs,
+      statusCode: result.statusCode,
+      responseBody: result.responseBody,
+      err: result.errorMessage,
+    });
 
     // re-read to include any AI hint the planner may have written while running
     const fresh = await jobs.getEndpoint(endpointId);
