@@ -188,6 +188,7 @@ export type RunsRepo = {
     finishedAt?: Date;
     durationMs?: number;
     errorMessage?: string;
+    responseBody?: JsonValue;
     source?: string;
     attempt: number;
   } | null>;
