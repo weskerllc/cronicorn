@@ -16,7 +16,7 @@ import { TopEndpointsTable } from "./top-endpoints-table";
 import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
 
 export function DashboardTables() {
-  const { data, isLoading } = useQuery(dashboardStatsQueryOptions({ days: 7 }));
+  const { data, isLoading, refetch, isFetching } = useQuery(dashboardStatsQueryOptions({ days: 7 }));
 
   if (isLoading) {
     return (
@@ -60,11 +60,11 @@ export function DashboardTables() {
   }));
 
   return (
-    <Tabs defaultValue="endpoints" className="w-full flex flex-col justify-start gap-4">
+    <Tabs defaultValue="recent" className="w-full flex flex-col justify-start gap-4">
       <div className="flex items-center justify-between">
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1">
-          <TabsTrigger value="endpoints">Top Endpoints</TabsTrigger>
           <TabsTrigger value="recent">Recent Runs</TabsTrigger>
+          <TabsTrigger value="endpoints">Top Endpoints</TabsTrigger>
         </TabsList>
       </div>
 
@@ -72,11 +72,19 @@ export function DashboardTables() {
         value="endpoints"
         className="relative flex flex-col gap-4 overflow-auto"
       >
-        <TopEndpointsTable data={endpointsData} />
+        <TopEndpointsTable
+          data={endpointsData}
+          onRefresh={() => refetch()}
+          isRefreshing={isFetching}
+        />
       </TabsContent>
 
       <TabsContent value="recent" className="flex flex-col">
-        <RecentRunsTable data={runsData} />
+        <RecentRunsTable
+          data={runsData}
+          onRefresh={() => refetch()}
+          isRefreshing={isFetching}
+        />
       </TabsContent>
     </Tabs>
   );

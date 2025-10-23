@@ -13,6 +13,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@cronicorn/ui-library/components/avatar";
+import { ThemeSwitcher } from "@cronicorn/ui-library/components/theme-switcher"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@cronicorn/ui-library/components/sidebar";
+import { useTheme } from "@cronicorn/ui-library/components/theme-provider";
 import { signOut } from "../../lib/auth-client";
 
 interface NavUserProps {
@@ -40,6 +42,8 @@ interface NavUserProps {
 
 export function NavUser({ user }: NavUserProps) {
   const { isMobile } = useSidebar();
+  const { setTheme, theme } = useTheme()
+
 
   const handleLogout = async () => {
     await signOut({
@@ -106,6 +110,10 @@ export function NavUser({ user }: NavUserProps) {
               <DropdownMenuItem>
                 <IconNotification />
                 Notifications
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <ThemeSwitcher value={theme} onChange={(v) => setTheme(v)} />
+                <span>Theme</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
