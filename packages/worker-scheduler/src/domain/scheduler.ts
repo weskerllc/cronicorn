@@ -13,10 +13,10 @@ export class Scheduler implements IScheduler {
 
   async tick(batchSize: number, lockTtlMs: number) {
     const now = this.d.clock.now();
-    console.log(`[Scheduler] Tick at ${now.toISOString()}, claiming with horizon: ${lockTtlMs}ms`);
+    this.d.logger.debug({ lockTtlMs, now: now.toISOString() }, "Scheduler tick started");
 
     const ids = await this.d.jobs.claimDueEndpoints(batchSize, lockTtlMs);
-    console.log(`[Scheduler] Claimed ${ids.length} endpoint(s):`, ids);
+    this.d.logger.info({ claimedCount: ids.length, endpointIds: ids }, "Claimed endpoints");
 
     for (const id of ids) await this.handleEndpoint(id);
   }
@@ -29,14 +29,17 @@ export class Scheduler implements IScheduler {
     if (!ep)
       return;
 
-    console.log(`[Scheduler] Handling endpoint ${endpointId}:`, {
-      name: ep.name,
-      nextRunAt: ep.nextRunAt,
-      lastRunAt: ep.lastRunAt,
-      baselineIntervalMs: ep.baselineIntervalMs,
-      failureCount: ep.failureCount,
-      now: now.toISOString(),
-    });
+    const epLogger = this.d.logger.child({ endpointId, jobId: ep.jobId, tenantId: ep.tenantId });
+    epLogger.info(
+      {
+        name: ep.name,
+        nextRunAt: ep.nextRunAt,
+        lastRunAt: ep.lastRunAt,
+        baselineIntervalMs: ep.baselineIntervalMs,
+        failureCount: ep.failureCount,
+      },
+      "Handling endpoint execution",
+    );
 
     const runId = await runs.create({
       endpointId,
@@ -45,7 +48,23 @@ export class Scheduler implements IScheduler {
       source: "scheduler",
     });
 
+    const runLogger = epLogger.child({ runId, attempt: ep.failureCount + 1 });
     const result = await dispatcher.execute(ep);
+
+    if (result.status === "success") {
+      runLogger.info({ durationMs: result.durationMs, statusCode: result.statusCode }, "Execution succeeded");
+    }
+    else {
+      runLogger.warn(
+        {
+          durationMs: result.durationMs,
+          statusCode: result.statusCode,
+          error: result.errorMessage,
+        },
+        "Execution failed",
+      );
+    }
+
     await runs.finish(runId, {
       status: result.status,
       durationMs: result.durationMs,
@@ -69,17 +88,27 @@ export class Scheduler implements IScheduler {
       // This preserves the scheduling policy while preventing immediate re-claiming
       const intendedIntervalMs = Math.max(plan.nextRunAt.getTime() - now.getTime(), 1000);
       safeNextRunAt = new Date(currentTimeMs + intendedIntervalMs);
-      // eslint-disable-next-line no-console
-      console.log(`[Scheduler] Adjusted nextRunAt (was in past): ${plan.nextRunAt.toISOString()} -> ${safeNextRunAt.toISOString()}`);
-    } // eslint-disable-next-line no-console
-    console.log(`[Scheduler] Scheduling decision for ${endpointId}:`, {
-      resultStatus: result.status,
-      oldFailureCount: fresh.failureCount,
-      nextRunAt: safeNextRunAt.toISOString(),
-      source: plan.source,
-      intervalFromNow: safeNextRunAt.getTime() - currentTimeMs,
-      failureCountPolicy: result.status === "success" ? "reset" : "increment",
-    });
+      epLogger.warn(
+        {
+          originalNextRunAt: plan.nextRunAt.toISOString(),
+          adjustedNextRunAt: safeNextRunAt.toISOString(),
+          intendedIntervalMs,
+        },
+        "Adjusted nextRunAt (was in past)",
+      );
+    }
+
+    epLogger.info(
+      {
+        resultStatus: result.status,
+        oldFailureCount: fresh.failureCount,
+        nextRunAt: safeNextRunAt.toISOString(),
+        source: plan.source,
+        intervalFromNow: safeNextRunAt.getTime() - currentTimeMs,
+        failureCountPolicy: result.status === "success" ? "reset" : "increment",
+      },
+      "Scheduling decision made",
+    );
 
     await jobs.updateAfterRun(endpointId, {
       lastRunAt: now,
@@ -93,7 +122,7 @@ export class Scheduler implements IScheduler {
   async cleanupZombieRuns(olderThanMs: number) {
     const count = await this.d.runs.cleanupZombieRuns(olderThanMs);
     if (count > 0) {
-      console.log(`[Scheduler] Cleaned up ${count} zombie run(s) older than ${olderThanMs}ms`);
+      this.d.logger.info({ count, olderThanMs }, "Cleaned up zombie runs");
     }
     return count;
   }
