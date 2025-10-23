@@ -26,7 +26,7 @@ Worker (this package)
 | `DATABASE_URL`     | ✅ Yes   | -       | PostgreSQL connection string (e.g., `postgresql://user:pass@localhost:5432/db`) |
 | `BATCH_SIZE`       | No       | `10`    | Number of endpoints to claim per tick                                           |
 | `POLL_INTERVAL_MS` | No       | `5000`  | Milliseconds between ticks (5 seconds)                                          |
-| `LOCK_TTL_MS`      | No       | `60000` | Lock duration for claimed endpoints (60 seconds)                                |
+| `CLAIM_HORIZON_MS` | No       | `10000` | Look-ahead window for claiming endpoints (10 seconds). Only claim endpoints due within this window. |
 
 ## Development
 

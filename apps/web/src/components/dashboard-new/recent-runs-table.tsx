@@ -46,6 +46,7 @@ import {
   TableRow,
 } from "@cronicorn/ui-library/components/table";
 
+import { Link } from "@tanstack/react-router";
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -111,8 +112,8 @@ const columns: Array<ColumnDef<RunRow>> = [
           row.original.status === "success"
             ? "default"
             : row.original.status === "failure"
-            ? "destructive"
-            : "outline"
+              ? "destructive"
+              : "outline"
         }
       >
         {row.original.status}
@@ -150,7 +151,7 @@ const columns: Array<ColumnDef<RunRow>> = [
   },
   {
     id: "actions",
-    cell: () => (
+    cell: ({ row }) => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -163,8 +164,15 @@ const columns: Array<ColumnDef<RunRow>> = [
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem>View Details</DropdownMenuItem>
-          <DropdownMenuItem>View Logs</DropdownMenuItem>
+
+          <DropdownMenuItem asChild>
+            <Link
+              to="/runs/$id"
+              params={{ id: row.original.id }}
+            >
+              View Details
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive">Retry</DropdownMenuItem>
         </DropdownMenuContent>
@@ -225,9 +233,9 @@ export function RecentRunsTable({ data }: RecentRunsTableProps) {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}

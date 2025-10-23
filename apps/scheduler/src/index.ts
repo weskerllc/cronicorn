@@ -34,7 +34,7 @@ const configSchema = z.object({
   DATABASE_URL: z.string().url(),
   BATCH_SIZE: z.coerce.number().int().positive().default(10),
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
-  LOCK_TTL_MS: z.coerce.number().int().positive().default(60000),
+  CLAIM_HORIZON_MS: z.coerce.number().int().positive().default(10000),
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -74,7 +74,7 @@ async function main() {
   logger("info", "Worker started", {
     batchSize: config.BATCH_SIZE,
     pollIntervalMs: config.POLL_INTERVAL_MS,
-    lockTtlMs: config.LOCK_TTL_MS,
+    claimHorizonMs: config.CLAIM_HORIZON_MS,
   });
 
   // Main tick loop
@@ -83,7 +83,7 @@ async function main() {
       return;
 
     try {
-      currentTick = scheduler.tick(config.BATCH_SIZE, config.LOCK_TTL_MS);
+      currentTick = scheduler.tick(config.BATCH_SIZE, config.CLAIM_HORIZON_MS);
       await currentTick;
       currentTick = null;
     }
