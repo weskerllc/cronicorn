@@ -109,6 +109,11 @@ export class DrizzleJobsRepo implements JobsRepo {
     const horizonMs = nowMs + withinMs;
     const horizon = new Date(horizonMs);
 
+    // Lock duration should be longer than claim horizon to cover execution time
+    // Use 60 seconds as a reasonable default for most endpoint executions
+    const lockDurationMs = Math.max(withinMs, 60000);
+    const lockUntil = new Date(nowMs + lockDurationMs);
+
     // Claim endpoints that are:
     // 1. Due now or within horizon
     // 2. Not paused (pausedUntil is null or <= now)
@@ -136,10 +141,11 @@ export class DrizzleJobsRepo implements JobsRepo {
     const ids = claimed.map((r: { id: string }) => r.id);
 
     // Extend lock for claimed endpoints
+    // Lock duration is longer than claim horizon to cover execution time
     if (ids.length > 0) {
       await this.tx
         .update(jobEndpoints)
-        .set({ _lockedUntil: horizon })
+        .set({ _lockedUntil: lockUntil })
         .where(inArray(jobEndpoints.id, ids));
     }
 
