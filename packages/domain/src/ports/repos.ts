@@ -2,7 +2,7 @@
  * Repository ports for job and run persistence.
  */
 
-import type { ExecutionResult, Job, JobEndpoint } from "../entities/index.js";
+import type { ExecutionResult, Job, JobEndpoint, JsonValue } from "../entities/index.js";
 
 /**
  * Health summary for an endpoint over a time window.
@@ -156,6 +156,8 @@ export type RunsRepo = {
     status: "success" | "failed" | "canceled";
     durationMs: number;
     err?: unknown;
+    statusCode?: number;
+    responseBody?: JsonValue;
   }) => Promise<void>;
 
   // Execution visibility operations (Phase 3)
