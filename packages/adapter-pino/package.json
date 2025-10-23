@@ -13,6 +13,7 @@
   "files": ["dist"],
   "dependencies": {
     "@cronicorn/domain": "workspace:*",
-    "pino": "^10.1.0"
+    "pino": "^10.1.0",
+    "pino-pretty": "^11.0.0"
   }
 }
