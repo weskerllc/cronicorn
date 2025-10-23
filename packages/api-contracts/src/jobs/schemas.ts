@@ -44,7 +44,7 @@ function validateCronExpression(expr: string): boolean {
   }
 }
 
-const EndpointFieldsSchema = z.object({
+const EndpointFieldsBaseSchema = z.object({
   name: z.string().min(1).max(255),
   baselineCron: z
     .string()
@@ -63,6 +63,14 @@ const EndpointFieldsSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
 });
 
+const EndpointFieldsSchema = EndpointFieldsBaseSchema.refine(
+  data => !data.minIntervalMs || !data.maxIntervalMs || data.minIntervalMs <= data.maxIntervalMs,
+  {
+    message: "minIntervalMs must be less than or equal to maxIntervalMs",
+    path: ["minIntervalMs"],
+  },
+);
+
 export const AddEndpointRequestSchema = EndpointFieldsSchema.refine(
   data =>
     // XOR condition: exactly one must be provided
@@ -74,7 +82,13 @@ export const AddEndpointRequestSchema = EndpointFieldsSchema.refine(
   },
 );
 
-export const UpdateEndpointRequestSchema = EndpointFieldsSchema.partial();
+export const UpdateEndpointRequestSchema = EndpointFieldsBaseSchema.partial().refine(
+  data => !data.minIntervalMs || !data.maxIntervalMs || data.minIntervalMs <= data.maxIntervalMs,
+  {
+    message: "minIntervalMs must be less than or equal to maxIntervalMs",
+    path: ["minIntervalMs"],
+  },
+);
 
 export const EndpointResponseSchema = z.object({
   id: z.string(),
