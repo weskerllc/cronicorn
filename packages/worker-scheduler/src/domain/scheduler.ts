@@ -5,6 +5,7 @@ import type { SchedulerDeps } from "./deps.js";
 
 export type IScheduler = {
   tick: (batchSize: number, lockTtlMs: number) => Promise<void>;
+  cleanupZombieRuns: (olderThanMs: number) => Promise<number>;
 };
 
 export class Scheduler implements IScheduler {
@@ -87,5 +88,13 @@ export class Scheduler implements IScheduler {
       failureCountPolicy: result.status === "success" ? "reset" : "increment",
       clearExpiredHints: true,
     });
+  }
+
+  async cleanupZombieRuns(olderThanMs: number) {
+    const count = await this.d.runs.cleanupZombieRuns(olderThanMs);
+    if (count > 0) {
+      console.log(`[Scheduler] Cleaned up ${count} zombie run(s) older than ${olderThanMs}ms`);
+    }
+    return count;
   }
 }

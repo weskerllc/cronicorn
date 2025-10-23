@@ -67,6 +67,10 @@ export class DrizzleJobsRepo implements JobsRepo {
       updates.bodyJson = patch.bodyJson;
     if (patch.timeoutMs !== undefined)
       updates.timeoutMs = patch.timeoutMs;
+    if (patch.maxExecutionTimeMs !== undefined)
+      updates.maxExecutionTimeMs = patch.maxExecutionTimeMs;
+    if (patch.maxResponseSizeKb !== undefined)
+      updates.maxResponseSizeKb = patch.maxResponseSizeKb;
     if (patch.aiHintIntervalMs !== undefined)
       updates.aiHintIntervalMs = patch.aiHintIntervalMs;
     if (patch.aiHintNextRunAt !== undefined)
@@ -109,17 +113,15 @@ export class DrizzleJobsRepo implements JobsRepo {
     const horizonMs = nowMs + withinMs;
     const horizon = new Date(horizonMs);
 
-    // Lock duration should be longer than claim horizon to cover execution time
-    // Use 60 seconds as a reasonable default for most endpoint executions
-    const lockDurationMs = Math.max(withinMs, 60000);
-    const lockUntil = new Date(nowMs + lockDurationMs);
-
     // Claim endpoints that are:
     // 1. Due now or within horizon
     // 2. Not paused (pausedUntil is null or <= now)
     // 3. Not locked (lockedUntil is null or <= now)
     const claimed = await this.tx
-      .select({ id: jobEndpoints.id })
+      .select({
+        id: jobEndpoints.id,
+        maxExecutionTimeMs: jobEndpoints.maxExecutionTimeMs,
+      })
       .from(jobEndpoints)
       .where(
         and(
@@ -140,9 +142,13 @@ export class DrizzleJobsRepo implements JobsRepo {
 
     const ids = claimed.map((r: { id: string }) => r.id);
 
-    // Extend lock for claimed endpoints
-    // Lock duration is longer than claim horizon to cover execution time
+    // Set lock duration per endpoint based on maxExecutionTimeMs
+    // Use the maximum of: endpoint's maxExecutionTimeMs (default 60s), horizon, or minimum 60s
     if (ids.length > 0) {
+      const maxLockDuration = claimed.reduce((max, ep) =>
+        Math.max(max, ep.maxExecutionTimeMs ?? 60000), Math.max(withinMs, 60000));
+      const lockUntil = new Date(nowMs + maxLockDuration);
+
       await this.tx
         .update(jobEndpoints)
         .set({ _lockedUntil: lockUntil })
@@ -324,6 +330,8 @@ export class DrizzleJobsRepo implements JobsRepo {
       headersJson: row.headersJson ?? undefined,
       bodyJson: row.bodyJson,
       timeoutMs: row.timeoutMs ?? undefined,
+      maxExecutionTimeMs: row.maxExecutionTimeMs ?? undefined,
+      maxResponseSizeKb: row.maxResponseSizeKb ?? undefined,
     };
   }
 

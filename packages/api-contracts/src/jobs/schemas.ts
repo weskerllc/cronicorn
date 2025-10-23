@@ -61,6 +61,11 @@ const EndpointFieldsBaseSchema = z.object({
   headersJson: z.record(z.string()).optional(),
   bodyJson: z.any().optional(),
   timeoutMs: z.number().int().positive().optional(),
+  maxExecutionTimeMs: z.number().int().positive().max(1800000).optional().openapi({
+    description: "Maximum expected execution time in milliseconds (for lock duration). Default: 60000 (1 minute). Max: 1800000 (30 minutes).",
+    example: 120000,
+  }),
+  maxResponseSizeKb: z.number().int().positive().optional(),
 });
 
 const EndpointFieldsSchema = EndpointFieldsBaseSchema.refine(
@@ -106,11 +111,13 @@ export const EndpointResponseSchema = z.object({
   headersJson: z.record(z.string()).optional(),
   bodyJson: z.any().optional(),
   timeoutMs: z.number().optional(),
+  maxExecutionTimeMs: z.number().optional(),
+  maxResponseSizeKb: z.number().optional(),
   aiHintIntervalMs: z.number().int().optional().openapi({
-    description: "AI-suggested interval in milliseconds",
+    description: "AI-suggested interval in milliseconds. If both interval and one-shot hints are active, the earliest scheduled time wins.",
   }),
   aiHintNextRunAt: z.string().datetime().optional().openapi({
-    description: "AI-suggested next run time",
+    description: "AI-suggested next run time (one-shot). If both interval and one-shot hints are active, the earliest scheduled time wins.",
   }),
   aiHintExpiresAt: z.string().datetime().optional().openapi({
     description: "When the AI hint expires",
