@@ -41,9 +41,9 @@ export function planNextRun(now: Date, j: JobEndpoint, cron: Cron): PlanResult {
   const baseline: Candidate = j.baselineCron
     ? { at: cron.next(j.baselineCron, now), src: "baseline-cron" }
     : {
-      at: new Date(lastMs + calculateBackoffInterval(j.baselineIntervalMs ?? 60_000, j.failureCount)),
-      src: "baseline-interval",
-    };
+        at: new Date(lastMs + calculateBackoffInterval(j.baselineIntervalMs ?? 60_000, j.failureCount)),
+        src: "baseline-interval",
+      };
 
   const freshHint = !!(j.aiHintExpiresAt && j.aiHintExpiresAt.getTime() > nowMs);
 

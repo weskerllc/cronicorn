@@ -57,15 +57,15 @@ async function main() {
     level: config.LOG_LEVEL,
     ...(config.NODE_ENV === "development"
       ? {
-        transport: {
-          target: "pino-pretty",
-          options: {
-            colorize: true,
-            translateTime: "SYS:standard",
-            ignore: "pid,hostname",
+          transport: {
+            target: "pino-pretty",
+            options: {
+              colorize: true,
+              translateTime: "SYS:standard",
+              ignore: "pid,hostname",
+            },
           },
-        },
-      }
+        }
       : {}),
   });
   const logger = new PinoLoggerAdapter(pinoLogger);

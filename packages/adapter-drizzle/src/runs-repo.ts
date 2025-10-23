@@ -79,16 +79,16 @@ export class DrizzleRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-    runs: Array<{
-      runId: string;
-      endpointId: string;
-      startedAt: Date;
-      status: string;
-      durationMs?: number;
-      source?: string;
-    }>;
-    total: number;
-  }> {
+      runs: Array<{
+        runId: string;
+        endpointId: string;
+        startedAt: Date;
+        status: string;
+        durationMs?: number;
+        source?: string;
+      }>;
+      total: number;
+    }> {
     // Build conditions
     // Build query conditions
     const conditions = [];
@@ -315,11 +315,11 @@ export class DrizzleRunsRepo implements RunsRepo {
     endpointId: string,
     limit: number,
   ): Promise<Array<{
-    responseBody: JsonValue | null;
-    timestamp: Date;
-    status: string;
-    durationMs: number;
-  }>> {
+      responseBody: JsonValue | null;
+      timestamp: Date;
+      status: string;
+      durationMs: number;
+    }>> {
     // Clamp limit to max 50
     const clampedLimit = Math.min(limit, 50);
 
@@ -351,12 +351,12 @@ export class DrizzleRunsRepo implements RunsRepo {
     jobId: string,
     excludeEndpointId: string,
   ): Promise<Array<{
-    endpointId: string;
-    endpointName: string;
-    responseBody: JsonValue | null;
-    timestamp: Date;
-    status: string;
-  }>> {
+      endpointId: string;
+      endpointName: string;
+      responseBody: JsonValue | null;
+      timestamp: Date;
+      status: string;
+    }>> {
     // This requires a lateral join to get latest run per endpoint.
     // We'll use a window function approach instead (simpler with Drizzle).
 
