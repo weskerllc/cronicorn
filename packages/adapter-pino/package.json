@@ -1,0 +1,18 @@
+{
+  "name": "@cronicorn/adapter-pino",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "dependencies": {
+    "@cronicorn/domain": "workspace:*",
+    "pino": "^10.1.0"
+  }
+}
