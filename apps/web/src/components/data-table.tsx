@@ -6,6 +6,8 @@ import {
   IconChevronRight,
   IconChevronsLeft,
   IconChevronsRight,
+  IconLoader,
+  IconRefresh,
 } from "@tabler/icons-react";
 import {
   flexRender,
@@ -56,6 +58,9 @@ interface DataTableProps<TData, TValue> {
   defaultPageSize?: number;
   pageSizeOptions?: Array<number>;
   emptyMessage?: string;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
+  getRowId?: (row: TData) => string;
 }
 
 export function DataTable<TData, TValue>({
@@ -68,6 +73,9 @@ export function DataTable<TData, TValue>({
   defaultPageSize = 10,
   pageSizeOptions = [5, 10, 20, 30, 40, 50],
   emptyMessage = "No results found.",
+  onRefresh,
+  isRefreshing = false,
+  getRowId,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -89,6 +97,7 @@ export function DataTable<TData, TValue>({
       pagination,
     },
     enableRowSelection,
+    getRowId,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -104,16 +113,35 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex flex-col gap-4">
-      {searchKey && (
+      {(searchKey || onRefresh) && (
         <div className="flex items-center gap-2">
-          <Input
-            placeholder={searchPlaceholder}
-            value={(table.getColumn(searchKey)?.getFilterValue() as string) || ""}
-            onChange={(event) =>
-              table.getColumn(searchKey)?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
+          {searchKey && (
+            <Input
+              placeholder={searchPlaceholder}
+              value={(table.getColumn(searchKey)?.getFilterValue() as string) || ""}
+              onChange={(event) =>
+                table.getColumn(searchKey)?.setFilterValue(event.target.value)
+              }
+              className="max-w-sm"
+            />
+          )}
+          {onRefresh && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="ml-auto"
+            >
+              {isRefreshing ? (
+                <>
+                  <IconLoader className=" size-4 animate-spin" />
+                </>
+              ) : (
+                <IconRefresh className="size-4" />
+              )}
+            </Button>
+          )}
         </div>
       )}
 
@@ -128,9 +156,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}
