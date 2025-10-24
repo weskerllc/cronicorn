@@ -39,7 +39,9 @@
         "failComment": false,
         "failTitle": false,
         "labels": false,
-        "releasedLabels": false
+        "releasedLabels": false,
+        "addReleases": "bottom",
+        "releaseBodyTemplate": "{{body}}\n\n---\n\n> **Note:** Docker images for this release will be automatically built and pushed to the GitHub Container Registry. The release notes will be updated with image details once the build completes."
       }
     ]
   ]
