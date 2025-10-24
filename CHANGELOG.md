@@ -1,3 +1,10 @@
+## [1.1.6](https://github.com/bcanfield/mvpmvp/compare/v1.1.5...v1.1.6) (2025-10-24)
+
+
+### Bug Fixes
+
+* Optimize build ([efb4b1f](https://github.com/bcanfield/mvpmvp/commit/efb4b1f28cbf72be27c0afb6fec2d5abfbbd54e9))
+
 ## [1.1.5](https://github.com/bcanfield/mvpmvp/compare/v1.1.4...v1.1.5) (2025-10-24)
 
 
