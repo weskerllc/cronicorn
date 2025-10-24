@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/bcanfield/mvpmvp/compare/v1.0.0...v1.0.1) (2025-10-24)
+
+
+### Bug Fixes
+
+* Lint ([41c5d1d](https://github.com/bcanfield/mvpmvp/commit/41c5d1d26804c065a235dfd13f4f8fef8fabf2f4))
+
 # 1.0.0 (2025-10-24)
 
 
