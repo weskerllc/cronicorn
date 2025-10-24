@@ -3,7 +3,7 @@ name: Build and Publish Docker Images
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 env:
   REGISTRY: ghcr.io
@@ -17,7 +17,7 @@ jobs:
       packages: write
       attestations: write
       id-token: write
-    
+
     strategy:
       matrix:
         service:
