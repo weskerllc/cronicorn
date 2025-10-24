@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/bcanfield/mvpmvp/compare/v1.0.2...v1.0.3) (2025-10-24)
+
+
+### Bug Fixes
+
+* CI ([839ca31](https://github.com/bcanfield/mvpmvp/commit/839ca31ce77c75f8086cbdb404fb8d6fc3a45560))
+
 ## [1.0.2](https://github.com/bcanfield/mvpmvp/compare/v1.0.1...v1.0.2) (2025-10-24)
 
 
