@@ -1,3 +1,16 @@
+## [1.0.2](https://github.com/bcanfield/mvpmvp/compare/v1.0.1...v1.0.2) (2025-10-24)
+
+
+### Bug Fixes
+
+* CI ([e3e1db1](https://github.com/bcanfield/mvpmvp/commit/e3e1db139d0a853157d06787269c40807aeb2df0))
+* CI ([d824412](https://github.com/bcanfield/mvpmvp/commit/d8244120f050ecb36c010985d6e9a9f82e3eb790))
+* CI ([f26d29a](https://github.com/bcanfield/mvpmvp/commit/f26d29a6b7d7f5a32481d8d9b7cbaf4ed88ae064))
+* CI ([edb4316](https://github.com/bcanfield/mvpmvp/commit/edb4316bb4da28a3869bd469e8e60e3ac030d921))
+* CI ([df63cc3](https://github.com/bcanfield/mvpmvp/commit/df63cc3510a1cd24a1d2856c702bf48c9ddc256c))
+* CI ([42d08ba](https://github.com/bcanfield/mvpmvp/commit/42d08ba0f7d3b63dc445910c1ebfb430e9051b53))
+* workflow ([a75e395](https://github.com/bcanfield/mvpmvp/commit/a75e39561beadc2e14838ad5bb71aeb6fdd36669))
+
 ## [1.0.1](https://github.com/bcanfield/mvpmvp/compare/v1.0.0...v1.0.1) (2025-10-24)
 
 
