@@ -168,17 +168,13 @@ The project uses GitHub Actions for automated releases and deployments.
 
 When code is merged to `main`:
 1. CI workflow runs tests and quality checks
-2. Semantic-release automatically versions and creates a tag
-3. Release workflow builds and publishes Docker images to GitHub Container Registry
+2. Semantic-release automatically versions and creates a GitHub release
+3. Release workflow triggers on the published release and builds Docker images
+4. Docker images are published to GitHub Container Registry with version tags
 
-### Setup Requirements
+The release workflow automatically triggers when semantic-release publishes a release - no manual setup required!
 
-To enable automatic releases, a repository secret `PAT_TOKEN` is required:
-- Create a Personal Access Token with `repo` scope
-- Add it as a repository secret named `PAT_TOKEN`
-- See [.github/workflows/README.md](.github/workflows/README.md) for detailed instructions
-
-Without `PAT_TOKEN`, tags will be created but Docker images won't be built automatically.
+See [.github/workflows/README.md](.github/workflows/README.md) for technical details.
 
 ## 🤝 Contributing
 

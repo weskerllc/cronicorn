@@ -12,41 +12,31 @@ Runs on every push to `main`:
 - Semantic release (version bump, changelog, tag creation)
 
 ### release.yml
-Triggers on tag push:
+Triggers when a GitHub release is published:
 - Builds and publishes Docker images to GitHub Container Registry
 - Creates multi-platform images (amd64, arm64)
 - Generates attestations for security
 
 ### tag-test.yml
-Simple test workflow to verify tag triggers work correctly.
+Simple test workflow to verify release triggers work correctly.
 
-## Important Setup Requirements
+## How It Works
 
-### PAT_TOKEN Secret
+### Release Trigger Mechanism
 
-⚠️ **Critical**: The `release.yml` workflow will **not** trigger automatically when semantic-release creates a tag if using the default `GITHUB_TOKEN`.
+The `release.yml` workflow triggers when semantic-release publishes a GitHub release (not on tag push). This is the correct approach because:
 
-**Why?** GitHub Actions has a security feature that prevents workflows triggered by `GITHUB_TOKEN` from triggering other workflows. This prevents infinite workflow loops.
+1. **Semantic-release creates releases via GitHub API** (not git push)
+2. **API-created releases fire the `release.published` event**
+3. **This event properly triggers workflows** regardless of which token is used
 
-**Solution**: Create a Personal Access Token (PAT) with `repo` scope and add it as a repository secret named `PAT_TOKEN`.
+This is why we use `on: release: types: [published]` instead of `on: push: tags:`.
 
-#### Steps to Create PAT:
+### Why PAT_TOKEN is Still Used
 
-1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
-2. Click "Generate new token (classic)"
-3. Name: `Workflow Trigger Token` (or similar)
-4. Expiration: Choose an appropriate duration
-5. Scopes: Select `repo` (full control of private repositories)
-6. Click "Generate token" and copy the token
-7. In your repository: Settings → Secrets and variables → Actions
-8. Click "New repository secret"
-9. Name: `PAT_TOKEN`
-10. Value: Paste your PAT
-11. Click "Add secret"
-
-#### Alternative: GitHub App Token
-
-For better security and more fine-grained control, consider using a GitHub App token instead of a PAT. See [GitHub's documentation](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/making-authenticated-api-requests-with-a-github-app-in-a-github-actions-workflow) for details.
+Even though the release trigger now works with the default `GITHUB_TOKEN`, we still use `PAT_TOKEN` in the CI workflow for semantic-release. This is optional but recommended because:
+- It ensures semantic-release can create releases even if default token permissions change
+- The `PAT_TOKEN || GITHUB_TOKEN` fallback means the workflow still works without PAT_TOKEN
 
 ## Workflow Sequence
 
@@ -55,9 +45,9 @@ Push to main
     ↓
 ci.yml runs
     ↓
-semantic-release creates tag (using PAT_TOKEN)
+semantic-release creates GitHub release (with tag)
     ↓
-release.yml triggers on tag push
+release.yml triggers on release published event
     ↓
 Docker images built and published
 ```
@@ -66,10 +56,10 @@ Docker images built and published
 
 ### release.yml not triggering
 
-1. Verify `PAT_TOKEN` secret exists and is valid
-2. Check that the PAT has `repo` scope
-3. Ensure semantic-release successfully created a tag (check Releases page)
-4. Look for failed workflow runs in the Actions tab
+1. Ensure semantic-release successfully created a GitHub release (check Releases page)
+2. Verify the release is published (not draft)
+3. Check for failed workflow runs in the Actions tab
+4. Verify the workflow file syntax is correct
 
 ### Docker build failures
 
@@ -77,8 +67,28 @@ Docker images built and published
 2. Check that all required build targets exist in the Dockerfile
 3. Ensure all dependencies are properly installed during build
 
+## Common Pitfall: Tag Push vs Release Event
+
+### ❌ Wrong Approach (Doesn't Work)
+```yaml
+on:
+  push:
+    tags:
+      - "*"
+```
+**Why it fails:** semantic-release creates releases via GitHub API, not git push. API calls don't trigger `push` events.
+
+### ✅ Correct Approach (Works)
+```yaml
+on:
+  release:
+    types: [published]
+```
+**Why it works:** The `@semantic-release/github` plugin publishes releases via API, which fires the `release.published` event that properly triggers workflows.
+
 ## References
 
 - [GitHub Actions Security: Preventing pwn requests](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#understanding-the-risk-of-script-injections)
 - [Using secrets in GitHub Actions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions)
 - [Triggering a workflow from a workflow](https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#triggering-a-workflow-from-a-workflow)
+- [GitHub Release Events](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#release)
