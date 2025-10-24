@@ -32,6 +32,8 @@ RUN pnpm run build
 # -------- Deploy Individual Apps --------
 FROM build AS deploy-migrator
 RUN pnpm deploy --filter=@cronicorn/migrator --prod --legacy /prod/migrator
+# Copy migrations folder to deployment directory
+RUN cp -r /app/packages/adapter-drizzle/migrations /prod/migrator/node_modules/@cronicorn/adapter-drizzle/
 
 FROM build AS deploy-api
 RUN pnpm deploy --filter=@cronicorn/api --prod --legacy /prod/api
@@ -58,8 +60,6 @@ ENTRYPOINT ["/sbin/tini", "--"]
 USER node
 WORKDIR /app
 COPY --from=deploy-migrator --chown=node:node /prod/migrator .
-# Copy migrations folder to deployment directory
-RUN cp -r /app/packages/adapter-drizzle/migrations /app/node_modules/@cronicorn/adapter-drizzle/
 CMD ["node", "dist/index.js"]
 
 # API Runtime
