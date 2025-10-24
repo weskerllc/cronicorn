@@ -160,6 +160,26 @@ Verify deployment:
 - Scheduler: Monitor logs for job execution
 - AI Features: Test with an AI-enabled job
 
+## 🔄 CI/CD
+
+The project uses GitHub Actions for automated releases and deployments.
+
+### Automated Release Process
+
+When code is merged to `main`:
+1. CI workflow runs tests and quality checks
+2. Semantic-release automatically versions and creates a tag
+3. Release workflow builds and publishes Docker images to GitHub Container Registry
+
+### Setup Requirements
+
+To enable automatic releases, a repository secret `PAT_TOKEN` is required:
+- Create a Personal Access Token with `repo` scope
+- Add it as a repository secret named `PAT_TOKEN`
+- See [.github/workflows/README.md](.github/workflows/README.md) for detailed instructions
+
+Without `PAT_TOKEN`, tags will be created but Docker images won't be built automatically.
+
 ## 🤝 Contributing
 
 1. Fork & create a feature branch
