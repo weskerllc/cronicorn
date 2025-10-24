@@ -50,7 +50,7 @@ jobs:
 
       - name: Start PostgreSQL database
         run: docker compose -f docker-compose.dev.yml --env-file .env.test up -d
-      
+
       - name: Wait for PostgreSQL to be ready
         run: |
           # Wait for PostgreSQL to be ready
@@ -66,10 +66,10 @@ jobs:
             sleep 1
           done
           echo "PostgreSQL is ready!"
-      
+
       - name: Run database migrations and reset
-        run: pnpm db:push
-      
+        run: pnpm db:migrate
+
       - name: Run Tests with coverage
         run: pnpm test
 
