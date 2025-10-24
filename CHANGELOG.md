@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/bcanfield/mvpmvp/compare/v1.0.3...v1.1.0) (2025-10-24)
+
+
+### Bug Fixes
+
+* Test ([0b8e6fc](https://github.com/bcanfield/mvpmvp/commit/0b8e6fcb3e6622e04b9a09c3ff1845cafb2cd002))
+
+
+### Features
+
+* add tag test workflow ([deeb64b](https://github.com/bcanfield/mvpmvp/commit/deeb64b5751d42253e88afe079686fe764943320))
+
 ## [1.0.3](https://github.com/bcanfield/mvpmvp/compare/v1.0.2...v1.0.3) (2025-10-24)
 
 
