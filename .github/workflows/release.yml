@@ -72,27 +72,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and cache the common layers up to 'build' stage
-      - name: Build base layers
+      # Build and cache common dependencies layer
+      - name: Build and cache base layers
         id: base
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.monorepo-optimized
-          target: build
-          push: false
+          target: build-deps
           platforms: linux/amd64
-          # Multi-tier caching: GHA cache + registry cache + inline cache
+          # Use GitHub Actions cache for optimal performance
           cache-from: |
             type=gha,scope=monorepo-base
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:base
           cache-to: |
             type=gha,mode=max,scope=monorepo-base
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:base,mode=max
+          # Don't push base layers, just cache them
           outputs: type=cacheonly
-          # Add build metadata
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
 
   # Build each service using the cached base
   build-services:
@@ -174,16 +169,12 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          # Enhanced multi-tier caching strategy
+          # Optimized caching with GitHub Actions cache
           cache-from: |
             type=gha,scope=monorepo-base
             type=gha,scope=${{ matrix.service.name }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:base
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:${{ matrix.service.name }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ matrix.service.name }}:latest
           cache-to: |
             type=gha,mode=max,scope=${{ matrix.service.name }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:${{ matrix.service.name }},mode=max
           # Enable provenance and SBOM for security
           provenance: true
           sbom: true
