@@ -1,3 +1,10 @@
+## [1.1.17](https://github.com/bcanfield/mvpmvp/compare/v1.1.16...v1.1.17) (2025-10-24)
+
+
+### Bug Fixes
+
+* migrator ([dd9309e](https://github.com/bcanfield/mvpmvp/commit/dd9309e6c01fcb6148aee9af15910fbba0b7822f))
+
 ## [1.1.16](https://github.com/bcanfield/mvpmvp/compare/v1.1.15...v1.1.16) (2025-10-24)
 
 
