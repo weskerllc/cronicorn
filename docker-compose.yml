@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:17
-    container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-db
+    container_name: cronicorn-db
     restart: ${DB_RESTART:-unless-stopped}
     networks: [cronicorn]
     ports:
@@ -28,11 +28,11 @@ services:
         condition: service_healthy
     environment:
       # Override DATABASE_URL to use container hostname (local .env uses localhost:6666)
-      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@${COMPOSE_PROJECT_NAME:-cronicorn}-db:5432/${POSTGRES_DB:-db}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-db:5432/${POSTGRES_DB:-db}
 
   api:
     image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/api:${IMAGE_TAG:-latest}
-    container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-api
+    container_name: cronicorn-api
     restart: unless-stopped
     networks: [cronicorn]
     depends_on:
@@ -41,7 +41,7 @@ services:
       migrator:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@${COMPOSE_PROJECT_NAME:-cronicorn}-db:5432/${POSTGRES_DB:-db}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-db:5432/${POSTGRES_DB:-db}
       PORT: ${PORT:-3333}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL}
@@ -60,7 +60,7 @@ services:
 
   scheduler:
     image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/scheduler:${IMAGE_TAG:-latest}
-    container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-scheduler
+    container_name: cronicorn-scheduler
     restart: unless-stopped
     networks: [cronicorn]
     depends_on:
@@ -76,7 +76,7 @@ services:
 
   ai-planner:
     image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/ai-planner:${IMAGE_TAG:-latest}
-    container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-ai-planner
+    container_name: cronicorn-ai-planner
     restart: unless-stopped
     networks: [cronicorn]
     depends_on:
@@ -85,7 +85,7 @@ services:
       migrator:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@${COMPOSE_PROJECT_NAME:-cronicorn}-db:5432/${POSTGRES_DB:-db}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-db:5432/${POSTGRES_DB:-db}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
       AI_ANALYSIS_INTERVAL_MS: ${AI_ANALYSIS_INTERVAL_MS:-300000}
@@ -96,12 +96,12 @@ services:
 
   web:
     image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/web:${IMAGE_TAG:-latest}
+    container_name: cronicorn-web
     networks: [cronicorn]
     ports:
-      - "3001:80"
+      - "5173:80"
     depends_on:
-      api:
-        condition: service_healthy
+      - api
     restart: unless-stopped
 
 volumes:

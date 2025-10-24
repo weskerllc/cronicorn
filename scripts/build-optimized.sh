@@ -39,6 +39,9 @@ if [ -n "$CACHE_TO" ]; then
 fi
 
 # Build individual services
+echo "📦 Building Migrator..."
+docker buildx build $BUILD_FLAGS --target migrator --tag $REGISTRY/cronicorn-migrator:$TAG --load .
+
 echo "📦 Building API..."
 docker buildx build $BUILD_FLAGS --target api --tag $REGISTRY/cronicorn-api:$TAG --load .
 
@@ -54,6 +57,7 @@ docker buildx build $BUILD_FLAGS --target web --tag $REGISTRY/cronicorn-web:$TAG
 # Push if requested
 if [ "$PUSH" = "true" ]; then
     echo "🚀 Pushing images..."
+    docker push $REGISTRY/cronicorn-migrator:$TAG
     docker push $REGISTRY/cronicorn-api:$TAG
     docker push $REGISTRY/cronicorn-scheduler:$TAG
     docker push $REGISTRY/cronicorn-ai-planner:$TAG
