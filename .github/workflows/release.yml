@@ -3,6 +3,17 @@ name: Build and Publish Docker Images
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g., v1.2.3)'
+        required: true
+        type: string
+
+# Cancel in-progress builds for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name || github.event.inputs.tag }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
@@ -12,20 +23,47 @@ jobs:
   # Build common base layers once
   build-base:
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       packages: write
-    
+
     outputs:
       base-digest: ${{ steps.base.outputs.digest }}
-      
+      registry: ${{ env.REGISTRY }}
+      repo-name: ${{ env.REPO_NAME }}
+      tag-version: ${{ steps.tag.outputs.version }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          # Sparse checkout to speed up clone (only needed files)
+          sparse-checkout: |
+            .github
+            Dockerfile.monorepo-optimized
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            package.json
+            tsconfig*.json
+            apps
+            packages
+          sparse-checkout-cone-mode: false
+
+      - name: Extract version tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          # Enable advanced BuildKit features
+          buildkitd-flags: --debug
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -44,20 +82,31 @@ jobs:
           target: build
           push: false
           platforms: linux/amd64
-          cache-from: type=gha,scope=monorepo-base
-          cache-to: type=gha,mode=max,scope=monorepo-base
+          # Multi-tier caching: GHA cache + registry cache + inline cache
+          cache-from: |
+            type=gha,scope=monorepo-base
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:base
+          cache-to: |
+            type=gha,mode=max,scope=monorepo-base
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:base,mode=max
           outputs: type=cacheonly
+          # Add build metadata
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
 
   # Build each service using the cached base
   build-services:
     runs-on: ubuntu-latest
     needs: build-base
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       packages: write
-      
+      attestations: write
+      id-token: write
+
     strategy:
+      fail-fast: false
       matrix:
         service:
           - name: api
@@ -69,12 +118,29 @@ jobs:
           - name: web
             target: web
 
+    outputs:
+      api-digest: ${{ steps.push.outputs.digest }}
+      api-tags: ${{ steps.meta.outputs.tags }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            .github
+            Dockerfile.monorepo-optimized
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            package.json
+            tsconfig*.json
+            apps
+            packages
+          sparse-checkout-cone-mode: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --debug
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -89,11 +155,16 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ matrix.service.name }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ needs.build-base.outputs.tag-version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.build-base.outputs.tag-version }}
             type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.service.name }}
+            org.opencontainers.image.description=Cronicorn ${{ matrix.service.name }} service
+            org.opencontainers.image.version=${{ needs.build-base.outputs.tag-version }}
 
       - name: Build and push Docker image
+        id: push
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -103,7 +174,142 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+          # Enhanced multi-tier caching strategy
           cache-from: |
             type=gha,scope=monorepo-base
             type=gha,scope=${{ matrix.service.name }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:base
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:${{ matrix.service.name }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ matrix.service.name }}:latest
+          cache-to: |
+            type=gha,mode=max,scope=${{ matrix.service.name }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:${{ matrix.service.name }},mode=max
+          # Enable provenance and SBOM for security
+          provenance: true
+          sbom: true
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      # Attest the build for supply chain security
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ matrix.service.name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Export image information
+        id: export
+        run: |
+          echo "digest=${{ steps.push.outputs.digest }}" >> $GITHUB_OUTPUT
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # Save build artifacts for summary
+      - name: Save build metadata
+        run: |
+          mkdir -p /tmp/build-info
+          cat > /tmp/build-info/${{ matrix.service.name }}.json <<EOF
+          {
+            "service": "${{ matrix.service.name }}",
+            "digest": "${{ steps.push.outputs.digest }}",
+            "tags": $(echo '${{ steps.meta.outputs.tags }}' | jq -R -s -c 'split("\n") | map(select(length > 0))'),
+            "version": "${{ needs.build-base.outputs.tag-version }}",
+            "registry": "${{ env.REGISTRY }}",
+            "repo": "${{ env.REPO_NAME }}"
+          }
+          EOF
+
+      - name: Upload build metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-metadata-${{ matrix.service.name }}
+          path: /tmp/build-info/${{ matrix.service.name }}.json
+          retention-days: 7
+
+  # Update GitHub Release with Docker image information
+  update-release:
+    runs-on: ubuntu-latest
+    needs: [build-base, build-services]
+    if: (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && !cancelled()
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: Download all build metadata
+        uses: actions/download-artifact@v4
+        with:
+          pattern: build-metadata-*
+          path: /tmp/build-info
+          merge-multiple: true
+
+      - name: Generate Docker images summary
+        id: summary
+        run: |
+          echo "## 🐳 Docker Images" > /tmp/docker-images.md
+          echo "" >> /tmp/docker-images.md
+          echo "The following Docker images have been published for this release:" >> /tmp/docker-images.md
+          echo "" >> /tmp/docker-images.md
+
+          for file in /tmp/build-info/*.json; do
+            service=$(jq -r '.service' "$file")
+            version=$(jq -r '.version' "$file")
+            digest=$(jq -r '.digest' "$file")
+            registry=$(jq -r '.registry' "$file")
+            repo=$(jq -r '.repo' "$file")
+
+            echo "### 📦 ${service}" >> /tmp/docker-images.md
+            echo "" >> /tmp/docker-images.md
+            echo '```bash' >> /tmp/docker-images.md
+            echo "# Pull by version tag" >> /tmp/docker-images.md
+            echo "docker pull ${registry}/${repo}/${service}:${version}" >> /tmp/docker-images.md
+            echo "" >> /tmp/docker-images.md
+            echo "# Pull by digest (immutable)" >> /tmp/docker-images.md
+            echo "docker pull ${registry}/${repo}/${service}@${digest}" >> /tmp/docker-images.md
+            echo '```' >> /tmp/docker-images.md
+            echo "" >> /tmp/docker-images.md
+            echo "**Image Digest:** \`${digest}\`" >> /tmp/docker-images.md
+            echo "" >> /tmp/docker-images.md
+          done
+
+          echo "---" >> /tmp/docker-images.md
+          echo "" >> /tmp/docker-images.md
+          echo "**Registry:** \`${registry}/${repo}\`" >> /tmp/docker-images.md
+          echo "**Version:** \`${version}\`" >> /tmp/docker-images.md
+          echo "**Build Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> /tmp/docker-images.md
+
+          cat /tmp/docker-images.md
+
+      - name: Update Release Notes
+        if: github.event_name == 'release'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const dockerInfo = fs.readFileSync('/tmp/docker-images.md', 'utf8');
+
+            const release = await github.rest.repos.getRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id
+            });
+
+            const currentBody = release.data.body || '';
+            const updatedBody = currentBody + '\n\n' + dockerInfo;
+
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id,
+              body: updatedBody
+            });
+
+            console.log('Release notes updated with Docker image information');
+
+      - name: Create workflow summary
+        run: |
+          cat /tmp/docker-images.md >> $GITHUB_STEP_SUMMARY
+
