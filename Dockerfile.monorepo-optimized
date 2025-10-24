@@ -1,9 +1,8 @@
 # syntax=docker/dockerfile:1.4
-# Optimized multi-stage build for pnpm monorepo with BuildKit cache mounts
-# Based on: https://pnpm.io/docker and BuildKit best practices
+# Optimized multi-stage build for pnpm monorepo following Docker best practices
+# Based on: https://docs.docker.com/get-started/workshop/09_image_best/
 
 ARG NODE_VERSION=24.5.0
-ARG PNPM_VERSION=10.17.1
 
 # -------- Base: Setup pnpm --------
 FROM node:${NODE_VERSION}-alpine AS base
@@ -11,30 +10,22 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-# -------- Fetch Dependencies (Layer-Cacheable) --------
-FROM base AS fetch
-COPY pnpm-lock.yaml /app/
+# -------- Dependencies (Layer-Cacheable) --------
+FROM base AS deps
 WORKDIR /app
-# Use cache mount for pnpm store - this is the KEY optimization
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm fetch --prod
+# Copy dependency files first for optimal layer caching
+COPY pnpm-lock.yaml package.json ./
+RUN pnpm fetch --prod
 
 # -------- Dev Dependencies --------
-FROM fetch AS fetch-dev
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm fetch
-
-# -------- Production Dependencies --------
-FROM fetch AS prod-deps
-COPY . /app
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --prod --frozen-lockfile --offline
+FROM deps AS build-deps
+RUN pnpm fetch
 
 # -------- Build Stage --------
-FROM fetch-dev AS build
-COPY . /app
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --offline
+FROM build-deps AS build
+# Copy source code after dependencies are cached
+COPY . .
+RUN pnpm install --frozen-lockfile --offline
 # Build all packages (TypeScript project references)
 RUN pnpm run build
 
