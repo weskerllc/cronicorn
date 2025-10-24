@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/bcanfield/mvpmvp/compare/v1.1.3...v1.1.4) (2025-10-24)
+
+
+### Bug Fixes
+
+* Comment out attestation ([8610427](https://github.com/bcanfield/mvpmvp/commit/8610427f1f1737b090b2741afd984d5d29fb2f23))
+
 ## [1.1.3](https://github.com/bcanfield/mvpmvp/compare/v1.1.2...v1.1.3) (2025-10-24)
 
 
