@@ -1,3 +1,11 @@
+## [1.1.1](https://github.com/bcanfield/mvpmvp/compare/v1.1.0...v1.1.1) (2025-10-24)
+
+
+### Bug Fixes
+
+* CI ([204bd1a](https://github.com/bcanfield/mvpmvp/commit/204bd1a943e287d762805a8c54ddc779a4019827))
+* update tag triggers for workflows ([d5dd947](https://github.com/bcanfield/mvpmvp/commit/d5dd9472aad533f63e3cba48a873f121a7e733e4))
+
 # [1.1.0](https://github.com/bcanfield/mvpmvp/compare/v1.0.3...v1.1.0) (2025-10-24)
 
 
