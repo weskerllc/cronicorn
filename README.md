@@ -1,3 +1,4 @@
+
 # Cron MVP - AI HTTP Job Scheduler
 
 An AI-powered HTTP request scheduler that supports dynamic scheduling based on runtime signals, endpoint responses, and manual overrides.
