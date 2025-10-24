@@ -3,9 +3,7 @@ name: Build and Publish Docker Images
 on:
   push:
     tags:
-      - "v*"
-      - "v*.*.*"
-  create:
+      - "*"
 
 env:
   REGISTRY: ghcr.io
