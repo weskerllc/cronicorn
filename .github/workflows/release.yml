@@ -22,23 +22,19 @@ jobs:
       matrix:
         service:
           - name: api
-            dockerfile: Dockerfile.api
+            dockerfile: Dockerfile.monorepo-optimized
             context: .
             target: api
           - name: ai-planner
-            dockerfile: Dockerfile.ai-planner
+            dockerfile: Dockerfile.monorepo-optimized
             context: .
             target: ai-planner
           - name: scheduler
-            dockerfile: Dockerfile.scheduler
+            dockerfile: Dockerfile.monorepo-optimized
             context: .
             target: scheduler
-          - name: migrator
-            dockerfile: Dockerfile.migrator
-            context: .
-            target: migrator
           - name: web
-            dockerfile: Dockerfile.web
+            dockerfile: Dockerfile.monorepo-optimized
             context: .
             target: web
 
