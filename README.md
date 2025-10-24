@@ -18,6 +18,7 @@ docker-compose up -d
 # Set up database
 pnpm migrate
 
+
 # Start development
 pnpm dev
 ```
