@@ -1,3 +1,10 @@
+## [1.1.7](https://github.com/bcanfield/mvpmvp/compare/v1.1.6...v1.1.7) (2025-10-24)
+
+
+### Bug Fixes
+
+* Optimize ci ([b375c58](https://github.com/bcanfield/mvpmvp/commit/b375c58b7f966fecc3c27bd0bfebc1464c1a0330))
+
 ## [1.1.6](https://github.com/bcanfield/mvpmvp/compare/v1.1.5...v1.1.6) (2025-10-24)
 
 
