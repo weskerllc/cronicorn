@@ -68,10 +68,10 @@ jobs:
           echo "PostgreSQL is ready!"
 
       - name: Run database migrations and reset
-        run: dotenv -e .env.test -- pnpm db:migrate
+        run: pnpm exec dotenv -e .env.test -- pnpm db:migrate
 
       - name: Run tests with coverage
-        run: dotenv -e .env.test -- pnpm test
+        run: pnpm exec dotenv -e .env.test pnpm test
 
   release:
     runs-on: ubuntu-latest
