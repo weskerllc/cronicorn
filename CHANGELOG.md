@@ -1,3 +1,10 @@
+## [1.1.8](https://github.com/bcanfield/mvpmvp/compare/v1.1.7...v1.1.8) (2025-10-24)
+
+
+### Bug Fixes
+
+* cache ([f5a5f7c](https://github.com/bcanfield/mvpmvp/commit/f5a5f7c530e80b0f2812147daa73e4506e305558))
+
 ## [1.1.7](https://github.com/bcanfield/mvpmvp/compare/v1.1.6...v1.1.7) (2025-10-24)
 
 
