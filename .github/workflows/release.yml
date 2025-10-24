@@ -33,6 +33,11 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64
+        include:
+          - platform: linux/amd64
+            platform-tag: linux-amd64
+          - platform: linux/arm64
+            platform-tag: linux-arm64
 
     outputs:
       registry: ${{ env.REGISTRY }}
@@ -88,12 +93,12 @@ jobs:
           platforms: ${{ matrix.platform }}
           # Use GitHub Actions cache for optimal performance
           cache-from: |
-            type=gha,scope=monorepo-base-${{ matrix.platform }}
+            type=gha,scope=monorepo-base-${{ matrix.platform-tag }}
           cache-to: |
-            type=gha,mode=max,scope=monorepo-base-${{ matrix.platform }}
+            type=gha,mode=max,scope=monorepo-base-${{ matrix.platform-tag }}
           # Build and push to enable layer sharing with service builds
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ steps.tag.outputs.version }}-${{ matrix.platform }}
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ steps.tag.outputs.version }}-${{ matrix.platform-tag }}
 
   # Build each service using the cached base
   build-services:
@@ -177,11 +182,11 @@ jobs:
           platforms: linux/amd64,linux/arm64
           # Optimized caching with GitHub Actions cache
           cache-from: |
-            type=gha,scope=monorepo-base-linux/amd64
-            type=gha,scope=monorepo-base-linux/arm64
+            type=gha,scope=monorepo-base-linux-amd64
+            type=gha,scope=monorepo-base-linux-arm64
             type=gha,scope=${{ matrix.service.name }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ needs.build-base.outputs.tag-version }}-linux/amd64
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ needs.build-base.outputs.tag-version }}-linux/arm64
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ needs.build-base.outputs.tag-version }}-linux-amd64
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ needs.build-base.outputs.tag-version }}-linux-arm64
           cache-to: |
             type=gha,mode=max,scope=${{ matrix.service.name }}
           # Enable provenance and SBOM for security
