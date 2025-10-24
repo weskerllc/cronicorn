@@ -63,5 +63,6 @@
     "tsx": "^4.20.6",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "version": "1.0.0"
 }
