@@ -19,11 +19,7 @@ services:
       - db_data:/var/lib/postgresql/data
 
   migrator:
-    profiles: [dev, prod]
-    build:
-      context: .
-      dockerfile: Dockerfile.migrator
-      target: migrator
+    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/migrator:${IMAGE_TAG:-latest}
     container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-migrator
     restart: no
     networks: [cronicorn]
@@ -35,10 +31,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@${COMPOSE_PROJECT_NAME:-cronicorn}-db:5432/${POSTGRES_DB:-db}
 
   api:
-    profiles: [prod]
-    build:
-      context: .
-      dockerfile: Dockerfile.api
+    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/api:${IMAGE_TAG:-latest}
     container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-api
     restart: unless-stopped
     networks: [cronicorn]
@@ -66,10 +59,7 @@ services:
       - "${PORT:-3333}:3333"
 
   scheduler:
-    profiles: [prod]
-    build:
-      context: .
-      dockerfile: Dockerfile.scheduler
+    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/scheduler:${IMAGE_TAG:-latest}
     container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-scheduler
     restart: unless-stopped
     networks: [cronicorn]
@@ -85,10 +75,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
 
   ai-planner:
-    profiles: [prod]
-    build:
-      context: .
-      dockerfile: Dockerfile.ai-planner
+    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/ai-planner:${IMAGE_TAG:-latest}
     container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-ai-planner
     restart: unless-stopped
     networks: [cronicorn]
@@ -106,6 +93,16 @@ services:
       AI_MAX_TOKENS: ${AI_MAX_TOKENS:-500}
       AI_TEMPERATURE: ${AI_TEMPERATURE:-0.7}
       NODE_ENV: ${NODE_ENV:-production}
+
+  web:
+    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/web:${IMAGE_TAG:-latest}
+    networks: [cronicorn]
+    ports:
+      - "3001:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   db_data:

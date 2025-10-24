@@ -16,7 +16,7 @@
     "noEmit": true,
 
     /* Composite project for faster builds */
-    "composite": true,
+    // "composite": true,
     "incremental": true,
     "declaration": true,
     "declarationMap": true,

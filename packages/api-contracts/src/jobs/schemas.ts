@@ -58,7 +58,7 @@ const EndpointFieldsBaseSchema = z.object({
   maxIntervalMs: z.number().int().positive().optional(),
   url: z.string().url(),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
-  headersJson: z.record(z.string()).optional(),
+  headersJson: z.record(z.string(), z.string()).optional(),
   bodyJson: z.any().optional(),
   timeoutMs: z.number().int().positive().optional(),
   maxExecutionTimeMs: z.number().int().positive().max(1800000).optional().openapi({
@@ -108,7 +108,7 @@ export const EndpointResponseSchema = z.object({
   pausedUntil: z.string().datetime().optional(),
   url: z.string().optional(),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).optional(),
-  headersJson: z.record(z.string()).optional(),
+  headersJson: z.record(z.string(), z.string()).optional(),
   bodyJson: z.any().optional(),
   timeoutMs: z.number().optional(),
   maxExecutionTimeMs: z.number().optional(),

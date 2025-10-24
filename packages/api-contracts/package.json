@@ -25,8 +25,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@hono/zod-openapi": "0.18.3",
+    "@hono/zod-openapi": "1.1.4",
     "cron-parser": "^4.9.0",
-    "zod": "3.25.76"
+    "zod": "catalog:"
   }
 }
