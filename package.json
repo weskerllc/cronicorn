@@ -36,7 +36,6 @@
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && pnpm db",
     "db:migrate": "dotenv -e .env -- pnpm run -r --parallel migrate",
-    "db:push": "dotenv -e .env -- pnpm run -r --parallel push",
     "generate": "dotenv -e .env -- pnpm run -r --parallel generate",
     "studio": "dotenv -e .env -- pnpm run -r --parallel studio",
     "🚀 ---------- SCENARIOS ----------": "",
