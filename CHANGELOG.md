@@ -1,3 +1,10 @@
+## [1.1.15](https://github.com/bcanfield/mvpmvp/compare/v1.1.14...v1.1.15) (2025-10-24)
+
+
+### Bug Fixes
+
+* semantic release ([8794839](https://github.com/bcanfield/mvpmvp/commit/879483907070239da43653e33c91553bcdc02454))
+
 ## [1.1.14](https://github.com/bcanfield/mvpmvp/compare/v1.1.13...v1.1.14) (2025-10-24)
 
 
