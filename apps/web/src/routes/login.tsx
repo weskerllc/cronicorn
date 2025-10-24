@@ -100,7 +100,7 @@ function RouteComponent() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="flex flex-col gap-2">
             <Button
               variant="outline"
