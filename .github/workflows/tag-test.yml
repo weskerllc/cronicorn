@@ -4,10 +4,13 @@ on:
   push:
     tags:
       - "v*"
+      - "v*.*.*"
+  create:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Simple test
         run: |
