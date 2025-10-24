@@ -79,7 +79,7 @@ jobs:
         with:
           context: .
           file: Dockerfile.monorepo-optimized
-          target: build
+          target: build-deps
           platforms: linux/amd64,linux/arm64
           # Use GitHub Actions cache for optimal performance
           cache-from: |
@@ -88,7 +88,7 @@ jobs:
             type=gha,mode=max,scope=monorepo-base
           # Build and push to enable layer sharing with service builds
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-${{ steps.tag.outputs.version }}
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ steps.tag.outputs.version }}
 
   # Build each service using the cached base
   build-services:
@@ -174,7 +174,7 @@ jobs:
           cache-from: |
             type=gha,scope=monorepo-base
             type=gha,scope=${{ matrix.service.name }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-${{ needs.build-base.outputs.tag-version }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ needs.build-base.outputs.tag-version }}
           cache-to: |
             type=gha,mode=max,scope=${{ matrix.service.name }}
           # Enable provenance and SBOM for security
