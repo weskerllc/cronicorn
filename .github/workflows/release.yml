@@ -80,14 +80,15 @@ jobs:
           context: .
           file: Dockerfile.monorepo-optimized
           target: build-deps
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           # Use GitHub Actions cache for optimal performance
           cache-from: |
             type=gha,scope=monorepo-base
           cache-to: |
             type=gha,mode=max,scope=monorepo-base
-          # Don't push base layers, just cache them
-          outputs: type=cacheonly
+          # Build and push to enable layer sharing with service builds
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ steps.tag.outputs.version }}
 
   # Build each service using the cached base
   build-services:
@@ -173,13 +174,12 @@ jobs:
           cache-from: |
             type=gha,scope=monorepo-base
             type=gha,scope=${{ matrix.service.name }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_NAME }}/cache:build-deps-${{ needs.build-base.outputs.tag-version }}
           cache-to: |
             type=gha,mode=max,scope=${{ matrix.service.name }}
           # Enable provenance and SBOM for security
           provenance: true
           sbom: true
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
 
       # Attest the build for supply chain security
       - name: Attest Build Provenance
