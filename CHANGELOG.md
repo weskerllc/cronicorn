@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/bcanfield/mvpmvp/compare/v1.1.1...v1.1.2) (2025-10-24)
+
+
+### Bug Fixes
+
+* release.yml workflow not triggering on new tag push ([#41](https://github.com/bcanfield/mvpmvp/issues/41)) ([774f639](https://github.com/bcanfield/mvpmvp/commit/774f639a841c6e913babafc5a6ab734f9239860c))
+
 ## [1.1.1](https://github.com/bcanfield/mvpmvp/compare/v1.1.0...v1.1.1) (2025-10-24)
 
 
