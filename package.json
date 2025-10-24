@@ -9,6 +9,7 @@
     "node": ">=24.0.0",
     "pnpm": ">=10.0.0"
   },
+  "version": "1.0.0",
   "scripts": {
     "🚀 ---------- MONOREPO ----------": "",
     "build": "tsc -b",
@@ -63,6 +64,5 @@
     "tsx": "^4.20.6",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "version": "1.0.0"
+  }
 }
