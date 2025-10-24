@@ -172,10 +172,34 @@ When code is merged to `main`:
 2. Semantic-release automatically versions and creates a GitHub release
 3. Release workflow triggers on the published release and builds Docker images
 4. Docker images are published to GitHub Container Registry with version tags
+5. Release notes are automatically updated with Docker image information
 
 The release workflow automatically triggers when semantic-release publishes a release - no manual setup required!
 
-See [.github/workflows/README.md](.github/workflows/README.md) for technical details.
+### Docker Images
+
+All services are automatically built and published as Docker images with each release:
+
+```bash
+# Pull images by version (recommended)
+docker pull ghcr.io/bcanfield/mvpmvp/api:v1.2.3
+docker pull ghcr.io/bcanfield/mvpmvp/scheduler:v1.2.3
+docker pull ghcr.io/bcanfield/mvpmvp/ai-planner:v1.2.3
+docker pull ghcr.io/bcanfield/mvpmvp/web:v1.2.3
+```
+
+**Documentation:**
+- 📖 [Quick Reference Guide](./docs/DOCKER_QUICK_REFERENCE.md) - How to use the Docker workflow
+- 🚀 [Optimization Guide](./docs/DOCKER_BUILD_OPTIMIZATION.md) - Technical details on caching & performance
+- 📊 [Before/After Comparison](./docs/DOCKER_WORKFLOW_COMPARISON.md) - What changed and why
+
+**Key Features:**
+- Multi-tier caching (70-80% faster builds)
+- Automatic release notes updates with image details
+- SBOM and provenance attestations for security
+- Multi-platform support (amd64 & arm64)
+
+See [Docker Quick Reference](./docs/DOCKER_QUICK_REFERENCE.md) for complete usage instructions.
 
 ## 🤝 Contributing
 
