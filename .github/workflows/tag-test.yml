@@ -1,0 +1,15 @@
+name: Tag Test
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simple test
+        run: |
+          echo "Tag triggered: ${{ github.ref }}"
+          echo "Tag name: ${{ github.ref_name }}"
