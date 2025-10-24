@@ -181,36 +181,36 @@ jobs:
           provenance: true
           sbom: true
 
-      # Attest the build for supply chain security
-      - name: Attest Build Provenance
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ matrix.service.name }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
+      # # Attest the build for supply chain security
+      # - name: Attest Build Provenance
+      #   uses: actions/attest-build-provenance@v1
+      #   with:
+      #     subject-name: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ matrix.service.name }}
+      #     subject-digest: ${{ steps.push.outputs.digest }}
+      #     push-to-registry: true
 
-      - name: Export image information
-        id: export
-        run: |
-          echo "digest=${{ steps.push.outputs.digest }}" >> $GITHUB_OUTPUT
-          echo "tags<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+      # - name: Export image information
+      #   id: export
+      #   run: |
+      #     echo "digest=${{ steps.push.outputs.digest }}" >> $GITHUB_OUTPUT
+      #     echo "tags<<EOF" >> $GITHUB_OUTPUT
+      #     echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_OUTPUT
+      #     echo "EOF" >> $GITHUB_OUTPUT
 
-      # Save build artifacts for summary
-      - name: Save build metadata
-        run: |
-          mkdir -p /tmp/build-info
-          cat > /tmp/build-info/${{ matrix.service.name }}.json <<EOF
-          {
-            "service": "${{ matrix.service.name }}",
-            "digest": "${{ steps.push.outputs.digest }}",
-            "tags": $(echo '${{ steps.meta.outputs.tags }}' | jq -R -s -c 'split("\n") | map(select(length > 0))'),
-            "version": "${{ needs.build-base.outputs.tag-version }}",
-            "registry": "${{ env.REGISTRY }}",
-            "repo": "${{ env.REPO_NAME }}"
-          }
-          EOF
+      # # Save build artifacts for summary
+      # - name: Save build metadata
+      #   run: |
+      #     mkdir -p /tmp/build-info
+      #     cat > /tmp/build-info/${{ matrix.service.name }}.json <<EOF
+      #     {
+      #       "service": "${{ matrix.service.name }}",
+      #       "digest": "${{ steps.push.outputs.digest }}",
+      #       "tags": $(echo '${{ steps.meta.outputs.tags }}' | jq -R -s -c 'split("\n") | map(select(length > 0))'),
+      #       "version": "${{ needs.build-base.outputs.tag-version }}",
+      #       "registry": "${{ env.REGISTRY }}",
+      #       "repo": "${{ env.REPO_NAME }}"
+      #     }
+      #     EOF
 
       - name: Upload build metadata
         uses: actions/upload-artifact@v4

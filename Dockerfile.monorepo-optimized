@@ -30,6 +30,9 @@ RUN pnpm install --frozen-lockfile --offline
 RUN pnpm run build
 
 # -------- Deploy Individual Apps --------
+FROM build AS deploy-migrator
+RUN pnpm deploy --filter=@cronicorn/migrator --prod --legacy /prod/migrator
+
 FROM build AS deploy-api
 RUN pnpm deploy --filter=@cronicorn/api --prod --legacy /prod/api
 
@@ -46,6 +49,16 @@ RUN pnpm deploy --filter=@cronicorn/web --prod --legacy /prod/web
 RUN cp -r /app/apps/web/dist /prod/web/
 
 # -------- Runtime Images --------
+# Migrator Runtime
+FROM node:${NODE_VERSION}-alpine AS migrator
+ENV NODE_ENV=production
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini", "--"]
+USER node
+WORKDIR /app
+COPY --from=deploy-migrator --chown=node:node /prod/migrator .
+CMD ["node", "dist/index.js"]
+
 # API Runtime
 FROM node:${NODE_VERSION}-alpine AS api
 ENV NODE_ENV=production
