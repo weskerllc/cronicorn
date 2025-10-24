@@ -231,4 +231,17 @@ export class InMemoryRunsRepo implements RunsRepo {
     // Integration tests use DrizzleRunsRepo which has full implementation.
     return [];
   }
+
+  async cleanupZombieRuns(olderThanMs: number): Promise<number> {
+    const threshold = Date.now() - olderThanMs;
+    const zombies = this.runs.filter(r => r.status === "running" && r.startedAt <= threshold);
+
+    for (const zombie of zombies) {
+      zombie.status = "failed";
+      zombie.err = `Cleaned up zombie run (started at ${new Date(zombie.startedAt).toISOString()}, older than ${olderThanMs}ms)`;
+      zombie.durationMs = Date.now() - zombie.startedAt;
+    }
+
+    return zombies.length;
+  }
 }

@@ -49,8 +49,9 @@ export default antfu({
     "import/extensions": ["error", "ignorePackages", {
       js: "always",
       ts: "never",
+      tsx: "never",
+      jsx: "never",
     }],
   },
-  // TODO: Add the web baack in
-  ignores: ["**/migrations/*", "**/*.md", "**/apps/web/*"],
+  ignores: ["**/migrations/*", "**/*.md", "**/packages/ui-library/*", "**/routeTree.gen.ts", "**/.tanstack/**", "**/apps/web/**"],
 });

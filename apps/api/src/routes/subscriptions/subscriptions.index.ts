@@ -1,20 +1,12 @@
-import { requireAuth } from "../../auth/middleware.js";
 import { createRouter } from "../../types.js";
 import * as handlers from "./subscriptions.handlers.js";
+import * as routes from "./subscriptions.routes.js";
 
-const router = createRouter();
-
-// Protect all subscription routes with auth
-router.use("/subscriptions/*", async (c, next) => {
-  const auth = c.get("auth");
-  return requireAuth(auth)(c, next);
-});
-
-// ==================== Subscription Routes ====================
-// Note: Using regular routes (not .openapi()) to exclude from OpenAPI docs
-// These are internal billing endpoints consumed by the web app, not public API
-router.post("/subscriptions/checkout", handlers.handleCreateCheckout);
-router.post("/subscriptions/portal", handlers.handleCreatePortal);
-router.get("/subscriptions/status", handlers.handleGetStatus);
+const router = createRouter()
+  // ==================== Subscription Routes ====================
+  .openapi(routes.createCheckout, handlers.handleCreateCheckout)
+  .openapi(routes.createPortal, handlers.handleCreatePortal)
+  .openapi(routes.getStatus, handlers.handleGetStatus)
+  .openapi(routes.getUsage, handlers.handleGetUsage);
 
 export default router;

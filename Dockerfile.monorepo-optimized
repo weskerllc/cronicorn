@@ -1,0 +1,91 @@
+# syntax=docker/dockerfile:1.4
+# Optimized multi-stage build for pnpm monorepo with BuildKit cache mounts
+# Based on: https://pnpm.io/docker and BuildKit best practices
+
+ARG NODE_VERSION=24.5.0
+ARG PNPM_VERSION=10.17.1
+
+# -------- Base: Setup pnpm --------
+FROM node:${NODE_VERSION}-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+# -------- Fetch Dependencies (Layer-Cacheable) --------
+FROM base AS fetch
+COPY pnpm-lock.yaml /app/
+WORKDIR /app
+# Use cache mount for pnpm store - this is the KEY optimization
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm fetch --prod
+
+# -------- Dev Dependencies --------
+FROM fetch AS fetch-dev
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm fetch
+
+# -------- Production Dependencies --------
+FROM fetch AS prod-deps
+COPY . /app
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --prod --frozen-lockfile --offline
+
+# -------- Build Stage --------
+FROM fetch-dev AS build
+COPY . /app
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --offline
+# Build all packages (TypeScript project references)
+RUN pnpm run build
+
+# -------- Deploy Individual Apps --------
+FROM build AS deploy-api
+RUN pnpm deploy --filter=@cronicorn/api --prod --legacy /prod/api
+
+FROM build AS deploy-scheduler
+RUN pnpm deploy --filter=@cronicorn/scheduler-app --prod --legacy /prod/scheduler
+
+FROM build AS deploy-ai-planner
+RUN pnpm deploy --filter=@cronicorn/ai-planner-app --prod --legacy /prod/ai-planner
+
+FROM build AS deploy-web
+RUN pnpm --filter @cronicorn/web run build
+RUN pnpm deploy --filter=@cronicorn/web --prod --legacy /prod/web
+# Copy built web assets
+RUN cp -r /app/apps/web/dist /prod/web/
+
+# -------- Runtime Images --------
+# API Runtime
+FROM node:${NODE_VERSION}-alpine AS api
+ENV NODE_ENV=production
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini", "--"]
+USER node
+WORKDIR /app
+COPY --from=deploy-api --chown=node:node /prod/api .
+CMD ["node", "dist/index.js"]
+
+# Scheduler Runtime
+FROM node:${NODE_VERSION}-alpine AS scheduler
+ENV NODE_ENV=production
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini", "--"]
+USER node
+WORKDIR /app
+COPY --from=deploy-scheduler --chown=node:node /prod/scheduler .
+CMD ["node", "dist/index.js"]
+
+# AI Planner Runtime
+FROM node:${NODE_VERSION}-alpine AS ai-planner
+ENV NODE_ENV=production
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini", "--"]
+USER node
+WORKDIR /app
+COPY --from=deploy-ai-planner --chown=node:node /prod/ai-planner .
+CMD ["node", "dist/index.js"]
+
+# Web Runtime (nginx)
+FROM nginx:alpine AS web
+COPY --from=deploy-web /prod/web/dist /usr/share/nginx/html
+EXPOSE 80

@@ -16,6 +16,7 @@
     { "path": "./apps/api" },
     { "path": "./apps/migrator" },
     { "path": "./apps/test-ai" },
+    { "path": "./packages/ui-library" },
     { "path": "./apps/web" }
   ]
 }

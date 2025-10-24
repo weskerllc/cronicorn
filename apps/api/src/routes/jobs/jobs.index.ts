@@ -1,49 +1,32 @@
-import { requireAuth } from "../../auth/middleware.js";
 import { createRouter } from "../../types.js";
 import * as handlers from "./jobs.handlers.js";
 import * as routes from "./jobs.routes.js";
 
-const router = createRouter();
+const router = createRouter()
+  // ==================== Job Lifecycle Routes ====================
+  .openapi(routes.createJob, handlers.createJob)
+  .openapi(routes.getJob, handlers.getJob)
+  .openapi(routes.listJobs, handlers.listJobs)
+  .openapi(routes.updateJob, handlers.updateJob)
+  .openapi(routes.archiveJob, handlers.archiveJob)
 
-// Protect all /jobs and /endpoints routes with auth
-router.use("/jobs/*", async (c, next) => {
-  const auth = c.get("auth");
-  return requireAuth(auth)(c, next);
-});
+  // ==================== Endpoint Orchestration Routes ====================
+  .openapi(routes.addEndpoint, handlers.addEndpoint)
+  .openapi(routes.updateEndpoint, handlers.updateEndpoint)
+  .openapi(routes.deleteEndpoint, handlers.deleteEndpoint)
+  .openapi(routes.getEndpoint, handlers.getEndpoint)
+  .openapi(routes.listEndpoints, handlers.listEndpoints)
 
-router.use("/endpoints/*", async (c, next) => {
-  const auth = c.get("auth");
-  return requireAuth(auth)(c, next);
-});
+  // ==================== Adaptive Scheduling Routes ====================
+  .openapi(routes.applyIntervalHint, handlers.applyIntervalHint)
+  .openapi(routes.scheduleOneShot, handlers.scheduleOneShot)
+  .openapi(routes.pauseEndpoint, handlers.pauseEndpoint)
+  .openapi(routes.clearHints, handlers.clearHints)
+  .openapi(routes.resetFailures, handlers.resetFailures)
 
-router.use("/runs/*", async (c, next) => {
-  const auth = c.get("auth");
-  return requireAuth(auth)(c, next);
-});
-
-// ==================== Job Lifecycle Routes ====================
-router.openapi(routes.createJob, handlers.createJob);
-router.openapi(routes.getJob, handlers.getJob);
-router.openapi(routes.listJobs, handlers.listJobs);
-router.openapi(routes.updateJob, handlers.updateJob);
-router.openapi(routes.archiveJob, handlers.archiveJob);
-
-// ==================== Endpoint Orchestration Routes ====================
-router.openapi(routes.addEndpoint, handlers.addEndpoint);
-router.openapi(routes.updateEndpoint, handlers.updateEndpoint);
-router.openapi(routes.deleteEndpoint, handlers.deleteEndpoint);
-router.openapi(routes.listEndpoints, handlers.listEndpoints);
-
-// ==================== Adaptive Scheduling Routes ====================
-router.openapi(routes.applyIntervalHint, handlers.applyIntervalHint);
-router.openapi(routes.scheduleOneShot, handlers.scheduleOneShot);
-router.openapi(routes.pauseEndpoint, handlers.pauseEndpoint);
-router.openapi(routes.clearHints, handlers.clearHints);
-router.openapi(routes.resetFailures, handlers.resetFailures);
-
-// ==================== Execution Visibility Routes ====================
-router.openapi(routes.listRuns, handlers.listRuns);
-router.openapi(routes.getRunDetails, handlers.getRunDetails);
-router.openapi(routes.getHealthSummary, handlers.getHealthSummary);
+  // ==================== Execution Visibility Routes ====================
+  .openapi(routes.listRuns, handlers.listRuns)
+  .openapi(routes.getRunDetails, handlers.getRunDetails)
+  .openapi(routes.getHealthSummary, handlers.getHealthSummary);
 
 export default router;

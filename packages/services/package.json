@@ -23,6 +23,6 @@
   "dependencies": {
     "@cronicorn/domain": "workspace:*",
     "nanoid": "^5.0.9",
-    "zod": "^4.1.12"
+    "zod": "catalog:"
   }
 }

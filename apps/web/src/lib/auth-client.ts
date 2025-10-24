@@ -1,14 +1,16 @@
+import { apiKeyClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3333";
-
-console.log("API URL:", apiUrl);
 
 export const authClient = createAuthClient({
   baseURL: apiUrl,
   fetchOptions: {
     credentials: "include", // Important: ensures cookies are sent cross-origin
   },
+  plugins: [
+    apiKeyClient(),
+  ],
 });
 
 export const {

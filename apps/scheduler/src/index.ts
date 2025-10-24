@@ -8,24 +8,13 @@
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
 import { DrizzleJobsRepo, DrizzleRunsRepo, schema } from "@cronicorn/adapter-drizzle";
 import { HttpDispatcher } from "@cronicorn/adapter-http";
+import { PinoLoggerAdapter } from "@cronicorn/adapter-pino";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { Scheduler } from "@cronicorn/worker-scheduler";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import pino from "pino";
 import { z } from "zod";
-
-/**
- * Structured JSON logger
- */
-function logger(level: "info" | "warn" | "error" | "fatal", message: string, meta?: Record<string, unknown>) {
-  // eslint-disable-next-line no-console
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    level,
-    message,
-    ...meta,
-  }));
-}
 
 /**
  * Configuration schema with sensible defaults
@@ -34,7 +23,12 @@ const configSchema = z.object({
   DATABASE_URL: z.string().url(),
   BATCH_SIZE: z.coerce.number().int().positive().default(10),
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
-  LOCK_TTL_MS: z.coerce.number().int().positive().default(60000),
+  CLAIM_HORIZON_MS: z.coerce.number().int().positive().default(10000),
+  CLEANUP_INTERVAL_MS: z.coerce.number().int().positive().default(300000), // 5 minutes
+  ZOMBIE_RUN_THRESHOLD_MS: z.coerce.number().int().positive().default(3600000), // 1 hour
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  // eslint-disable-next-line node/no-process-env
+  NODE_ENV: z.enum(["development", "production", "test"]).default(process.env.NODE_ENV === "production" ? "production" : "development"),
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -58,6 +52,24 @@ async function main() {
   const jobsRepo = new DrizzleJobsRepo(db);
   const runsRepo = new DrizzleRunsRepo(db);
 
+  // Configure pino logger
+  const pinoLogger = pino({
+    level: config.LOG_LEVEL,
+    ...(config.NODE_ENV === "development"
+      ? {
+          transport: {
+            target: "pino-pretty",
+            options: {
+              colorize: true,
+              translateTime: "SYS:standard",
+              ignore: "pid,hostname",
+            },
+          },
+        }
+      : {}),
+  });
+  const logger = new PinoLoggerAdapter(pinoLogger);
+
   // Wire up scheduler with dependencies
   const scheduler = new Scheduler({
     clock,
@@ -65,17 +77,23 @@ async function main() {
     dispatcher,
     jobs: jobsRepo,
     runs: runsRepo,
+    logger,
   });
 
   // State for tick loop and shutdown
   let currentTick: Promise<void> | null = null;
   let isShuttingDown = false;
 
-  logger("info", "Worker started", {
-    batchSize: config.BATCH_SIZE,
-    pollIntervalMs: config.POLL_INTERVAL_MS,
-    lockTtlMs: config.LOCK_TTL_MS,
-  });
+  logger.info(
+    {
+      batchSize: config.BATCH_SIZE,
+      pollIntervalMs: config.POLL_INTERVAL_MS,
+      claimHorizonMs: config.CLAIM_HORIZON_MS,
+      cleanupIntervalMs: config.CLEANUP_INTERVAL_MS,
+      zombieRunThresholdMs: config.ZOMBIE_RUN_THRESHOLD_MS,
+    },
+    "Worker started",
+  );
 
   // Main tick loop
   const intervalId = setInterval(async () => {
@@ -83,32 +101,65 @@ async function main() {
       return;
 
     try {
-      currentTick = scheduler.tick(config.BATCH_SIZE, config.LOCK_TTL_MS);
+      currentTick = scheduler.tick(config.BATCH_SIZE, config.CLAIM_HORIZON_MS);
       await currentTick;
       currentTick = null;
     }
     catch (err) {
-      logger("error", "Tick failed", {
-        error: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
-      });
+      logger.error(
+        {
+          error: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+        },
+        "Tick failed",
+      );
       // Continue to next tick - don't crash worker
     }
   }, config.POLL_INTERVAL_MS);
 
+  // Zombie run cleanup loop
+  const cleanupIntervalId = setInterval(async () => {
+    if (isShuttingDown)
+      return;
+
+    try {
+      const count = await scheduler.cleanupZombieRuns(config.ZOMBIE_RUN_THRESHOLD_MS);
+      if (count > 0) {
+        logger.info(
+          {
+            count,
+            thresholdMs: config.ZOMBIE_RUN_THRESHOLD_MS,
+          },
+          "Zombie run cleanup completed",
+        );
+      }
+    }
+    catch (err) {
+      logger.error(
+        {
+          error: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+        },
+        "Zombie run cleanup failed",
+      );
+      // Continue - don't crash worker
+    }
+  }, config.CLEANUP_INTERVAL_MS);
+
   // Graceful shutdown handler
   async function shutdown(signal: string) {
-    logger("info", "Shutdown signal received", { signal });
+    logger.info({ signal }, "Shutdown signal received");
     isShuttingDown = true;
     clearInterval(intervalId);
+    clearInterval(cleanupIntervalId);
 
     if (currentTick) {
-      logger("info", "Waiting for current tick to complete");
+      logger.info("Waiting for current tick to complete");
       await currentTick;
     }
 
     await pool.end();
-    logger("info", "Worker shutdown complete");
+    logger.info("Worker shutdown complete");
     process.exit(0);
   }
 

@@ -36,6 +36,20 @@
       "when": 1760642602445,
       "tag": "0004_tiny_landau",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1760731200381,
+      "tag": "0005_tiresome_argent",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1761241288168,
+      "tag": "0006_next_thor_girl",
+      "breakpoints": true
     }
   ]
 }

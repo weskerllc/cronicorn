@@ -1,12 +1,17 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import {
+  CreateCheckoutRequestSchema,
+  CreateCheckoutResponseSchema,
+  CreatePortalRequestSchema,
+  CreatePortalResponseSchema,
+  ErrorSchema,
+  SubscriptionStatusResponseSchema,
+  UsageResponseSchema,
+} from "@cronicorn/api-contracts/subscriptions";
+import { createRoute } from "@hono/zod-openapi";
 
 /**
  * API Route Definitions for Subscription Management
  */
-
-const ErrorSchema = z.object({
-  error: z.string(),
-});
 
 // ==================== POST /subscriptions/checkout ====================
 
@@ -20,12 +25,7 @@ export const createCheckout = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: z.object({
-            tier: z.enum(["pro", "enterprise"]).openapi({
-              description: "Subscription tier to purchase",
-              example: "pro",
-            }),
-          }),
+          schema: CreateCheckoutRequestSchema,
         },
       },
     },
@@ -35,12 +35,7 @@ export const createCheckout = createRoute({
       description: "Checkout session created successfully",
       content: {
         "application/json": {
-          schema: z.object({
-            checkoutUrl: z.string().url().openapi({
-              description: "Stripe Checkout URL to redirect user to",
-              example: "https://checkout.stripe.com/c/pay/cs_test_...",
-            }),
-          }),
+          schema: CreateCheckoutResponseSchema,
         },
       },
     },
@@ -76,7 +71,7 @@ export const createPortal = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: z.object({}), // No body required
+          schema: CreatePortalRequestSchema,
         },
       },
     },
@@ -86,12 +81,7 @@ export const createPortal = createRoute({
       description: "Portal session created successfully",
       content: {
         "application/json": {
-          schema: z.object({
-            portalUrl: z.string().url().openapi({
-              description: "Stripe Customer Portal URL to redirect user to",
-              example: "https://billing.stripe.com/session/...",
-            }),
-          }),
+          schema: CreatePortalResponseSchema,
         },
       },
     },
@@ -136,20 +126,44 @@ export const getStatus = createRoute({
       description: "Subscription status retrieved successfully",
       content: {
         "application/json": {
-          schema: z.object({
-            tier: z.enum(["free", "pro", "enterprise"]).openapi({
-              description: "Current subscription tier",
-              example: "pro",
-            }),
-            status: z.string().nullable().openapi({
-              description: "Stripe subscription status (active, past_due, canceled, etc.)",
-              example: "active",
-            }),
-            endsAt: z.string().nullable().openapi({
-              description: "Subscription end date (ISO 8601)",
-              example: "2025-11-16T00:00:00Z",
-            }),
-          }),
+          schema: SubscriptionStatusResponseSchema,
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized - authentication required",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: "Internal server error",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+  },
+  security: [{ cookieAuth: [] }],
+});
+
+// ==================== GET /subscriptions/usage ====================
+
+export const getUsage = createRoute({
+  method: "get",
+  path: "/subscriptions/usage",
+  tags: ["subscriptions"],
+  summary: "Get Usage and Quota",
+  description: "Get current usage vs quota limits for AI calls and endpoints",
+  responses: {
+    200: {
+      description: "Usage data retrieved successfully",
+      content: {
+        "application/json": {
+          schema: UsageResponseSchema,
         },
       },
     },

@@ -282,4 +282,34 @@ export class InMemoryJobsRepo implements JobsRepo {
     // In-memory fixture: no-op
     // Real tests should mock this method
   }
+
+  async getUsage(userId: string, _since: Date): Promise<{
+    aiCallsUsed: number;
+    aiCallsLimit: number;
+    endpointsUsed: number;
+    endpointsLimit: number;
+  }> {
+    // For in-memory implementation, return basic usage data
+    const tier = await this.getUserTier(userId);
+    const { getExecutionLimits, getTierLimit } = await import("../quota/tier-limits.js");
+
+    const aiCallsLimit = getTierLimit(tier);
+    const { maxEndpoints: endpointsLimit } = getExecutionLimits(tier);
+
+    // Count endpoints for this user
+    const endpoints = Array.from(this.map.values()).filter(
+      (ep: StoredJob) => ep.tenantId === userId,
+    );
+    const endpointsUsed = endpoints.length;
+
+    // In-memory doesn't track actual token usage
+    const aiCallsUsed = 0;
+
+    return {
+      aiCallsUsed,
+      aiCallsLimit,
+      endpointsUsed,
+      endpointsLimit,
+    };
+  }
 }

@@ -1,5 +1,5 @@
 import type { Clock, Cron, PaymentProvider } from "@cronicorn/domain";
-import type { SubscriptionsManager } from "@cronicorn/services";
+import type { DashboardManager, SubscriptionsManager } from "@cronicorn/services";
 import type { JobsManager } from "@cronicorn/services/jobs";
 import type { RouteConfig, RouteHandler } from "@hono/zod-openapi";
 
@@ -17,6 +17,7 @@ export type AppBindings = {
     cron: Cron;
     auth: Auth;
     withJobsManager: <T extends Response>(fn: (manager: JobsManager) => Promise<T>) => Promise<T>;
+    withDashboardManager: <T extends Response>(fn: (manager: DashboardManager) => Promise<T>) => Promise<T>;
     // Stripe services
     subscriptionsManager: SubscriptionsManager;
     paymentProvider: PaymentProvider;
