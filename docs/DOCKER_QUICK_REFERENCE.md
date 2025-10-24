@@ -266,7 +266,7 @@ build-args: |
 - [Optimization Guide](./DOCKER_BUILD_OPTIMIZATION.md) - Full technical details
 - [Before/After Comparison](./DOCKER_WORKFLOW_COMPARISON.md) - What changed and why
 - [Dockerfile](../Dockerfile.monorepo-optimized) - Multi-stage build configuration
-- [GitHub Actions Logs](https://github.com/bcanfield/mvpmvp/actions) - Workflow history
+- [GitHub Actions Workflows](../.github/workflows/) - Workflow configurations
 
 ## Quick Commands Cheat Sheet
 
@@ -286,13 +286,13 @@ docker inspect ghcr.io/bcanfield/mvpmvp/api:v1.2.3
 # Check cache status
 gh cache list
 
-# Trigger manual build
+# Trigger manual build (replace with your workflow filename if different)
 gh workflow run release.yml -f tag=v1.2.3
 
-# View workflow runs
+# View workflow runs (replace with your workflow filename if different)
 gh run list --workflow=release.yml
 
-# View latest run
+# View latest run (replace with your workflow filename if different)
 gh run view --workflow=release.yml
 
 # Download build artifacts
