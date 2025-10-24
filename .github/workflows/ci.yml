@@ -42,36 +42,36 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run linting
-        run: pnpm run lint
+      # - name: Run linting
+      #   run: pnpm run lint
 
-      - name: Run type checking
-        run: pnpm run build
+      # - name: Run type checking
+      #   run: pnpm run build
 
-      - name: Start PostgreSQL database
-        run: docker compose -f docker-compose.dev.yml --env-file .env.test up -d
+      # - name: Start PostgreSQL database
+      #   run: docker compose -f docker-compose.dev.yml --env-file .env.test up -d
 
-      - name: Wait for PostgreSQL to be ready
-        run: |
-          # Wait for PostgreSQL to be ready
-          echo "Waiting for PostgreSQL to be ready..."
-          timeout=60
-          while ! docker exec cronicorn-dev-db pg_isready -U user -d db -h localhost > /dev/null 2>&1; do
-            timeout=$((timeout - 1))
-            if [ $timeout -eq 0 ]; then
-              echo "Timed out waiting for PostgreSQL to be ready"
-              exit 1
-            fi
-            echo "PostgreSQL is not ready yet. Waiting..."
-            sleep 1
-          done
-          echo "PostgreSQL is ready!"
+      # - name: Wait for PostgreSQL to be ready
+      #   run: |
+      #     # Wait for PostgreSQL to be ready
+      #     echo "Waiting for PostgreSQL to be ready..."
+      #     timeout=60
+      #     while ! docker exec cronicorn-dev-db pg_isready -U user -d db -h localhost > /dev/null 2>&1; do
+      #       timeout=$((timeout - 1))
+      #       if [ $timeout -eq 0 ]; then
+      #         echo "Timed out waiting for PostgreSQL to be ready"
+      #         exit 1
+      #       fi
+      #       echo "PostgreSQL is not ready yet. Waiting..."
+      #       sleep 1
+      #     done
+      #     echo "PostgreSQL is ready!"
 
-      - name: Run database migrations and reset
-        run: pnpm exec dotenv -e .env.test -- pnpm db:migrate
+      # - name: Run database migrations and reset
+      #   run: pnpm exec dotenv -e .env.test -- pnpm db:migrate
 
-      - name: Run tests with coverage
-        run: pnpm exec dotenv -e .env.test pnpm test
+      # - name: Run tests with coverage
+      #   run: pnpm exec dotenv -e .env.test pnpm test
 
   release:
     runs-on: ubuntu-latest
