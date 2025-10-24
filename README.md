@@ -7,8 +7,8 @@ An AI-powered HTTP request scheduler that supports dynamic scheduling based on r
 
 ```bash
 # Get the code
-git clone <repository-url>
-cd cron-mvp
+git clone https://github.com/bcanfield/mvpmvp.git
+cd mvpmvp
 
 # Install everything
 pnpm install
