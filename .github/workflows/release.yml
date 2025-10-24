@@ -72,8 +72,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          # Enable advanced BuildKit features
+          # Enable advanced BuildKit features + reduce parallelism for upload reliability
           buildkitd-flags: --debug
+          buildkitd-config-inline: |
+            [registry."ghcr.io"]
+              http = false
+              insecure = false
+            [worker.oci]
+              max_parallelism = 2
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -113,12 +119,15 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         service:
           - name: api
             target: api
           - name: ai-planner
             target: ai-planner
+          - name: migrator
+            target: migrator
           - name: scheduler
             target: scheduler
           - name: web
@@ -147,6 +156,12 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           buildkitd-flags: --debug
+          buildkitd-config-inline: |
+            [registry."ghcr.io"]
+              http = false
+              insecure = false
+            [worker.oci]
+              max_parallelism = 2
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
