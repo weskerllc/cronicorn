@@ -1,18 +1,16 @@
-name: Tag Test
+name: Release Test
 
 on:
-  push:
-    tags:
-      - "v*"
-      - "v*.*.*"
-  create:
+  release:
+    types: [published]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'release'
     steps:
       - name: Simple test
         run: |
-          echo "Tag triggered: ${{ github.ref }}"
-          echo "Tag name: ${{ github.ref_name }}"
+          echo "Release triggered: ${{ github.event.release.tag_name }}"
+          echo "Release name: ${{ github.event.release.name }}"
+          echo "Release URL: ${{ github.event.release.html_url }}"
