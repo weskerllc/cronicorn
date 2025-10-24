@@ -53,6 +53,10 @@ export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
     headersJson: endpoint.headersJson,
     bodyJson: endpoint.bodyJson,
     timeoutMs: endpoint.timeoutMs,
+    aiHintIntervalMs: endpoint.aiHintIntervalMs,
+    aiHintNextRunAt: endpoint.aiHintNextRunAt?.toISOString(),
+    aiHintExpiresAt: endpoint.aiHintExpiresAt?.toISOString(),
+    aiHintReason: endpoint.aiHintReason,
   };
 }
 
@@ -110,6 +114,14 @@ export function mapRunDetailsToResponse(run: {
   errorMessage?: string;
   source?: string;
   attempt: number;
+  responseBody?: import("@cronicorn/domain").JsonValue | null;
+  statusCode?: number;
+  endpoint?: {
+    id: string;
+    name: string;
+    url?: string;
+    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  };
 }): RunDetailsResponse {
   return {
     id: run.id,
@@ -121,6 +133,9 @@ export function mapRunDetailsToResponse(run: {
     errorMessage: run.errorMessage,
     source: run.source,
     attempt: run.attempt,
+    responseBody: run.responseBody ?? null,
+    statusCode: run.statusCode,
+    endpoint: run.endpoint,
   };
 }
 

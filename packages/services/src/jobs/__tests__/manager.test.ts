@@ -27,21 +27,22 @@ describe("jobsManager", () => {
       archiveJob: vi.fn(),
       addEndpoint: vi.fn(),
       updateEndpoint: vi.fn(),
-      listEndpointsByJob: vi.fn(),
-      getEndpoint: vi.fn(),
-      deleteEndpoint: vi.fn(),
       claimDueEndpoints: vi.fn(),
+      getEndpoint: vi.fn(),
       setLock: vi.fn(),
       clearLock: vi.fn(),
       setNextRunAtIfEarlier: vi.fn(),
       writeAIHint: vi.fn(),
+      setPausedUntil: vi.fn(),
       clearAIHints: vi.fn(),
       resetFailureCount: vi.fn(),
-      setPausedUntil: vi.fn(),
       updateAfterRun: vi.fn(),
+      listEndpointsByJob: vi.fn(),
+      deleteEndpoint: vi.fn(),
       getUserById: vi.fn(),
       getUserByStripeCustomerId: vi.fn(),
       updateUserSubscription: vi.fn(),
+      getUsage: vi.fn(),
     };
     mockRunsRepo = {
       create: vi.fn(),
@@ -53,6 +54,7 @@ describe("jobsManager", () => {
       getLatestResponse: vi.fn(),
       getResponseHistory: vi.fn(),
       getSiblingLatestResponses: vi.fn(),
+      cleanupZombieRuns: vi.fn(),
     };
     const now = new Date("2025-01-14T12:00:00Z");
     fakeClock = { now: () => now, sleep: async () => { } };

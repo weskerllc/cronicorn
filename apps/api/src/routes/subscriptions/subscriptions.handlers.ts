@@ -1,39 +1,26 @@
-import type { Context } from "hono";
-
 import { HTTPException } from "hono/http-exception";
-import { z } from "zod";
+
+import type { AppRouteHandler } from "../../types.js";
+import type * as routes from "./subscriptions.routes.js";
 
 import { getAuthContext } from "../../auth/middleware.js";
 
 /**
  * Route Handlers for Subscription Management
- * Note: These use regular Hono routes, not OpenAPI routes
  */
-
-// Request validation schemas
-const CheckoutSchema = z.object({
-  tier: z.enum(["pro", "enterprise"]),
-});
 
 // ==================== POST /subscriptions/checkout ====================
 
-export async function handleCreateCheckout(c: Context) {
+export const handleCreateCheckout: AppRouteHandler<typeof routes.createCheckout> = async (c) => {
   const { userId } = getAuthContext(c);
-
-  // Parse and validate request body
-  const body = await c.req.json();
-  const parsed = CheckoutSchema.safeParse(body);
-
-  if (!parsed.success) {
-    throw new HTTPException(400, { message: "Invalid request body" });
-  }
+  const body = c.req.valid("json");
 
   const subscriptionsManager = c.get("subscriptionsManager");
 
   try {
     const result = await subscriptionsManager.createCheckout({
       userId,
-      tier: parsed.data.tier,
+      tier: body.tier,
     });
     return c.json(result, 200);
   }
@@ -42,11 +29,11 @@ export async function handleCreateCheckout(c: Context) {
       message: error instanceof Error ? error.message : "Failed to create checkout session",
     });
   }
-}
+};
 
 // ==================== POST /subscriptions/portal ====================
 
-export async function handleCreatePortal(c: Context) {
+export const handleCreatePortal: AppRouteHandler<typeof routes.createPortal> = async (c) => {
   const { userId } = getAuthContext(c);
 
   const subscriptionsManager = c.get("subscriptionsManager");
@@ -65,11 +52,11 @@ export async function handleCreatePortal(c: Context) {
       message: error instanceof Error ? error.message : "Failed to create portal session",
     });
   }
-}
+};
 
 // ==================== GET /subscriptions/status ====================
 
-export async function handleGetStatus(c: Context) {
+export const handleGetStatus: AppRouteHandler<typeof routes.getStatus> = async (c) => {
   const { userId } = getAuthContext(c);
 
   const subscriptionsManager = c.get("subscriptionsManager");
@@ -83,4 +70,31 @@ export async function handleGetStatus(c: Context) {
       message: error instanceof Error ? error.message : "Failed to get subscription status",
     });
   }
-}
+};
+
+// ==================== GET /subscriptions/usage ====================
+
+export const handleGetUsage: AppRouteHandler<typeof routes.getUsage> = async (c) => {
+  const { userId } = getAuthContext(c);
+
+  return c.get("withJobsManager")(async (manager) => {
+    try {
+      // Calculate start of current month (UTC)
+      const now = new Date();
+      const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+      // Get usage data via JobsRepo
+      const usage = await manager.getUsage(userId, startOfMonth);
+
+      return c.json(usage, 200);
+    }
+    catch (error) {
+      if (error instanceof HTTPException) {
+        throw error;
+      }
+      throw new HTTPException(500, {
+        message: error instanceof Error ? error.message : "Failed to get usage data",
+      });
+    }
+  });
+};

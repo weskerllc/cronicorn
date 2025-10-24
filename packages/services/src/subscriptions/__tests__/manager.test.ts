@@ -43,6 +43,7 @@ describe("subscriptionsManager", () => {
       resetFailureCount: vi.fn(),
       setPausedUntil: vi.fn(),
       updateAfterRun: vi.fn(),
+      getUsage: vi.fn(),
     };
 
     // Mock PaymentProvider (including extractTierFromSubscription)

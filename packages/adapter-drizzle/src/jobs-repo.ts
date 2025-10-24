@@ -67,6 +67,10 @@ export class DrizzleJobsRepo implements JobsRepo {
       updates.bodyJson = patch.bodyJson;
     if (patch.timeoutMs !== undefined)
       updates.timeoutMs = patch.timeoutMs;
+    if (patch.maxExecutionTimeMs !== undefined)
+      updates.maxExecutionTimeMs = patch.maxExecutionTimeMs;
+    if (patch.maxResponseSizeKb !== undefined)
+      updates.maxResponseSizeKb = patch.maxResponseSizeKb;
     if (patch.aiHintIntervalMs !== undefined)
       updates.aiHintIntervalMs = patch.aiHintIntervalMs;
     if (patch.aiHintNextRunAt !== undefined)
@@ -114,7 +118,10 @@ export class DrizzleJobsRepo implements JobsRepo {
     // 2. Not paused (pausedUntil is null or <= now)
     // 3. Not locked (lockedUntil is null or <= now)
     const claimed = await this.tx
-      .select({ id: jobEndpoints.id })
+      .select({
+        id: jobEndpoints.id,
+        maxExecutionTimeMs: jobEndpoints.maxExecutionTimeMs,
+      })
       .from(jobEndpoints)
       .where(
         and(
@@ -135,11 +142,16 @@ export class DrizzleJobsRepo implements JobsRepo {
 
     const ids = claimed.map((r: { id: string }) => r.id);
 
-    // Extend lock for claimed endpoints
+    // Set lock duration per endpoint based on maxExecutionTimeMs
+    // Use the maximum of: endpoint's maxExecutionTimeMs (default 60s), horizon, or minimum 60s
     if (ids.length > 0) {
+      const maxLockDuration = claimed.reduce((max, ep) =>
+        Math.max(max, ep.maxExecutionTimeMs ?? 60000), Math.max(withinMs, 60000));
+      const lockUntil = new Date(nowMs + maxLockDuration);
+
       await this.tx
         .update(jobEndpoints)
-        .set({ _lockedUntil: horizon })
+        .set({ _lockedUntil: lockUntil })
         .where(inArray(jobEndpoints.id, ids));
     }
 
@@ -264,11 +276,16 @@ export class DrizzleJobsRepo implements JobsRepo {
       && ep.aiHintExpiresAt
       && ep.aiHintExpiresAt <= now;
 
+    // Don't clear lock immediately - keep it until nextRunAt to prevent re-claiming
+    // during the claim horizon window. This ensures an endpoint isn't claimed multiple
+    // times before its scheduled time when using horizon-based claiming.
+    const lockUntil = patch.nextRunAt > now ? patch.nextRunAt : null;
+
     const updates: Partial<JobEndpointRow> = {
       lastRunAt: patch.lastRunAt,
       nextRunAt: patch.nextRunAt,
       failureCount: newFailureCount,
-      _lockedUntil: null,
+      _lockedUntil: lockUntil,
     };
 
     if (clearHints) {
@@ -313,6 +330,8 @@ export class DrizzleJobsRepo implements JobsRepo {
       headersJson: row.headersJson ?? undefined,
       bodyJson: row.bodyJson,
       timeoutMs: row.timeoutMs ?? undefined,
+      maxExecutionTimeMs: row.maxExecutionTimeMs ?? undefined,
+      maxResponseSizeKb: row.maxResponseSizeKb ?? undefined,
     };
   }
 
@@ -486,6 +505,52 @@ export class DrizzleJobsRepo implements JobsRepo {
       return tier;
     }
     return "free";
+  }
+
+  async getUsage(userId: string, since: Date): Promise<{
+    aiCallsUsed: number;
+    aiCallsLimit: number;
+    endpointsUsed: number;
+    endpointsLimit: number;
+  }> {
+    const { getExecutionLimits, getTierLimit } = await import("@cronicorn/domain");
+
+    // Get user tier
+    const tier = await this.getUserTier(userId);
+
+    // Get tier limits
+    const aiCallsLimit = getTierLimit(tier);
+    const { maxEndpoints: endpointsLimit } = getExecutionLimits(tier);
+
+    // Count endpoints for this user
+    const endpointsResult = await this.tx
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(jobEndpoints)
+      .where(eq(jobEndpoints.tenantId, userId));
+    const endpointsUsed = endpointsResult[0]?.count ?? 0;
+
+    // Sum token usage since specified date
+    const { aiAnalysisSessions } = await import("./schema.js");
+    const usageResult = await this.tx
+      .select({
+        totalUsage: sql<number>`COALESCE(SUM(${aiAnalysisSessions.tokenUsage}), 0)::int`,
+      })
+      .from(aiAnalysisSessions)
+      .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
+      .where(
+        and(
+          eq(jobEndpoints.tenantId, userId),
+          sql`${aiAnalysisSessions.analyzedAt} >= ${since}`,
+        ),
+      );
+    const aiCallsUsed = usageResult[0]?.totalUsage ?? 0;
+
+    return {
+      aiCallsUsed,
+      aiCallsLimit,
+      endpointsUsed,
+      endpointsLimit,
+    };
   }
 
   /**

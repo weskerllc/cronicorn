@@ -1,5 +1,6 @@
 {
-  "include": ["**/*.ts", "**/*.tsx", "eslint.config.js", "prettier.config.js", "vite.config.js"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
+  "exclude": ["node_modules", "dist", ".tanstack"],
 
   "compilerOptions": {
     "target": "ES2022",
@@ -14,6 +15,13 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
+    /* Composite project for faster builds */
+    // "composite": true,
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+
     /* Linting */
     "skipLibCheck": true,
     "strict": true,
@@ -21,9 +29,21 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@cronicorn/ui-library/*": ["../../packages/ui-library/src/*"]
     }
-  }
+
+  },
+
+  "references": [
+    {
+      "path": "../../packages/api-contracts"
+    },
+    {
+      "path": "../../packages/ui-library"
+    }
+  ]
 }

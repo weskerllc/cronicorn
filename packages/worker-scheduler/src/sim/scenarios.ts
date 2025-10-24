@@ -1,7 +1,7 @@
 import type { Cron, Tool } from "@cronicorn/domain";
 
 import { callTool } from "@cronicorn/domain";
-import { InMemoryJobsRepo, InMemoryRunsRepo } from "@cronicorn/domain/fixtures";
+import { FakeLogger, InMemoryJobsRepo, InMemoryRunsRepo } from "@cronicorn/domain/fixtures";
 
 import { FakeClock } from "../adapters/fake-clock.js";
 import { FakeDispatcher } from "../adapters/fake-dispatcher.js";
@@ -834,7 +834,8 @@ export async function scenario_flash_sale() {
     return { status: "success", durationMs: 150 };
   });
 
-  const scheduler = new Scheduler({ clock, jobs, runs, dispatcher, cron });
+  const logger = new FakeLogger();
+  const scheduler = new Scheduler({ clock, jobs, runs, dispatcher, cron, logger });
 
   const flashSaleSnapshots: FlashSaleSnapshot[] = [];
 

@@ -3,8 +3,10 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "composite": true,
     "module": "ESNext",
+    "composite": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
     "moduleResolution": "bundler",
     "target": "ES2022",
     "lib": [
@@ -22,6 +24,9 @@
     "dist"
   ],
   "references": [
+    {
+      "path": "../../packages/api-contracts"
+    },
     {
       "path": "../../packages/domain"
     },

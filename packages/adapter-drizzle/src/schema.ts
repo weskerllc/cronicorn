@@ -56,6 +56,7 @@ export const jobEndpoints = pgTable("job_endpoints", {
   headersJson: jsonb("headers_json").$type<Record<string, string>>(),
   bodyJson: jsonb("body_json").$type<import("@cronicorn/domain").JsonValue>(),
   timeoutMs: integer("timeout_ms"),
+  maxExecutionTimeMs: integer("max_execution_time_ms"), // Expected max execution time for lock duration
   maxResponseSizeKb: integer("max_response_size_kb"), // Max response body size to store (default: 100 KB)
 
   // Adapter-specific (not in domain entity)
@@ -144,6 +145,32 @@ export const verification = pgTable("verification", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at"),
   updatedAt: timestamp("updated_at"),
+});
+
+export const apiKey = pgTable("apikey", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  start: text("start"), // Starting characters for display in UI
+  prefix: text("prefix"), // API Key prefix (plain text)
+  key: text("key").notNull(), // Hashed API key
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  refillInterval: integer("refill_interval"), // Interval to refill key in ms
+  refillAmount: integer("refill_amount"), // Amount to refill remaining count
+  lastRefillAt: timestamp("last_refill_at", { mode: "date" }),
+  enabled: boolean("enabled").notNull().default(true),
+  rateLimitEnabled: boolean("rate_limit_enabled").notNull().default(false),
+  rateLimitTimeWindow: integer("rate_limit_time_window"), // Time window in ms
+  rateLimitMax: integer("rate_limit_max"), // Max requests in time window
+  requestCount: integer("request_count").notNull().default(0),
+  remaining: integer("remaining"), // Remaining requests (null = unlimited)
+  lastRequest: timestamp("last_request", { mode: "date" }),
+  expiresAt: timestamp("expires_at", { mode: "date" }),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  permissions: text("permissions"), // JSON string of permissions
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(), // Any additional metadata
 });
 
 /**

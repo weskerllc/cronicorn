@@ -1,3 +1,4 @@
+import { schema } from "@cronicorn/adapter-drizzle";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { apiKey } from "better-auth/plugins";
@@ -17,6 +18,10 @@ export function createAuth(config: Env, db: Database) {
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
+      schema: {
+        ...schema,
+        apikey: schema.apiKey, // Map Better Auth's expected "apikey" to our "apiKey" export
+      },
     }),
     secret: config.BETTER_AUTH_SECRET,
     baseURL: config.BETTER_AUTH_URL,

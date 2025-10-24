@@ -1,9 +1,9 @@
 import type { HealthSummary, JsonValue, RunsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, avg, count, desc, eq, gte, sql } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
-import { jobEndpoints, runs } from "./schema.js";
+import { jobEndpoints, jobs, runs } from "./schema.js";
 
 /**
  * PostgreSQL implementation of RunsRepo using Drizzle ORM.
@@ -93,6 +93,9 @@ export class DrizzleRunsRepo implements RunsRepo {
     // Build query conditions
     const conditions = [];
 
+    // CRITICAL: Always filter by userId to ensure data isolation
+    conditions.push(eq(jobs.userId, filters.userId));
+
     if (filters.endpointId) {
       conditions.push(eq(runs.endpointId, filters.endpointId));
     }
@@ -117,10 +120,10 @@ export class DrizzleRunsRepo implements RunsRepo {
       })
       .from(runs);
 
-    // Add join if filtering by jobId
-    const withJoin = filters.jobId
-      ? baseSelect.innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
-      : baseSelect;
+    // CRITICAL: Always join with jobEndpoints and jobs to filter by userId
+    const withJoin = baseSelect
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id));
 
     // Add where conditions
     const withWhere = conditions.length > 0
@@ -136,9 +139,12 @@ export class DrizzleRunsRepo implements RunsRepo {
       : await withOrder.offset(filters.offset ?? 0);
 
     // Get total count (TODO: optimize with single query using window functions)
-    const countQuery = filters.jobId
-      ? this.tx.select({ count: count() }).from(runs).innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
-      : this.tx.select({ count: count() }).from(runs);
+    // CRITICAL: Always join with jobEndpoints and jobs to filter by userId
+    const countQuery = this.tx
+      .select({ count: count() })
+      .from(runs)
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id));
 
     const countWithWhere = conditions.length > 0
       ? countQuery.where(and(...conditions))
@@ -168,6 +174,7 @@ export class DrizzleRunsRepo implements RunsRepo {
     finishedAt?: Date;
     durationMs?: number;
     errorMessage?: string;
+    responseBody?: JsonValue;
     source?: string;
     attempt: number;
   } | null> {
@@ -192,6 +199,7 @@ export class DrizzleRunsRepo implements RunsRepo {
       errorMessage: row.errorMessage ?? undefined,
       source: row.source ?? undefined,
       attempt: row.attempt,
+      responseBody: row.responseBody ?? undefined,
     };
   }
 
@@ -391,5 +399,40 @@ export class DrizzleRunsRepo implements RunsRepo {
     }
 
     return results;
+  }
+
+  // ============================================================================
+  // Cleanup Operations
+  // ============================================================================
+
+  async cleanupZombieRuns(olderThanMs: number): Promise<number> {
+    const threshold = new Date(Date.now() - olderThanMs);
+
+    // Find zombie runs (stuck in "running" state longer than threshold)
+    const zombies = await this.tx
+      .select({ id: runs.id })
+      .from(runs)
+      .where(and(
+        eq(runs.status, "running"),
+        lte(runs.startedAt, threshold),
+      ));
+
+    if (zombies.length === 0) {
+      return 0;
+    }
+
+    const zombieIds = zombies.map(z => z.id);
+
+    // Mark them as failed with descriptive error message
+    await this.tx
+      .update(runs)
+      .set({
+        status: "failed",
+        finishedAt: new Date(),
+        errorMessage: "Worker crashed or timed out (no response after threshold)",
+      })
+      .where(inArray(runs.id, zombieIds));
+
+    return zombies.length;
   }
 }

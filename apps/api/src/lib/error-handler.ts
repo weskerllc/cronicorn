@@ -24,7 +24,7 @@ export function errorHandler(err: Error, c: Context) {
     return c.json(
       {
         error: "Validation failed",
-        issues: err.errors,
+        issues: err.issues,
       },
       400,
     );

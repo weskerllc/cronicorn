@@ -498,6 +498,14 @@ export class JobsManager {
     errorMessage?: string;
     source?: string;
     attempt: number;
+    responseBody?: import("@cronicorn/domain").JsonValue | null;
+    statusCode?: number;
+    endpoint?: {
+      id: string;
+      name: string;
+      url?: string;
+      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+    };
   } | null> {
     const run = await this.runsRepo.getRunDetails(runId);
 
@@ -511,7 +519,16 @@ export class JobsManager {
       return null;
     }
 
-    return run;
+    // Include endpoint details for debugging
+    return {
+      ...run,
+      endpoint: {
+        id: endpoint.id,
+        name: endpoint.name,
+        url: endpoint.url,
+        method: endpoint.method,
+      },
+    };
   }
 
   // ==================== Adaptive Scheduling ====================
@@ -742,5 +759,23 @@ export class JobsManager {
     const since = new Date(now.getTime() - sinceHours * 60 * 60 * 1000);
 
     return this.runsRepo.getHealthSummary(endpointId, since);
+  }
+
+  // ==================== Usage & Quota ====================
+
+  /**
+   * Get usage statistics for a user.
+   *
+   * @param userId - The user ID
+   * @param since - Start date for usage calculation (typically start of current month)
+   * @returns Current usage vs limits for AI calls and endpoints
+   */
+  async getUsage(userId: string, since: Date): Promise<{
+    aiCallsUsed: number;
+    aiCallsLimit: number;
+    endpointsUsed: number;
+    endpointsLimit: number;
+  }> {
+    return this.jobsRepo.getUsage(userId, since);
   }
 }

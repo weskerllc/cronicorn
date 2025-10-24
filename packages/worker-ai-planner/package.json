@@ -13,6 +13,6 @@
   "files": ["dist"],
   "dependencies": {
     "@cronicorn/domain": "workspace:*",
-    "zod": "^4.1.12"
+    "zod": "catalog:"
   }
 }

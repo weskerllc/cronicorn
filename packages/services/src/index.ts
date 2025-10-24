@@ -11,6 +11,8 @@
  * about HTTP, JSON-RPC, or other transport details.
  */
 
+export * from "./dashboard/manager.js";
+export * from "./dashboard/types.js";
 export * from "./jobs/manager.js";
 export * from "./subscriptions/manager.js";
 export * from "./subscriptions/types.js";

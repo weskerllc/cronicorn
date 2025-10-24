@@ -158,6 +158,29 @@ export function testJobsRepoContract(
           failureCount: 0,
         });
 
+        it("should not claim endpoints outside horizon window", async () => {
+          // Regression test for bug where endpoints with short intervals
+          // were claimed repeatedly on every tick
+          setNow(new Date("2025-01-01T00:00:00Z"));
+
+          await repo.addEndpoint({
+            id: "ep1",
+            jobId: "job1",
+            tenantId: "t1",
+            name: "short-interval",
+            nextRunAt: new Date("2025-01-01T00:01:00Z"), // 60 seconds in future
+            failureCount: 0,
+          });
+
+          // With 10s horizon, this endpoint should NOT be claimed yet
+          const claimed = await repo.claimDueEndpoints(10, 10000);
+          expect(claimed).toEqual([]);
+
+          // But with 60s+ horizon, it would be (old buggy behavior)
+          const claimedWithLargeHorizon = await repo.claimDueEndpoints(10, 60000);
+          expect(claimedWithLargeHorizon).toEqual(["ep1"]);
+        });
+
         const claimed = await repo.claimDueEndpoints(10, 0);
         expect(claimed).toEqual(["ep1"]);
       });

@@ -2,7 +2,7 @@
  * Repository ports for job and run persistence.
  */
 
-import type { ExecutionResult, Job, JobEndpoint } from "../entities/index.js";
+import type { ExecutionResult, Job, JobEndpoint, JsonValue } from "../entities/index.js";
 
 /**
  * Health summary for an endpoint over a time window.
@@ -128,6 +128,20 @@ export type JobsRepo = {
     subscriptionStatus?: string;
     subscriptionEndsAt?: Date | null;
   }) => Promise<void>;
+
+  /**
+   * Get usage statistics for quota enforcement and display.
+   *
+   * @param userId - User ID
+   * @param since - Start date for usage calculation (typically start of current month)
+   * @returns Current usage vs limits for AI calls and endpoints
+   */
+  getUsage: (userId: string, since: Date) => Promise<{
+    aiCallsUsed: number;
+    aiCallsLimit: number;
+    endpointsUsed: number;
+    endpointsLimit: number;
+  }>;
 };
 
 export type RunsRepo = {
@@ -142,6 +156,8 @@ export type RunsRepo = {
     status: "success" | "failed" | "canceled";
     durationMs: number;
     err?: unknown;
+    statusCode?: number;
+    responseBody?: JsonValue;
   }) => Promise<void>;
 
   // Execution visibility operations (Phase 3)
@@ -172,6 +188,7 @@ export type RunsRepo = {
     finishedAt?: Date;
     durationMs?: number;
     errorMessage?: string;
+    responseBody?: JsonValue;
     source?: string;
     attempt: number;
   } | null>;
@@ -237,6 +254,17 @@ export type RunsRepo = {
     timestamp: Date;
     status: string;
   }>>;
+
+  /**
+   * Clean up zombie runs (stuck in "running" state).
+   *
+   * Finds runs older than threshold and marks them as failed.
+   * Used by background cleanup task to handle worker crashes.
+   *
+   * @param olderThanMs - Mark runs as failed if running longer than this (milliseconds)
+   * @returns Number of runs cleaned up
+   */
+  cleanupZombieRuns: (olderThanMs: number) => Promise<number>;
 };
 
 /**
