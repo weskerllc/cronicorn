@@ -14,8 +14,8 @@ Welcome! This guide helps you understand the development workflow and make effec
 
 ```bash
 # Clone repository
-git clone https://github.com/bcanfield/mvpmvp
-cd mvpmvp
+git clone https://github.com/cronicorn/cronicorn
+cd cronicorn
 
 # Install dependencies
 pnpm install
