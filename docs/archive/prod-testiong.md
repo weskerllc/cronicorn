@@ -1,12 +1,12 @@
 I'll analyze this production testing plan against your architecture and provide concrete recommendations. 
 
-Read [](file:///Users/bcanfield/Documents/Git/mvpmvp/docs/_RUNNING_TECH_DEBT.md)
+Read [](file:///Users/bcanfield/Documents/Git/cronicorn/docs/_RUNNING_TECH_DEBT.md)
 
-Read [](file:///Users/bcanfield/Documents/Git/mvpmvp/.github/instructions/architecture.instructions.md)
+Read [](file:///Users/bcanfield/Documents/Git/cronicorn/.github/instructions/architecture.instructions.md)
 
-Read [](file:///Users/bcanfield/Documents/Git/mvpmvp/packages/adapter-drizzle/src/schema.ts)
+Read [](file:///Users/bcanfield/Documents/Git/cronicorn/packages/adapter-drizzle/src/schema.ts)
 
-Read [](file:///Users/bcanfield/Documents/Git/mvpmvp/apps/api/src/app.ts)
+Read [](file:///Users/bcanfield/Documents/Git/cronicorn/apps/api/src/app.ts)
 
 I'll deeply analyze the production testing plan and provide tailored recommendations for your architecture. 
 

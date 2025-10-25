@@ -20,7 +20,7 @@ services:
       - "../files/cronicorndatabasevolume:/var/lib/postgresql/data"
 
   migrator:
-    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/migrator:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/cronicorn/cronicorn}/migrator:${IMAGE_TAG:-latest}
     container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-migrator
     restart: no
     networks:
@@ -33,7 +33,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-db:5432/${POSTGRES_DB:-db}
 
   api:
-    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/api:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/cronicorn/cronicorn}/api:${IMAGE_TAG:-latest}
     container_name: cronicorn-api
     restart: unless-stopped
     networks:
@@ -62,7 +62,7 @@ services:
       - "${PORT:-3333}:3333"
 
   scheduler:
-    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/scheduler:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/cronicorn/cronicorn}/scheduler:${IMAGE_TAG:-latest}
     container_name: cronicorn-scheduler
     restart: unless-stopped
     networks:
@@ -79,7 +79,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
 
   ai-planner:
-    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/ai-planner:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/cronicorn/cronicorn}/ai-planner:${IMAGE_TAG:-latest}
     container_name: cronicorn-ai-planner
     restart: unless-stopped
     networks:
@@ -100,7 +100,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
 
   web:
-    image: ${IMAGE_REGISTRY:-ghcr.io/bcanfield/mvpmvp}/web:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/cronicorn/cronicorn}/web:${IMAGE_TAG:-latest}
     container_name: cronicorn-web
     networks:
       - cronicorn
