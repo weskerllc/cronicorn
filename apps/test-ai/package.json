@@ -1,0 +1,13 @@
+{
+  "name": "@cronicorn/test-ai",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@cronicorn/domain": "workspace:*",
+    "@cronicorn/adapter-ai": "workspace:*",
+    "ai": "^5.0.0",
+    "@ai-sdk/openai": "^2.0.46",
+    "zod": "catalog:"
+  }
+}
