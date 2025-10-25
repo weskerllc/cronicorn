@@ -1,0 +1,28 @@
+{
+  "name": "@cronicorn/services",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./jobs": {
+      "types": "./dist/jobs/index.d.ts",
+      "default": "./dist/jobs/index.js"
+    },
+    "./scheduling": {
+      "types": "./dist/scheduling/index.d.ts",
+      "default": "./dist/scheduling/index.js"
+    }
+  },
+  "files": ["dist"],
+  "dependencies": {
+    "@cronicorn/domain": "workspace:*",
+    "nanoid": "^5.0.9",
+    "zod": "catalog:"
+  }
+}

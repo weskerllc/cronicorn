@@ -1,0 +1,22 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/domain" },
+    { "path": "./packages/worker-scheduler" },
+    { "path": "./packages/worker-ai-planner" },
+    { "path": "./packages/services" },
+    { "path": "./packages/adapter-ai" },
+    { "path": "./packages/adapter-cron" },
+    { "path": "./packages/adapter-drizzle" },
+    { "path": "./packages/adapter-http" },
+    { "path": "./packages/adapter-stripe" },
+    { "path": "./packages/adapter-system-clock" },
+    { "path": "./apps/scheduler" },
+    { "path": "./apps/ai-planner" },
+    { "path": "./apps/api" },
+    { "path": "./apps/migrator" },
+    { "path": "./apps/test-ai" },
+    { "path": "./packages/ui-library" },
+    { "path": "./apps/web" }
+  ]
+}

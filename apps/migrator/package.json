@@ -1,0 +1,19 @@
+{
+  "name": "@cronicorn/migrator",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "migrate": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@cronicorn/adapter-drizzle": "workspace:*",
+    "drizzle-orm": "^0.38.3",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5"
+  }
+}

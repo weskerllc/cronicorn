@@ -1,0 +1,913 @@
+import type { Cron, Tool } from "@cronicorn/domain";
+
+import { callTool } from "@cronicorn/domain";
+import { FakeLogger, InMemoryJobsRepo, InMemoryRunsRepo } from "@cronicorn/domain/fixtures";
+
+import { FakeClock } from "../adapters/fake-clock.js";
+import { FakeDispatcher } from "../adapters/fake-dispatcher.js";
+import { Scheduler } from "../domain/scheduler.js";
+
+/* =========================
+   Flash Sale Metrics
+   ========================= */
+export type FlashSaleMetricSample = {
+  at: Date;
+  traffic: number; // visitors per minute
+  ordersPerMin: number;
+  pageLoadMs: number;
+  inventoryLagMs: number;
+  dbQueryMs: number;
+};
+
+export type FlashSalePhase = "baseline" | "surge" | "strain" | "critical" | "recovery";
+
+export type FlashSaleTimeline = {
+  phase: FlashSalePhase;
+  minutes: number[];
+  traffic: number;
+  ordersPerMin: number;
+  pageLoadMs: number;
+  inventoryLagMs: number;
+  dbQueryMs: number;
+};
+
+// 40-minute flash sale timeline with 5 distinct phases
+export const FLASH_SALE_TIMELINE: FlashSaleTimeline[] = [
+  {
+    phase: "baseline",
+    minutes: [0, 1, 2, 3, 4],
+    traffic: 1000,
+    ordersPerMin: 40,
+    pageLoadMs: 800,
+    inventoryLagMs: 100,
+    dbQueryMs: 120,
+  },
+  {
+    phase: "surge",
+    minutes: [5, 6, 7, 8],
+    traffic: 5000,
+    ordersPerMin: 180,
+    pageLoadMs: 1800,
+    inventoryLagMs: 250,
+    dbQueryMs: 280,
+  },
+  {
+    phase: "strain",
+    minutes: [9, 10, 11, 12],
+    traffic: 5500,
+    ordersPerMin: 160,
+    pageLoadMs: 3200,
+    inventoryLagMs: 450,
+    dbQueryMs: 850,
+  },
+  {
+    phase: "critical",
+    minutes: [13, 14, 15, 16, 17, 18, 19, 20],
+    traffic: 6000,
+    ordersPerMin: 120,
+    pageLoadMs: 4500,
+    inventoryLagMs: 600,
+    dbQueryMs: 1200,
+  },
+  {
+    phase: "recovery",
+    minutes: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
+    traffic: 1500,
+    ordersPerMin: 50,
+    pageLoadMs: 1100,
+    inventoryLagMs: 150,
+    dbQueryMs: 180,
+  },
+];
+
+export function getFlashSaleMetricsForMinute(minute: number): FlashSaleMetricSample {
+  const timeline = FLASH_SALE_TIMELINE.find(t => t.minutes.includes(minute));
+  if (!timeline) {
+    // Default to recovery phase for any minutes beyond 40
+    const recovery = FLASH_SALE_TIMELINE.find(t => t.phase === "recovery")!;
+    return {
+      at: new Date(),
+      traffic: recovery.traffic,
+      ordersPerMin: recovery.ordersPerMin,
+      pageLoadMs: recovery.pageLoadMs,
+      inventoryLagMs: recovery.inventoryLagMs,
+      dbQueryMs: recovery.dbQueryMs,
+    };
+  }
+
+  return {
+    at: new Date(),
+    traffic: timeline.traffic,
+    ordersPerMin: timeline.ordersPerMin,
+    pageLoadMs: timeline.pageLoadMs,
+    inventoryLagMs: timeline.inventoryLagMs,
+    dbQueryMs: timeline.dbQueryMs,
+  };
+}
+
+export class FlashSaleMetricsRepo {
+  private map = new Map<string, FlashSaleMetricSample[]>();
+
+  push(endpointId: string, sample: FlashSaleMetricSample) {
+    const arr = this.map.get(endpointId) ?? [];
+    arr.push(sample);
+    this.map.set(endpointId, arr);
+  }
+
+  latest(endpointId: string): FlashSaleMetricSample | undefined {
+    const arr = this.map.get(endpointId) ?? [];
+    return arr[arr.length - 1];
+  }
+
+  all(endpointId: string): FlashSaleMetricSample[] {
+    return this.map.get(endpointId) ?? [];
+  }
+
+  /**
+   * Count consecutive minutes where traffic exceeded threshold
+   */
+  consecutiveHighTraffic(endpointId: string, threshold: number): number {
+    const arr = (this.map.get(endpointId) ?? []).slice().reverse();
+    let count = 0;
+    for (const s of arr) {
+      if (s.traffic >= threshold)
+        count++;
+      else break;
+    }
+    return count;
+  }
+
+  /**
+   * Count consecutive minutes where orders per minute fell below threshold
+   */
+  consecutiveSlowOrders(endpointId: string, threshold: number): number {
+    const arr = (this.map.get(endpointId) ?? []).slice().reverse();
+    let count = 0;
+    for (const s of arr) {
+      if (s.ordersPerMin < threshold)
+        count++;
+      else break;
+    }
+    return count;
+  }
+
+  /**
+   * Average page load time over last N minutes
+   */
+  averagePageLoadLast(endpointId: string, n: number): number {
+    const arr = this.map.get(endpointId) ?? [];
+    const recent = arr.slice(-n);
+    if (recent.length === 0)
+      return 0;
+    const sum = recent.reduce((acc, s) => acc + s.pageLoadMs, 0);
+    return sum / recent.length;
+  }
+
+  /**
+   * Check if inventory lag exceeds threshold in latest sample
+   */
+  isInventoryLagging(endpointId: string, thresholdMs: number): boolean {
+    const latest = this.latest(endpointId);
+    return latest ? latest.inventoryLagMs >= thresholdMs : false;
+  }
+
+  /**
+   * Check if database queries are slow in latest sample
+   */
+  isDatabaseSlow(endpointId: string, thresholdMs: number): boolean {
+    const latest = this.latest(endpointId);
+    return latest ? latest.dbQueryMs >= thresholdMs : false;
+  }
+}
+
+export type FlashSaleSnapshot = {
+  minute: number;
+  timestamp: Date;
+  traffic: number;
+  ordersPerMin: number;
+  pageLoadMs: number;
+  inventoryLagMs: number;
+  dbQueryMs: number;
+  nextTrafficCheckAt: Date;
+};
+
+/* =========================
+   Endpoint-bound tool bag
+   (object-shaped, SDK-compatible)
+   ========================= */
+function makeToolsForEndpoint(
+  endpointId: string,
+  deps: { jobs: InMemoryJobsRepo; now: () => Date },
+): Record<string, Tool<unknown, unknown>> {
+  const tools = {
+    propose_interval: {
+      description: "Suggest a temporary interval",
+      async execute(p: { intervalMs: number; ttlMinutes?: number; reason?: string }) {
+        const nowMs = deps.now().getTime();
+        const next = new Date(nowMs + p.intervalMs);
+
+        await deps.jobs.writeAIHint(endpointId, {
+          intervalMs: p.intervalMs,
+          nextRunAt: undefined,
+          expiresAt: new Date(nowMs + (p.ttlMinutes ?? 60) * 60_000),
+          reason: p.reason,
+        });
+
+        // Immediate reschedule so scheduler can pick it up
+        await deps.jobs.setNextRunAtIfEarlier(endpointId, next);
+        // console.log(`[tool] propose_interval ${endpointId} -> ${next.toISOString()}`);
+        return { ok: true as const };
+      },
+    },
+    propose_next_time: {
+      description: "Schedule a one-off next run time",
+      async execute(p: { nextRunInMs?: number; nextRunAtIso?: string; ttlMinutes?: number; reason?: string }) {
+        const nowMs = deps.now().getTime();
+        const ts = p.nextRunAtIso ? new Date(p.nextRunAtIso) : new Date(nowMs + (p.nextRunInMs ?? 0));
+
+        await deps.jobs.writeAIHint(endpointId, {
+          nextRunAt: ts,
+          intervalMs: undefined,
+          expiresAt: new Date(nowMs + (p.ttlMinutes ?? 30) * 60_000),
+          reason: p.reason,
+        });
+
+        await deps.jobs.setNextRunAtIfEarlier(endpointId, ts);
+        // console.log(`[tool] propose_next_time ${endpointId} -> ${ts.toISOString()}`);
+        return { ok: true as const, nextRunAtIso: ts.toISOString() };
+      },
+    },
+    pause_until: {
+      description: "Pause/unpause this endpoint",
+      async execute(p: { untilIso: string | null; reason?: string }) {
+        await deps.jobs.setPausedUntil(endpointId, p.untilIso ? new Date(p.untilIso) : null);
+        // If unpausing, make it runnable soon
+        if (p.untilIso === null) {
+          const soon = new Date(deps.now().getTime() + 5_000);
+          await deps.jobs.setNextRunAtIfEarlier(endpointId, soon);
+        }
+        // console.log(`[tool] pause_until ${endpointId} -> ${p.untilIso}`);
+        return { ok: true as const };
+      },
+    },
+  };
+  // eslint-disable-next-line ts/consistent-type-assertions
+  return tools as Record<string, Tool<unknown, unknown>>;
+}
+
+/* =========================
+   Planning helpers (sim-only)
+   ========================= */
+
+// Effective interval the governor will honor *right now*
+function effectiveIntervalMs(ep: {
+  aiHintIntervalMs?: number;
+  aiHintExpiresAt?: Date;
+  baselineIntervalMs?: number;
+}, now: Date): number {
+  const fresh = ep.aiHintExpiresAt && ep.aiHintExpiresAt > now;
+  if (fresh && ep.aiHintIntervalMs)
+    return ep.aiHintIntervalMs;
+  return ep.baselineIntervalMs ?? 300_000;
+}
+
+async function maybeProposeInterval(
+  tools: ReturnType<typeof makeToolsForEndpoint>,
+  ep: { aiHintIntervalMs?: number; aiHintExpiresAt?: Date; baselineIntervalMs?: number },
+  targetMs: number,
+  now: Date,
+  reason: string,
+) {
+  const current = effectiveIntervalMs(ep, now);
+  if (current !== targetMs) {
+    await callTool(tools, "propose_interval", { intervalMs: targetMs, ttlMinutes: 60, reason });
+  }
+}
+
+/* =========================
+    }
+
+/* =========================
+
+/* =========================
+   Flash Sale Scenario Planning Helpers
+   ========================= */
+
+// Health Tier
+async function planTrafficMonitor(
+  endpointId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+) {
+  const latest = metrics.latest(endpointId);
+  if (!latest)
+    return;
+
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+
+  // Baseline: 1 minute checks
+  // Surge (traffic >= 4000): tighten to 30s
+  // Critical (traffic >= 6000): tighten to 20s
+  // Recovery (traffic < 2000): widen back to 1m
+
+  if (latest.traffic >= 6000) {
+    await maybeProposeInterval(tools, ep, 20_000, now, "Critical traffic load");
+  }
+  else if (latest.traffic >= 4000) {
+    await maybeProposeInterval(tools, ep, 30_000, now, "Surge traffic detected");
+  }
+  else if (latest.traffic < 2000) {
+    await maybeProposeInterval(tools, ep, 60_000, now, "Traffic normalized");
+  }
+}
+
+async function planOrderProcessorHealth(
+  endpointId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+) {
+  const latest = metrics.latest(endpointId);
+  if (!latest)
+    return;
+
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+
+  // Baseline: 2 minute checks
+  // During critical (orders < 130): widen to 5m (system is overwhelmed, don't add load)
+  // During recovery (orders > 130): return to 2m
+
+  if (latest.ordersPerMin < 130) {
+    await maybeProposeInterval(tools, ep, 5 * 60_000, now, "Order processing strained, reducing check frequency");
+  }
+  else if (latest.ordersPerMin >= 130 && effectiveIntervalMs(ep, now) > 2 * 60_000) {
+    await maybeProposeInterval(tools, ep, 2 * 60_000, now, "Order processing recovered");
+  }
+}
+
+async function planInventorySyncCheck(
+  endpointId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+) {
+  const latest = metrics.latest(endpointId);
+  if (!latest)
+    return;
+
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+
+  // Baseline: 3 minute checks
+  // Lagging (lag >= 400ms): tighten to 1m
+  // Severe lag (lag >= 600ms): tighten to 30s
+  // Normal (lag < 200ms): return to 3m
+
+  if (latest.inventoryLagMs >= 600) {
+    await maybeProposeInterval(tools, ep, 30_000, now, "Severe inventory lag detected");
+  }
+  else if (latest.inventoryLagMs >= 400) {
+    await maybeProposeInterval(tools, ep, 60_000, now, "Inventory lag increasing");
+  }
+  else if (latest.inventoryLagMs < 200) {
+    await maybeProposeInterval(tools, ep, 3 * 60_000, now, "Inventory sync healthy");
+  }
+}
+
+// Recovery Tier
+type RecoveryState = {
+  lastCacheWarmupAt?: Date;
+  lastScaleCheckoutAt?: Date;
+};
+
+// Alert Tier
+type AlertState = {
+  lastSlackOperationsAt?: Date;
+  lastSlackSupportAt?: Date;
+  lastOncallPageAt?: Date;
+};
+
+async function planCacheWarmUp(
+  endpointId: string,
+  sharedMetricsId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+  state: RecoveryState,
+) {
+  const latest = metrics.latest(sharedMetricsId);
+  if (!latest)
+    return;
+
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+  const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+  // Cooldown: 10 minutes
+  const cooldownMs = 10 * 60_000;
+  const onCooldown = state.lastCacheWarmupAt && (now.getTime() - state.lastCacheWarmupAt.getTime()) < cooldownMs;
+
+  // Trigger: pageLoad > 3000ms, not on cooldown, currently paused
+  if (latest.pageLoadMs > 3000 && !onCooldown && isPaused) {
+    await callTool(tools, "pause_until", { untilIso: null, reason: "Cache warm-up triggered" });
+    await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 5, reason: "Execute cache warm-up" });
+
+    // Re-pause long-term after execution
+    const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+    await callTool(tools, "pause_until", {
+      untilIso: rePauseAt.toISOString(),
+      reason: "One-shot complete, cooldown active",
+    });
+
+    state.lastCacheWarmupAt = now;
+  }
+}
+
+async function planScaleCheckoutWorkers(
+  endpointId: string,
+  sharedMetricsId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+  state: RecoveryState,
+) {
+  const latest = metrics.latest(sharedMetricsId);
+  if (!latest)
+    return;
+
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+  const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+  // Cooldown: 15 minutes
+  const cooldownMs = 15 * 60_000;
+  const onCooldown = state.lastScaleCheckoutAt && (now.getTime() - state.lastScaleCheckoutAt.getTime()) < cooldownMs;
+
+  // Trigger: orders < 150 AND traffic >= 5000 (strain phase), not on cooldown, currently paused
+  if (latest.ordersPerMin < 150 && latest.traffic >= 5000 && !onCooldown && isPaused) {
+    await callTool(tools, "pause_until", { untilIso: null, reason: "Scaling checkout workers" });
+    await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 5, reason: "Execute worker scaling" });
+
+    // Re-pause long-term after execution
+    const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+    await callTool(tools, "pause_until", {
+      untilIso: rePauseAt.toISOString(),
+      reason: "One-shot complete, cooldown active",
+    });
+
+    state.lastScaleCheckoutAt = now;
+  }
+}
+
+// Alert Tier
+async function planSlackOperations(
+  endpointId: string,
+  sharedMetricsId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+  state: AlertState,
+) {
+  const latest = metrics.latest(sharedMetricsId);
+  if (!latest)
+    return;
+
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+  const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+  // Cooldown: 10 minutes
+  const cooldownMs = 10 * 60_000;
+  const onCooldown = state.lastSlackOperationsAt && (now.getTime() - state.lastSlackOperationsAt.getTime()) < cooldownMs;
+
+  // Trigger: pageLoad crosses 3000ms threshold (strain begins)
+  if (latest.pageLoadMs >= 3000 && !onCooldown && isPaused) {
+    await callTool(tools, "pause_until", { untilIso: null, reason: "Alerting operations team" });
+    await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 2, reason: "Send Slack operations alert" });
+
+    // Re-pause long-term after alert sent
+    const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+    await callTool(tools, "pause_until", {
+      untilIso: rePauseAt.toISOString(),
+      reason: "Alert sent, cooldown active",
+    });
+
+    state.lastSlackOperationsAt = now;
+  }
+}
+
+async function planSlackCustomerSupport(
+  endpointId: string,
+  sharedMetricsId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+  state: AlertState,
+) {
+  const latest = metrics.latest(sharedMetricsId);
+  if (!latest)
+    return;
+
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+  const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+  // Cooldown: 15 minutes
+  const cooldownMs = 15 * 60_000;
+  const onCooldown = state.lastSlackSupportAt && (now.getTime() - state.lastSlackSupportAt.getTime()) < cooldownMs;
+
+  // Trigger: orders drop below 130 during critical phase (escalation from operations)
+  if (latest.ordersPerMin < 130 && latest.traffic >= 5500 && !onCooldown && isPaused) {
+    await callTool(tools, "pause_until", { untilIso: null, reason: "Alerting customer support team" });
+    await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 2, reason: "Send customer support escalation" });
+
+    // Re-pause long-term after alert sent
+    const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+    await callTool(tools, "pause_until", {
+      untilIso: rePauseAt.toISOString(),
+      reason: "Support alert sent, cooldown active",
+    });
+
+    state.lastSlackSupportAt = now;
+  }
+}
+
+async function planEmergencyOncallPage(
+  endpointId: string,
+  sharedMetricsId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+  state: AlertState,
+) {
+  const latest = metrics.latest(sharedMetricsId);
+  if (!latest)
+    return;
+
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+  const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+  // Cooldown: 2 hours (very long - oncall pages are serious)
+  const cooldownMs = 2 * 60 * 60_000;
+  const onCooldown = state.lastOncallPageAt && (now.getTime() - state.lastOncallPageAt.getTime()) < cooldownMs;
+
+  // Trigger: Critical sustained issue - pageLoad > 4000ms AND orders < 125 (final escalation)
+  if (latest.pageLoadMs >= 4000 && latest.ordersPerMin < 125 && !onCooldown && isPaused) {
+    await callTool(tools, "pause_until", { untilIso: null, reason: "EMERGENCY: Paging oncall engineer" });
+    await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 2, reason: "Send emergency oncall page" });
+
+    // Re-pause long-term after page sent
+    const rePauseAt = new Date(now.getTime() + cooldownMs + 60_000);
+    await callTool(tools, "pause_until", {
+      untilIso: rePauseAt.toISOString(),
+      reason: "Oncall paged, long cooldown active",
+    });
+
+    state.lastOncallPageAt = now;
+  }
+}
+
+// Investigation Tier
+async function planSlowPageAnalyzer(
+  endpointId: string,
+  sharedMetricsId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+) {
+  // Use shared metrics for conditional activation
+  const avgPageLoad = metrics.averagePageLoadLast(sharedMetricsId, 2);
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+  const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+  // Activate: avgPageLoad > 2000ms for 2 minutes
+  // Deactivate: avgPageLoad < 1500ms
+
+  if (avgPageLoad > 2000 && isPaused) {
+    await callTool(tools, "pause_until", { untilIso: null, reason: "Activating page performance analysis" });
+    await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 30, reason: "Begin deep page analysis" });
+    await maybeProposeInterval(tools, ep, 90_000, now, "Analyzing slow page loads");
+  }
+  else if (avgPageLoad < 1500 && !isPaused) {
+    await callTool(tools, "pause_until", {
+      untilIso: new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString(),
+      reason: "Page performance recovered",
+    });
+  }
+}
+
+async function planDatabaseQueryTrace(
+  endpointId: string,
+  sharedMetricsId: string,
+  metrics: FlashSaleMetricsRepo,
+  jobs: InMemoryJobsRepo,
+  now: Date,
+) {
+  // Use shared metrics for conditional activation
+  const isDatabaseSlow = metrics.isDatabaseSlow(sharedMetricsId, 500);
+  const tools = makeToolsForEndpoint(endpointId, { jobs, now: () => now });
+  const ep = await jobs.getEndpoint(endpointId);
+  const isPaused = !!(ep.pausedUntil && ep.pausedUntil > now);
+
+  // Activate: dbQueryMs > 500ms
+  // Deactivate: dbQueryMs < 300ms
+
+  if (isDatabaseSlow && isPaused) {
+    await callTool(tools, "pause_until", { untilIso: null, reason: "Activating database query tracing" });
+    await callTool(tools, "propose_next_time", { nextRunInMs: 5_000, ttlMinutes: 30, reason: "Begin query analysis" });
+    await maybeProposeInterval(tools, ep, 2 * 60_000, now, "Tracing slow database queries");
+  }
+  else if (!isDatabaseSlow && !isPaused) {
+    const latest = metrics.latest(sharedMetricsId);
+    if (latest && latest.dbQueryMs < 300) {
+      await callTool(tools, "pause_until", {
+        untilIso: new Date(now.getTime() + 3650 * 24 * 60 * 60 * 1000).toISOString(),
+        reason: "Database performance recovered",
+      });
+    }
+  }
+}
+
+/* =========================
+   Scenario: Flash Sale (E-Commerce)
+   ========================= */
+export async function scenario_flash_sale() {
+  const clock = new FakeClock("2025-01-01T00:00:00Z");
+
+  const jobs = new InMemoryJobsRepo(() => clock.now());
+  const runs = new InMemoryRunsRepo();
+  const metrics = new FlashSaleMetricsRepo();
+  const cron: Cron = {
+    next() {
+      throw new Error("Cron expressions are not supported in this simulation; use baselineIntervalMs.");
+    },
+  };
+
+  // Health Tier endpoint IDs
+  const trafficMonitorId = "traffic_monitor#prod";
+  const orderProcessorId = "order_processor_health#prod";
+  const inventorySyncId = "inventory_sync_check#prod";
+
+  // Investigation Tier endpoint IDs
+  const slowPageAnalyzerId = "slow_page_analyzer#prod";
+  const dbQueryTraceId = "database_query_trace#prod";
+
+  // Recovery Tier endpoint IDs
+  const cacheWarmUpId = "cache_warm_up#prod";
+  const scaleCheckoutId = "scale_checkout_workers#prod";
+
+  // Alert Tier endpoint IDs
+  const slackOperationsId = "slack_operations#prod";
+  const slackSupportId = "slack_customer_support#prod";
+  const oncallPageId = "emergency_oncall_page#prod";
+
+  // Seed Health Tier endpoints
+  await jobs.addEndpoint({
+    id: trafficMonitorId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Traffic Monitor",
+    url: "https://example.com/metrics/traffic",
+    method: "GET",
+    baselineIntervalMs: 60_000, // 1 minute baseline
+    minIntervalMs: 20_000,
+    maxIntervalMs: 5 * 60_000,
+    nextRunAt: clock.now(),
+    failureCount: 0,
+  });
+
+  await jobs.addEndpoint({
+    id: orderProcessorId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Order Processor Health",
+    url: "https://example.com/metrics/orders",
+    method: "GET",
+    baselineIntervalMs: 2 * 60_000, // 2 minutes baseline
+    minIntervalMs: 60_000,
+    maxIntervalMs: 5 * 60_000,
+    nextRunAt: clock.now(),
+    failureCount: 0,
+  });
+
+  await jobs.addEndpoint({
+    id: inventorySyncId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Inventory Sync Check",
+    url: "https://example.com/metrics/inventory",
+    method: "GET",
+    baselineIntervalMs: 3 * 60_000, // 3 minutes baseline
+    minIntervalMs: 30_000,
+    maxIntervalMs: 10 * 60_000,
+    nextRunAt: clock.now(),
+    failureCount: 0,
+  });
+
+  // Seed Investigation Tier endpoints (start paused, activate conditionally)
+  await jobs.addEndpoint({
+    id: slowPageAnalyzerId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Slow Page Analyzer",
+    url: "https://example.com/analyze/page-performance",
+    method: "POST",
+    baselineIntervalMs: 90_000, // 90s when active
+    minIntervalMs: 60_000,
+    maxIntervalMs: 5 * 60_000,
+    nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+    pausedUntil: new Date("2099-01-01T00:00:00Z"),
+    failureCount: 0,
+  });
+
+  await jobs.addEndpoint({
+    id: dbQueryTraceId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Database Query Trace",
+    url: "https://example.com/analyze/db-queries",
+    method: "POST",
+    baselineIntervalMs: 2 * 60_000, // 2m when active
+    minIntervalMs: 60_000,
+    maxIntervalMs: 5 * 60_000,
+    nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+    pausedUntil: new Date("2099-01-01T00:00:00Z"),
+    failureCount: 0,
+  });
+
+  // Seed Recovery Tier endpoints (one-shot actions with cooldowns)
+  await jobs.addEndpoint({
+    id: cacheWarmUpId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Cache Warm Up",
+    url: "https://example.com/recovery/cache-warmup",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 10 * 60_000,
+    nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+    pausedUntil: new Date("2099-01-01T00:00:00Z"),
+    failureCount: 0,
+  });
+
+  await jobs.addEndpoint({
+    id: scaleCheckoutId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Scale Checkout Workers",
+    url: "https://example.com/recovery/scale-workers",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 15 * 60_000,
+    nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+    pausedUntil: new Date("2099-01-01T00:00:00Z"),
+    failureCount: 0,
+  });
+
+  // Seed Alert Tier endpoints (escalation alerts with cooldowns)
+  await jobs.addEndpoint({
+    id: slackOperationsId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Slack Operations Alert",
+    url: "https://hooks.slack.com/services/operations",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 10 * 60_000,
+    nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+    pausedUntil: new Date("2099-01-01T00:00:00Z"),
+    failureCount: 0,
+  });
+
+  await jobs.addEndpoint({
+    id: slackSupportId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Slack Customer Support Alert",
+    url: "https://hooks.slack.com/services/support",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 15 * 60_000,
+    nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+    pausedUntil: new Date("2099-01-01T00:00:00Z"),
+    failureCount: 0,
+  });
+
+  await jobs.addEndpoint({
+    id: oncallPageId,
+    jobId: "job#flash-sale",
+    tenantId: "tenant#ecommerce",
+    name: "Emergency Oncall Page",
+    url: "https://api.pagerduty.com/incidents",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 2 * 60 * 60_000,
+    nextRunAt: new Date(clock.now().getTime() + 60 * 60_000),
+    pausedUntil: new Date("2099-01-01T00:00:00Z"),
+    failureCount: 0,
+  });
+
+  // Shared metrics: All endpoints see the same timeline
+  const sharedMetricsId = "shared#metrics";
+
+  // Dispatcher: Each endpoint run records flash sale metrics
+  const dispatcher = new FakeDispatcher((ep) => {
+    const elapsedMin = Math.floor(
+      (clock.now().getTime() - new Date("2025-01-01T00:00:00Z").getTime()) / 60_000,
+    );
+
+    const sample = getFlashSaleMetricsForMinute(elapsedMin);
+    // Push to both endpoint-specific and shared location
+    metrics.push(ep.id, { ...sample, at: clock.now() });
+    metrics.push(sharedMetricsId, { ...sample, at: clock.now() });
+
+    return { status: "success", durationMs: 150 };
+  });
+
+  const logger = new FakeLogger();
+  const scheduler = new Scheduler({ clock, jobs, runs, dispatcher, cron, logger });
+
+  const flashSaleSnapshots: FlashSaleSnapshot[] = [];
+
+  // Recovery Tier state (tracks cooldowns across simulation)
+  const recoveryState: RecoveryState = {};
+
+  // Alert Tier state (tracks cooldowns across simulation)
+  const alertState: AlertState = {};
+
+  // Planning orchestration
+  const planAllTiers = async (now: Date) => {
+    // Health Tier
+    await planTrafficMonitor(trafficMonitorId, metrics, jobs, now);
+    await planOrderProcessorHealth(orderProcessorId, metrics, jobs, now);
+    await planInventorySyncCheck(inventorySyncId, metrics, jobs, now);
+
+    // Investigation Tier (uses shared metrics for conditional activation)
+    await planSlowPageAnalyzer(slowPageAnalyzerId, sharedMetricsId, metrics, jobs, now);
+    await planDatabaseQueryTrace(dbQueryTraceId, sharedMetricsId, metrics, jobs, now);
+
+    // Recovery Tier (one-shot actions with cooldowns)
+    await planCacheWarmUp(cacheWarmUpId, sharedMetricsId, metrics, jobs, now, recoveryState);
+    await planScaleCheckoutWorkers(scaleCheckoutId, sharedMetricsId, metrics, jobs, now, recoveryState);
+
+    // Alert Tier (escalation alerts with cooldowns)
+    await planSlackOperations(slackOperationsId, sharedMetricsId, metrics, jobs, now, alertState);
+    await planSlackCustomerSupport(slackSupportId, sharedMetricsId, metrics, jobs, now, alertState);
+    await planEmergencyOncallPage(oncallPageId, sharedMetricsId, metrics, jobs, now, alertState);
+  };
+
+  for (let minute = 0; minute < 40; minute++) {
+    // 1) MEASURE: run scheduler tick to process any due endpoints
+    await scheduler.tick(50, 10_000);
+
+    // 2) PLAN: All tiers adjust based on latest metrics
+    const now = clock.now();
+    await planAllTiers(now);
+
+    // 3) DRAIN: execute everything that became due during planning
+    while (true) {
+      const due = await jobs.claimDueEndpoints(50, 10_000);
+      if (due.length === 0)
+        break;
+      for (const _id of due) {
+        await scheduler.tick(50, 10_000);
+      }
+    }
+
+    // Advance time in 5s increments within the minute to allow sub-minute cadences
+    const minuteEnd = new Date(clock.now().getTime() + 60_000);
+    while (clock.now() < minuteEnd) {
+      await clock.sleep(5_000);
+      await scheduler.tick(50, 10_000);
+    }
+
+    // 4) SNAPSHOT: Capture state for this minute
+    const latest = metrics.latest(sharedMetricsId);
+    const trafficEp = await jobs.getEndpoint(trafficMonitorId);
+
+    if (latest) {
+      flashSaleSnapshots.push({
+        minute,
+        timestamp: latest.at,
+        traffic: latest.traffic,
+        ordersPerMin: latest.ordersPerMin,
+        pageLoadMs: latest.pageLoadMs,
+        inventoryLagMs: latest.inventoryLagMs,
+        dbQueryMs: latest.dbQueryMs,
+        nextTrafficCheckAt: trafficEp.nextRunAt,
+      });
+    }
+  }
+
+  return { runs, jobs, metrics, flashSaleSnapshots };
+}
