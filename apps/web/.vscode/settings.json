@@ -1,0 +1,15 @@
+{
+  "files.watcherExclude": {
+    "**/routeTree.gen.ts": true,
+    "**/.tanstack/**": true
+  },
+  "search.exclude": {
+    "**/routeTree.gen.ts": true,
+    "**/.tanstack/**": true
+  },
+  "files.readonlyInclude": {
+    "**/routeTree.gen.ts": true
+  }
+  // "typescript.tsserver.maxTsServerMemory": 4096,
+  // "typescript.preferences.includePackageJsonAutoImports": "off"
+}

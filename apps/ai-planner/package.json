@@ -1,0 +1,24 @@
+{
+  "name": "@cronicorn/ai-planner-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.46",
+    "@cronicorn/adapter-ai": "workspace:*",
+    "@cronicorn/adapter-drizzle": "workspace:*",
+    "@cronicorn/adapter-system-clock": "workspace:*",
+    "@cronicorn/worker-ai-planner": "workspace:*",
+    "drizzle-orm": "^0.38.3",
+    "pg": "^8.13.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5"
+  }
+}

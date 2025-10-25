@@ -1,0 +1,1 @@
+ALTER TABLE "job_endpoints" ADD COLUMN "max_execution_time_ms" integer;

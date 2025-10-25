@@ -1,0 +1,2 @@
+# Add .env.test to gitignore (contains local DATABASE_URL)
+.env.test

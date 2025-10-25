@@ -1,0 +1,49 @@
+{
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
+  "exclude": ["node_modules", "dist", ".tanstack"],
+
+  "compilerOptions": {
+    "target": "ES2022",
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    /* Composite project for faster builds */
+    // "composite": true,
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+
+    /* Linting */
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@cronicorn/ui-library/*": ["../../packages/ui-library/src/*"]
+    }
+
+  },
+
+  "references": [
+    {
+      "path": "../../packages/api-contracts"
+    },
+    {
+      "path": "../../packages/ui-library"
+    }
+  ]
+}
