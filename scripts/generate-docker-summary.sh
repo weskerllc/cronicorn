@@ -2,7 +2,7 @@
 set -e
 
 VERSION="$1"
-REGISTRY="ghcr.io/bcanfield/mvpmvp"
+REGISTRY="ghcr.io/cronicorn/cronicorn"
 
 if [ -z "$VERSION" ]; then
   echo "Usage: $0 <version>"
