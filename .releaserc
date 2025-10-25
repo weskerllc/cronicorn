@@ -1,8 +1,7 @@
 {
   "branches": [
-    "main",
     {
-      "name": "ui-init",
+      "name": "main",
       "prerelease": "beta"
     }
   ],
