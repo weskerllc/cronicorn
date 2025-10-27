@@ -7,7 +7,7 @@ An AI-powered HTTP request scheduler that supports dynamic scheduling based on r
 
 ```bash
 # Get the code
-git clone https://github.com/cronicorn/cronicorn.git
+git clone https://github.com/weskerllc/cronicorn.git
 cd cronicorn
 
 # Install everything
@@ -182,10 +182,10 @@ All services are automatically built and published as Docker images with each re
 
 ```bash
 # Pull images by version (recommended)
-docker pull ghcr.io/cronicorn/cronicorn/api:v1.2.3
-docker pull ghcr.io/cronicorn/cronicorn/scheduler:v1.2.3
-docker pull ghcr.io/cronicorn/cronicorn/ai-planner:v1.2.3
-docker pull ghcr.io/cronicorn/cronicorn/web:v1.2.3
+docker pull ghcr.io/weskerllc/cronicorn/api:v1.2.3
+docker pull ghcr.io/weskerllc/cronicorn/scheduler:v1.2.3
+docker pull ghcr.io/weskerllc/cronicorn/ai-planner:v1.2.3
+docker pull ghcr.io/weskerllc/cronicorn/web:v1.2.3
 ```
 
 **Documentation:**
