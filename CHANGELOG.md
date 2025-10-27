@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/weskerllc/cronicorn/compare/v1.0.4...v1.0.5) (2025-10-27)
+
+
+### Bug Fixes
+
+* endpoint form ([7c0d7b7](https://github.com/weskerllc/cronicorn/commit/7c0d7b764aef7f7aff38957c61d2aa125c090809))
+
 ## [1.0.4](https://github.com/weskerllc/cronicorn/compare/v1.0.3...v1.0.4) (2025-10-27)
 
 
