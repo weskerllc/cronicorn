@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert"
 import { AlertCircle } from "lucide-react";
 
 import { signIn } from "@/lib/auth-client";
+import { SEO } from "@/components/SEO";
+import siteConfig from "@/site-config";
 
 export const Route = createFileRoute("/login")({
   component: RouteComponent,
@@ -84,91 +86,158 @@ function RouteComponent() {
     );
   };
 
+  // Structured data for login page
+  const loginStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Login - Cronicorn",
+    description: "Sign in to your Cronicorn account to access AI-powered job scheduling tools",
+    url: `${siteConfig.url}/login`,
+    isPartOf: {
+      "@type": "WebSite",
+      name: siteConfig.siteName,
+      url: siteConfig.url
+    },
+    potentialAction: {
+      "@type": "LoginAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteConfig.url}/login`,
+        actionPlatform: [
+          "http://schema.org/DesktopWebPlatform",
+          "http://schema.org/MobileWebPlatform"
+        ]
+      },
+      object: {
+        "@type": "DigitalDocument",
+        name: "User Account",
+        description: "Access to Cronicorn scheduling platform"
+      }
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">Sign in</CardTitle>
-          <CardDescription>
-            Enter your email and password to sign in to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="size-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+    <>
+      <SEO
+        title="Login - Access Your AI Scheduling Dashboard"
+        description="Sign in to your Cronicorn account to access powerful AI-driven job scheduling, analytics, and automation tools. Multiple authentication options available."
+        keywords={["login", "sign in", "authentication", "user account", "dashboard access"]}
+        url="/login"
+        noindex={true}
+        structuredData={loginStructuredData}
+      />
 
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="outline"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className="w-full"
-            >
-              Sign in with Google
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGithubLogin}
-              disabled={isLoading}
-              className="w-full"
-            >
-              Sign in with GitHub
-            </Button>
-          </div>
+      <main className="flex min-h-screen items-center justify-center p-4" role="main">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Welcome Back</CardTitle>
+            <CardDescription className="text-center">
+              Sign in to your {siteConfig.siteName} account to continue
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive" role="alert">
+                <AlertCircle className="size-4" aria-hidden="true" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <form onSubmit={handleEmailLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                onClick={handleGoogleLogin}
                 disabled={isLoading}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+                className="w-full"
+                aria-label="Sign in with Google"
+              >
+                Sign in with Google
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleGithubLogin}
                 disabled={isLoading}
-                required
-              />
+                className="w-full"
+                aria-label="Sign in with GitHub"
+              >
+                Sign in with GitHub
+              </Button>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <div className="text-sm text-muted-foreground text-center">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </div>
-        </CardFooter>
-      </Card>
-    </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with email
+                </span>
+              </div>
+            </div>
+
+            <form onSubmit={handleEmailLogin} className="space-y-4" noValidate>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  autoComplete="email"
+                  aria-describedby="email-error"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  autoComplete="current-password"
+                  aria-describedby="password-error"
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+                aria-label={isLoading ? "Signing in..." : "Sign in to your account"}
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4">
+            <div className="text-sm text-muted-foreground text-center">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Create a new account"
+              >
+                Create Account
+              </Link>
+            </div>
+            <div className="text-xs text-muted-foreground text-center">
+              <Link
+                to="/"
+                className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Return to homepage"
+              >
+                ← Back to Home
+              </Link>
+            </div>
+          </CardFooter>
+        </Card>
+      </main>
+    </>
   );
 }
