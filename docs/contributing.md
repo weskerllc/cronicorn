@@ -14,7 +14,7 @@ Welcome! This guide helps you understand the development workflow and make effec
 
 ```bash
 # Clone repository
-git clone https://github.com/cronicorn/cronicorn
+git clone https://github.com/weskerllc/cronicorn
 cd cronicorn
 
 # Install dependencies
