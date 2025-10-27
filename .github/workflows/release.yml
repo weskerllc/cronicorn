@@ -213,13 +213,13 @@ jobs:
           provenance: true
           sbom: true
 
-      # # Attest the build for supply chain security
-      # - name: Attest Build Provenance
-      #   uses: actions/attest-build-provenance@v1
-      #   with:
-      #     subject-name: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ matrix.service.name }}
-      #     subject-digest: ${{ steps.push.outputs.digest }}
-      #     push-to-registry: true
+      # Attest the build for supply chain security
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ matrix.service.name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
       # # Export image information (disabled - using semantic-release instead)
       # - name: Export image information
