@@ -3,7 +3,6 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 import { Button } from "@cronicorn/ui-library/components/button";
 import {
@@ -20,13 +19,10 @@ import { Textarea } from "@cronicorn/ui-library/components/textarea";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 
+import { UpdateJobRequestSchema } from "@cronicorn/api-contracts/jobs";
 import { PageHeader } from "../../components/page-header";
+import type { UpdateJobRequest } from "@cronicorn/api-contracts/jobs";
 import { jobQueryOptions, updateJob } from "@/lib/api-client/queries/jobs.queries";
-
-const updateJobSchema = z.object({
-  name: z.string().min(1, "Name is required").max(255, "Name must be less than 255 characters"),
-  description: z.string().optional(),
-});
 
 export const Route = createFileRoute("/_authed/jobs/$id/edit")({
   loader: async ({ params, context }) => {
@@ -35,8 +31,6 @@ export const Route = createFileRoute("/_authed/jobs/$id/edit")({
   component: EditJobPage,
 });
 
-type UpdateJobForm = z.infer<typeof updateJobSchema>;
-
 function EditJobPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -44,8 +38,8 @@ function EditJobPage() {
   const queryClient = useQueryClient();
   const { data: job } = useSuspenseQuery(jobQueryOptions(id));
 
-  const form = useForm<UpdateJobForm>({
-    resolver: zodResolver(updateJobSchema),
+  const form = useForm<UpdateJobRequest>({
+    resolver: zodResolver(UpdateJobRequestSchema),
     defaultValues: {
       name: job.name,
       description: job.description || "",
@@ -53,7 +47,7 @@ function EditJobPage() {
   });
 
   const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: async (data: UpdateJobForm) => updateJob(id, data),
+    mutationFn: async (data: UpdateJobRequest) => updateJob(id, data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["jobs"] });
       await queryClient.invalidateQueries({ queryKey: ["jobs", id] });
@@ -61,7 +55,7 @@ function EditJobPage() {
     },
   });
 
-  const handleFormSubmit = async (data: UpdateJobForm) => {
+  const handleFormSubmit = async (data: UpdateJobRequest) => {
     await mutateAsync(data);
   };
 
