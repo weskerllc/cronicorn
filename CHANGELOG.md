@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/weskerllc/cronicorn/compare/v1.0.1...v1.0.2) (2025-10-27)
+
+
+### Bug Fixes
+
+* GHCR registry ([d1ad3cf](https://github.com/weskerllc/cronicorn/commit/d1ad3cf9db9b6770095f2b473f8a74feecd9a598))
+
 ## [1.0.1](https://github.com/cronicorn/cronicorn/compare/v1.0.0...v1.0.1) (2025-10-27)
 
 
