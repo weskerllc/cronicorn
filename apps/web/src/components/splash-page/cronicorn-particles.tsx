@@ -25,10 +25,13 @@ export default function Component() {
       </div>
 
       {/* What Cronicorn Does Section */}
-      <WhatCronicornDoes />
+      <section className="px-6">
+        <WhatCronicornDoes />
+
+      </section>
 
       {/* Particles Canvas Section - Bottom */}
-      <section className="relative w-full h-dvh flex flex-col items-center overflow-hidden justify-center">
+      <section className="relative w-full h-[60vh] md:h-[70vh] flex flex-col items-center overflow-hidden justify-center">
         <ParticleCanvas />
       </section>
     </div>
