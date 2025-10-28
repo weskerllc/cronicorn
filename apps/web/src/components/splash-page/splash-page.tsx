@@ -22,47 +22,7 @@ export default function SplashPage() {
 
     return (
         <div className="min-h-screen bg-background relative overflow-hidden mb-8">
-            {/* Background effects */}
-            <div
-                className="absolute top-0 left-0 w-1/4 h-96 bg-gradient-to-br from-background/20 via-secondary/15 to-background/10 blur-3xl animate-pulse"
-                style={{ animationDuration: "8s" }}
-            >
-            </div>
 
-            {/* 2. Light blue blur - slightly overlapping */}
-            <div
-                className="absolute top-0 left-16 w-1/4 h-96 bg-gradient-to-br from-blue-400/8 via-blue-500/5 to-transparent blur-3xl animate-pulse"
-                style={{ animationDuration: "6s", animationDelay: "1s" }}
-            >
-            </div>
-
-            {/* 3. More prominent blue blur */}
-            <div
-                className="absolute top-0 left-1/4 w-1/3 h-[28rem] bg-gradient-to-br from-blue-500/10 via-blue-600/8 to-transparent blur-3xl animate-pulse"
-                style={{ animationDuration: "7s", animationDelay: "2s" }}
-            >
-            </div>
-
-            {/* 4. Another blue blur - different height */}
-            <div
-                className="absolute top-0 left-2/5 w-1/4 h-80 bg-gradient-to-br from-blue-400/9 via-blue-500/6 to-transparent blur-3xl animate-pulse"
-                style={{ animationDuration: "5s", animationDelay: "3s" }}
-            >
-            </div>
-
-            {/* 5. Vivid pink blur - more prominent */}
-            <div
-                className="absolute top-0 right-1/4 w-1/3 h-80 bg-gradient-to-bl from-pink-500/12 via-purple-500/10 to-transparent blur-3xl animate-pulse"
-                style={{ animationDuration: "6s", animationDelay: "1.5s" }}
-            >
-            </div>
-
-            {/* 6. Softer pink blur on the far right */}
-            <div
-                className="absolute top-0 right-0 w-1/4 h-96 bg-gradient-to-bl from-pink-400/9 via-purple-400/6 to-transparent blur-3xl animate-pulse"
-                style={{ animationDuration: "8s", animationDelay: "4s" }}
-            >
-            </div>
 
             <LogoParticles />
             {/* Background-colored blur behind hero text */}
@@ -170,7 +130,10 @@ export default function SplashPage() {
                 </div>
 
                 {/* Timeline demo */}
-                <TimelineTabs tabs={tabData} variant="default" />
+                <div className="z-50 max-w-3xl w-full bg-red-500">
+                    {/* <TimelineTabs tabs={tabData} variant="default" /> */}
+
+                </div>
                 <WhatCronicornDoes />
                 {/* Setup guide */}
                 {/* <SimpleSetup />
