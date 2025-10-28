@@ -5,6 +5,7 @@ import { Badge } from "@cronicorn/ui-library/components/badge";
 import { BarChart3, CheckCircle, Clock, Shield, Users, Zap } from "lucide-react";
 
 import LogoParticles from "../components/splash-page/cronicorn-particles";
+import SplashPage from "../components/splash-page/splash-page";
 import { signOut, useSession } from "@/lib/auth-client";
 import { SEO, createOrganizationSchema, createSoftwareApplicationSchema, createWebsiteSchema } from "@/components/SEO";
 import siteConfig from "@/site-config";
@@ -76,6 +77,7 @@ function Index() {
     "Integrate with existing tools and workflows"
   ];
 
+  return (<SplashPage />)
   return (
     <div className="bg-background p-2">
       <div className="rounded-sm bg-cronicorn-background border">

@@ -1,7 +1,10 @@
 const siteConfig = {
   siteName: "Cronicorn",
+  docsUrl: "https://docs.cronicorn.com",
   tagline: "AI-Powered Job Scheduling Platform",
   description: "Transform your cron jobs and scheduled tasks with Cronicorn's intelligent AI scheduling. Get smart recommendations, advanced analytics, and reliable job orchestration.",
+  description2: "Transform your cron jobs and scheduled tasks with Cronicorn's intelligent AI scheduling. Get smart recommendations, advanced analytics, and reliable job orchestration.",
+
   url: "https://cronicorn.com",
   githubUrl: "https://github.com/bcanfield/cron-mvp",
   supportUrl: "https://github.com/bcanfield/cron-mvp/issues/new",
