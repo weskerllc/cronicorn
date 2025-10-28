@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@cron
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { BarChart3, CheckCircle, Clock, Shield, Users, Zap } from "lucide-react";
 
+import LogoParticles from "../components/splash-page/cronicorn-particles";
 import { signOut, useSession } from "@/lib/auth-client";
 import { SEO, createOrganizationSchema, createSoftwareApplicationSchema, createWebsiteSchema } from "@/components/SEO";
 import siteConfig from "@/site-config";
@@ -84,8 +85,10 @@ function Index() {
         url="/"
         structuredData={structuredData}
       />
+      <LogoParticles />
 
       <div className="max-w-6xl mx-auto space-y-16 p-8">
+
         {/* Hero Section */}
         <section className="text-center space-y-6">
           <div className="space-y-4">
