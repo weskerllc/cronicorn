@@ -7,18 +7,9 @@ import { Button, buttonVariants } from "@cronicorn/ui-library/components/button"
 import AppLogo from "../../icon.svg?react";
 import siteConfig from "../../site-config";
 import LogoParticles from "../../components/splash-page/cronicorn-particles";
-import DynamicScheduleTimeline from "./timeline/timeline";
-import { monitoringScenarios } from "./timeline/timeline-scenario-data";
-import { TimelineTabs } from "./timeline/timeline-tabs";
 import WhatCronicornDoes from "./what-cronicorn-does/what-cronicorn-does";
 
 export default function SplashPage() {
-    const tabData = monitoringScenarios.map(scenario => ({
-        id: scenario.id,
-        label: scenario.name,
-        content: <DynamicScheduleTimeline scenario={scenario} />,
-        icon: <div className="w-2 h-2 rounded-full bg-current opacity-60" />,
-    }));
 
     return (
         <div className="min-h-screen bg-background relative overflow-hidden mb-8">
@@ -32,32 +23,7 @@ export default function SplashPage() {
       >
       </div> */}
 
-            {/* Faint particles scattered around */}
-            <div className="absolute top-16 left-8 w-1 h-1 bg-blue-400/12 rounded-full"></div>
-            <div className="absolute top-32 left-24 w-2 h-2 bg-purple-300/10 rounded-full"></div>
-            <div className="absolute top-48 left-16 w-1.5 h-1.5 bg-blue-300/15 rounded-full"></div>
-            <div className="absolute top-64 left-32 w-1 h-1 bg-pink-400/12 rounded-full"></div>
-            <div className="absolute top-80 left-12 w-2.5 h-2.5 bg-blue-500/8 rounded-full"></div>
 
-            <div className="absolute top-24 right-16 w-1.5 h-1.5 bg-pink-300/12 rounded-full"></div>
-            <div className="absolute top-40 right-32 w-1 h-1 bg-blue-400/15 rounded-full"></div>
-            <div className="absolute top-56 right-8 w-2 h-2 bg-purple-400/10 rounded-full"></div>
-            <div className="absolute top-72 right-24 w-1 h-1 bg-pink-500/12 rounded-full"></div>
-            <div className="absolute top-88 right-40 w-1.5 h-1.5 bg-blue-300/10 rounded-full"></div>
-
-            <div className="absolute bottom-16 left-16 w-2 h-2 bg-purple-400/12 rounded-full"></div>
-            <div className="absolute bottom-32 left-8 w-1 h-1 bg-blue-500/15 rounded-full"></div>
-            <div className="absolute bottom-48 left-28 w-1.5 h-1.5 bg-pink-300/10 rounded-full"></div>
-            <div className="absolute bottom-64 left-20 w-1 h-1 bg-blue-400/12 rounded-full"></div>
-
-            <div className="absolute bottom-20 right-12 w-1.5 h-1.5 bg-pink-400/15 rounded-full"></div>
-            <div className="absolute bottom-36 right-28 w-1 h-1 bg-blue-300/12 rounded-full"></div>
-            <div className="absolute bottom-52 right-16 w-2 h-2 bg-purple-300/10 rounded-full"></div>
-            <div className="absolute bottom-68 right-36 w-1 h-1 bg-pink-500/12 rounded-full"></div>
-
-            <div className="absolute top-1/3 left-1/4 w-1 h-1 bg-blue-400/10 rounded-full"></div>
-            <div className="absolute top-2/3 right-1/3 w-1.5 h-1.5 bg-purple-400/12 rounded-full"></div>
-            <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-pink-300/15 rounded-full"></div>
 
             {/* Header */}
             <header className="relative z-10 px-6 py-6">
