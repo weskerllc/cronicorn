@@ -107,9 +107,9 @@ function Index() {
         structuredData={structuredData}
       />
 
-      <main className="bg-background">
+      <main className="bg-background" role="main">
         {/* Hero Section with Particle Animation Background */}
-        <section className="relative min-h-screen bg-background overflow-hidden mb-8">
+        <section className="relative min-h-screen bg-background overflow-hidden mb-8" aria-labelledby="hero-heading">
           <BackgroundEffects />
           <HeroSection />
           <TimelineSection tabData={tabData} />
@@ -120,12 +120,64 @@ function Index() {
           <WhatCronicornDoes />
         </section>
 
+        {/* Zero-Click Optimization Section */}
+        <section className="px-6 py-16 bg-muted/30" aria-labelledby="quick-answers-heading">
+          <div className="max-w-6xl mx-auto">
+            <header className="text-center mb-12">
+              <h2 id="quick-answers-heading" className="text-3xl font-bold mb-4">Quick Answers</h2>
+              <p className="text-lg text-muted-foreground">Everything you need to know about AI-powered job scheduling</p>
+            </header>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {siteConfig.zeroClick.quickAnswers.map((qa, index) => (
+                <article key={index} className="bg-card p-6 rounded-lg border" itemScope itemType="https://schema.org/Question">
+                  <header>
+                    <h3 className="font-semibold text-lg mb-3" itemProp="name">{qa.question}</h3>
+                  </header>
+                  <div itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
+                    <div itemProp="text" className="text-muted-foreground">
+                      {qa.format === "steps" ? (
+                        <ol className="list-decimal list-inside space-y-1">
+                          {qa.answer.split('\n').map((step, i) => (
+                            <li key={i}>{step.replace(/^\d+\.\s*/, '')}</li>
+                          ))}
+                        </ol>
+                      ) : qa.format === "list" ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {qa.answer.split('\n').filter(line => line.startsWith('•')).map((item, i) => (
+                            <li key={i}>{item.replace('•', '').trim()}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>{qa.answer}</p>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {/* Key Statistics for Featured Snippets */}
+            <aside className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6" aria-labelledby="key-stats-heading">
+              <h3 id="key-stats-heading" className="sr-only">Key Performance Statistics</h3>
+              {siteConfig.zeroClick.keyStats.map((stat, index) => (
+                <div key={index} className="text-center" itemScope itemType="https://schema.org/QuantitativeValue">
+                  <div className="text-3xl font-bold text-primary" itemProp="value">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground" itemProp="name">{stat.metric}</div>
+                  <div className="text-xs text-muted-foreground/70">{stat.context}</div>
+                </div>
+              ))}
+            </aside>
+          </div>
+        </section>
+
         {/* Main Content */}
-        <div className="max-w-6xl mx-auto space-y-16 p-8">
+        <div className="max-w-6xl mx-auto space-y-16 p-8" role="region" aria-label="Main content area">
 
           {session ? (
             /* Authenticated User Section */
-            <section className="space-y-6">
+            <section className="space-y-6" aria-labelledby="user-dashboard-heading">
+              <h2 id="user-dashboard-heading" className="sr-only">User Dashboard</h2>
               <Card className="border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -197,39 +249,41 @@ function Index() {
 
               {/* Features Section */}
               <section className="space-y-8" aria-labelledby="features-heading">
-                <div className="text-center space-y-4">
+                <header className="text-center space-y-4">
                   <h2 id="features-heading" className="text-3xl font-bold">Why Choose Cronicorn?</h2>
                   <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                     Everything you need for intelligent job scheduling and automation
                   </p>
-                </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </header>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Platform features">
                   {features.map((feature, index) => (
-                    <Card key={index} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-center gap-3">
-                          {feature.icon}
-                          <CardTitle className="text-xl">{feature.title}</CardTitle>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <CardDescription className="text-base">
-                          {feature.description}
-                        </CardDescription>
-                      </CardContent>
-                    </Card>
+                    <article key={index} className="hover:shadow-lg transition-shadow" role="listitem">
+                      <Card>
+                        <CardHeader>
+                          <div className="flex items-center gap-3">
+                            {feature.icon}
+                            <CardTitle className="text-xl">{feature.title}</CardTitle>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <CardDescription className="text-base">
+                            {feature.description}
+                          </CardDescription>
+                        </CardContent>
+                      </Card>
+                    </article>
                   ))}
                 </div>
               </section>
 
               {/* Benefits Section */}
               <section className="bg-muted/30 rounded-lg p-8 space-y-6" aria-labelledby="benefits-heading">
-                <div className="text-center space-y-4">
+                <header className="text-center space-y-4">
                   <h2 id="benefits-heading" className="text-3xl font-bold">Transform Your Workflow</h2>
                   <p className="text-lg text-muted-foreground">
                     See the immediate impact on your development process
                   </p>
-                </div>
+                </header>
                 <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
                   {benefits.map((benefit, index) => (
                     <div key={index} className="flex items-center gap-3">
@@ -242,46 +296,48 @@ function Index() {
 
               {/* FAQ Section for SEO */}
               <section className="space-y-8" aria-labelledby="faq-heading">
-                <div className="text-center space-y-4">
+                <header className="text-center space-y-4">
                   <h2 id="faq-heading" className="text-3xl font-bold">Frequently Asked Questions</h2>
                   <p className="text-lg text-muted-foreground">
                     Get answers to common questions about Cronicorn
                   </p>
-                </div>
-                <div className="grid gap-6 max-w-4xl mx-auto">
+                </header>
+                <div className="grid gap-6 max-w-4xl mx-auto" role="list" aria-label="Frequently asked questions">
                   {faqData.map((faq, index) => (
-                    <Card key={index}>
-                      <CardHeader>
-                        <CardTitle className="text-left">{faq.question}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground">
-                          {faq.answer}
-                        </p>
-                      </CardContent>
-                    </Card>
+                    <article key={index} role="listitem" itemScope itemType="https://schema.org/Question">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-left" itemProp="name">{faq.question}</CardTitle>
+                        </CardHeader>
+                        <CardContent itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
+                          <p className="text-muted-foreground" itemProp="text">
+                            {faq.answer}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </article>
                   ))}
                 </div>
               </section>
 
               {/* Trust Indicators */}
               <section className="text-center space-y-6" aria-labelledby="trust-heading">
-                <div className="space-y-4">
+                <header className="space-y-4">
                   <h2 id="trust-heading" className="text-2xl font-bold">Trusted by Developers Worldwide</h2>
-                  <div className="flex justify-center gap-8 text-sm text-muted-foreground">
-                    <div className="flex flex-col items-center">
-                      <span className="text-2xl font-bold text-primary">{siteConfig.trustSignals.metrics.uptime}</span>
-                      <span>Uptime SLA</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <span className="text-2xl font-bold text-primary">{siteConfig.trustSignals.metrics.jobsScheduledDaily}</span>
-                      <span>Jobs Scheduled Daily</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <span className="text-2xl font-bold text-primary">{siteConfig.trustSignals.metrics.customersServed}</span>
-                      <span>Active Teams</span>
-                    </div>
-                  </div>
+                </header>
+                <div className="flex justify-center gap-8 text-sm text-muted-foreground" role="list" aria-label="Trust metrics">
+                  <article className="flex flex-col items-center" role="listitem" itemScope itemType="https://schema.org/QuantitativeValue">
+                    <span className="text-2xl font-bold text-primary" itemProp="value">{siteConfig.trustSignals.metrics.uptime}</span>
+                    <span itemProp="name">Uptime SLA</span>
+                  </article>
+                  <article className="flex flex-col items-center" role="listitem" itemScope itemType="https://schema.org/QuantitativeValue">
+                    <span className="text-2xl font-bold text-primary" itemProp="value">{siteConfig.trustSignals.metrics.jobsScheduledDaily}</span>
+                    <span itemProp="name">Jobs Scheduled Daily</span>
+                  </article>
+                  <article className="flex flex-col items-center" role="listitem" itemScope itemType="https://schema.org/QuantitativeValue">
+                    <span className="text-2xl font-bold text-primary" itemProp="value">{siteConfig.trustSignals.metrics.customersServed}</span>
+                    <span itemProp="name">Active Teams</span>
+                  </article>
                 </div>
               </section>
             </>
