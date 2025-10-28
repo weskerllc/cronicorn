@@ -5,7 +5,6 @@ import { Badge } from "@cronicorn/ui-library/components/badge";
 import { BarChart3, CheckCircle, Clock, Shield, Users, Zap } from "lucide-react";
 
 import LogoParticles from "../components/splash-page/cronicorn-particles";
-import SplashPage from "../components/splash-page/splash-page";
 import { signOut, useSession } from "@/lib/auth-client";
 import { SEO, createOrganizationSchema, createSoftwareApplicationSchema, createWebsiteSchema } from "@/components/SEO";
 import siteConfig from "@/site-config";
@@ -77,7 +76,7 @@ function Index() {
     "Integrate with existing tools and workflows"
   ];
 
-  return (<SplashPage />)
+  return (<LogoParticles />)
   return (
     <div className="bg-background p-2">
       <div className="rounded-sm bg-cronicorn-background border">
@@ -117,12 +116,12 @@ function Index() {
               <Card className="border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    👋 Hello, {session.user.name}!
+                    👋 Hello, {session?.user.name}!
                   </CardTitle>
                   <CardDescription>
                     Welcome back to your AI-powered scheduling dashboard
                     <br />
-                    <span className="text-sm text-muted-foreground">Email: {session.user.email}</span>
+                    <span className="text-sm text-muted-foreground">Email: {session?.user.email}</span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-4">
