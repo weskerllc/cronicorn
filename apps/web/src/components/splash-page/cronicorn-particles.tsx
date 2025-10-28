@@ -2,13 +2,21 @@
 
 import { useEffect, useRef, useState } from "react"
 import { CRONICORN_LOGO_PATH } from "./cronicorn-logo-path"
+import { TimelineTabs } from "./timeline/timeline-tabs"
+import { monitoringScenarios } from "./timeline/timeline-scenario-data"
+import DynamicScheduleTimeline from "./timeline/timeline"
 
 export default function Component() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mousePositionRef = useRef({ x: 0, y: 0 })
   const isTouchingRef = useRef(false)
   const [isMobile, setIsMobile] = useState(false)
-
+  const tabData = monitoringScenarios.map(scenario => ({
+    id: scenario.id,
+    label: scenario.name,
+    content: <DynamicScheduleTimeline scenario={scenario} />,
+    icon: <div className="w-2 h-2 rounded-full bg-current opacity-60" />,
+  }));
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -235,52 +243,52 @@ export default function Component() {
   }, [isMobile])
 
   return (
-    <div className="relative w-full h-dvh flex flex-col items-center justify-center">
+    <div className="relative w-full h-dvh flex flex-col items-center overflow-hidden justify-center bg-background">
       <canvas
         ref={canvasRef}
         className="w-full h-full absolute top-0 left-0 z-50 touch-none"
         aria-label="Interactive particle effect with Cronicorn logo"
       />
       <div
-        className="absolute top-0 left-0 w-1/4 h-96 bg-gradient-to-br from-background/95 via-secondary/80 to-background/50 blur-3xl animate-pulse"
+        className="absolute top-0 left-0 w-1/4 h-96 bg-gradient-to-br from-background/50 via-secondary/40 to-background/25 blur-3xl animate-pulse"
         style={{ animationDuration: "8s" }}
       >
       </div>
 
       {/* 2. Light blue blur - slightly overlapping */}
       <div
-        className="absolute top-0 left-16 w-1/4 h-96 bg-gradient-to-br from-blue-400/5 via-blue-500/5 to-transparent blur-3xl animate-pulse"
+        className="absolute top-0 left-16 w-1/4 h-96 bg-gradient-to-br from-blue-400/2 via-blue-500/2 to-transparent blur-3xl animate-pulse"
         style={{ animationDuration: "6s", animationDelay: "1s" }}
       >
       </div>
 
       {/* 3. More prominent blue blur */}
       <div
-        className="absolute top-0 left-1/4 w-1/3 h-[28rem] bg-gradient-to-br from-blue-500/20 via-blue-600/20 to-transparent blur-3xl animate-pulse"
+        className="absolute top-0 left-1/4 w-1/3 h-[28rem] bg-gradient-to-br from-blue-500/10 via-blue-600/10 to-transparent blur-3xl animate-pulse"
         style={{ animationDuration: "7s", animationDelay: "2s" }}
       >
       </div>
 
       {/* 4. Another blue blur - different height */}
-      {/* <div
-        className="absolute top-0 left-2/5 w-1/4 h-80 bg-gradient-to-br from-blue-400/35 via-blue-500/25 to-transparent blur-3xl animate-pulse"
+      <div
+        className="absolute top-0 left-2/5 w-1/4 h-80 bg-gradient-to-br from-blue-400/18 via-blue-500/12 to-transparent blur-3xl animate-pulse"
         style={{ animationDuration: "5s", animationDelay: "3s" }}
       >
-      </div> */}
+      </div>
 
       {/* 5. Vivid pink blur - more prominent */}
-      {/* <div
-        className="absolute top-0 right-1/4 w-1/3 h-80 bg-gradient-to-bl from-pink-500/50 via-purple-500/40 to-transparent blur-3xl animate-pulse"
+      <div
+        className="absolute top-0 right-1/4 w-1/3 h-80 bg-gradient-to-bl from-pink-500/25 via-purple-500/20 to-transparent blur-3xl animate-pulse"
         style={{ animationDuration: "6s", animationDelay: "1.5s" }}
       >
-      </div> */}
+      </div>
 
       {/* 6. Softer pink blur on the far right */}
-      {/* <div
-        className="absolute top-0 right-0 w-1/4 h-96 bg-gradient-to-bl from-pink-400/35 via-purple-400/25 to-transparent blur-3xl animate-pulse"
+      <div
+        className="absolute top-0 right-0 w-1/4 h-96 bg-gradient-to-bl from-pink-400/18 via-purple-400/12 to-transparent blur-3xl animate-pulse"
         style={{ animationDuration: "8s", animationDelay: "4s" }}
       >
-      </div> */}
+      </div>
       {/* Text below the animated logo */}
       <div className="absolute z-10 text-center" style={{ top: isMobile ? '160px' : '200px' }}>
         <h1 className="font-sans text-foreground text-xl md:text-3xl font-bold mb-2 tracking-wide">
@@ -291,15 +299,18 @@ export default function Component() {
         </p>
       </div>
 
+
       {/* Feature Graphic Placeholder */}
-      <div className="absolute z-10 flex items-center justify-center" style={{
+      <div className="absolute z-100 flex max-w-2xl w-full items-center justify-center" style={{
         top: isMobile ? '280px' : '320px',
         left: '50%',
         transform: 'translateX(-50%)'
       }}>
-        <div className="relative">
-          {/* Placeholder for feature graphic - could be dashboard preview, architecture diagram, etc. */}
-          <div className="w-80 md:w-96 h-48 md:h-56 bg-card/50 rounded-lg border border-border backdrop-blur-sm p-6 flex flex-col items-center justify-center">
+        <div className="relative   w-full">
+          {/* asdf */}
+          <TimelineTabs tabs={tabData} variant="default" />
+
+          {/* <div className="w-80 md:w-96 h-48 md:h-56 bg-card/50 rounded-lg border border-border backdrop-blur-sm p-6 flex flex-col items-center justify-center">
             <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-accent-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -309,12 +320,11 @@ export default function Component() {
             <p className="text-muted-foreground text-sm text-center">Dashboard, architecture diagram, or key feature visualization will go here</p>
           </div>
 
-          {/* Subtle glow effect */}
-          <div className="absolute inset-0 bg-accent/5 rounded-lg blur-xl -z-10"></div>
+          <div className="absolute inset-0 bg-accent/5 rounded-lg blur-xl -z-10"></div> */}
         </div>
       </div>
 
-      <div className="absolute bottom-12 md:bottom-16 text-center z-10 px-6 max-w-2xl">
+      {/* <div className="absolute bottom-12 md:bottom-16 text-center z-10 px-6 max-w-2xl">
         <h2 className="font-sans text-foreground text-lg md:text-2xl font-semibold mb-3 md:mb-4 text-balance">
           Something magical is coming soon
         </h2>
@@ -331,7 +341,7 @@ export default function Component() {
             Notify Me
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }
