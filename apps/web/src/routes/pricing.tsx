@@ -110,7 +110,7 @@ function Pricing() {
     <>
       <SEO
         title="Pricing Plans - Choose Your AI Scheduling Solution"
-        description="Flexible pricing for Cronicorn's AI-powered job scheduling platform. Start free with 100 jobs, upgrade to Professional for unlimited scheduling, or choose Enterprise for advanced features."
+        description={siteConfig.metaDescriptions.pricing}
         keywords={["pricing", "plans", "subscription", "AI scheduling cost", "cron job pricing", "enterprise scheduling"]}
         url="/pricing"
         structuredData={tierStructuredData}

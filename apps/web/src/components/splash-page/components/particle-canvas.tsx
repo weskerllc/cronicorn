@@ -57,13 +57,13 @@ export default function ParticleCanvas({
             ctx.fillStyle = "white"
             ctx.save()
 
-            const logoHeight = isMobile ? 50 : 60
+            const logoHeight = isMobile ? 50 : 120
             const cronicornLogoWidth = logoHeight * (40 / 19.7762)
-            const fontSize = isMobile ? 50 : 56
+            const fontSize = isMobile ? 50 : 112
             ctx.font = `${fontSize}px "Inter", "Helvetica Neue", Arial, sans-serif`
             const textMetrics = ctx.measureText("cronicorn")
             const textWidth = textMetrics.width
-            const textSpacing = isMobile ? -30 : -40
+            const textSpacing = isMobile ? -25 : -60
             const totalWidth = cronicornLogoWidth + textSpacing + textWidth
 
             const topOffset = canvas.height / 2 - logoHeight / 2
@@ -119,7 +119,7 @@ export default function ParticleCanvas({
         function createInitialParticles() {
             if (!canvas) return
 
-            const baseParticleCount = 7000
+            const baseParticleCount = isMobile ? 6000 : 12000
             const particleCount = Math.floor(baseParticleCount * Math.sqrt((canvas.width * canvas.height) / (1920 * 1080)))
             for (let i = 0; i < particleCount; i++) {
                 const particle = createParticle()
@@ -137,7 +137,7 @@ export default function ParticleCanvas({
             ctx.fillRect(0, 0, canvas.width, canvas.height)
 
             const { x: mouseX, y: mouseY } = mousePositionRef.current
-            const maxDistance = 100
+            const maxDistance = isMobile ? 100 : 150
 
             for (let i = 0; i < particles.length; i++) {
                 const p = particles[i]
@@ -174,7 +174,7 @@ export default function ParticleCanvas({
                 }
             }
 
-            const baseParticleCount = 7000
+            const baseParticleCount = isMobile ? 6000 : 12000
             const targetParticleCount = Math.floor(
                 baseParticleCount * Math.sqrt((canvas.width * canvas.height) / (1920 * 1080)),
             )
@@ -198,7 +198,11 @@ export default function ParticleCanvas({
         }
 
         const handleMove = (x: number, y: number) => {
-            mousePositionRef.current = { x, y }
+            const rect = canvas.getBoundingClientRect()
+            mousePositionRef.current = {
+                x: x - rect.left,
+                y: y - rect.top
+            }
         }
 
         const handleMouseMove = (e: MouseEvent) => {
