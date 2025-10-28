@@ -120,9 +120,9 @@ export default function Component() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       // Get the computed background color from the CSS custom property
-      const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background').trim()
+      // const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background').trim()
 
-      ctx.fillStyle = backgroundColor
+      ctx.fillStyle = 'transparent'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       const { x: mouseX, y: mouseY } = mousePositionRef.current
@@ -235,12 +235,52 @@ export default function Component() {
   }, [isMobile])
 
   return (
-    <div className="relative w-full h-dvh flex flex-col items-center justify-center bg-background">
+    <div className="relative w-full h-dvh flex flex-col items-center justify-center">
       <canvas
         ref={canvasRef}
-        className="w-full h-full absolute top-0 left-0 touch-none"
+        className="w-full h-full absolute top-0 left-0 z-50 touch-none"
         aria-label="Interactive particle effect with Cronicorn logo"
       />
+      <div
+        className="absolute top-0 left-0 w-1/4 h-96 bg-gradient-to-br from-background/95 via-secondary/80 to-background/50 blur-3xl animate-pulse"
+        style={{ animationDuration: "8s" }}
+      >
+      </div>
+
+      {/* 2. Light blue blur - slightly overlapping */}
+      <div
+        className="absolute top-0 left-16 w-1/4 h-96 bg-gradient-to-br from-blue-400/5 via-blue-500/5 to-transparent blur-3xl animate-pulse"
+        style={{ animationDuration: "6s", animationDelay: "1s" }}
+      >
+      </div>
+
+      {/* 3. More prominent blue blur */}
+      <div
+        className="absolute top-0 left-1/4 w-1/3 h-[28rem] bg-gradient-to-br from-blue-500/20 via-blue-600/20 to-transparent blur-3xl animate-pulse"
+        style={{ animationDuration: "7s", animationDelay: "2s" }}
+      >
+      </div>
+
+      {/* 4. Another blue blur - different height */}
+      {/* <div
+        className="absolute top-0 left-2/5 w-1/4 h-80 bg-gradient-to-br from-blue-400/35 via-blue-500/25 to-transparent blur-3xl animate-pulse"
+        style={{ animationDuration: "5s", animationDelay: "3s" }}
+      >
+      </div> */}
+
+      {/* 5. Vivid pink blur - more prominent */}
+      {/* <div
+        className="absolute top-0 right-1/4 w-1/3 h-80 bg-gradient-to-bl from-pink-500/50 via-purple-500/40 to-transparent blur-3xl animate-pulse"
+        style={{ animationDuration: "6s", animationDelay: "1.5s" }}
+      >
+      </div> */}
+
+      {/* 6. Softer pink blur on the far right */}
+      {/* <div
+        className="absolute top-0 right-0 w-1/4 h-96 bg-gradient-to-bl from-pink-400/35 via-purple-400/25 to-transparent blur-3xl animate-pulse"
+        style={{ animationDuration: "8s", animationDelay: "4s" }}
+      >
+      </div> */}
       {/* Text below the animated logo */}
       <div className="absolute z-10 text-center" style={{ top: isMobile ? '160px' : '200px' }}>
         <h1 className="font-sans text-foreground text-xl md:text-3xl font-bold mb-2 tracking-wide">
