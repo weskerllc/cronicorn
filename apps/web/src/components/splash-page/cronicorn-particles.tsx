@@ -118,7 +118,11 @@ export default function Component() {
     function animate(scale: number) {
       if (!ctx || !canvas) return
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.fillStyle = "black"
+
+      // Get the computed background color from the CSS custom property
+      const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background').trim()
+
+      ctx.fillStyle = backgroundColor
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       const { x: mouseX, y: mouseY } = mousePositionRef.current
@@ -231,7 +235,7 @@ export default function Component() {
   }, [isMobile])
 
   return (
-    <div className="relative w-full h-dvh flex flex-col items-center justify-center bg-black">
+    <div className="relative w-full h-dvh flex flex-col items-center justify-center bg-background">
       <canvas
         ref={canvasRef}
         className="w-full h-full absolute top-0 left-0 touch-none"
@@ -239,51 +243,51 @@ export default function Component() {
       />
       {/* Text below the animated logo */}
       <div className="absolute z-10 text-center" style={{ top: isMobile ? '160px' : '200px' }}>
-        <h1 className="font-sans text-white text-xl md:text-3xl font-bold mb-2 tracking-wide">
+        <h1 className="font-sans text-foreground text-xl md:text-3xl font-bold mb-2 tracking-wide">
           Intelligent Cron Scheduling
         </h1>
-        <p className="font-sans text-gray-300 text-sm md:text-lg font-light tracking-wider">
+        <p className="font-sans text-muted-foreground text-sm md:text-lg font-light tracking-wider">
           Built for the Modern Web
         </p>
       </div>
-      
+
       {/* Feature Graphic Placeholder */}
-      <div className="absolute z-10 flex items-center justify-center" style={{ 
+      <div className="absolute z-10 flex items-center justify-center" style={{
         top: isMobile ? '280px' : '320px',
         left: '50%',
         transform: 'translateX(-50%)'
       }}>
         <div className="relative">
           {/* Placeholder for feature graphic - could be dashboard preview, architecture diagram, etc. */}
-          <div className="w-80 md:w-96 h-48 md:h-56 bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-lg border border-gray-700/50 backdrop-blur-sm p-6 flex flex-col items-center justify-center">
-            <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-80 md:w-96 h-48 md:h-56 bg-card/50 rounded-lg border border-border backdrop-blur-sm p-6 flex flex-col items-center justify-center">
+            <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-accent-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h3 className="text-white text-lg font-semibold mb-2">Feature Preview</h3>
-            <p className="text-gray-400 text-sm text-center">Dashboard, architecture diagram, or key feature visualization will go here</p>
+            <h3 className="text-foreground text-lg font-semibold mb-2">Feature Preview</h3>
+            <p className="text-muted-foreground text-sm text-center">Dashboard, architecture diagram, or key feature visualization will go here</p>
           </div>
-          
+
           {/* Subtle glow effect */}
-          <div className="absolute inset-0 bg-orange-500/5 rounded-lg blur-xl -z-10"></div>
+          <div className="absolute inset-0 bg-accent/5 rounded-lg blur-xl -z-10"></div>
         </div>
       </div>
-      
+
       <div className="absolute bottom-12 md:bottom-16 text-center z-10 px-6 max-w-2xl">
-        <h2 className="font-sans text-white text-lg md:text-2xl font-semibold mb-3 md:mb-4 text-balance">
+        <h2 className="font-sans text-foreground text-lg md:text-2xl font-semibold mb-3 md:mb-4 text-balance">
           Something magical is coming soon
         </h2>
-        <p className="font-sans text-gray-400 text-sm md:text-base mb-6 md:mb-8 leading-relaxed text-pretty">
+        <p className="font-sans text-muted-foreground text-sm md:text-base mb-6 md:mb-8 leading-relaxed text-pretty">
           Join the waitlist to be the first to experience the future of innovation
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
           <input
             type="email"
             placeholder="Enter your email"
-            className="w-full sm:w-64 px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
+            className="w-full sm:w-64 px-4 py-2.5 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all"
           />
-          <button className="w-full sm:w-auto px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors duration-200">
+          <button className="w-full sm:w-auto px-6 py-2.5 bg-accent hover:bg-accent/90 text-accent-foreground font-medium rounded-lg transition-colors duration-200">
             Notify Me
           </button>
         </div>
