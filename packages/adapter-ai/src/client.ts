@@ -2,7 +2,7 @@
 
 import type { AIClient, Tool } from "@cronicorn/domain";
 
-import { generateText, tool } from "ai";
+import { generateText, hasToolCall, tool } from "ai";
 import { z } from "zod";
 
 import type { VercelAiClientConfig } from "./types.js";
@@ -88,7 +88,7 @@ function createVercelTool(
 /** Create Vercel AI SDK client that implements our AIClient port */
 export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
   return {
-    async planWithTools({ input, tools, maxTokens }: Parameters<AIClient["planWithTools"]>[0]) {
+    async planWithTools({ input, tools, maxTokens, finalToolName }: Parameters<AIClient["planWithTools"]>[0]) {
       try {
         // Note: _modelName parameter from interface is ignored for now
         // We use the pre-configured model from config instead
@@ -125,36 +125,33 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           ? vercelTools as Parameters<typeof generateText>[0]["tools"]
           : undefined;
 
-        // Track tool calls for observability
-        const capturedToolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [];
-
         const result = await generateText({
           model: config.model,
           prompt: input,
           tools: cleanTools,
           maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
-          temperature: config.temperature || 0,
-          onStepFinish: ({ toolCalls, toolResults }) => {
-            // Capture tool calls as they execute
-            if (toolCalls && toolResults) {
-              for (let i = 0; i < toolCalls.length; i++) {
-                const call = toolCalls[i];
-                const result = toolResults[i];
-                capturedToolCalls.push({
-                  tool: call.toolName,
-                  args: "args" in call ? call.args : undefined,
-                  result: result ? ("result" in result ? result.result : result) : undefined,
-                });
-              }
-            }
-          },
+          stopWhen: finalToolName ? hasToolCall(finalToolName) : undefined,
         });
+
+        // Extract ALL tool calls and results from ALL steps
+        // Per Vercel AI SDK docs: steps.flatMap(step => step.toolResults) gets all results
+        const capturedToolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [];
+        const allToolResults = result.steps.flatMap(step => step.toolResults);
+
+        for (const toolResult of allToolResults) {
+          capturedToolCalls.push({
+            tool: toolResult.toolName,
+            args: toolResult.input, // SDK uses 'input', not 'args'
+            result: toolResult.output, // SDK uses 'output', not 'result'
+          });
+        }
 
         // Emit telemetry if configured
         config.logger?.info("AI client execution completed", {
           textLength: result.text.length,
           hasUsage: !!result.usage,
           toolCalls: capturedToolCalls.length,
+          tools: capturedToolCalls.map(tc => tc.tool),
         });
 
         return {
