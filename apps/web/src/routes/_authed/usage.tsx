@@ -29,10 +29,10 @@ function RouteComponent() {
       limit: usage.endpointsLimit || 0,
     },
     {
-      title: "AI Tokens",
-      description: "Number of endpoints across all jobs",
-      used: usage.aiCallsUsed || 0,
-      limit: usage.aiCallsLimit || 0,
+      title: "Total Runs",
+      description: "Total endpoint executions this period",
+      used: usage.totalRuns || 0,
+      limit: usage.totalRunsLimit || 0,
     },
   ];
 

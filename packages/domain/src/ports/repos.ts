@@ -130,7 +130,7 @@ export type JobsRepo = {
   }) => Promise<void>;
 
   /**
-   * Get usage statistics for quota enforcement and display.
+   * Get usage statistics for a user.
    *
    * @param userId - User ID
    * @param since - Start date for usage calculation (typically start of current month)
@@ -141,6 +141,8 @@ export type JobsRepo = {
     aiCallsLimit: number;
     endpointsUsed: number;
     endpointsLimit: number;
+    totalRuns: number;
+    totalRunsLimit: number;
   }>;
 };
 

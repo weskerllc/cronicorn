@@ -465,16 +465,16 @@ export class JobsManager {
       offset?: number;
     },
   ): Promise<{
-      runs: Array<{
-        runId: string;
-        endpointId: string;
-        startedAt: Date;
-        status: string;
-        durationMs?: number;
-        source?: string;
-      }>;
-      total: number;
-    }> {
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }> {
     return this.runsRepo.listRuns({
       userId,
       ...filters,
@@ -743,12 +743,12 @@ export class JobsManager {
     endpointId: string,
     sinceHours = 24,
   ): Promise<{
-      successCount: number;
-      failureCount: number;
-      avgDurationMs: number | null;
-      lastRun: { status: string; at: Date } | null;
-      failureStreak: number;
-    }> {
+    successCount: number;
+    failureCount: number;
+    avgDurationMs: number | null;
+    lastRun: { status: string; at: Date } | null;
+    failureStreak: number;
+  }> {
     // Authorization check
     const endpoint = await this.getEndpoint(userId, endpointId);
     if (!endpoint) {
@@ -768,13 +768,15 @@ export class JobsManager {
    *
    * @param userId - The user ID
    * @param since - Start date for usage calculation (typically start of current month)
-   * @returns Current usage vs limits for AI calls and endpoints
+   * @returns Current usage vs limits for AI calls, endpoints, and total runs
    */
   async getUsage(userId: string, since: Date): Promise<{
     aiCallsUsed: number;
     aiCallsLimit: number;
     endpointsUsed: number;
     endpointsLimit: number;
+    totalRuns: number;
+    totalRunsLimit: number;
   }> {
     return this.jobsRepo.getUsage(userId, since);
   }
