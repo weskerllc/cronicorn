@@ -39,6 +39,8 @@ export class DrizzleJobsRepo implements JobsRepo {
 
     if (patch.name !== undefined)
       updates.name = patch.name;
+    if (patch.description !== undefined)
+      updates.description = patch.description;
     if (patch.jobId !== undefined)
       updates.jobId = patch.jobId && patch.jobId !== "" ? patch.jobId : null;
     if (patch.baselineCron !== undefined)
@@ -313,6 +315,7 @@ export class DrizzleJobsRepo implements JobsRepo {
       jobId: row.jobId ?? "", // Nullable for backward compat, default to empty string
       tenantId: row.tenantId,
       name: row.name,
+      description: row.description ?? undefined,
       baselineCron: row.baselineCron ?? undefined,
       baselineIntervalMs: row.baselineIntervalMs ?? undefined,
       aiHintIntervalMs: row.aiHintIntervalMs ?? undefined,
