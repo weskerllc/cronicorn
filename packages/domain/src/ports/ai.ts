@@ -26,6 +26,7 @@ export type AISessionResult = {
 
 export type AIClient = {
   planWithTools: (args: {
+    finalToolName?: string;
     input: string;
     tools: Tools<AnyTools>;
     maxTokens: number;
@@ -57,13 +58,13 @@ export type Tools<T extends Record<string, Tool<unknown, unknown>>> = {
 
 export type ToolArgs<T> =
   T extends ToolFn<infer P, unknown> ? P
-    : T extends ToolObj<infer P, unknown> ? P
-      : never;
+  : T extends ToolObj<infer P, unknown> ? P
+  : never;
 
 export type ToolResult<T> =
   T extends ToolFn<unknown, infer R> ? R
-    : T extends ToolObj<unknown, infer R> ? R
-      : never;
+  : T extends ToolObj<unknown, infer R> ? R
+  : never;
 
 /** Type guards (no `any`) */
 function isToolFn<P, R>(t: Tool<P, R>): t is ToolFn<P, R> {

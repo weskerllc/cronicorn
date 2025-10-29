@@ -57,7 +57,7 @@ function buildAnalysisPrompt(endpoint: {
 
 ---
 
-**Available Tools (6 total):**
+**Available Tools (7 total):**
 
 **Query Tools (Inspect Response Data):**
 1. **get_latest_response** - Get the most recent response body from this endpoint
@@ -86,6 +86,12 @@ function buildAnalysisPrompt(endpoint: {
    - Params: { untilIso: string | null, reason? }
    - Example: Pause during maintenance, resume when dependency recovers
 
+**Final Answer Tool:**
+7. **submit_analysis** - Submit your final analysis and reasoning (REQUIRED)
+   - Params: { reasoning: string, actions_taken?: string[], confidence?: 'high'|'medium'|'low' }
+   - MUST be called last to complete your analysis
+   - Include your reasoning about what you found and why you did/didn't take action
+
 ---
 
 **Analysis Strategy:**
@@ -94,6 +100,7 @@ function buildAnalysisPrompt(endpoint: {
 2. **Query response data if needed**: Use get_latest_response or get_response_history to understand *why* issues exist
 3. **Check cross-endpoint dependencies**: Use get_sibling_latest_responses if this endpoint coordinates with others
 4. **Take action if warranted**: Call action tools (propose_interval, propose_next_time, pause_until) based on insights
+5. **Submit your analysis**: ALWAYS call submit_analysis with your reasoning as the final step
 
 **Decision Guidelines:**
 
@@ -110,9 +117,10 @@ function buildAnalysisPrompt(endpoint: {
 - Query tools are READ-ONLY and cost-efficient. Use them liberally to make informed decisions.
 - Only call action tools when adjustments will meaningfully improve reliability or efficiency.
 - Always include a clear "reason" parameter explaining your decision.
-- If everything looks normal and response data doesn't suggest changes, respond with analysis only (no tool calls).
+- **You MUST call submit_analysis as your final step** with your complete reasoning and analysis.
+- The submit_analysis tool is how you communicate your findings - be thorough and specific.
 
-Analyze this endpoint and use tools as needed to optimize its scheduling.`;
+Analyze this endpoint, use tools as needed, and submit your analysis.`;
 }
 
 /**
@@ -163,18 +171,34 @@ export class AIPlanner {
     // 6. Invoke AI with tools and capture session result
     const startTime = clock.now().getTime();
     const session = await aiClient.planWithTools({
+      finalToolName: "submit_analysis",
       input: prompt,
       tools,
       maxTokens: 500, // Keep responses concise
     });
     const durationMs = clock.now().getTime() - startTime;
 
-    // 7. Persist session to database for debugging/cost tracking
+    // 7. Extract reasoning from submit_analysis tool call
+    const submitAnalysisCall = session.toolCalls.find(tc => tc.tool === "submit_analysis");
+    if (!submitAnalysisCall) {
+      throw new Error("AI did not call required submit_analysis tool. This indicates a prompt engineering issue or model failure.");
+    }
+
+    const analysisResult = submitAnalysisCall.result;
+    const reasoning = analysisResult && typeof analysisResult === "object" && "reasoning" in analysisResult
+      ? String(analysisResult.reasoning)
+      : undefined;
+
+    if (!reasoning) {
+      throw new Error("submit_analysis tool was called but returned no reasoning");
+    }
+
+    // 8. Persist session to database for debugging/cost tracking
     await sessions.create({
       endpointId,
       analyzedAt: clock.now(),
       toolCalls: session.toolCalls,
-      reasoning: session.reasoning,
+      reasoning,
       tokenUsage: session.tokenUsage,
       durationMs,
     });
@@ -183,7 +207,7 @@ export class AIPlanner {
     if (session.toolCalls.length > 0) {
       console.warn(`[AI Analysis] ${endpoint.name}:`, {
         toolsCalled: session.toolCalls.map(tc => tc.tool),
-        reasoning: session.reasoning.slice(0, 150) + (session.reasoning.length > 150 ? "..." : ""),
+        reasoning: reasoning.slice(0, 150) + (reasoning.length > 150 ? "..." : ""),
         tokens: session.tokenUsage,
       });
     }

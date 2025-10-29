@@ -33,6 +33,33 @@ export function createToolsForEndpoint(
 ) {
   const { jobs, runs, clock } = deps;
   return defineTools({
+    // ============================================================================
+    // Final Answer Tool: Submit Analysis
+    // ============================================================================
+
+    submit_analysis: tool({
+      description: "Submit your final analysis and reasoning after gathering data and taking any necessary actions. This signals you are done analyzing the endpoint.",
+      schema: z.object({
+        reasoning: z.string().describe("Your analysis of the endpoint's health and performance, including what data you examined and why you took (or didn't take) any actions"),
+        actions_taken: z.array(z.string()).optional().describe("List of action tools called (e.g., ['propose_interval', 'pause_until'])"),
+        confidence: z.enum(["high", "medium", "low"]).optional().describe("Confidence level in your analysis"),
+      }),
+      execute: async (args) => {
+        // This is a terminal tool - just return the analysis
+        // The reasoning will be captured by the planner
+        return {
+          status: "analysis_complete",
+          reasoning: args.reasoning,
+          actions_taken: args.actions_taken || [],
+          confidence: args.confidence || "high",
+        };
+      },
+    }),
+
+    // ============================================================================
+    // Action Tools: Scheduling Adjustments
+    // ============================================================================
+
     propose_interval: tool({
       description: "Adjust endpoint execution interval based on observed patterns (e.g., increase frequency if failures detected, decrease if stable)",
       schema: z.object({
