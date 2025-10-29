@@ -121,8 +121,8 @@ function JobDetailsPage() {
   return (
     <>
       <PageHeader
-        text={job.name}
-        description={job.description || "Manage endpoints for this job"}
+        text={'Job Details'}
+        description={job.name}
         slotRight={
           <div className="flex gap-2">
             <Button variant="outline" asChild>
@@ -155,6 +155,7 @@ function JobDetailsPage() {
         />
       ) : (
         <DataTable
+          tableTitle="Endpoints"
           columns={columns}
           data={endpointsData.endpoints.map(ep => ({
             id: ep.id,

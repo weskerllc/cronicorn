@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@cronicorn/ui-library/components/dropdown-menu";
 
+import { Link } from "@tanstack/react-router";
 import { DataTable } from "../data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -124,7 +125,7 @@ const columns: Array<ColumnDef<EndpointRow>> = [
   },
   {
     id: "actions",
-    cell: () => (
+    cell: ({ row }) => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -137,11 +138,22 @@ const columns: Array<ColumnDef<EndpointRow>> = [
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem>View Details</DropdownMenuItem>
-          <DropdownMenuItem>View Runs</DropdownMenuItem>
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Pause</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link
+              to="/endpoints/$id/health"
+              params={{ id: row.original.id }}
+            >
+              View Health
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link
+              to="/endpoints/$id/runs"
+              params={{ id: row.original.id }}
+            >
+              View Runs
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),

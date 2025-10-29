@@ -68,20 +68,22 @@ export function DashboardTables() {
         </TabsList>
       </div>
 
+
+
+      <TabsContent value="recent" className="flex flex-col">
+        <RecentRunsTable
+          data={runsData}
+          onRefresh={() => refetch()}
+          isRefreshing={isFetching}
+        />
+      </TabsContent>
+
       <TabsContent
         value="endpoints"
         className="relative flex flex-col gap-4 overflow-auto"
       >
         <TopEndpointsTable
           data={endpointsData}
-          onRefresh={() => refetch()}
-          isRefreshing={isFetching}
-        />
-      </TabsContent>
-
-      <TabsContent value="recent" className="flex flex-col">
-        <RecentRunsTable
-          data={runsData}
           onRefresh={() => refetch()}
           isRefreshing={isFetching}
         />

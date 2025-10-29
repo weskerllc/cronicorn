@@ -50,6 +50,7 @@ import type {
 
 interface DataTableProps<TData, TValue> {
   columns: Array<ColumnDef<TData, TValue>>;
+  tableTitle?: string;
   data: Array<TData>;
   searchKey?: string;
   searchPlaceholder?: string;
@@ -65,6 +66,7 @@ interface DataTableProps<TData, TValue> {
 
 export function DataTable<TData, TValue>({
   columns,
+  tableTitle,
   data,
   searchKey,
   searchPlaceholder = "Search...",
@@ -113,6 +115,8 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex flex-col gap-4">
+      {tableTitle && (<p className="text-lg font-medium">{tableTitle}</p>
+      )}
       {(searchKey || onRefresh) && (
         <div className="flex items-center gap-2">
           {searchKey && (
