@@ -9,7 +9,7 @@ import { useTimeline } from "./use-timeline";
 import type { TimelineScenario } from "./timeline-types";
 
 export default function DynamicScheduleTimeline({ scenario }: { scenario: TimelineScenario }) {
-  const { steps, config, description, name } = scenario;
+  const { steps, config } = scenario;
   const { currentData, currentStep } = useTimeline({ steps, config });
 
   const currentTime = currentData?.executions[currentData.executions.length - 1]?.time || 0;
@@ -18,40 +18,23 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
     <div className={cn("w-full max-w-5xl mx-auto lg:h-full ")}>
       {/* Main Timeline Component with enhanced styling */}
       <div
-        className="relative bg-background/70 lg:h-full backdrop-blur-xl rounded-md border border-border shadow-2xl p-2 lg:p-4 overflow-hidden"
+        className="relative bg-background lg:h-full rounded border border-border/50 p-3 lg:p-3 overflow-hidden"
         role="region"
         aria-label="Dynamic Schedule Timeline"
       >
-        {/* Subtle background pattern */}
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-muted/30 to-transparent pointer-events-none" />
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-radial from-primary/5 to-transparent pointer-events-none" />
 
         <div className="relative">
-          <div className="mb-6 text-left space-y-1 ">
-            <p className="text-base font-medium   tracking-tight text-primary/85">{name}</p>
-
-            <p className="text-xs  text-muted-foreground tracking-tight">{description}</p>
-
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 mb-4 gap-6 ">
+          <div className="grid grid-cols-1 lg:grid-cols-2 mb-4 gap-4 ">
 
             {/* Live Conditions Section */}
             <section aria-labelledby="conditions-heading">
-              <div className="flex items-center justify-between mb-4 ">
-                <div className="flex items-center gap-3">
-                  <div className="relative" aria-hidden="true">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shadow-lg shadow-emerald-500/40" />
-                    <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-400 dark:bg-emerald-300 animate-ping opacity-75" />
-                  </div>
-                  <h2 id="conditions-heading" className="text-sm font-bold text-foreground tracking-wide uppercase">
-                    {/* {name} */}
-                    Live Conditions
-                  </h2>
-                </div>
+              <div className="mb-3">
+                <h2 id="conditions-heading" className="text-xs font-medium text-muted-foreground/80">
+                  Live conditions
+                </h2>
               </div>
 
-              <div className="grid  grid-cols-1  gap-4" role="group" aria-label="System conditions">
+              <div className="grid  grid-cols-1  gap-3" role="group" aria-label="System conditions">
                 {currentData?.conditions.map(condition => (
                   <TimelineConditionCard key={condition.id} condition={condition} />
                 ))}
@@ -60,28 +43,21 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
 
             {/* Timeline Section */}
             <section aria-labelledby="timeline-heading">
-              <div className="flex items-center justify-between mb-4  ">
-                <div className="flex items-center gap-3">
-                  <div className="relative" aria-hidden="true">
-                    <div className="w-2 h-2 rounded-full bg-primary shadow-lg shadow-primary/40" />
-                  </div>
-                  <h2 id="timeline-heading" className="text-sm font-bold text-foreground tracking-wide uppercase">
-                    {/* {description} */}
-                    Execution Timeline
-                  </h2>
-                </div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 id="timeline-heading" className="text-xs font-medium text-muted-foreground/80">
+                  Execution timeline
+                </h2>
 
                 {/* Enhanced Current Time Display */}
                 {config.showCurrentTime && (
                   <div
-                    className="flex items-center px-2 "
+                    className="flex items-center"
                     role="status"
                     aria-live="polite"
                     aria-label={`Current time: ${Math.floor(currentTime)} minutes`}
                   >
-                    <span className="text-xs font-medium text-muted-foreground tabular-nums">
-                      {Math.floor(currentTime)}
-                      m
+                    <span className="text-[10px] font-medium text-muted-foreground/80 font-mono tabular-nums">
+                      {Math.floor(currentTime)}m
                     </span>
                   </div>
                 )}
@@ -89,21 +65,20 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
 
               {/* Enhanced Timeline Container */}
               <div
-                className="relative h-48 bg-muted/50 rounded-md border border-border shadow-inner overflow-visible px-6 py-12 backdrop-blur-sm"
+                className="relative h-48 bg-muted/10 rounded border border-border/50 overflow-visible px-6 py-12"
                 role="img"
                 aria-label="Timeline visualization showing execution intervals and current progress"
               >
                 {/* Enhanced Timeline Base */}
-                <div className="absolute top-1/2 left-6 right-6 h-0.5 bg-border transform -translate-y-1/2 rounded-md shadow-sm" />
+                <div className="absolute top-1/2 left-6 right-6 h-px bg-border/50 transform -translate-y-1/2" />
 
                 {/* Enhanced Time Markers */}
                 <div className="absolute inset-0 flex justify-between items-center px-6">
                   {Array.from({ length: 5 }, (_, i) => i * (config.maxTime / 4)).map(time => (
                     <div key={time} className="flex flex-col items-center">
-                      <div className="w-px h-3 bg-muted-foreground rounded-full shadow-sm" />
-                      <span className="text-xs font-medium text-muted-foreground mt-2 tabular-nums">
-                        {time}
-                        m
+                      <div className="w-px h-2 bg-border/50" />
+                      <span className="text-[10px] font-medium text-muted-foreground/80 font-mono mt-1.5 tabular-nums">
+                        {time}m
                       </span>
                     </div>
                   ))}
@@ -130,10 +105,10 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
 
           </div>
           {/* Enhanced Status Caption */}
-          <div className="text-center" role="status" aria-live="polite">
+          <div className="text-left mt-3 px-1" role="status" aria-live="polite">
             <div
               key={currentStep}
-              className="text-sm font-medium text-muted-foreground animate-in fade-in duration-700 leading-relaxed max-w-lg mx-auto"
+              className="text-xs text-muted-foreground/80"
             >
               {currentData?.caption}
             </div>

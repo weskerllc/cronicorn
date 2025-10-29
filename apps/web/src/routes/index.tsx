@@ -119,12 +119,14 @@ function Index() {
           {/* <section className="px-6">
           <WhatCronicornDoes />
         </section> */}
+
+
           <div className="border relative border-muted-foreground/10 w-full max-w-6xl mx-auto mt-28">
             <HeroSection />
             <TimelineSection tabData={tabData} />
 
             {/* How It Works - Intelligent Scheduling Process */}
-            <section className="px-6 py-16 bg-muted/30" aria-labelledby="how-it-works-heading">
+            {/* <section className="px-6 py-16 bg-muted/30" aria-labelledby="how-it-works-heading">
               <div className="max-w-6xl mx-auto">
                 <header className="text-center mb-12">
                   <h2 id="how-it-works-heading" className="text-3xl font-bold mb-4">{siteConfig.productCapabilities.howItWorks.title}</h2>
@@ -160,7 +162,7 @@ function Index() {
                   </div>
                 </div>
               </div>
-            </section>
+            </section> */}
 
             {/* Zero-Click Optimization Section */}
             <section className="px-6 py-16" aria-labelledby="quick-answers-heading">
@@ -206,7 +208,7 @@ function Index() {
                     <div key={index} className="text-center" itemScope itemType="https://schema.org/QuantitativeValue">
                       <div className="text-3xl font-bold text-primary" itemProp="value">{stat.value}</div>
                       <div className="text-sm text-muted-foreground" itemProp="name">{stat.metric}</div>
-                      <div className="text-xs text-muted-foreground/70">{stat.context}</div>
+                      <div className="text-xs text-muted-foreground/80">{stat.context}</div>
                     </div>
                   ))}
                 </aside>

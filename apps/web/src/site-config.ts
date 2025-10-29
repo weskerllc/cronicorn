@@ -1,6 +1,6 @@
 const siteConfig = {
   siteName: "Cronicorn",
-  docsUrl: "https://docs.cronicorn.com",
+  apiUrl: import.meta.env.VITE_API_URL || "http://localhost:3333",
   tagline: "Adaptive task scheduler that learns from your system patterns",
   description: "Intelligent cron alternative with AI job scheduling that automatically adjusts to real-time system conditions. Multi-tier coordination from health checks to auto-recovery across diverse use cases.",
   description2: "Event-driven job scheduler built for cloud-native applications. Our adaptive monitoring scheduler learns from execution patterns and coordinates intelligent HTTP workflows.",

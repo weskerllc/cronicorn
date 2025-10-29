@@ -13,10 +13,10 @@ export default function HeaderSection() {
 
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
-                    <a href={siteConfig.docsUrl} target="_blank" className="text-foreground/80 hover:text-foreground transition-colors text-sm">
-                        Docs
+                    <a href='/faq' className="text-foreground/80 hover:text-foreground transition-colors text-sm">
+                        FAQ
                     </a>
-                    <a href="/api-playground" className="text-foreground/80 hover:text-foreground transition-colors text-sm">
+                    <a href={siteConfig.apiUrl} target="_blank" className="text-foreground/80 hover:text-foreground transition-colors text-sm">
                         API Playground
                     </a>
                     <a

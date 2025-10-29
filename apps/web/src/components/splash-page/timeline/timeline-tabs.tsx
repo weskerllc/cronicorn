@@ -32,19 +32,17 @@ export function TimelineTabs({ tabs, className, onTabChange }: AnimatedTabsProps
 
       <Tabs defaultValue="account" className="w-full" value={activeTab} onValueChange={handleTabChange}>
 
-        <ScrollArea className="rounded-lg bg-background/70 backdrop-blur-xl max-w-5xl mx-auto w-full   shadow-2xl">
-          <div className="w-full relative h-10">
-            <TabsList className="flex absolute h-10 bg-transparent min-w-full">
+        <ScrollArea className="max-w-5xl mx-auto w-full ">
+          <div className="w-full relative">
+            <TabsList className="flex h-auto bg-transparent min-w-full p-0 gap-0 rounded-none">
               {tabs.map(tab => (
                 <TabsTrigger
-                  className="data-[state=active]:bg-secondary! text-xs "
+                  className="relative rounded-none border-0 bg-transparent px-4 py-3 text-sm font-medium text-muted-foreground shadow-none transition-none hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-transparent data-[state=active]:after:bg-muted-foreground"
                   key={`${tab.label}-tab-trigger`}
                   value={tab.id}
                 >
                   {tab.label}
-
                 </TabsTrigger>
-
               ))}
             </TabsList>
           </div>
@@ -55,7 +53,6 @@ export function TimelineTabs({ tabs, className, onTabChange }: AnimatedTabsProps
           <TabsContent key={`${tab.label}-tab-content`} value={tab.id}>
             {tab.content}
           </TabsContent>
-
         ))}
       </Tabs>
 
