@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
-import { BarChart3, CheckCircle, Clock, Shield, Users, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, CheckCircle, ChevronRight, Clock, Shield, Users, Zap } from "lucide-react";
 import { Suspense, lazy } from "react";
 
 import BackgroundEffects from "../components/splash-page/components/background-effects";
@@ -108,9 +108,9 @@ function Index() {
         structuredData={structuredData}
       />
 
-      <main className="bg-background border" role="main">
+      <main className="bg-background" role="main">
         {/* Hero Section with Particle Animation Background */}
-        <section className="relative min-h-screen bg-background overflow-hidden mb-8" aria-labelledby="hero-heading">
+        <section className="relative min-h-screen bg-background overflow-hidden mb-8 p-2 md:p-4" aria-labelledby="hero-heading">
           <BackgroundEffects />
           <HeaderSection />
 
@@ -165,35 +165,35 @@ function Index() {
             </section> */}
 
             {/* Zero-Click Optimization Section */}
-            <section className="px-6 py-16" aria-labelledby="quick-answers-heading">
-              <div className="max-w-6xl mx-auto">
-                <header className="text-center mb-12">
-                  <h2 id="quick-answers-heading" className="text-3xl font-bold mb-4">Quick Answers</h2>
-                  <p className="text-lg text-muted-foreground">Everything you need to know about intelligent job scheduling</p>
+            <section className="pt-16 md:pt-20" aria-labelledby="quick-answers-heading">
+              <div className="max-w-5xl mx-auto">
+                <header className="text-center mb-12 md:mb-16">
+                  <h2 id="quick-answers-heading" className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">Quick Answers</h2>
+                  <p className="text-base md:text-lg text-muted-foreground/80">Everything you need to know about intelligent job scheduling</p>
                 </header>
 
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="grid md:grid-cols-2">
                   {siteConfig.zeroClick.quickAnswers.map((qa, index) => (
-                    <article key={index} className="bg-card p-6 rounded-lg border" itemScope itemType="https://schema.org/Question">
+                    <article key={index} className=" p-6 md:p-8 border border-border/40 hover:border-border/70 hover:shadow-sm transition-all duration-200" itemScope itemType="https://schema.org/Question">
                       <header>
-                        <h3 className="font-semibold text-lg mb-3" itemProp="name">{qa.question}</h3>
+                        <h3 className="font-semibold text-lg md:text-xl mb-3 tracking-tight" itemProp="name">{qa.question}</h3>
                       </header>
                       <div itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
-                        <div itemProp="text" className="text-muted-foreground">
+                        <div itemProp="text" className="text-muted-foreground/90 text-sm md:text-base leading-relaxed">
                           {qa.format === "steps" ? (
-                            <ol className="list-decimal list-inside space-y-1">
+                            <ol className="list-decimal list-inside space-y-1.5">
                               {qa.answer.split('\n').map((step, i) => (
-                                <li key={i}>{step.replace(/^\d+\.\s*/, '')}</li>
+                                <li key={i} className="leading-relaxed">{step.replace(/^\d+\.\s*/, '')}</li>
                               ))}
                             </ol>
                           ) : qa.format === "list" ? (
-                            <ul className="list-disc list-inside space-y-1">
+                            <ul className="list-disc list-inside space-y-1.5">
                               {qa.answer.split('\n').filter(line => line.startsWith('•')).map((item, i) => (
-                                <li key={i}>{item.replace('•', '').trim()}</li>
+                                <li key={i} className="leading-relaxed">{item.replace('•', '').trim()}</li>
                               ))}
                             </ul>
                           ) : (
-                            <p>{qa.answer}</p>
+                            <p className="leading-relaxed">{qa.answer}</p>
                           )}
                         </div>
                       </div>
@@ -202,245 +202,43 @@ function Index() {
                 </div>
 
                 {/* Key Statistics for Featured Snippets */}
-                <aside className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6" aria-labelledby="key-stats-heading">
+                {/* <aside className="mt-16 md:mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 py-12 md:py-14 bg-muted/20 rounded-xl px-6" aria-labelledby="key-stats-heading">
                   <h3 id="key-stats-heading" className="sr-only">Key Performance Statistics</h3>
                   {siteConfig.zeroClick.keyStats.map((stat, index) => (
                     <div key={index} className="text-center" itemScope itemType="https://schema.org/QuantitativeValue">
-                      <div className="text-3xl font-bold text-primary" itemProp="value">{stat.value}</div>
-                      <div className="text-sm text-muted-foreground" itemProp="name">{stat.metric}</div>
-                      <div className="text-xs text-muted-foreground/80">{stat.context}</div>
+                      <div className="text-3xl md:text-4xl font-bold text-foreground mb-1.5" itemProp="value">{stat.value}</div>
+                      <div className="text-xs md:text-sm font-medium text-foreground/80 mb-0.5" itemProp="name">{stat.metric}</div>
+                      <div className="text-xs text-muted-foreground/70">{stat.context}</div>
                     </div>
                   ))}
-                </aside>
+                </aside> */}
               </div>
             </section>
 
             {/* Main Content */}
-            <div className="max-w-6xl mx-auto space-y-16 p-8" role="region" aria-label="Main content area">
 
-              {session ? (
-                /* Authenticated User Section */
-                <section className="space-y-6" aria-labelledby="user-dashboard-heading">
-                  <h2 id="user-dashboard-heading" className="sr-only">User Dashboard</h2>
-                  <Card className="border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        👋 Hello, {session.user.name}!
-                      </CardTitle>
-                      <CardDescription>
-                        Welcome back to your adaptive scheduling dashboard
-                        <br />
-                        <span className="text-sm text-muted-foreground">Email: {session.user.email}</span>
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap gap-4">
-                      <Button asChild size="lg">
-                        <Link to="/dashboard">
-                          Go to Dashboard
-                        </Link>
-                      </Button>
-                      <Button variant="outline" asChild>
-                        <Link to="/pricing">
-                          View Pricing
-                        </Link>
-                      </Button>
-                      <Button variant="outline" asChild>
-                        <Link to="/settings">
-                          Account Settings
-                        </Link>
-                      </Button>
-                      <Button variant="destructive" onClick={handleLogout}>
-                        Logout
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </section>
-              ) : (
-                /* Non-authenticated User Section */
-                <>
-                  <section className="space-y-6">
-                    <Card className="border-primary/20">
-                      <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">Join the Future of Intelligent Scheduling</CardTitle>
-                        <CardDescription className="text-lg">
-                          Be part of our early access program and experience next-generation adaptive job scheduling
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex flex-wrap justify-center gap-4">
-                        <Button asChild size="lg">
-                          <Link to="/register">
-                            Join Early Access
-                          </Link>
-                        </Button>
-                        <Button variant="outline" asChild size="lg">
-                          <Link to="/login">
-                            Login
-                          </Link>
-                        </Button>
-                        <Button variant="secondary" asChild size="lg">
-                          <Link to="/pricing">
-                            View Pricing
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" asChild>
-                          <a href={siteConfig.docsUrl} target="_blank" rel="noopener noreferrer">
-                            Documentation
-                          </a>
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </section>
+            <section className="relative w-full flex  items-center justify-center px-6 py-16 md:py-20 overflow-hidden border-b border-border/40">
+              <div className="text-center max-w-4xl relative z-10 flex flex-col md:items-center md:flex-row md:gap-12">
+                <a
+                  href="/login"
+                  className="group px-12 py-6 bg-primary text-primary-foreground rounded-lg font-medium text-lg hover:bg-primary/90 transition-all duration-150 shadow-sm hover:shadow-md flex items-center gap-2"
+                >
+                  Join Early Access
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
+                </a>
 
-                  {/* Features Section */}
-                  <section className="space-y-8" aria-labelledby="features-heading">
-                    <header className="text-center space-y-4">
-                      <h2 id="features-heading" className="text-3xl font-bold">Why Choose Cronicorn?</h2>
-                      <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Everything you need for intelligent job scheduling and automation
-                      </p>
-                    </header>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Platform features">
-                      {features.map((feature, index) => (
-                        <article key={index} className="hover:shadow-lg transition-shadow" role="listitem">
-                          <Card>
-                            <CardHeader>
-                              <div className="flex items-center gap-3">
-                                {feature.icon}
-                                <CardTitle className="text-xl">{feature.title}</CardTitle>
-                              </div>
-                            </CardHeader>
-                            <CardContent>
-                              <CardDescription className="text-base">
-                                {feature.description}
-                              </CardDescription>
-                            </CardContent>
-                          </Card>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
+                <div className="flex flex-col">
+                  <Button variant={'outline'}> View us on Github
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
 
-                  {/* Benefits Section */}
-                  <section className="bg-muted/30 rounded-lg p-8 space-y-6" aria-labelledby="benefits-heading">
-                    <header className="text-center space-y-4">
-                      <h2 id="benefits-heading" className="text-3xl font-bold">Transform Your Workflow</h2>
-                      <p className="text-lg text-muted-foreground">
-                        See the immediate impact on your development process
-                      </p>
-                    </header>
-                    <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-                      {benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" aria-hidden="true" />
-                          <span className="text-lg">{benefit}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
 
-                  {/* Problems & Solutions Section - SEO Keywords */}
-                  <section className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg p-8 space-y-8" aria-labelledby="problems-heading">
-                    <header className="text-center space-y-4">
-                      <h2 id="problems-heading" className="text-3xl font-bold">Stop Fighting Your Scheduler</h2>
-                      <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Traditional cron jobs create more problems than they solve. Here's how our adaptive task scheduler fixes them.
-                      </p>
-                    </header>
-                    <div className="grid md:grid-cols-2 gap-8">
-                      <div className="space-y-6">
-                        <h3 className="text-xl font-semibold text-red-600">Common DevOps Problems:</h3>
-                        <ul className="space-y-3">
-                          <li className="flex items-start gap-2">
-                            <span className="text-red-500 font-bold mt-1">✗</span>
-                            <span><strong>Alert fatigue:</strong> Getting paged at 3 AM for issues that fix themselves</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-red-500 font-bold mt-1">✗</span>
-                            <span><strong>Unreliable cron jobs:</strong> Fixed intervals that ignore system reality</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-red-500 font-bold mt-1">✗</span>
-                            <span><strong>Manual monitoring:</strong> Having to check microservices health manually</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-red-500 font-bold mt-1">✗</span>
-                            <span><strong>No adaptation:</strong> Same monitoring frequency during calm and crisis</span>
-                          </li>
-                        </ul>
-                      </div>
-                      <div className="space-y-6">
-                        <h3 className="text-xl font-semibold text-green-600">Intelligent Cron Solutions:</h3>
-                        <ul className="space-y-3">
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-1" />
-                            <span><strong>Reduce alert fatigue:</strong> AI adapts frequency and attempts auto-recovery</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-1" />
-                            <span><strong>Event-driven scheduling:</strong> Responds to real-time system conditions</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-1" />
-                            <span><strong>Automate monitoring:</strong> Intelligent HTTP scheduler learns your patterns</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-1" />
-                            <span><strong>Context-aware:</strong> Tighten during incidents, relax during calm periods</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </section>
 
-                  {/* FAQ Section for SEO */}
-                  <section className="space-y-8" aria-labelledby="faq-heading">
-                    <header className="text-center space-y-4">
-                      <h2 id="faq-heading" className="text-3xl font-bold">Frequently Asked Questions</h2>
-                      <p className="text-lg text-muted-foreground">
-                        Get answers to common questions about Cronicorn
-                      </p>
-                    </header>
-                    <div className="grid gap-6 max-w-4xl mx-auto" role="list" aria-label="Frequently asked questions">
-                      {faqData.map((faq, index) => (
-                        <article key={index} role="listitem" itemScope itemType="https://schema.org/Question">
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="text-left" itemProp="name">{faq.question}</CardTitle>
-                            </CardHeader>
-                            <CardContent itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
-                              <p className="text-muted-foreground" itemProp="text">
-                                {faq.answer}
-                              </p>
-                            </CardContent>
-                          </Card>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
+                </div>
+              </div>
+            </section>
 
-                  {/* Trust Indicators */}
-                  <section className="text-center space-y-6" aria-labelledby="trust-heading">
-                    <header className="space-y-4">
-                      <h2 id="trust-heading" className="text-2xl font-bold">Trusted by Developers Worldwide</h2>
-                    </header>
-                    <div className="flex justify-center gap-8 text-sm text-muted-foreground" role="list" aria-label="Trust metrics">
-                      <article className="flex flex-col items-center" role="listitem" itemScope itemType="https://schema.org/QuantitativeValue">
-                        <span className="text-2xl font-bold text-primary" itemProp="value">{siteConfig.trustSignals.metrics.uptime}</span>
-                        <span itemProp="name">Uptime SLA</span>
-                      </article>
-                      <article className="flex flex-col items-center" role="listitem" itemScope itemType="https://schema.org/QuantitativeValue">
-                        <span className="text-2xl font-bold text-primary" itemProp="value">{siteConfig.trustSignals.metrics.jobsScheduledDaily}</span>
-                        <span itemProp="name">Jobs Scheduled Daily</span>
-                      </article>
-                      <article className="flex flex-col items-center" role="listitem" itemScope itemType="https://schema.org/QuantitativeValue">
-                        <span className="text-2xl font-bold text-primary" itemProp="value">{siteConfig.trustSignals.metrics.customersServed}</span>
-                        <span itemProp="name">Active Teams</span>
-                      </article>
-                    </div>
-                  </section>
-                </>
-              )}
-            </div>
+
 
             {/* Particles Canvas Section - Bottom */}
             {/* <section className="relative w-full h-[60vh] md:h-[70vh] flex flex-col items-center overflow-hidden justify-center">

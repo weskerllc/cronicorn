@@ -18,7 +18,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
     <div className={cn("w-full max-w-5xl mx-auto lg:h-full ")}>
       {/* Main Timeline Component with enhanced styling */}
       <div
-        className="relative bg-background lg:h-full rounded border border-border/50 p-3 lg:p-3 overflow-hidden"
+        className="relative bg-muted/10 lg:h-full rounded border border-border/50 p-3 lg:p-3 overflow-hidden"
         role="region"
         aria-label="Dynamic Schedule Timeline"
       >
@@ -65,7 +65,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
 
               {/* Enhanced Timeline Container */}
               <div
-                className="relative h-48 bg-muted/10 rounded border border-border/50 overflow-visible px-6 py-12"
+                className="relative h-48 bg-background rounded border border-border/50 overflow-visible px-6 py-12"
                 role="img"
                 aria-label="Timeline visualization showing execution intervals and current progress"
               >
