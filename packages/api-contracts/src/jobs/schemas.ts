@@ -97,6 +97,7 @@ export const UpdateEndpointRequestSchema = EndpointFieldsBaseSchema.partial().re
 
 export const EndpointResponseSchema = z.object({
   id: z.string(),
+  jobId: z.string().optional(),
   name: z.string(),
   baselineCron: z.string().optional(),
   baselineIntervalMs: z.number().optional(),
