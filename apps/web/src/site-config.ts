@@ -36,8 +36,8 @@ const siteConfig = {
   },
 
   url: "https://cronicorn.com",
-  githubUrl: "https://github.com/bcanfield/cron-mvp",
-  supportUrl: "https://github.com/bcanfield/cron-mvp/issues/new",
+  githubUrl: "https://github.com/weskerllc/cronicorn",
+  supportUrl: "https://github.com/weskerllc/cronicorn/issues/new",
 
   /**
    * SEO Configuration
