@@ -84,6 +84,20 @@ function buildAnalysisPrompt(
 
 ---
 
+## Key Terms
+
+- **Baseline**: The user's original schedule (cron or fixed interval) before any AI adjustments
+- **TTL (Time To Live)**: How long an AI hint remains valid before expiring and reverting to baseline
+- **Governor**: The system component that calculates nextRunAt by evaluating baseline, AI hints, and constraints
+- **Backoff**: Exponentially increasing intervals after failures (2^failureCount) to avoid overwhelming struggling services
+- **Nudging**: Using setNextRunAtIfEarlier() to make hints take effect within seconds instead of waiting for the next scheduled check
+- **One-shot hint**: A specific datetime for the next run that competes with the baseline schedule
+- **Response body**: The JSON data returned by the endpoint's HTTP response
+- **Rate limit**: When an external service restricts how frequently you can call it (often returns 429 status)
+- **Clamping**: Enforcing min/max interval constraints on scheduling decisions
+
+---
+
 ## How This Scheduling System Works
 
 You control scheduling through **time-bounded hints** that influence the scheduler's decision logic:
