@@ -1,11 +1,20 @@
+/**
+ * Site Configuration
+ * 
+ * Central configuration for all site content, metadata, and settings.
+ * Organized by purpose for easy maintenance and updates.
+ * 
+ * @see https://cronicorn.com
+ */
 const siteConfig = {
+  /** Core site information */
   siteName: "Cronicorn",
   apiUrl: import.meta.env.VITE_API_URL || "http://localhost:3333",
   tagline: "Adaptive task scheduler that learns from your system patterns",
   description: "Intelligent cron alternative with AI job scheduling that automatically adjusts to real-time system conditions. Multi-tier coordination from health checks to auto-recovery across diverse use cases.",
   description2: "Event-driven job scheduler built for cloud-native applications. Our adaptive monitoring scheduler learns from execution patterns and coordinates intelligent HTTP workflows.",
 
-  // 2025 Authentic Product Headlines Based on Real Capabilities
+  /** Headlines and messaging used throughout marketing pages */
   headlines: {
     hero: {
       primary: "Never Miss the Perfect Moment to Run Your Code",
@@ -16,16 +25,10 @@ const siteConfig = {
       problem: "Your Systems Don't Run in a Vacuum",
       solution: "Intelligent Scheduling in 4 Steps",
       benefit: "Adaptive automation for modern operations"
-    },
-    valueProps: [
-      "Get early access to adaptive scheduling that learns from your systems",
-      "Handle diverse use cases: e-commerce monitoring, data pipelines, DevOps automation",
-      "Set boundaries once—AI respects your min/max limits while optimizing within them",
-      "Fully managed cloud platform: no servers to maintain, just better scheduling"
-    ]
+    }
   },
 
-  // Enhanced Meta Descriptions for 2025 - Keywords Integrated
+  /** Meta descriptions optimized for search engines */
   metaDescriptions: {
     home: "Adaptive task scheduler that adjusts to real-time conditions. Intelligent cron alternative with transparent AI decisions. Early access available.",
     pricing: "Flexible pricing for adaptive monitoring. Start with early access. Enterprise features for intelligent HTTP scheduler and workflow orchestration.",
@@ -36,7 +39,10 @@ const siteConfig = {
   githubUrl: "https://github.com/bcanfield/cron-mvp",
   supportUrl: "https://github.com/bcanfield/cron-mvp/issues/new",
 
-  // SEO Configuration
+  /**
+   * SEO Configuration
+   * Includes keywords, OpenGraph, and Twitter Card settings
+   */
   seo: {
     defaultTitle: "Cronicorn - AI Job Scheduler | Intelligent Cron Alternative",
     titleTemplate: "%s | Cronicorn",
@@ -111,7 +117,10 @@ const siteConfig = {
     }
   },
 
-  // Enhanced FAQ for AI Optimization & Voice Search - Technical Focus
+  /**
+   * FAQ Content
+   * Primary FAQs used for SEO structured data and FAQ page
+   */
   faq: {
     primary: [
       {
@@ -164,270 +173,70 @@ const siteConfig = {
         answer: "Our AI analyzes failure patterns and attempts auto-recovery before alerting humans. Example: Health check fails → AI activates diagnostics → Attempts cache warming → Only alerts if recovery fails. This reduces unnecessary pages by 80%.",
         category: "ai-benefits"
       }
-    ],
-
-    // Voice search optimized questions
-    voiceOptimized: [
-      {
-        question: "What cron job alternatives work for modern DevOps teams?",
-        answer: "Cronicorn adapts scheduling to real-time conditions with intelligent monitoring. Traffic surge detected—tightening to 30 seconds. System calm—relaxing to 5 minutes. Over 500 DevOps teams trust our adaptive approach for 99.9% reliability.",
-        category: "voice-search"
-      },
-      {
-        question: "How do I prevent my scheduled tasks from failing?",
-        answer: "Use an adaptive scheduling platform like Cronicorn that analyzes success rates and response times to automatically adjust check frequencies. Set min/max boundaries—AI respects them.",
-        category: "voice-search"
-      }
     ]
   },
 
-  // Authentic Product Capabilities (Based on Technical Documentation)
-  productCapabilities: {
-    features: [
-      {
-        name: "Adaptive Intervals",
-        description: "Automatically adjust monitoring frequency based on real-time conditions. Tighten from 5 minutes to 30 seconds during incidents.",
-        example: "Traffic surge detected—tightening monitoring to 30 seconds",
-        technical: "AI analyzes success rates and response times to determine optimal intervals within your min/max boundaries."
-      },
-      {
-        name: "Multi-Tier Coordination",
-        description: "Orchestrate workflows across Health, Investigation, Recovery, and Alert tiers with conditional activation.",
-        example: "Health check fails → Investigation activates → Recovery attempts → Alert only if needed",
-        technical: "Coordinate complex workflows where each tier responds to conditions, from baseline monitoring to sophisticated orchestration."
-      },
-      {
-        name: "AI Hints System",
-        description: "Intelligent 'hints' that temporarily adjust schedules based on system load and traffic patterns.",
-        example: "Flash sale detected: Increase monitoring + activate diagnostics + warm cache",
-        technical: "Hints have TTL (time-to-live) and automatically expire. You control min/max boundaries that AI respects."
-      },
-      {
-        name: "Transparent AI Decisions",
-        description: "Every AI adjustment includes clear reasoning. No black boxes—you always know why changes were made.",
-        example: "Frequency increased due to error rate spike (2.1% → 5.3%)",
-        technical: "Full audit trail of AI decisions with contextual explanations, making the system predictable and debuggable."
-      },
-      {
-        name: "Diverse Use Cases",
-        description: "From e-commerce flash sales to data pipelines—handle any API-dependent workflow with intelligent adaptation.",
-        example: "E-commerce: Monitor traffic → Detect surge → Warm cache → Scale monitoring → Alert if needed",
-        technical: "Support for DevOps automation, content publishing, SaaS monitoring, web scraping, and data processing workflows."
-      },
-      {
-        name: "Cloud-Native Platform",
-        description: "Fully managed cloud service with enterprise security. No servers to maintain—focus on your logic.",
-        example: "Deploy jobs globally with automatic failover and distributed execution",
-        technical: "Built on distributed architecture with idempotent execution, graceful degradation, and transaction guarantees."
+  /**
+   * Splash Page Content
+   * Configuration for splash page sections, CTAs, and headings
+   */
+  splash: {
+    sections: {
+      quickAnswers: {
+        heading: "Quick Answers",
+        description: "Everything you need to know about intelligent job scheduling"
       }
-    ],
-
-    flashSaleScenario: {
-      title: "Flash Sale Example: 5× Traffic Surge",
-      description: "See how Cronicorn automatically adapts during traffic spikes",
-      phases: [
-        {
-          phase: "Before Sale (Baseline)",
-          conditions: "Normal traffic levels",
-          actions: [
-            "Traffic monitor: Every 5 minutes",
-            "Order processing: Every 3 minutes",
-            "Performance diagnostics: Paused",
-            "Cache optimization: Inactive"
-          ]
-        },
-        {
-          phase: "Sale Launches - Traffic Surges 5×",
-          conditions: "Sudden spike in concurrent users",
-          actions: [
-            "Automatically tighten monitoring (5min → 30sec)",
-            "Activate performance analyzer (was paused)",
-            "Trigger cache warming for slow products",
-            "Send proactive team notification",
-            "Monitor error rates and response times"
-          ]
-        },
-        {
-          phase: "Recovery & Optimization",
-          conditions: "Traffic stabilizes, systems adapt",
-          actions: [
-            "Gradually relax monitoring intervals",
-            "Maintain heightened awareness",
-            "Deactivate resource-intensive diagnostics",
-            "Return to baseline schedules",
-            "Generate performance report"
-          ]
-        }
-      ],
-      whatYouDidntDo: [
-        "Manually adjust monitoring schedules",
-        "Remember to activate performance diagnostics",
-        "Trigger cache warming scripts",
-        "Get paged for auto-resolved issues",
-        "Manually scale monitoring back down"
-      ]
     },
-
-    howItWorks: {
-      title: "Intelligent Scheduling in 4 Steps",
-      steps: [
-        {
-          number: 1,
-          title: "Define Your Jobs",
-          description: "Set up HTTP endpoints with baseline schedules",
-          details: "Configure health checks, data pipelines, automation tasks with your preferred intervals and boundaries."
-        },
-        {
-          number: 2,
-          title: "We Execute & Learn",
-          description: "Track success rates, response times, patterns",
-          details: "Build understanding of normal vs. abnormal behavior across your systems and workflows."
-        },
-        {
-          number: 3,
-          title: "AI Adapts",
-          description: "Tighten monitoring during incidents, pause during failures, activate tools automatically",
-          details: "Apply intelligent strategies: increase frequency during degradation, coordinate multi-tier responses, respect your guardrails."
-        },
-        {
-          number: 4,
-          title: "Coordinated Response",
-          description: "Orchestrate workflows, attempt auto-recovery, smart escalation",
-          details: "Health → Investigation → Recovery → Alert. Only page humans when automated recovery fails."
-        }
-      ]
+    cta: {
+      primary: {
+        text: "Join Early Access",
+        href: "/login"
+      },
+      secondary: {
+        text: "View Documentation",
+        href: "/docs"
+      },
+      github: {
+        text: "View us on Github",
+        href: "https://github.com/bcanfield/cron-mvp"
+      }
     }
   },
 
-  // Zero-Click Optimization Content (Featured Snippets)
+  /**
+   * Zero-Click Optimization Content
+   * Quick answers optimized for featured snippets and voice search
+   */
   zeroClick: {
     // Quick answers for featured snippets
     quickAnswers: [
       {
-        question: "What is intelligent job scheduling?",
-        answer: "Intelligent job scheduling analyzes execution patterns to automatically adapt when tasks run based on real-time conditions, system load, and external factors. It works through 'hints' that temporarily adjust baseline schedules with TTL, providing transparent adaptation that traditional cron jobs can't match.",
+        question: "How does Cronicorn know when to run your code?",
+        answer: "It adapts HTTP request timing based on real conditions. Data pipelines run faster when processing backlogs, social media posts shift to peak engagement windows, web scrapers slow down when rate-limited, billing cycles accelerate near quota limits. AI adjusts intervals automatically with clear reasoning: 'Backlog detected—increasing ETL frequency to 2 minutes.'",
         format: "definition"
       },
       {
-        question: "How to set up automated cron job monitoring?",
-        answer: "1. Create a job in Cronicorn's cloud platform\n2. Add your API endpoints with baseline schedules\n3. Configure AI hints and clamps for adaptive scheduling\n4. Set up multi-tier coordination (Health, Investigation, Recovery, Alert)\n5. Monitor real-time adjustments via dashboard",
+        question: "How does Cronicorn work across different use cases?",
+        answer: "1. Set up HTTP endpoints with baseline schedules\n2. Cronicorn executes and learns patterns\n3. AI adapts timing based on conditions (traffic, failures, engagement, quotas)\n4. Coordinate multi-tier workflows (Extract→Transform→Load, Health→Investigation→Recovery)\n5. Every adjustment explained: 'High engagement detected—posting immediately'\n\nWorks for DevOps, e-commerce, content, data pipelines, billing, scraping.",
         format: "steps"
       },
       {
-        question: "Enterprise job scheduling patterns",
-        answer: "• Use cloud-based adaptive scheduling for real-time adaptation\n• Implement multi-tier coordination (Health, Investigation, Recovery, Alert)\n• Configure baseline schedules with AI hints for transparent adjustment\n• Set up proper clamps and failure handling\n• Monitor diverse use cases from DevOps to content publishing\n• Enable conditional endpoint activation",
+        question: "Real examples: How Cronicorn adapts across domains",
+        answer: "• Data Pipeline: ETL runs every hour → backlog detected → increases to 15min → clears → back to hourly\n• Content Publishing: Posts scheduled for 9am → high engagement detected → AI suggests immediate follow-up post\n• Web Scraping: Requests every 5sec → rate limit warning → slows to 30sec → proxy recovers → resumes 5sec\n• E-commerce: Health checks every 5min → traffic surge → tightens to 30sec → systems stable → relaxes",
         format: "list"
       },
       {
-        question: "Cron vs AI scheduling comparison",
-        answer: "Traditional Cron: Fixed schedules, manual monitoring, reactive failures, limited to time-based triggers\nAI Scheduling: Dynamic adaptation via hints system, predictive monitoring, proactive recovery, condition-based execution across diverse use cases",
+        question: "What makes this different from regular cron jobs?",
+        answer: "Regular Cron: 'Run this HTTP request every 5 minutes' regardless of context—whether your data pipeline has a massive backlog or your social posts are going viral.\n\nCronicorn: 'Data backlog growing—increasing ETL to every 2 minutes' or 'Post engagement spiking—suggesting immediate follow-up' or 'Rate limit hit—slowing scraper to 30 seconds.'",
         format: "comparison"
       }
-    ],
-
-    // Stats optimized for featured snippets (early access appropriate)
-    keyStats: [
-      {
-        metric: "Use cases supported",
-        value: "6+ domains",
-        context: "from e-commerce to data pipelines"
-      },
-      {
-        metric: "Early access adoption",
-        value: "Growing",
-        context: "innovative teams joining beta"
-      },
-      {
-        metric: "Cloud deployment",
-        value: "100%",
-        context: "managed service, no installation"
-      },
-      {
-        metric: "Scheduling flexibility",
-        value: "Real-time",
-        context: "AI hints adapt to conditions"
-      }
-    ],
-
-    // How-to guides for snippets
-    howToGuides: [
-      {
-        title: "How to migrate from cron to AI scheduling",
-        steps: [
-          "Export existing cron jobs using crontab -l",
-          "Sign up for Cronicorn platform",
-          "Use import wizard to upload cron expressions",
-          "Configure AI optimization settings",
-          "Test jobs in staging environment",
-          "Switch production traffic to Cronicorn"
-        ],
-        timeEstimate: "30 minutes"
-      },
-      {
-        title: "How to prevent cron job failures",
-        steps: [
-          "Enable adaptive scheduling",
-          "Set up dependency monitoring",
-          "Configure automatic retry logic",
-          "Implement health checks",
-          "Add real-time alerting",
-          "Use load-based scheduling"
-        ],
-        timeEstimate: "15 minutes"
-      }
     ]
   },
 
-  // Trust Signals & Authority Data
-  trustSignals: {
-    metrics: {
-      uptime: "99.9%",
-      customersServed: "Early Access Teams",
-      jobsScheduledDaily: "Growing Daily",
-      alertReduction: "Up to 80%",
-      migrationTime: "Under 30 minutes",
-      adaptationSpeed: "Real-time"
-    },
-
-    testimonials: [
-      {
-        quote: "Cronicorn's adaptive scheduling handles our data pipeline complexity better than anything we've tried. The AI reasoning is transparent and trustworthy.",
-        author: "Alex Chen",
-        title: "Senior Engineer",
-        company: "Early Access Partner",
-        industry: "Data Technology"
-      },
-      {
-        quote: "Multi-tier coordination is exactly what we needed. Health checks trigger diagnostics automatically, and recovery happens before we even notice issues.",
-        author: "Jordan Martinez",
-        title: "DevOps Engineer",
-        company: "Beta Partner",
-        industry: "SaaS Platform"
-      },
-      {
-        quote: "Finally found a scheduler that understands our diverse workflows. From content publishing to infrastructure monitoring—it adapts intelligently.",
-        author: "Sam Parker",
-        title: "Platform Engineer",
-        company: "Early Access Team",
-        industry: "Digital Media"
-      }
-    ],
-
-    certifications: [
-      "SOC 2 Type II Certified",
-      "GDPR Compliant",
-      "ISO 27001 Certified",
-      "HIPAA Ready"
-    ],
-
-    integrations: [
-      "AWS", "Google Cloud", "Azure", "Kubernetes", "Docker",
-      "Jenkins", "GitHub Actions", "GitLab CI", "Terraform",
-      "Datadog", "PagerDuty", "Slack", "Microsoft Teams"
-    ]
-  },
-
-  // Business Information
+  /**
+   * Business Information
+   * Used for structured data (schema.org) and contact information
+   */
   business: {
     name: "Cronicorn",
     legalName: "Cronicorn Technologies Inc.",
@@ -453,14 +262,10 @@ const siteConfig = {
     ]
   },
 
-  // Social Media
-  social: {
-    twitter: "https://twitter.com/cronicorn",
-    linkedin: "https://linkedin.com/company/cronicorn",
-    github: "https://github.com/cronicorn"
-  },
-
-  // Pricing Tiers for SEO
+  /**
+   * Pricing Tiers
+   * Used for pricing page and SEO structured data (Product schema)
+   */
   pricing: [
     {
       name: "Starter",

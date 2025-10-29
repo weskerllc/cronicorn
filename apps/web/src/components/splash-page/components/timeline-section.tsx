@@ -1,6 +1,7 @@
 import { CheckCircle2 } from "lucide-react"
 import { useState } from "react"
 import { TimelineTabs } from "../timeline/timeline-tabs"
+import { scenarioBenefits } from "../timeline/timeline-scenario-data"
 
 interface TimelineSectionProps {
     tabData: Array<{
@@ -12,33 +13,9 @@ interface TimelineSectionProps {
 }
 
 export default function TimelineSection({ tabData }: TimelineSectionProps) {
-    const [activeScenario, setActiveScenario] = useState("flash-sale")
+    const [activeScenario, setActiveScenario] = useState("ecommerce-flash-sale")
 
-    // Scenario-specific automation benefits (3 high-impact items per scenario for condensed view)
-    const scenarioBenefits: Record<string, Array<string>> = {
-        "flash-sale": [
-            "Detected surge in 90sec, tightened to 30sec monitoring",
-            "Activated cache warming + diagnostics automatically",
-            "Auto-recovery prevented 47 alerts, zero human intervention"
-        ],
-        "system-monitoring": [
-            "Identified degradation early, escalated 15min→3min",
-            "Triggered investigation tools, attempted auto-fix",
-            "Restored baseline after confirming recovery"
-        ],
-        "data-pipeline": [
-            "Coordinated 3 dependent stages, adjusted by data volume",
-            "Prevented cascading failures with intelligent backoff",
-            "Maintained SLA without manual intervention"
-        ],
-        "api-monitoring": [
-            "Detected degradation, escalated to 1min health checks",
-            "Activated diagnostic endpoints automatically",
-            "Early detection prevented full outage"
-        ]
-    }
-
-    const currentBenefits = scenarioBenefits[activeScenario] || scenarioBenefits["flash-sale"]
+    const currentBenefits = scenarioBenefits[activeScenario] || scenarioBenefits["ecommerce-flash-sale"]
 
     return (
         <section className="relative w-full flex flex-col items-center justify-start px-6 py-16 md:py-20 border-b border-border/40">

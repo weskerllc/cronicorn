@@ -15,17 +15,17 @@ export default function HeroSection() {
                 {/* CTA Section */}
                 <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center items-center">
                     <a
-                        href="/login"
+                        href={siteConfig.splash.cta.primary.href}
                         className="group px-7 py-3 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-all duration-150 shadow-sm hover:shadow-md flex items-center gap-2"
                     >
-                        Join Early Access
+                        {siteConfig.splash.cta.primary.text}
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
                     </a>
                     <a
-                        href="/docs"
+                        href={siteConfig.splash.cta.secondary.href}
                         className="px-7 py-3 border border-border text-foreground rounded-lg font-medium text-sm hover:bg-accent/50 hover:border-foreground/20 transition-all duration-150"
                     >
-                        View Documentation
+                        {siteConfig.splash.cta.secondary.text}
                     </a>
                 </div>
             </div>

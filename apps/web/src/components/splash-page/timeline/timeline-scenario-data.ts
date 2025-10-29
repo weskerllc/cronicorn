@@ -1,5 +1,29 @@
 import type { TimelineScenario } from "./timeline-types";
 
+// Scenario-specific automation benefits (3 high-impact items per scenario for condensed view)
+export const scenarioBenefits: Record<string, Array<string>> = {
+  "ecommerce-flash-sale": [
+    "Detected surge in 90sec, tightened to 30sec monitoring",
+    "Activated cache warming + diagnostics automatically",
+    "Auto-recovery prevented 47 alerts, zero human intervention"
+  ],
+  "system-monitoring": [
+    "Identified degradation early, escalated 15min→3min",
+    "Triggered investigation tools, attempted auto-fix",
+    "Restored baseline after confirming recovery"
+  ],
+  "data-pipeline": [
+    "Coordinated 3 dependent stages, adjusted by data volume",
+    "Prevented cascading failures with intelligent backoff",
+    "Maintained SLA without manual intervention"
+  ],
+  "api-monitoring": [
+    "Detected degradation, escalated to 1min health checks",
+    "Activated diagnostic endpoints automatically",
+    "Early detection prevented full outage"
+  ]
+};
+
 export const monitoringScenarios: Array<TimelineScenario> = [
   {
     id: "ecommerce-flash-sale",
