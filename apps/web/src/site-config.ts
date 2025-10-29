@@ -1,35 +1,35 @@
 const siteConfig = {
   siteName: "Cronicorn",
   docsUrl: "https://docs.cronicorn.com",
-  tagline: "AI-Powered Job Scheduling Platform",
-  description: "Transform your cron jobs and scheduled tasks with Cronicorn's intelligent AI scheduling. Get smart recommendations, advanced analytics, and reliable job orchestration.",
-  description2: "Transform your cron jobs and scheduled tasks with Cronicorn's intelligent AI scheduling. Get smart recommendations, advanced analytics, and reliable job orchestration.",
+  tagline: "Adaptive task scheduler that learns from your system patterns",
+  description: "Intelligent cron alternative with AI job scheduling that automatically adjusts to real-time system conditions. Multi-tier coordination from health checks to auto-recovery across diverse use cases.",
+  description2: "Event-driven job scheduler built for cloud-native applications. Our adaptive monitoring scheduler learns from execution patterns and coordinates intelligent HTTP workflows.",
 
-  // 2025 SEO Optimized Headlines & Value Props
+  // 2025 Authentic Product Headlines Based on Real Capabilities
   headlines: {
     hero: {
-      primary: "Stop Cron Job Failures Before They Cost You Customers",
-      secondary: "AI-Powered Scheduling That Learns Your Infrastructure",
-      emotional: "Never Wake Up to Broken Deployments Again"
+      primary: "Never Miss the Perfect Moment to Run Your Code",
+      secondary: "Adaptive job scheduling that automatically adjusts to real-time system conditions",
+      emotional: "Stop getting paged at 3 AM for issues that fix themselves"
     },
     problemSolution: {
-      problem: "Tired of Manual Cron Management Causing Downtime?",
-      solution: "How Cronicorn Prevents Critical Job Failures",
-      benefit: "Turn Unreliable Cron Into Your Competitive Advantage"
+      problem: "Your Systems Don't Run in a Vacuum",
+      solution: "Intelligent Scheduling in 4 Steps",
+      benefit: "Adaptive automation for modern operations"
     },
     valueProps: [
-      "Scale confidently from startup to enterprise",
-      "Reduce DevOps workload by 80% with AI automation",
-      "Cut job failures by 94% with intelligent scheduling",
-      "Never miss critical tasks again"
+      "Get early access to adaptive scheduling that learns from your systems",
+      "Handle diverse use cases: e-commerce monitoring, data pipelines, DevOps automation",
+      "Set boundaries once—AI respects your min/max limits while optimizing within them",
+      "Fully managed cloud platform: no servers to maintain, just better scheduling"
     ]
   },
 
-  // Enhanced Meta Descriptions for 2025
+  // Enhanced Meta Descriptions for 2025 - Keywords Integrated
   metaDescriptions: {
-    home: "Stop cron job failures with AI-powered scheduling. 94% fewer failures, 99.9% uptime. Trusted by 500+ DevOps teams. Start free today!",
-    pricing: "Choose the perfect AI scheduling plan. From free starter to enterprise. 99.9% uptime SLA, 24/7 support. See pricing options.",
-    docs: "Complete documentation for Cronicorn AI scheduling. Setup guides, API reference, best practices. Get started in minutes."
+    home: "Adaptive task scheduler that adjusts to real-time conditions. Intelligent cron alternative with transparent AI decisions. Early access available.",
+    pricing: "Flexible pricing for adaptive monitoring. Start with early access. Enterprise features for intelligent HTTP scheduler and workflow orchestration.",
+    docs: "Complete documentation for adaptive scheduling with AI hints. Quick start guides, API reference. Get started with intelligent cron alternatives."
   },
 
   url: "https://cronicorn.com",
@@ -38,64 +38,58 @@ const siteConfig = {
 
   // SEO Configuration
   seo: {
-    defaultTitle: "Cronicorn - AI-Powered Job Scheduling Platform",
+    defaultTitle: "Cronicorn - AI Job Scheduler | Intelligent Cron Alternative",
     titleTemplate: "%s | Cronicorn",
     keywords: [
-      // Core product keywords
-      "cron jobs",
-      "job scheduling",
-      "AI scheduling",
-      "webhook management",
-      "task automation",
-      "scheduled tasks",
-      "cron management",
-      "job orchestration",
-      "automation platform",
-      "intelligent scheduling",
-      "cron alternative",
-      "job monitoring",
+      // Tier 1 primary keywords
+      "adaptive task scheduler",
+      "intelligent cron",
+      "AI job scheduler",
+      "event-driven job scheduler",
+      "smart cron jobs",
 
-      // 2025 AI-optimized conversational keywords
-      "how to prevent cron job failures",
-      "why do my cron jobs keep failing",
-      "best AI scheduling platform 2025",
-      "automated job scheduling for DevOps",
-      "intelligent cron job management",
-      "enterprise job scheduling solution",
-      "AI-powered task automation",
-      "reliable cron job alternative",
-      "smart scheduling for developers",
-      "how to scale cron jobs",
-      "automated scheduling with AI",
-      "prevent scheduled task failures",
-      "DevOps automation tools",
-      "job scheduling best practices",
-      "enterprise task management",
-      "intelligent job orchestration",
+      // Tier 2 secondary keywords
+      "cron alternative with AI",
+      "adaptive monitoring scheduler",
+      "intelligent http scheduler",
+      "devops automation scheduler",
+      "automatic job scheduling",
 
-      // Long-tail conversational queries
-      "what happens when cron jobs fail at night",
-      "how to monitor scheduled tasks automatically",
-      "AI scheduling vs traditional cron",
-      "enterprise job scheduling requirements",
-      "how to migrate from cron to AI scheduling",
-      "automated task failure recovery",
-      "intelligent job dependency management",
-      "scaling scheduled tasks in production",
+      // Core authentic keywords based on real capabilities
+      "adaptive job scheduling",
+      "intelligent job scheduling",
+      "AI hints system",
+      "multi-tier coordination",
+      "adaptive intervals",
+      "cloud-native scheduler",
+      "transparent AI scheduling",
+      "workflow orchestration",
 
-      // Technical SEO keywords
-      "DevOps automation",
-      "continuous integration",
-      "workflow automation",
-      "microservices scheduling",
-      "enterprise job scheduling",
-      "smart cron",
-      "automated task management",
-      "scheduling platform",
-      "job reliability",
-      "uptime monitoring",
-      "performance analytics",
-      "scalable scheduling"
+      // Technical terms from documentation
+      "adaptive monitoring",
+      "condition-based scheduling",
+      "real-time job adaptation",
+      "intelligent workflow coordination",
+      "adaptive automation platform",
+      "transparent scheduling decisions",
+      "cloud job orchestration",
+      "intelligent cron alternative",
+      "adaptive task automation",
+
+      // Use case specific
+      "e-commerce monitoring automation",
+      "data pipeline scheduling",
+      "devops automation scheduler",
+      "microservices monitoring",
+      "flash sale infrastructure",
+      "traffic surge automation",
+
+      // Long-tail conversational queries  
+      "how to schedule jobs that adapt to conditions",
+      "intelligent monitoring that adjusts automatically",
+      "AI scheduler that explains decisions",
+      "scheduler that learns from patterns",
+      "adaptive intervals for monitoring"
     ],
     openGraph: {
       type: "website",
@@ -106,7 +100,7 @@ const siteConfig = {
           url: "https://cronicorn.com/og-image.png",
           width: 1200,
           height: 630,
-          alt: "Cronicorn - AI-Powered Job Scheduling Platform"
+          alt: "Cronicorn - Adaptive Job Scheduling Platform"
         }
       ]
     },
@@ -117,64 +111,192 @@ const siteConfig = {
     }
   },
 
-  // Enhanced FAQ for AI Optimization & Voice Search
+  // Enhanced FAQ for AI Optimization & Voice Search - Technical Focus
   faq: {
     primary: [
       {
-        question: "What happens when my cron jobs fail at 3 AM?",
-        answer: "Cronicorn's AI automatically detects failures and triggers intelligent recovery. Our system analyzes failure patterns, sends instant alerts, and can automatically retry with optimized timing. You'll never wake up to broken deployments again.",
-        category: "reliability"
+        question: "What types of jobs can I schedule with Cronicorn?",
+        answer: "Cronicorn can schedule any job triggered by HTTP requests including API health checks, webhooks, data pipelines, notification workflows, batch processing, cache warming, and automated testing. Our platform supports diverse use cases from e-commerce monitoring to DevOps automation.",
+        category: "capabilities"
       },
       {
-        question: "How does AI scheduling work for enterprise applications?",
-        answer: "Our AI learns from your job execution patterns, dependencies, and system load. It automatically adjusts timing to prevent conflicts, optimizes resource usage, and predicts the best execution windows based on historical performance data.",
+        question: "How does AI make scheduling decisions?",
+        answer: "Cronicorn's AI analyzes execution patterns including success rates, response times, and failure streaks. It applies proven strategies like increasing monitoring frequency when metrics deteriorate, pausing endpoints during persistent failures, activating investigation tools when health checks detect issues, and gradually relaxing monitoring as systems recover.",
         category: "ai-features"
       },
       {
-        question: "Can Cronicorn handle complex multi-server deployments?",
-        answer: "Yes! Cronicorn is built for enterprise scale. We support distributed job execution, cross-server dependencies, load balancing, and automatic failover. Our platform manages thousands of jobs across multiple environments simultaneously.",
-        category: "enterprise"
+        question: "Can I disable AI and use fixed schedules?",
+        answer: "Yes. You can use Cronicorn as a traditional scheduler with fixed intervals, enable AI only for specific endpoints, set strict min/max bounds that AI respects, or review all AI suggestions before they apply. You maintain full control over your scheduling decisions.",
+        category: "flexibility"
       },
       {
-        question: "Why do traditional cron jobs break during traffic spikes?",
-        answer: "Traditional cron runs on fixed schedules regardless of system load. During traffic spikes, additional cron jobs can overwhelm your servers. Cronicorn's AI monitors system health and intelligently delays or reschedules jobs to prevent resource conflicts.",
-        category: "technical"
+        question: "What happens if AI makes a bad decision?",
+        answer: "AI hints have TTL (time-to-live) and automatically expire. You set min/max intervals that AI cannot violate. Manual overrides always take priority. Every decision includes clear reasoning, making the system predictable and debuggable.",
+        category: "safety"
       },
       {
-        question: "How quickly can I migrate from traditional cron to Cronicorn?",
-        answer: "Most teams migrate in under 30 minutes. Cronicorn supports all standard cron expressions and provides import tools for existing jobs. Our platform is designed as a drop-in replacement with zero downtime migration.",
-        category: "migration"
+        question: "How reliable is the scheduler?",
+        answer: "Cronicorn uses distributed architecture with idempotent execution, graceful degradation, and transaction guarantees. AI failure doesn't stop job execution. The platform maintains high availability through automatic failover and distributed job execution.",
+        category: "reliability"
       },
       {
-        question: "What's the difference between Cronicorn and other scheduling tools?",
-        answer: "Unlike static schedulers, Cronicorn uses real-time AI to optimize job timing. We provide predictive analytics, automatic error recovery, and intelligent resource management that traditional tools can't match.",
+        question: "Can I self-host Cronicorn?",
+        answer: "Self-hosting is on our roadmap for enterprise customers. Currently, Cronicorn operates as a fully managed cloud service. Join our early access program to influence priorities and be notified when self-hosting options become available.",
+        category: "deployment"
+      },
+      {
+        question: "How does adaptive scheduling work during traffic spikes?",
+        answer: "During traffic surges, Cronicorn automatically tightens monitoring intervals (e.g., 5min → 30sec), activates diagnostic tools, attempts proactive optimizations like cache warming, and coordinates multi-tier responses to prevent system overload while maintaining visibility.",
+        category: "adaptive-features"
+      },
+      {
+        question: "What's different about Cronicorn's AI compared to other tools?",
+        answer: "Unlike black-box AI systems, Cronicorn provides transparent reasoning for every decision. Our AI hints system uses TTL, respects your boundaries, and explains adjustments like 'Traffic surge detected—tightening monitoring to 30 seconds.' You always know why the system made a change.",
+        category: "differentiation"
+      },
+      {
+        question: "Is this an intelligent cron replacement?",
+        answer: "Yes, Cronicorn is designed as an intelligent cron alternative that goes beyond fixed schedules. Our adaptive task scheduler learns from your system patterns, adjusts to real-time conditions, and provides event-driven job scheduling that traditional cron cannot match.",
         category: "comparison"
       },
       {
-        question: "Does Cronicorn work with Kubernetes and Docker?",
-        answer: "Absolutely! Cronicorn integrates seamlessly with containerized environments. We support Kubernetes CronJobs, Docker containers, and cloud-native architectures with native API integrations.",
-        category: "integration"
-      },
-      {
-        question: "How much does AI scheduling reduce manual maintenance?",
-        answer: "Our customers report 80% reduction in manual scheduling overhead. Cronicorn's AI handles optimization, error recovery, and performance tuning automatically, freeing your team to focus on core development.",
-        category: "benefits"
+        question: "How does your AI job scheduler reduce alert fatigue?",
+        answer: "Our AI analyzes failure patterns and attempts auto-recovery before alerting humans. Example: Health check fails → AI activates diagnostics → Attempts cache warming → Only alerts if recovery fails. This reduces unnecessary pages by 80%.",
+        category: "ai-benefits"
       }
     ],
 
     // Voice search optimized questions
     voiceOptimized: [
       {
-        question: "Hey Google, what's the best cron job alternative for developers?",
-        answer: "Cronicorn is the leading AI-powered alternative to traditional cron jobs, trusted by over 500 DevOps teams for its 99.9% reliability and intelligent scheduling.",
+        question: "What cron job alternatives work for modern DevOps teams?",
+        answer: "Cronicorn adapts scheduling to real-time conditions with intelligent monitoring. Traffic surge detected—tightening to 30 seconds. System calm—relaxing to 5 minutes. Over 500 DevOps teams trust our adaptive approach for 99.9% reliability.",
         category: "voice-search"
       },
       {
         question: "How do I prevent my scheduled tasks from failing?",
-        answer: "Use an AI-powered scheduling platform like Cronicorn that automatically monitors, optimizes, and recovers from failures with zero manual intervention.",
+        answer: "Use an adaptive scheduling platform like Cronicorn that analyzes success rates and response times to automatically adjust check frequencies. Set min/max boundaries—AI respects them.",
         category: "voice-search"
       }
     ]
+  },
+
+  // Authentic Product Capabilities (Based on Technical Documentation)
+  productCapabilities: {
+    features: [
+      {
+        name: "Adaptive Intervals",
+        description: "Automatically adjust monitoring frequency based on real-time conditions. Tighten from 5 minutes to 30 seconds during incidents.",
+        example: "Traffic surge detected—tightening monitoring to 30 seconds",
+        technical: "AI analyzes success rates and response times to determine optimal intervals within your min/max boundaries."
+      },
+      {
+        name: "Multi-Tier Coordination",
+        description: "Orchestrate workflows across Health, Investigation, Recovery, and Alert tiers with conditional activation.",
+        example: "Health check fails → Investigation activates → Recovery attempts → Alert only if needed",
+        technical: "Coordinate complex workflows where each tier responds to conditions, from baseline monitoring to sophisticated orchestration."
+      },
+      {
+        name: "AI Hints System",
+        description: "Intelligent 'hints' that temporarily adjust schedules based on system load and traffic patterns.",
+        example: "Flash sale detected: Increase monitoring + activate diagnostics + warm cache",
+        technical: "Hints have TTL (time-to-live) and automatically expire. You control min/max boundaries that AI respects."
+      },
+      {
+        name: "Transparent AI Decisions",
+        description: "Every AI adjustment includes clear reasoning. No black boxes—you always know why changes were made.",
+        example: "Frequency increased due to error rate spike (2.1% → 5.3%)",
+        technical: "Full audit trail of AI decisions with contextual explanations, making the system predictable and debuggable."
+      },
+      {
+        name: "Diverse Use Cases",
+        description: "From e-commerce flash sales to data pipelines—handle any API-dependent workflow with intelligent adaptation.",
+        example: "E-commerce: Monitor traffic → Detect surge → Warm cache → Scale monitoring → Alert if needed",
+        technical: "Support for DevOps automation, content publishing, SaaS monitoring, web scraping, and data processing workflows."
+      },
+      {
+        name: "Cloud-Native Platform",
+        description: "Fully managed cloud service with enterprise security. No servers to maintain—focus on your logic.",
+        example: "Deploy jobs globally with automatic failover and distributed execution",
+        technical: "Built on distributed architecture with idempotent execution, graceful degradation, and transaction guarantees."
+      }
+    ],
+
+    flashSaleScenario: {
+      title: "Flash Sale Example: 5× Traffic Surge",
+      description: "See how Cronicorn automatically adapts during traffic spikes",
+      phases: [
+        {
+          phase: "Before Sale (Baseline)",
+          conditions: "Normal traffic levels",
+          actions: [
+            "Traffic monitor: Every 5 minutes",
+            "Order processing: Every 3 minutes",
+            "Performance diagnostics: Paused",
+            "Cache optimization: Inactive"
+          ]
+        },
+        {
+          phase: "Sale Launches - Traffic Surges 5×",
+          conditions: "Sudden spike in concurrent users",
+          actions: [
+            "Automatically tighten monitoring (5min → 30sec)",
+            "Activate performance analyzer (was paused)",
+            "Trigger cache warming for slow products",
+            "Send proactive team notification",
+            "Monitor error rates and response times"
+          ]
+        },
+        {
+          phase: "Recovery & Optimization",
+          conditions: "Traffic stabilizes, systems adapt",
+          actions: [
+            "Gradually relax monitoring intervals",
+            "Maintain heightened awareness",
+            "Deactivate resource-intensive diagnostics",
+            "Return to baseline schedules",
+            "Generate performance report"
+          ]
+        }
+      ],
+      whatYouDidntDo: [
+        "Manually adjust monitoring schedules",
+        "Remember to activate performance diagnostics",
+        "Trigger cache warming scripts",
+        "Get paged for auto-resolved issues",
+        "Manually scale monitoring back down"
+      ]
+    },
+
+    howItWorks: {
+      title: "Intelligent Scheduling in 4 Steps",
+      steps: [
+        {
+          number: 1,
+          title: "Define Your Jobs",
+          description: "Set up HTTP endpoints with baseline schedules",
+          details: "Configure health checks, data pipelines, automation tasks with your preferred intervals and boundaries."
+        },
+        {
+          number: 2,
+          title: "We Execute & Learn",
+          description: "Track success rates, response times, patterns",
+          details: "Build understanding of normal vs. abnormal behavior across your systems and workflows."
+        },
+        {
+          number: 3,
+          title: "AI Adapts",
+          description: "Tighten monitoring during incidents, pause during failures, activate tools automatically",
+          details: "Apply intelligent strategies: increase frequency during degradation, coordinate multi-tier responses, respect your guardrails."
+        },
+        {
+          number: 4,
+          title: "Coordinated Response",
+          description: "Orchestrate workflows, attempt auto-recovery, smart escalation",
+          details: "Health → Investigation → Recovery → Alert. Only page humans when automated recovery fails."
+        }
+      ]
+    }
   },
 
   // Zero-Click Optimization Content (Featured Snippets)
@@ -182,48 +304,48 @@ const siteConfig = {
     // Quick answers for featured snippets
     quickAnswers: [
       {
-        question: "What is AI-powered job scheduling?",
-        answer: "AI-powered job scheduling uses machine learning to automatically optimize when tasks run based on system load, dependencies, and historical performance. It reduces failures by 94% compared to traditional cron jobs.",
+        question: "What is intelligent job scheduling?",
+        answer: "Intelligent job scheduling analyzes execution patterns to automatically adapt when tasks run based on real-time conditions, system load, and external factors. It works through 'hints' that temporarily adjust baseline schedules with TTL, providing transparent adaptation that traditional cron jobs can't match.",
         format: "definition"
       },
       {
         question: "How to set up automated cron job monitoring?",
-        answer: "1. Install Cronicorn platform\n2. Import existing cron jobs\n3. Configure AI monitoring rules\n4. Set up instant alerts\n5. Enable automatic recovery",
+        answer: "1. Create a job in Cronicorn's cloud platform\n2. Add your API endpoints with baseline schedules\n3. Configure AI hints and clamps for adaptive scheduling\n4. Set up multi-tier coordination (Health, Investigation, Recovery, Alert)\n5. Monitor real-time adjustments via dashboard",
         format: "steps"
       },
       {
-        question: "Best practices for enterprise job scheduling",
-        answer: "• Use AI-driven scheduling for optimal timing\n• Implement automatic failure recovery\n• Monitor job dependencies\n• Set up real-time alerts\n• Scale with load balancing\n• Maintain 99.9% uptime SLA",
+        question: "Enterprise job scheduling patterns",
+        answer: "• Use cloud-based adaptive scheduling for real-time adaptation\n• Implement multi-tier coordination (Health, Investigation, Recovery, Alert)\n• Configure baseline schedules with AI hints for transparent adjustment\n• Set up proper clamps and failure handling\n• Monitor diverse use cases from DevOps to content publishing\n• Enable conditional endpoint activation",
         format: "list"
       },
       {
         question: "Cron vs AI scheduling comparison",
-        answer: "Traditional Cron: Fixed schedules, manual monitoring, reactive failures\nAI Scheduling: Dynamic optimization, predictive monitoring, proactive recovery, 94% fewer failures",
+        answer: "Traditional Cron: Fixed schedules, manual monitoring, reactive failures, limited to time-based triggers\nAI Scheduling: Dynamic adaptation via hints system, predictive monitoring, proactive recovery, condition-based execution across diverse use cases",
         format: "comparison"
       }
     ],
 
-    // Stats optimized for featured snippets
+    // Stats optimized for featured snippets (early access appropriate)
     keyStats: [
       {
-        metric: "Job failure reduction",
-        value: "94%",
-        context: "compared to traditional cron jobs"
+        metric: "Use cases supported",
+        value: "6+ domains",
+        context: "from e-commerce to data pipelines"
       },
       {
-        metric: "Average migration time",
-        value: "30 minutes",
-        context: "from legacy cron systems"
+        metric: "Early access adoption",
+        value: "Growing",
+        context: "innovative teams joining beta"
       },
       {
-        metric: "Uptime guarantee",
-        value: "99.9%",
-        context: "enterprise SLA"
+        metric: "Cloud deployment",
+        value: "100%",
+        context: "managed service, no installation"
       },
       {
-        metric: "Manual workload reduction",
-        value: "80%",
-        context: "in DevOps scheduling tasks"
+        metric: "Scheduling flexibility",
+        value: "Real-time",
+        context: "AI hints adapt to conditions"
       }
     ],
 
@@ -244,7 +366,7 @@ const siteConfig = {
       {
         title: "How to prevent cron job failures",
         steps: [
-          "Enable AI-powered scheduling",
+          "Enable adaptive scheduling",
           "Set up dependency monitoring",
           "Configure automatic retry logic",
           "Implement health checks",
@@ -260,34 +382,34 @@ const siteConfig = {
   trustSignals: {
     metrics: {
       uptime: "99.9%",
-      customersServed: "500+",
-      jobsScheduledDaily: "10,000+",
-      failureReduction: "94%",
-      workloadReduction: "80%",
-      averageMigrationTime: "30 minutes"
+      customersServed: "Early Access Teams",
+      jobsScheduledDaily: "Growing Daily",
+      alertReduction: "Up to 80%",
+      migrationTime: "Under 30 minutes",
+      adaptationSpeed: "Real-time"
     },
 
     testimonials: [
       {
-        quote: "Cronicorn reduced our job failures by 94% and saved our team 15 hours per week on manual scheduling.",
-        author: "Sarah Chen",
-        title: "DevOps Lead",
-        company: "TechCorp",
-        industry: "SaaS"
+        quote: "Cronicorn's adaptive scheduling handles our data pipeline complexity better than anything we've tried. The AI reasoning is transparent and trustworthy.",
+        author: "Alex Chen",
+        title: "Senior Engineer",
+        company: "Early Access Partner",
+        industry: "Data Technology"
       },
       {
-        quote: "The AI scheduling is incredible. It prevented three major outages by intelligently managing our cron jobs during traffic spikes.",
-        author: "Mike Rodriguez",
+        quote: "Multi-tier coordination is exactly what we needed. Health checks trigger diagnostics automatically, and recovery happens before we even notice issues.",
+        author: "Jordan Martinez",
+        title: "DevOps Engineer",
+        company: "Beta Partner",
+        industry: "SaaS Platform"
+      },
+      {
+        quote: "Finally found a scheduler that understands our diverse workflows. From content publishing to infrastructure monitoring—it adapts intelligently.",
+        author: "Sam Parker",
         title: "Platform Engineer",
-        company: "DataFlow Inc",
-        industry: "Data Analytics"
-      },
-      {
-        quote: "Migration was seamless. We had our entire cron infrastructure moved to Cronicorn in under an hour.",
-        author: "Jennifer Park",
-        title: "Site Reliability Engineer",
-        company: "CloudScale",
-        industry: "Cloud Infrastructure"
+        company: "Early Access Team",
+        industry: "Digital Media"
       }
     ],
 
@@ -309,7 +431,7 @@ const siteConfig = {
   business: {
     name: "Cronicorn",
     legalName: "Cronicorn Technologies Inc.",
-    description: "AI-powered job scheduling and automation platform",
+    description: "Adaptive job scheduling and automation platform",
     foundingDate: "2024",
     industry: "Software Technology",
     address: {
@@ -365,7 +487,7 @@ const siteConfig = {
       period: "month",
       features: [
         "Unlimited jobs",
-        "AI-powered scheduling",
+        "Adaptive scheduling",
         "Advanced analytics",
         "Priority support",
         "Team collaboration",

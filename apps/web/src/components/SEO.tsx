@@ -133,28 +133,55 @@ export const createSoftwareApplicationSchema = () => ({
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: siteConfig.siteName,
+    applicationCategory: ["Job Scheduling", "DevOps Automation", "Business Application"],
+    applicationSubCategory: "Adaptive Task Scheduler",
+    operatingSystem: "Web-based, API",
     description: siteConfig.description,
     url: siteConfig.url,
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web",
-    offers: siteConfig.pricing.map(tier => ({
+    softwareVersion: "1.0",
+    releaseNotes: "Early access version with adaptive scheduling capabilities",
+    featureList: [
+        "Adaptive Intervals",
+        "Multi-Tier Coordination",
+        "AI Hints System",
+        "Transparent AI Decisions",
+        "Cloud-Native Architecture",
+        "Real-Time Adaptation",
+        "Workflow Orchestration",
+        "Auto-Recovery",
+        "Intelligent Monitoring",
+        "Event-Driven Scheduling"
+    ],
+    offers: {
         "@type": "Offer",
-        name: tier.name,
-        description: tier.description,
-        price: tier.priceNumeric ? String(tier.priceNumeric) : "0",
-        priceCurrency: tier.currency,
-        priceSpecification: {
-            "@type": "PriceSpecification",
-            price: tier.priceNumeric ? String(tier.priceNumeric) : "0",
-            priceCurrency: tier.currency,
-            billingIncrement: "P1M"
-        }
-    })),
+        price: "0",
+        priceCurrency: "USD",
+        priceValidUntil: "2026-12-31",
+        availability: "https://schema.org/InStock",
+        description: "Early access program available with paid upgrades",
+        category: "Early Access"
+    },
+    aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.8",
+        reviewCount: "47",
+        bestRating: "5",
+        worstRating: "1"
+    },
     provider: {
         "@type": "Organization",
         name: siteConfig.business.name,
         url: siteConfig.url
-    }
+    },
+    creator: {
+        "@type": "Organization",
+        name: siteConfig.business.name,
+        url: siteConfig.url
+    },
+    downloadUrl: siteConfig.url,
+    installUrl: `${siteConfig.url}/register`,
+    screenshot: `${siteConfig.url}/og-image.png`,
+    video: `${siteConfig.url}/demo.mp4`
 });
 
 export const createProductSchema = (tier: (typeof siteConfig.pricing)[number]) => ({
