@@ -21,32 +21,75 @@ export type AIPlannerDeps = {
 /**
  * Build analysis prompt for AI to understand endpoint context and suggest adjustments.
  */
-function buildAnalysisPrompt(endpoint: {
-  name: string;
-  baselineCron?: string;
-  baselineIntervalMs?: number;
-  lastRunAt?: Date;
-  nextRunAt: Date;
-  failureCount: number;
-}, health: {
-  successCount: number;
-  failureCount: number;
-  avgDurationMs: number | null;
-  lastRun: { status: string; at: Date } | null;
-  failureStreak: number;
-}): string {
+function buildAnalysisPrompt(
+  currentTime: Date,
+  jobDescription: string | undefined,
+  endpoint: {
+    name: string;
+    description?: string;
+    baselineCron?: string;
+    baselineIntervalMs?: number;
+    minIntervalMs?: number;
+    maxIntervalMs?: number;
+    pausedUntil?: Date;
+    lastRunAt?: Date;
+    nextRunAt: Date;
+    failureCount: number;
+    aiHintIntervalMs?: number;
+    aiHintNextRunAt?: Date;
+    aiHintExpiresAt?: Date;
+    aiHintReason?: string;
+  },
+  health: {
+    successCount: number;
+    failureCount: number;
+    avgDurationMs: number | null;
+    lastRun: { status: string; at: Date } | null;
+    failureStreak: number;
+  },
+): string {
   const totalRuns = health.successCount + health.failureCount;
   const successRate = totalRuns > 0 ? (health.successCount / totalRuns * 100).toFixed(1) : "N/A";
 
+  // Build pause status string
+  const pauseStatus = endpoint.pausedUntil && endpoint.pausedUntil > currentTime
+    ? `Paused until ${endpoint.pausedUntil.toISOString()}`
+    : "Active";
+
+  // Build AI hints status
+  const aiHintsActive = endpoint.aiHintExpiresAt && endpoint.aiHintExpiresAt > currentTime;
+  let aiHintsSection = "";
+  if (aiHintsActive) {
+    const hints = [];
+    if (endpoint.aiHintIntervalMs) {
+      hints.push(`- Interval: ${endpoint.aiHintIntervalMs}ms`);
+    }
+    if (endpoint.aiHintNextRunAt) {
+      hints.push(`- One-shot: ${endpoint.aiHintNextRunAt.toISOString()}`);
+    }
+    if (endpoint.aiHintReason) {
+      hints.push(`- Reason: ${endpoint.aiHintReason}`);
+    }
+    hints.push(`- Expires: ${endpoint.aiHintExpiresAt!.toISOString()}`);
+    aiHintsSection = `\n**Active AI Hints:**\n${hints.join("\n")}`;
+  }
+
   return `You are an adaptive job scheduler AI. Your role is to analyze endpoint execution patterns and make intelligent scheduling adjustments based on actual response data and performance metrics.
 
-**Endpoint: ${endpoint.name}**
+**Current Time:** ${currentTime.toISOString()}
+${jobDescription ? `\n**Job Context:**\n${jobDescription}\n` : ""}
+**Endpoint: ${endpoint.name}**${endpoint.description ? `\n\n**Endpoint Purpose:**\n${endpoint.description}` : ""}
 
 **Current Schedule:**
 - Baseline: ${endpoint.baselineCron || `${endpoint.baselineIntervalMs}ms interval`}
 - Last Run: ${endpoint.lastRunAt?.toISOString() || "Never"}
 - Next Scheduled: ${endpoint.nextRunAt.toISOString()}
+- Status: ${pauseStatus}
 - Failure Count: ${endpoint.failureCount}
+
+**Constraints:**
+- Min Interval: ${endpoint.minIntervalMs ? `${endpoint.minIntervalMs}ms` : "None"}
+- Max Interval: ${endpoint.maxIntervalMs ? `${endpoint.maxIntervalMs}ms` : "None"}${aiHintsSection}
 
 **Recent Performance (Last 24 hours):**
 - Total Runs: ${totalRuns}
@@ -161,14 +204,21 @@ export class AIPlanner {
     const since = new Date(clock.now().getTime() - 24 * 60 * 60 * 1000);
     const health = await runs.getHealthSummary(endpointId, since);
 
-    // 4. Build AI context
-    const prompt = buildAnalysisPrompt(endpoint, health);
+    // 4. Get job description if endpoint belongs to a job
+    let jobDescription: string | undefined;
+    if (endpoint.jobId) {
+      const job = await jobs.getJob(endpoint.jobId);
+      jobDescription = job?.description;
+    }
 
-    // 5. Create endpoint-scoped tools (3 query + 3 action)
+    // 5. Build AI context with all available information
+    const prompt = buildAnalysisPrompt(clock.now(), jobDescription, endpoint, health);
+
+    // 6. Create endpoint-scoped tools (3 query + 3 action)
     // Note: jobId is required for sibling queries. If missing, sibling tool will return empty.
     const tools = createToolsForEndpoint(endpointId, endpoint.jobId || "", { jobs, runs, clock });
 
-    // 6. Invoke AI with tools and capture session result
+    // 7. Invoke AI with tools and capture session result
     const startTime = clock.now().getTime();
     const session = await aiClient.planWithTools({
       finalToolName: "submit_analysis",
@@ -178,27 +228,28 @@ export class AIPlanner {
     });
     const durationMs = clock.now().getTime() - startTime;
 
-    // 7. Extract reasoning from submit_analysis tool call
+    // 8. Extract reasoning from submit_analysis tool call
     const submitAnalysisCall = session.toolCalls.find(tc => tc.tool === "submit_analysis");
     if (!submitAnalysisCall) {
-      throw new Error("AI did not call required submit_analysis tool. This indicates a prompt engineering issue or model failure.");
+      console.warn(`[AI Analysis] Missing submit_analysis tool call for endpoint ${endpoint.name}`);
     }
 
-    const analysisResult = submitAnalysisCall.result;
+    const analysisResult = submitAnalysisCall?.result;
     const reasoning = analysisResult && typeof analysisResult === "object" && "reasoning" in analysisResult
       ? String(analysisResult.reasoning)
       : undefined;
 
     if (!reasoning) {
-      throw new Error("submit_analysis tool was called but returned no reasoning");
+      console.warn(`[AI Analysis] Missing reasoning for endpoint ${endpoint.name}`);
     }
 
-    // 8. Persist session to database for debugging/cost tracking
+    const safeReasoning = reasoning ?? "No reasoning provided";
+    // 9. Persist session to database for debugging/cost tracking
     await sessions.create({
       endpointId,
       analyzedAt: clock.now(),
       toolCalls: session.toolCalls,
-      reasoning,
+      reasoning: safeReasoning,
       tokenUsage: session.tokenUsage,
       durationMs,
     });
@@ -207,7 +258,7 @@ export class AIPlanner {
     if (session.toolCalls.length > 0) {
       console.warn(`[AI Analysis] ${endpoint.name}:`, {
         toolsCalled: session.toolCalls.map(tc => tc.tool),
-        reasoning: reasoning.slice(0, 150) + (reasoning.length > 150 ? "..." : ""),
+        reasoning: safeReasoning.slice(0, 150) + (safeReasoning.length > 150 ? "..." : ""),
         tokens: session.tokenUsage,
       });
     }
