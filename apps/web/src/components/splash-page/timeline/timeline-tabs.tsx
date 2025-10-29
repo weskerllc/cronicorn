@@ -16,13 +16,15 @@ type AnimatedTabsProps = {
   }>;
   className?: string;
   variant?: "default" | "pills" | "underline";
+  onTabChange?: (tabId: string) => void;
 };
 
-export function TimelineTabs({ tabs, className }: AnimatedTabsProps) {
+export function TimelineTabs({ tabs, className, onTabChange }: AnimatedTabsProps) {
   const [activeTab, setActiveTab] = React.useState(tabs[0]?.id);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
+    onTabChange?.(tabId);
   };
 
   return (

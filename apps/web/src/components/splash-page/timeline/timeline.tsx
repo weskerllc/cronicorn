@@ -18,7 +18,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
     <div className={cn("w-full max-w-5xl mx-auto lg:h-full ")}>
       {/* Main Timeline Component with enhanced styling */}
       <div
-        className="relative bg-background/70 lg:h-full backdrop-blur-xl rounded-md border border-border shadow-2xl p-4 lg:p-6 overflow-hidden"
+        className="relative bg-background/70 lg:h-full backdrop-blur-xl rounded-md border border-border shadow-2xl p-2 lg:p-4 overflow-hidden"
         role="region"
         aria-label="Dynamic Schedule Timeline"
       >
@@ -130,7 +130,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
 
           </div>
           {/* Enhanced Status Caption */}
-          <div className="text-center mb-4" role="status" aria-live="polite">
+          <div className="text-center" role="status" aria-live="polite">
             <div
               key={currentStep}
               className="text-sm font-medium text-muted-foreground animate-in fade-in duration-700 leading-relaxed max-w-lg mx-auto"
@@ -140,7 +140,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
           </div>
 
           {/* Enhanced Legend */}
-          <div
+          {/* <div
             className="flex items-center justify-center gap-8 pt-6 border-t border-border"
             role="group"
             aria-label="Legend"
@@ -166,7 +166,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
               />
               <span className="text-sm font-semibold text-foreground">Skipped</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
