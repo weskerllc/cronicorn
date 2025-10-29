@@ -1,4 +1,4 @@
-import type { Job, JobEndpoint, JobsRepo } from "../index.js";
+import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo } from "../index.js";
 
 /**
  * Adapter-local storage type with internal locking state and job relationship.
@@ -288,13 +288,16 @@ export class InMemoryJobsRepo implements JobsRepo {
     aiCallsLimit: number;
     endpointsUsed: number;
     endpointsLimit: number;
+    totalRuns: number;
+    totalRunsLimit: number;
   }> {
     // For in-memory implementation, return basic usage data
     const tier = await this.getUserTier(userId);
-    const { getExecutionLimits, getTierLimit } = await import("../quota/tier-limits.js");
+    // const { getExecutionLimits, getTierLimit, getRunsLimit } = await import("../quota/tier-limits.js");
 
     const aiCallsLimit = getTierLimit(tier);
     const { maxEndpoints: endpointsLimit } = getExecutionLimits(tier);
+    const totalRunsLimit = getRunsLimit(tier);
 
     // Count endpoints for this user
     const endpoints = Array.from(this.map.values()).filter(
@@ -302,14 +305,17 @@ export class InMemoryJobsRepo implements JobsRepo {
     );
     const endpointsUsed = endpoints.length;
 
-    // In-memory doesn't track actual token usage
+    // In-memory doesn't track actual token usage or runs
     const aiCallsUsed = 0;
+    const totalRuns = 0;
 
     return {
       aiCallsUsed,
       aiCallsLimit,
       endpointsUsed,
       endpointsLimit,
+      totalRuns,
+      totalRunsLimit,
     };
   }
 }

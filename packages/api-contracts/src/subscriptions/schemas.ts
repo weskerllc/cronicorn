@@ -57,6 +57,14 @@ export const UsageResponseSchema = z.object({
     description: "Maximum endpoints allowed for current tier",
     example: 10,
   }),
+  totalRuns: z.number().int().openapi({
+    description: "Total number of endpoint executions since the start of the current period",
+    example: 150,
+  }),
+  totalRunsLimit: z.number().int().openapi({
+    description: "Maximum endpoint executions allowed per month for current tier",
+    example: 10000,
+  }),
 });
 
 export const ErrorSchema = z.object({
