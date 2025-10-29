@@ -39,6 +39,7 @@ export function mapJobWithCountToResponse(job: Job & { endpointCount: number }):
 export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
   return {
     id: endpoint.id,
+    jobId: endpoint.jobId,
     name: endpoint.name,
     baselineCron: endpoint.baselineCron,
     baselineIntervalMs: endpoint.baselineIntervalMs,
@@ -155,9 +156,9 @@ export function mapHealthSummaryToResponse(summary: {
     avgDurationMs: summary.avgDurationMs,
     lastRun: summary.lastRun
       ? {
-          status: summary.lastRun.status,
-          at: summary.lastRun.at.toISOString(),
-        }
+        status: summary.lastRun.status,
+        at: summary.lastRun.at.toISOString(),
+      }
       : null,
     failureStreak: summary.failureStreak,
   };

@@ -62,10 +62,10 @@ const columns: Array<ColumnDef<EndpointRow>> = [
     accessorKey: "name",
     header: "Endpoint Name",
     cell: ({ row }) => (
-      <div className="flex flex-col">
+      <Link to="/endpoints/$id" params={{ id: row.original.id }} className="flex flex-col hover:underline ">
         <span className="font-medium">{row.original.name}</span>
         <span className="text-muted-foreground text-xs">{row.original.jobName}</span>
-      </div>
+      </Link>
     ),
     enableHiding: false,
   },
@@ -140,6 +140,15 @@ const columns: Array<ColumnDef<EndpointRow>> = [
         <DropdownMenuContent align="end" className="w-32">
           <DropdownMenuItem asChild>
             <Link
+              to="/endpoints/$id"
+              params={{ id: row.original.id }}
+            >
+              Edit Endpoint
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link
               to="/endpoints/$id/health"
               params={{ id: row.original.id }}
             >
@@ -167,6 +176,7 @@ interface TopEndpointsTableProps {
 }
 
 export function TopEndpointsTable({ data, onRefresh, isRefreshing = false }: TopEndpointsTableProps) {
+  console.log({ data })
   return (
     <DataTable
       columns={columns}

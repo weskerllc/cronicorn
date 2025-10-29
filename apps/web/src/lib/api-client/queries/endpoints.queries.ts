@@ -35,6 +35,21 @@ export async function getEndpoint(jobId: string, id: string): Promise<GetEndpoin
   return json;
 }
 
+// Get endpoint by ID only (flat route - jobId will be in the response)
+export async function getEndpointById(id: string): Promise<GetEndpointResponse> {
+  // Backend supports getting endpoint by ID without jobId
+  // We use a dummy jobId since the API validates ownership by userId, not jobId
+  const resp = await apiClient.api.jobs[":jobId"].endpoints[":id"].$get({
+    param: { jobId: "_", id }
+  });
+  const json = await resp.json();
+
+  if ("message" in json) {
+    throw new Error(json.message);
+  }
+  return json;
+}
+
 // ==================== Mutation Functions ====================
 
 const $createEndpoint = apiClient.api.jobs[":jobId"].endpoints.$post;
@@ -155,6 +170,19 @@ export function endpointQueryOptions(jobId: string, id: string) {
   return queryOptions({
     queryKey: ["jobs", jobId, "endpoints", id] as const,
     queryFn: () => getEndpoint(jobId, id),
+    staleTime: 30000, // 30 seconds
+  });
+}
+
+/**
+ * Query options for getting a single endpoint by ID only (flat route)
+ * Usage: useSuspenseQuery(endpointByIdQueryOptions(endpointId))
+ * The endpoint response includes jobId, so you can still invalidate job-scoped queries
+ */
+export function endpointByIdQueryOptions(id: string) {
+  return queryOptions({
+    queryKey: ["endpoints", id] as const,
+    queryFn: () => getEndpointById(id),
     staleTime: 30000, // 30 seconds
   });
 }

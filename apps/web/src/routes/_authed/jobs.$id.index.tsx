@@ -48,8 +48,8 @@ function JobDetailsPage() {
       header: "Name",
       cell: ({ row }) => (
         <Link
-          to="/jobs/$jobId/endpoints/$id/edit"
-          params={{ jobId: id, id: row.original.id }}
+          to="/endpoints/$id"
+          params={{ id: row.original.id }}
           className="font-medium hover:underline"
         >
           {row.original.name}
@@ -90,8 +90,8 @@ function JobDetailsPage() {
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link
-                to="/jobs/$jobId/endpoints/$id/edit"
-                params={{ jobId: id, id: row.original.id }}
+                to="/endpoints/$id"
+                params={{ id: row.original.id }}
               >
                 Edit
               </Link>
