@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedUsageRouteImport } from './routes/_authed/usage'
@@ -23,11 +24,11 @@ import { Route as AuthedJobsIndexRouteImport } from './routes/_authed/jobs.index
 import { Route as AuthedRunsIdRouteImport } from './routes/_authed/runs.$id'
 import { Route as AuthedJobsNewRouteImport } from './routes/_authed/jobs.new'
 import { Route as AuthedJobsIdIndexRouteImport } from './routes/_authed/jobs.$id.index'
+import { Route as AuthedEndpointsIdIndexRouteImport } from './routes/_authed/endpoints.$id.index'
 import { Route as AuthedJobsIdEditRouteImport } from './routes/_authed/jobs.$id.edit'
 import { Route as AuthedEndpointsIdRunsRouteImport } from './routes/_authed/endpoints.$id.runs'
 import { Route as AuthedEndpointsIdHealthRouteImport } from './routes/_authed/endpoints.$id.health'
 import { Route as AuthedJobsJobIdEndpointsNewRouteImport } from './routes/_authed/jobs.$jobId.endpoints.new'
-import { Route as AuthedJobsJobIdEndpointsIdEditRouteImport } from './routes/_authed/jobs.$jobId.endpoints.$id.edit'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -42,6 +43,11 @@ const PricingRoute = PricingRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
@@ -98,6 +104,11 @@ const AuthedJobsIdIndexRoute = AuthedJobsIdIndexRouteImport.update({
   path: '/jobs/$id/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedEndpointsIdIndexRoute = AuthedEndpointsIdIndexRouteImport.update({
+  id: '/endpoints/$id/',
+  path: '/endpoints/$id/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedJobsIdEditRoute = AuthedJobsIdEditRouteImport.update({
   id: '/jobs/$id/edit',
   path: '/jobs/$id/edit',
@@ -119,15 +130,10 @@ const AuthedJobsJobIdEndpointsNewRoute =
     path: '/jobs/$jobId/endpoints/new',
     getParentRoute: () => AuthedRoute,
   } as any)
-const AuthedJobsJobIdEndpointsIdEditRoute =
-  AuthedJobsJobIdEndpointsIdEditRouteImport.update({
-    id: '/jobs/$jobId/endpoints/$id/edit',
-    path: '/jobs/$jobId/endpoints/$id/edit',
-    getParentRoute: () => AuthedRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
@@ -142,12 +148,13 @@ export interface FileRoutesByFullPath {
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/jobs/$id/edit': typeof AuthedJobsIdEditRoute
+  '/endpoints/$id': typeof AuthedEndpointsIdIndexRoute
   '/jobs/$id': typeof AuthedJobsIdIndexRoute
   '/jobs/$jobId/endpoints/new': typeof AuthedJobsJobIdEndpointsNewRoute
-  '/jobs/$jobId/endpoints/$id/edit': typeof AuthedJobsJobIdEndpointsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
@@ -162,14 +169,15 @@ export interface FileRoutesByTo {
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/jobs/$id/edit': typeof AuthedJobsIdEditRoute
+  '/endpoints/$id': typeof AuthedEndpointsIdIndexRoute
   '/jobs/$id': typeof AuthedJobsIdIndexRoute
   '/jobs/$jobId/endpoints/new': typeof AuthedJobsJobIdEndpointsNewRoute
-  '/jobs/$jobId/endpoints/$id/edit': typeof AuthedJobsJobIdEndpointsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
@@ -184,14 +192,15 @@ export interface FileRoutesById {
   '/_authed/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/_authed/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/_authed/jobs/$id/edit': typeof AuthedJobsIdEditRoute
+  '/_authed/endpoints/$id/': typeof AuthedEndpointsIdIndexRoute
   '/_authed/jobs/$id/': typeof AuthedJobsIdIndexRoute
   '/_authed/jobs/$jobId/endpoints/new': typeof AuthedJobsJobIdEndpointsNewRoute
-  '/_authed/jobs/$jobId/endpoints/$id/edit': typeof AuthedJobsJobIdEndpointsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/faq'
     | '/login'
     | '/pricing'
     | '/register'
@@ -206,12 +215,13 @@ export interface FileRouteTypes {
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
     | '/jobs/$id/edit'
+    | '/endpoints/$id'
     | '/jobs/$id'
     | '/jobs/$jobId/endpoints/new'
-    | '/jobs/$jobId/endpoints/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/faq'
     | '/login'
     | '/pricing'
     | '/register'
@@ -226,13 +236,14 @@ export interface FileRouteTypes {
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
     | '/jobs/$id/edit'
+    | '/endpoints/$id'
     | '/jobs/$id'
     | '/jobs/$jobId/endpoints/new'
-    | '/jobs/$jobId/endpoints/$id/edit'
   id:
     | '__root__'
     | '/'
     | '/_authed'
+    | '/faq'
     | '/login'
     | '/pricing'
     | '/register'
@@ -247,14 +258,15 @@ export interface FileRouteTypes {
     | '/_authed/endpoints/$id/health'
     | '/_authed/endpoints/$id/runs'
     | '/_authed/jobs/$id/edit'
+    | '/_authed/endpoints/$id/'
     | '/_authed/jobs/$id/'
     | '/_authed/jobs/$jobId/endpoints/new'
-    | '/_authed/jobs/$jobId/endpoints/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
+  FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
@@ -281,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -360,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedJobsIdIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/endpoints/$id/': {
+      id: '/_authed/endpoints/$id/'
+      path: '/endpoints/$id'
+      fullPath: '/endpoints/$id'
+      preLoaderRoute: typeof AuthedEndpointsIdIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/jobs/$id/edit': {
       id: '/_authed/jobs/$id/edit'
       path: '/jobs/$id/edit'
@@ -388,13 +414,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedJobsJobIdEndpointsNewRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/jobs/$jobId/endpoints/$id/edit': {
-      id: '/_authed/jobs/$jobId/endpoints/$id/edit'
-      path: '/jobs/$jobId/endpoints/$id/edit'
-      fullPath: '/jobs/$jobId/endpoints/$id/edit'
-      preLoaderRoute: typeof AuthedJobsJobIdEndpointsIdEditRouteImport
-      parentRoute: typeof AuthedRoute
-    }
   }
 }
 
@@ -410,9 +429,9 @@ interface AuthedRouteChildren {
   AuthedEndpointsIdHealthRoute: typeof AuthedEndpointsIdHealthRoute
   AuthedEndpointsIdRunsRoute: typeof AuthedEndpointsIdRunsRoute
   AuthedJobsIdEditRoute: typeof AuthedJobsIdEditRoute
+  AuthedEndpointsIdIndexRoute: typeof AuthedEndpointsIdIndexRoute
   AuthedJobsIdIndexRoute: typeof AuthedJobsIdIndexRoute
   AuthedJobsJobIdEndpointsNewRoute: typeof AuthedJobsJobIdEndpointsNewRoute
-  AuthedJobsJobIdEndpointsIdEditRoute: typeof AuthedJobsJobIdEndpointsIdEditRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
@@ -427,9 +446,9 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedEndpointsIdHealthRoute: AuthedEndpointsIdHealthRoute,
   AuthedEndpointsIdRunsRoute: AuthedEndpointsIdRunsRoute,
   AuthedJobsIdEditRoute: AuthedJobsIdEditRoute,
+  AuthedEndpointsIdIndexRoute: AuthedEndpointsIdIndexRoute,
   AuthedJobsIdIndexRoute: AuthedJobsIdIndexRoute,
   AuthedJobsJobIdEndpointsNewRoute: AuthedJobsJobIdEndpointsNewRoute,
-  AuthedJobsJobIdEndpointsIdEditRoute: AuthedJobsJobIdEndpointsIdEditRoute,
 }
 
 const AuthedRouteWithChildren =
@@ -438,6 +457,7 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
+  FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,

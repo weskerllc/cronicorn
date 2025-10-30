@@ -1,5 +1,5 @@
 import { RouterProvider } from '@tanstack/react-router'
-
+import { HelmetProvider } from 'react-helmet-async'
 
 import React from 'react';
 import { ThemeProvider } from "@cronicorn/ui-library/components/theme-provider"
@@ -27,11 +27,13 @@ function InnerApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider storageKey="cronicorn-ui-theme">
-        <InnerApp />
-      </ThemeProvider>
-    </AuthProvider>
+    <HelmetProvider>
+      <AuthProvider>
+        <ThemeProvider storageKey="cronicorn-ui-theme">
+          <InnerApp />
+        </ThemeProvider>
+      </AuthProvider>
+    </HelmetProvider>
   )
 }
 

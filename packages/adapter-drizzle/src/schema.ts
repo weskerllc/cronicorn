@@ -27,6 +27,7 @@ export const jobEndpoints = pgTable("job_endpoints", {
   jobId: text("job_id").references(() => jobs.id, { onDelete: "cascade" }), // Phase 3: FK to jobs table (nullable for backward compat)
   tenantId: text("tenant_id").notNull(),
   name: text("name").notNull(),
+  description: text("description"), // Endpoint-specific context: behavior, thresholds, response schema, coordination logic
 
   // Baseline cadence (choose one)
   baselineCron: text("baseline_cron"),

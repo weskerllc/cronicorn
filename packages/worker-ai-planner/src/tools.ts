@@ -11,6 +11,31 @@ import { defineTools, tool } from "@cronicorn/domain";
 import { z } from "zod";
 
 /**
+ * Truncate response body to prevent token overflow while preserving key information.
+ */
+function truncateResponseBody(responseBody: unknown, maxLength = 1000): unknown {
+  if (typeof responseBody === "string") {
+    if (responseBody.length <= maxLength)
+      return responseBody;
+    return `${responseBody.substring(0, maxLength)}...[truncated]`;
+  }
+
+  if (typeof responseBody === "object" && responseBody !== null) {
+    const str = JSON.stringify(responseBody);
+    if (str.length <= maxLength)
+      return responseBody;
+    try {
+      return JSON.parse(str.substring(0, maxLength - 20));
+    }
+    catch {
+      return `${str.substring(0, maxLength)}...[truncated]`;
+    }
+  }
+
+  return responseBody;
+}
+
+/**
  * Create endpoint-scoped tools for AI to control scheduling.
  *
  * Tools write hints to the database via JobsRepo methods.
@@ -33,6 +58,33 @@ export function createToolsForEndpoint(
 ) {
   const { jobs, runs, clock } = deps;
   return defineTools({
+    // ============================================================================
+    // Final Answer Tool: Submit Analysis
+    // ============================================================================
+
+    submit_analysis: tool({
+      description: "Submit your final analysis and reasoning after gathering data and taking any necessary actions. This signals you are done analyzing the endpoint.",
+      schema: z.object({
+        reasoning: z.string().describe("Your analysis of the endpoint's health and performance, including what data you examined and why you took (or didn't take) any actions"),
+        actions_taken: z.array(z.string()).optional().describe("List of action tools called (e.g., ['propose_interval', 'pause_until'])"),
+        confidence: z.enum(["high", "medium", "low"]).optional().describe("Confidence level in your analysis"),
+      }),
+      execute: async (args) => {
+        // This is a terminal tool - just return the analysis
+        // The reasoning will be captured by the planner
+        return {
+          status: "analysis_complete",
+          reasoning: args.reasoning,
+          actions_taken: args.actions_taken || [],
+          confidence: args.confidence || "high",
+        };
+      },
+    }),
+
+    // ============================================================================
+    // Action Tools: Scheduling Adjustments
+    // ============================================================================
+
     propose_interval: tool({
       description: "Adjust endpoint execution interval based on observed patterns (e.g., increase frequency if failures detected, decrease if stable)",
       schema: z.object({
@@ -132,28 +184,52 @@ export function createToolsForEndpoint(
     }),
 
     get_response_history: tool({
-      description: "Get recent response bodies from this endpoint to identify trends (e.g., increasing error rates, growing queue sizes, performance degradation). Returns up to 50 most recent responses.",
+      description: "Get recent response bodies from this endpoint to identify trends (e.g., increasing error rates, growing queue sizes, performance degradation). Use offset for pagination: start with limit=2, then use offset to skip previous results. Responses are returned newest-first.",
       schema: z.object({
-        limit: z.number().int().min(1).max(50).default(10).describe("Number of recent responses to retrieve (max 50)"),
+        limit: z.number().int().min(1).max(10).default(2).describe("Number of recent responses to retrieve (max 10, default 2 for token efficiency)"),
+        offset: z.number().int().min(0).default(0).describe("Number of newest responses to skip for pagination (0 = start from most recent)"),
       }),
       execute: async (args) => {
-        const history = await runs.getResponseHistory(endpointId, args.limit);
+        const history = await runs.getResponseHistory(endpointId, args.limit, args.offset);
 
         if (history.length === 0) {
           return {
             count: 0,
-            message: "No execution history found for this endpoint",
+            message: args.offset > 0
+              ? `No more execution history found (offset ${args.offset})`
+              : "No execution history found for this endpoint",
+            hasMore: false,
+            pagination: { offset: args.offset, limit: args.limit },
           };
         }
 
+        // Truncate response bodies to prevent token overflow
+        const truncatedResponses = history.map(r => ({
+          responseBody: truncateResponseBody(r.responseBody),
+          timestamp: r.timestamp.toISOString(),
+          status: r.status,
+          durationMs: r.durationMs,
+        }));
+
+        // Check if there are more results by requesting one extra with next offset
+        const hasMoreCheck = await runs.getResponseHistory(endpointId, 1, args.offset + args.limit);
+        const hasMore = hasMoreCheck.length > 0;
+
         return {
           count: history.length,
-          responses: history.map(r => ({
-            responseBody: r.responseBody,
-            timestamp: r.timestamp.toISOString(),
-            status: r.status,
-            durationMs: r.durationMs,
-          })),
+          pagination: {
+            offset: args.offset,
+            limit: args.limit,
+            nextOffset: hasMore ? args.offset + args.limit : undefined,
+          },
+          hasMore,
+          responses: truncatedResponses,
+          hint: hasMore
+            ? `More history available - call again with offset: ${args.offset + args.limit} to get next ${args.limit} older responses`
+            : args.offset > 0
+              ? "Reached end of history"
+              : undefined,
+          tokenSavingNote: "Response bodies truncated at 1000 chars to prevent token overflow",
         };
       },
     }),

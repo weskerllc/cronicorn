@@ -1,9 +1,9 @@
-import type { Job, JobEndpoint, JobsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
+import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo } from "@cronicorn/domain";
 import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 
-import { type JobEndpointRow, jobEndpoints, type JobRow, jobs, user } from "./schema.js";
+import { type JobEndpointRow, jobEndpoints, type JobRow, jobs, runs, user } from "./schema.js";
 
 /**
  * PostgreSQL implementation of JobsRepo using Drizzle ORM.
@@ -39,6 +39,8 @@ export class DrizzleJobsRepo implements JobsRepo {
 
     if (patch.name !== undefined)
       updates.name = patch.name;
+    if (patch.description !== undefined)
+      updates.description = patch.description;
     if (patch.jobId !== undefined)
       updates.jobId = patch.jobId && patch.jobId !== "" ? patch.jobId : null;
     if (patch.baselineCron !== undefined)
@@ -313,6 +315,7 @@ export class DrizzleJobsRepo implements JobsRepo {
       jobId: row.jobId ?? "", // Nullable for backward compat, default to empty string
       tenantId: row.tenantId,
       name: row.name,
+      description: row.description ?? undefined,
       baselineCron: row.baselineCron ?? undefined,
       baselineIntervalMs: row.baselineIntervalMs ?? undefined,
       aiHintIntervalMs: row.aiHintIntervalMs ?? undefined,
@@ -512,15 +515,16 @@ export class DrizzleJobsRepo implements JobsRepo {
     aiCallsLimit: number;
     endpointsUsed: number;
     endpointsLimit: number;
+    totalRuns: number;
+    totalRunsLimit: number;
   }> {
-    const { getExecutionLimits, getTierLimit } = await import("@cronicorn/domain");
-
     // Get user tier
     const tier = await this.getUserTier(userId);
 
     // Get tier limits
     const aiCallsLimit = getTierLimit(tier);
     const { maxEndpoints: endpointsLimit } = getExecutionLimits(tier);
+    const totalRunsLimit = getRunsLimit(tier);
 
     // Count endpoints for this user
     const endpointsResult = await this.tx
@@ -545,11 +549,26 @@ export class DrizzleJobsRepo implements JobsRepo {
       );
     const aiCallsUsed = usageResult[0]?.totalUsage ?? 0;
 
+    // Count total runs since specified date
+    const runsResult = await this.tx
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(runs)
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .where(
+        and(
+          eq(jobEndpoints.tenantId, userId),
+          sql`${runs.startedAt} >= ${since}`,
+        ),
+      );
+    const totalRuns = runsResult[0]?.count ?? 0;
+
     return {
       aiCallsUsed,
       aiCallsLimit,
       endpointsUsed,
       endpointsLimit,
+      totalRuns,
+      totalRunsLimit,
     };
   }
 
