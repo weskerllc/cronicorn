@@ -1,3 +1,5 @@
+import { cn } from "@cronicorn/ui-library/lib/utils";
+import { useIsMobile } from "../../hooks/use-mobile";
 import SectionContainer from "@/components/ui/section-container";
 import SectionHeader from "@/components/ui/section-header";
 import siteConfig from "@/site-config";
@@ -7,9 +9,11 @@ import siteConfig from "@/site-config";
  * Uses structured data (schema.org) for enhanced search visibility
  */
 export default function QuickAnswersSection() {
+    const isMobile = useIsMobile();
+
     return (
         <SectionContainer
-            maxWidth="5xl"
+            maxWidth="7xl"
             paddingY="lg"
             ariaLabelledBy="quick-answers-heading"
         >
@@ -19,11 +23,11 @@ export default function QuickAnswersSection() {
                 description={siteConfig.splash.sections.quickAnswers.description}
             />
 
-            <div className="grid md:grid-cols-2">
+            <div className="grid md:grid-cols-2 border-b border-border/40">
                 {siteConfig.zeroClick.quickAnswers.map((qa, index) => (
                     <article
                         key={index}
-                        className="p-6 md:p-8 border border-border/40 hover:border-border/70 hover:shadow-sm transition-all duration-200"
+                        className={cn("p-6 md:p-8 border-t border-border/40 hover:bg-muted/10 hover:shadow-sm transition-all duration-200 md:odd:border-r",)}
                         itemScope
                         itemType="https://schema.org/Question"
                     >
