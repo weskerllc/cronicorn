@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/weskerllc/cronicorn/compare/v1.1.0...v1.1.1) (2025-10-30)
+
+
+### Bug Fixes
+
+* Headers on endpoint edit page ([55347dd](https://github.com/weskerllc/cronicorn/commit/55347dd8574af7584f7a77e2e9677ee7c226fb27))
+
 # [1.1.0](https://github.com/weskerllc/cronicorn/compare/v1.0.5...v1.1.0) (2025-10-30)
 
 
