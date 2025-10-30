@@ -192,12 +192,12 @@ export class JobsManager {
    *
    * @param userId - The user ID
    * @param filters - Optional filters
-   * @param filters.status - Filter by job status (active/archived)
+   * @param filters.status - Filter by job status (active/paused/archived)
    * @returns Array of jobs with endpoint counts
    */
   async listJobs(
     userId: string,
-    filters?: { status?: "active" | "archived" },
+    filters?: { status?: "active" | "paused" | "archived" },
   ): Promise<Array<Job & { endpointCount: number }>> {
     return this.jobsRepo.listJobs(userId, filters);
   }
@@ -237,6 +237,42 @@ export class JobsManager {
     }
 
     return this.jobsRepo.archiveJob(jobId);
+  }
+
+  /**
+   * Pause a job (temporarily stop execution).
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param jobId - The job ID
+   * @returns The paused job
+   * @throws Error if job not found or user not authorized
+   */
+  async pauseJob(userId: string, jobId: string): Promise<Job> {
+    // Authorization check
+    const existing = await this.getJob(userId, jobId);
+    if (!existing) {
+      throw new Error("Job not found or unauthorized");
+    }
+
+    return this.jobsRepo.pauseJob(jobId);
+  }
+
+  /**
+   * Resume a paused job.
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param jobId - The job ID
+   * @returns The resumed job
+   * @throws Error if job not found or user not authorized
+   */
+  async resumeJob(userId: string, jobId: string): Promise<Job> {
+    // Authorization check
+    const existing = await this.getJob(userId, jobId);
+    if (!existing) {
+      throw new Error("Job not found or unauthorized");
+    }
+
+    return this.jobsRepo.resumeJob(jobId);
   }
 
   // ==================== Endpoint Operations ====================

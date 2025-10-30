@@ -13,6 +13,7 @@ export const createEndpointSchema = z.discriminatedUnion("scheduleType", [
     z.object({
         scheduleType: z.literal("interval"),
         name: z.string().min(1, "Name is required"),
+        description: z.string().optional(),
         url: z.string().min(1, "URL is required"),
         method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
         headers: z.array(headerSchema).optional(),
@@ -21,6 +22,7 @@ export const createEndpointSchema = z.discriminatedUnion("scheduleType", [
     z.object({
         scheduleType: z.literal("cron"),
         name: z.string().min(1, "Name is required"),
+        description: z.string().optional(),
         url: z.string().min(1, "URL is required"),
         method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
         headers: z.array(headerSchema).optional(),
@@ -32,6 +34,7 @@ export const updateEndpointSchema = z.discriminatedUnion("scheduleType", [
     z.object({
         scheduleType: z.literal("interval"),
         name: z.string().min(1, "Name is required"),
+        description: z.string().optional(),
         url: z.string().min(1, "URL is required"),
         method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
         headers: z.array(headerSchema).optional(),
@@ -40,6 +43,7 @@ export const updateEndpointSchema = z.discriminatedUnion("scheduleType", [
     z.object({
         scheduleType: z.literal("cron"),
         name: z.string().min(1, "Name is required"),
+        description: z.string().optional(),
         url: z.string().min(1, "URL is required"),
         method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
         headers: z.array(headerSchema).optional(),

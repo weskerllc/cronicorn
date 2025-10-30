@@ -20,6 +20,9 @@ export function mapJobToResponse(job: Job): JobResponse {
     name: job.name,
     description: job.description,
     status: job.status,
+    createdAt: job.createdAt.toISOString(),
+    updatedAt: job.updatedAt.toISOString(),
+    archivedAt: job.archivedAt?.toISOString(),
   };
 }
 
@@ -41,6 +44,7 @@ export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
     id: endpoint.id,
     jobId: endpoint.jobId,
     name: endpoint.name,
+    description: endpoint.description,
     baselineCron: endpoint.baselineCron,
     baselineIntervalMs: endpoint.baselineIntervalMs,
     minIntervalMs: endpoint.minIntervalMs,

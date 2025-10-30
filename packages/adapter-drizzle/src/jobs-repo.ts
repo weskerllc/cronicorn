@@ -1,7 +1,7 @@
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
 import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo } from "@cronicorn/domain";
-import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 
 import { type JobEndpointRow, jobEndpoints, type JobRow, jobs, runs, user } from "./schema.js";
 
@@ -117,8 +117,13 @@ export class DrizzleJobsRepo implements JobsRepo {
 
     // Claim endpoints that are:
     // 1. Due now or within horizon
-    // 2. Not paused (pausedUntil is null or <= now)
+    // 2. Not paused at endpoint level (pausedUntil is null or <= now)
     // 3. Not locked (lockedUntil is null or <= now)
+    // 4. Parent job is not paused (job.status != 'paused', or jobId is null for backward compat)
+    //
+    // Note: Cannot use LEFT JOIN with FOR UPDATE due to PostgreSQL limitation.
+    // Instead, we select from job_endpoints and use a WHERE clause that checks
+    // the job status only when jobId is not null.
     const claimed = await this.tx
       .select({
         id: jobEndpoints.id,
@@ -135,6 +140,15 @@ export class DrizzleJobsRepo implements JobsRepo {
           or(
             isNull(jobEndpoints._lockedUntil),
             lte(jobEndpoints._lockedUntil, now),
+          ),
+          // Only check job status if jobId exists
+          or(
+            isNull(jobEndpoints.jobId), // No job (backward compat)
+            sql`NOT EXISTS (
+              SELECT 1 FROM ${jobs} 
+              WHERE ${jobs.id} = ${jobEndpoints.jobId} 
+              AND ${jobs.status} = 'paused'
+            )`, // Job exists and is not paused
           ),
         ),
       )
@@ -387,7 +401,7 @@ export class DrizzleJobsRepo implements JobsRepo {
 
   async listJobs(
     userId: string,
-    filters?: { status?: "active" | "archived" },
+    filters?: { status?: "active" | "paused" | "archived" },
   ): Promise<Array<Job & { endpointCount: number }>> {
     // Build base query with endpoint count
     const query = this.tx
@@ -466,6 +480,44 @@ export class DrizzleJobsRepo implements JobsRepo {
     }
 
     return archived;
+  }
+
+  async pauseJob(id: string): Promise<Job> {
+    const now = this.now();
+
+    await this.tx
+      .update(jobs)
+      .set({
+        status: "paused",
+        updatedAt: now,
+      })
+      .where(eq(jobs.id, id));
+
+    const paused = await this.getJob(id);
+    if (!paused) {
+      throw new Error(`Job not found: ${id}`);
+    }
+
+    return paused;
+  }
+
+  async resumeJob(id: string): Promise<Job> {
+    const now = this.now();
+
+    await this.tx
+      .update(jobs)
+      .set({
+        status: "active",
+        updatedAt: now,
+      })
+      .where(eq(jobs.id, id));
+
+    const resumed = await this.getJob(id);
+    if (!resumed) {
+      throw new Error(`Job not found: ${id}`);
+    }
+
+    return resumed;
   }
 
   // ============================================================================
@@ -576,7 +628,22 @@ export class DrizzleJobsRepo implements JobsRepo {
    * Convert DB job row to domain entity.
    */
   private jobRowToEntity(row: JobRow): Job {
-    const status: "active" | "archived" = row.status === "archived" ? "archived" : "active";
+    // Type-safe status mapping with exhaustive check
+    let status: Job["status"];
+    if (row.status === "active") {
+      status = "active";
+    }
+    else if (row.status === "paused") {
+      status = "paused";
+    }
+    else if (row.status === "archived") {
+      status = "archived";
+    }
+    else {
+      // Fallback for unexpected values (defensive programming)
+      status = "active";
+    }
+
     return {
       id: row.id,
       userId: row.userId,
