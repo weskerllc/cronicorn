@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/weskerllc/cronicorn/compare/v1.1.1...v1.1.2) (2025-10-30)
+
+
+### Bug Fixes
+
+* Build errors ([483e389](https://github.com/weskerllc/cronicorn/commit/483e38902ac38f8da11a3c36549a961420bb3c18))
+
 ## [1.1.1](https://github.com/weskerllc/cronicorn/compare/v1.1.0...v1.1.1) (2025-10-30)
 
 
