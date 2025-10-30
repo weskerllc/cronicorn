@@ -1,4 +1,9 @@
-import { boolean, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+
+/**
+ * Job status enum - provides type safety at both compile-time and runtime.
+ */
+export const jobStatusEnum = pgEnum("job_status", ["active", "paused", "archived"]);
 
 /**
  * Jobs table (Phase 3).
@@ -9,7 +14,7 @@ export const jobs = pgTable("jobs", {
   userId: text("user_id").notNull(), // Single-user ownership (MVP simplification)
   name: text("name").notNull(),
   description: text("description"),
-  status: text("status").notNull().default("active"), // "active" | "archived"
+  status: jobStatusEnum("status").notNull().default("active"),
   createdAt: timestamp("created_at", { mode: "date" }).notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull(),
   archivedAt: timestamp("archived_at", { mode: "date" }),

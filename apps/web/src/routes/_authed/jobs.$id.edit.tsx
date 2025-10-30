@@ -22,7 +22,7 @@ import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert"
 import { UpdateJobRequestSchema } from "@cronicorn/api-contracts/jobs";
 import { PageHeader } from "../../components/page-header";
 import type { UpdateJobRequest } from "@cronicorn/api-contracts/jobs";
-import { jobQueryOptions, updateJob } from "@/lib/api-client/queries/jobs.queries";
+import { JOBS_QUERY_KEY, jobQueryOptions, updateJob } from "@/lib/api-client/queries/jobs.queries";
 
 export const Route = createFileRoute("/_authed/jobs/$id/edit")({
   loader: async ({ params, context }) => {
@@ -49,8 +49,8 @@ function EditJobPage() {
   const { mutateAsync, isPending, error } = useMutation({
     mutationFn: async (data: UpdateJobRequest) => updateJob(id, data),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      await queryClient.invalidateQueries({ queryKey: ["jobs", id] });
+      await queryClient.invalidateQueries({ queryKey: JOBS_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: [...JOBS_QUERY_KEY, id] });
       navigate({ to: "/jobs/$id", params: { id } });
     },
   });
