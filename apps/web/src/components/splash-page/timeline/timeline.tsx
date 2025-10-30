@@ -18,7 +18,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
     <div className={cn("w-full max-w-5xl mx-auto lg:h-full ")}>
       {/* Main Timeline Component with enhanced styling */}
       <div
-        className="relative bg-muted/10 lg:h-full rounded border border-border/50 p-3 lg:p-3 overflow-hidden"
+        className="relative bg-gradient-to-b from-muted/5 to-muted/10 lg:h-full rounded border border-border/50 p-3 lg:p-3 overflow-hidden"
         role="region"
         aria-label="Dynamic Schedule Timeline"
       >
