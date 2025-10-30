@@ -182,8 +182,14 @@ Example interpretations:
 2. **get_response_history** - Trend detection over time
    - When: Need to distinguish spike from trend, or identify patterns
    - Look for: Monotonic changes, periodic patterns, degradation signals
-   - Params: { limit: number (1-50) }
-   - Returns: { count, responses: [{ responseBody, timestamp, status, durationMs }] }
+   - **Efficient Pagination**: Start with default (2 newest), then use offset to skip previous results
+   - **Example Sequence**: 
+     * Call with limit=2 → responses 1-2 (newest)
+     * Call with limit=3, offset=2 → responses 3-5 (next older)
+     * Call with offset=5 → responses 6-7 (oldest)
+   - Params: { limit: number (1-10, default 2), offset?: number (default 0) }
+   - Returns: { count, responses, hasMore, pagination: { nextOffset? }, hint? }
+   - Note: Response bodies are truncated at 1000 chars to prevent token limits
 
 3. **get_sibling_latest_responses** - Cross-endpoint coordination
    - When: This endpoint is part of a workflow (endpoints in same job that coordinate)

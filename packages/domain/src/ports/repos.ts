@@ -232,9 +232,10 @@ export type RunsRepo = {
    *
    * @param endpointId - The endpoint to query
    * @param limit - Maximum number of responses (max 50)
+   * @param offset - Number of responses to skip (0 = most recent)
    * @returns Array of recent responses, ordered newest to oldest
    */
-  getResponseHistory: (endpointId: string, limit: number) => Promise<Array<{
+  getResponseHistory: (endpointId: string, limit: number, offset?: number) => Promise<Array<{
     responseBody: import("../entities/index.js").JsonValue | null;
     timestamp: Date;
     status: string;
