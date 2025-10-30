@@ -757,6 +757,34 @@ describe("drizzle Repos (PostgreSQL)", () => {
       expect(endpoints).not.toContain("ep-paused");
       expect(endpoints.length).toBe(1);
     });
+
+    test("should return endpoints without jobs in getEndpointsWithRecentRuns (backward compat)", async ({ tx }) => {
+      const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
+
+      // Add endpoint without a job (backward compat)
+      await jobsRepo.addEndpoint({
+        id: "ep-no-job",
+        tenantId: "user1",
+        jobId: undefined, // No job association
+        name: "Legacy Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
+
+      const runsRepo = new DrizzleRunsRepo(tx);
+
+      // Create run for endpoint without job
+      const run = await runsRepo.create({ endpointId: "ep-no-job", status: "running", attempt: 1 });
+      await runsRepo.finish(run, { status: "success", durationMs: 100 });
+
+      // Query for endpoints with recent runs
+      const since = new Date(Date.now() - 10 * 60 * 1000);
+      const endpoints = await runsRepo.getEndpointsWithRecentRuns(since);
+
+      // Should return endpoint even without job association
+      expect(endpoints).toContain("ep-no-job");
+      expect(endpoints.length).toBe(1);
+    });
   });
 
   describe("drizzleJobsRepo - lock duration", () => {
@@ -860,6 +888,27 @@ describe("drizzle Repos (PostgreSQL)", () => {
       // Should only claim endpoint from active job
       expect(claimed).toContain("ep-active");
       expect(claimed).not.toContain("ep-paused");
+      expect(claimed.length).toBe(1);
+    });
+
+    test("should claim endpoints without jobs (backward compat)", async ({ tx }) => {
+      const repo = new DrizzleJobsRepo(tx, () => new Date("2025-01-01T12:00:00.000Z"));
+
+      // Add endpoint without a job (jobId = null/undefined for backward compat)
+      await repo.addEndpoint({
+        id: "ep-no-job",
+        tenantId: "user1",
+        jobId: undefined, // No job association
+        name: "Legacy Endpoint",
+        nextRunAt: new Date("2025-01-01T11:59:00.000Z"), // Due
+        failureCount: 0,
+      });
+
+      // Claim due endpoints
+      const claimed = await repo.claimDueEndpoints(10, 10000);
+
+      // Should claim endpoint even without job association
+      expect(claimed).toContain("ep-no-job");
       expect(claimed.length).toBe(1);
     });
   });

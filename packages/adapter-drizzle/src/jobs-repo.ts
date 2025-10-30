@@ -119,14 +119,17 @@ export class DrizzleJobsRepo implements JobsRepo {
     // 1. Due now or within horizon
     // 2. Not paused at endpoint level (pausedUntil is null or <= now)
     // 3. Not locked (lockedUntil is null or <= now)
-    // 4. Parent job is not paused (job.status != 'paused')
+    // 4. Parent job is not paused (job.status != 'paused', or jobId is null for backward compat)
+    //
+    // Note: Cannot use LEFT JOIN with FOR UPDATE due to PostgreSQL limitation.
+    // Instead, we select from job_endpoints and use a WHERE clause that checks
+    // the job status only when jobId is not null.
     const claimed = await this.tx
       .select({
         id: jobEndpoints.id,
         maxExecutionTimeMs: jobEndpoints.maxExecutionTimeMs,
       })
       .from(jobEndpoints)
-      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
       .where(
         and(
           lte(jobEndpoints.nextRunAt, horizon),
@@ -138,7 +141,15 @@ export class DrizzleJobsRepo implements JobsRepo {
             isNull(jobEndpoints._lockedUntil),
             lte(jobEndpoints._lockedUntil, now),
           ),
-          ne(jobs.status, "paused"),
+          // Only check job status if jobId exists
+          or(
+            isNull(jobEndpoints.jobId), // No job (backward compat)
+            sql`NOT EXISTS (
+              SELECT 1 FROM ${jobs} 
+              WHERE ${jobs.id} = ${jobEndpoints.jobId} 
+              AND ${jobs.status} = 'paused'
+            )`, // Job exists and is not paused
+          ),
         ),
       )
       .orderBy(jobEndpoints.nextRunAt)
