@@ -1,7 +1,7 @@
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
 import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo } from "@cronicorn/domain";
-import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 
 import { type JobEndpointRow, jobEndpoints, type JobRow, jobs, runs, user } from "./schema.js";
 
@@ -117,14 +117,16 @@ export class DrizzleJobsRepo implements JobsRepo {
 
     // Claim endpoints that are:
     // 1. Due now or within horizon
-    // 2. Not paused (pausedUntil is null or <= now)
+    // 2. Not paused at endpoint level (pausedUntil is null or <= now)
     // 3. Not locked (lockedUntil is null or <= now)
+    // 4. Parent job is not paused (job.status != 'paused')
     const claimed = await this.tx
       .select({
         id: jobEndpoints.id,
         maxExecutionTimeMs: jobEndpoints.maxExecutionTimeMs,
       })
       .from(jobEndpoints)
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
       .where(
         and(
           lte(jobEndpoints.nextRunAt, horizon),
@@ -136,6 +138,7 @@ export class DrizzleJobsRepo implements JobsRepo {
             isNull(jobEndpoints._lockedUntil),
             lte(jobEndpoints._lockedUntil, now),
           ),
+          ne(jobs.status, "paused"),
         ),
       )
       .orderBy(jobEndpoints.nextRunAt)
