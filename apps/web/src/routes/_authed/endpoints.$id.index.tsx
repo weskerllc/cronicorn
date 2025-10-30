@@ -1,50 +1,38 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { AlertCircle, Zap } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { AlertCircle, Plus, Save, X, Zap } from "lucide-react";
+import { useFieldArray, useForm } from "react-hook-form";
 
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
-import { Card } from "@cronicorn/ui-library/components/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
+    FormMessage
 } from "@cronicorn/ui-library/components/form";
 import { Input } from "@cronicorn/ui-library/components/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@cronicorn/ui-library/components/select";
+import { Label } from "@cronicorn/ui-library/components/label";
+import { RadioGroup, RadioGroupItem } from "@cronicorn/ui-library/components/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
 import { Separator } from "@cronicorn/ui-library/components/separator";
-import { toast } from "@cronicorn/ui-library/lib/utils";
+import { toast } from "sonner";
 
 import { PageHeader } from "../../components/page-header";
-import {
-    clearHints,
-    endpointByIdQueryOptions,
-    pauseEndpoint,
-    resetFailures,
-    updateEndpoint
-} from "@/lib/api-client/queries/endpoints.queries";
+import type { UpdateEndpointForm } from "@/lib/endpoint-forms";
+import { clearHints, endpointByIdQueryOptions, endpointQueryOptions, pauseEndpoint, resetFailures, updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
-
-const updateEndpointSchema = z.object({
-    name: z.string().min(1, "Name is required").max(255, "Name must be less than 255 characters"),
-    url: z.string().url("Must be a valid URL"),
-    method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
-});
-
-type UpdateEndpointForm = z.infer<typeof updateEndpointSchema>;
+import {
+    endpointToFormData,
+    transformUpdatePayload,
+    updateEndpointSchema,
+} from "@/lib/endpoint-forms";
 
 export const Route = createFileRoute("/_authed/endpoints/$id/")({
     loader: async ({ params, context }) => {
@@ -57,24 +45,26 @@ export const Route = createFileRoute("/_authed/endpoints/$id/")({
             await context.queryClient.ensureQueryData(jobQueryOptions(endpoint.jobId));
         }
     },
-    component: EndpointDetailPage,
+    component: EditEndpointPage,
 });
 
-function EndpointDetailPage() {
+function EditEndpointPage() {
     const { id } = Route.useParams();
     const router = useRouter();
     const queryClient = useQueryClient();
     const { data: endpoint } = useSuspenseQuery(endpointByIdQueryOptions(id));
 
-
     const form = useForm<UpdateEndpointForm>({
         resolver: zodResolver(updateEndpointSchema),
-        defaultValues: {
-            name: endpoint.name,
-            url: endpoint.url,
-            method: endpoint.method,
-        },
+        defaultValues: endpointToFormData(endpoint) as UpdateEndpointForm,
     });
+
+    const { fields: headerFields, append: appendHeader, remove: removeHeader } = useFieldArray({
+        control: form.control,
+        name: "headers",
+    });
+
+    const watchedScheduleType = form.watch("scheduleType");
 
     const { mutateAsync: updateMutate, isPending: updatePending, error: updateError } = useMutation({
         mutationFn: async (data: UpdateEndpointForm) => {
@@ -94,7 +84,6 @@ function EndpointDetailPage() {
             toast.success("Endpoint updated successfully");
         },
     });
-
     const { mutateAsync: pauseMutate, isPending: pausePending } = useMutation({
         mutationFn: async (pausedUntil: string | null) => pauseEndpoint(id, { pausedUntil }),
         onSuccess: async (_, pausedUntil) => {
@@ -130,7 +119,6 @@ function EndpointDetailPage() {
             toast.success("AI hints cleared");
         },
     });
-
     const handleFormSubmit = async (data: UpdateEndpointForm) => {
         await updateMutate(data);
     };
@@ -159,9 +147,10 @@ function EndpointDetailPage() {
 
     return (
         <>
+
             <PageHeader
-                text={'Endpoint Details'}
-                description={endpoint.name}
+                text="Edit Endpoint"
+                description={`Update configuration for ${endpoint.name}`}
             />
 
             {hasAIHints && (
@@ -232,8 +221,9 @@ function EndpointDetailPage() {
                             <FormItem>
                                 <FormLabel>Endpoint Name</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input placeholder="e.g., Fetch Users API" {...field} disabled={updatePending} />
                                 </FormControl>
+                                <FormDescription>A descriptive name for this endpoint</FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -246,8 +236,14 @@ function EndpointDetailPage() {
                             <FormItem>
                                 <FormLabel>URL</FormLabel>
                                 <FormControl>
-                                    <Input type="url" {...field} />
+                                    <Input
+                                        type="url"
+                                        placeholder="https://api.example.com/users"
+                                        {...field}
+                                        disabled={updatePending}
+                                    />
                                 </FormControl>
+                                <FormDescription>The full URL to call for this endpoint</FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -259,10 +255,14 @@ function EndpointDetailPage() {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>HTTP Method</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    disabled={updatePending}
+                                >
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select method" />
+                                            <SelectValue placeholder="Select HTTP method" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -278,11 +278,173 @@ function EndpointDetailPage() {
                         )}
                     />
 
+                    <FormField
+                        control={form.control}
+                        name="scheduleType"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Schedule Type</FormLabel>
+                                <FormControl>
+                                    <RadioGroup
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        className="flex flex-col space-y-1"
+                                        disabled={updatePending}
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="interval" id="interval" />
+                                            <Label htmlFor="interval" className="font-normal cursor-pointer">
+                                                Fixed Interval
+                                            </Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="cron" id="cron" />
+                                            <Label htmlFor="cron" className="font-normal cursor-pointer">
+                                                Cron Expression
+                                            </Label>
+                                        </div>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormDescription>
+                                    Choose how you want to schedule this endpoint
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {watchedScheduleType === "interval" && (
+                        <FormField
+                            control={form.control}
+                            name="baselineIntervalMinutes"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Interval (minutes)</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            placeholder="5"
+                                            min="1"
+                                            {...field}
+                                            disabled={updatePending}
+                                            value={field.value || ""}
+                                            onChange={(e) =>
+                                                field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                                            }
+                                        />
+                                    </FormControl>
+                                    <FormDescription>How often should this endpoint run?</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+
+                    {watchedScheduleType === "cron" && (
+                        <FormField
+                            control={form.control}
+                            name="baselineCron"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Cron Expression</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="0 * * * *"
+                                            {...field}
+                                            disabled={updatePending}
+                                            value={field.value || ""}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        5-field format: minute hour day month weekday (e.g., "0 * * * *" for hourly)
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Request Headers</CardTitle>
+                            <CardDescription>
+                                Add custom headers to be sent with each request
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {headerFields.map((headerField, index) => (
+                                <div key={headerField.id} className="flex gap-2 items-end">
+                                    <FormField
+                                        control={form.control}
+                                        name={`headers.${index}.key`}
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                {index === 0 && <FormLabel>Header Name</FormLabel>}
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="e.g., Authorization"
+                                                        {...field}
+                                                        disabled={updatePending}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`headers.${index}.value`}
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                {index === 0 && <FormLabel>Header Value</FormLabel>}
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="e.g., Bearer your-token"
+                                                        {...field}
+                                                        disabled={updatePending}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => removeHeader(index)}
+                                        disabled={updatePending}
+                                    >
+                                        <X className="size-4" />
+                                    </Button>
+                                </div>
+                            ))}
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => appendHeader({ key: "", value: "" })}
+                                disabled={updatePending}
+                            >
+                                <Plus className="size-4 mr-2" />
+                                Add Header
+                            </Button>
+
+                            {headerFields.length === 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                    No custom headers configured. Click "Add Header" to add one.
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
+
                     <div className="flex gap-4">
                         <Button type="submit" disabled={updatePending}>
+                            <Save className="size-4 mr-2" />
                             {updatePending ? "Saving..." : "Save Changes"}
                         </Button>
                         <Button type="button" variant="outline" onClick={onCancel}>
+                            <X className="size-4 mr-2" />
                             Cancel
                         </Button>
                     </div>
