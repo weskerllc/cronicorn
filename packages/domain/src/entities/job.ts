@@ -4,8 +4,11 @@
 
 /**
  * Job lifecycle status.
+ * - active: Job is running normally
+ * - paused: Job is temporarily stopped, can be resumed
+ * - archived: Job is soft-deleted, preserves history
  */
-export type JobStatus = "active" | "archived";
+export type JobStatus = "active" | "paused" | "archived";
 
 /**
  * Job - groups related endpoints for organizational purposes.
