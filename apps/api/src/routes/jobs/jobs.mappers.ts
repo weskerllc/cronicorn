@@ -20,6 +20,9 @@ export function mapJobToResponse(job: Job): JobResponse {
     name: job.name,
     description: job.description,
     status: job.status,
+    createdAt: job.createdAt.toISOString(),
+    updatedAt: job.updatedAt.toISOString(),
+    archivedAt: job.archivedAt?.toISOString(),
   };
 }
 

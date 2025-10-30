@@ -25,6 +25,9 @@ export const JobResponseSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   status: z.enum(["active", "paused", "archived"]),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  archivedAt: z.string().datetime().optional(),
 });
 
 export const JobWithCountResponseSchema = JobResponseSchema.extend({
