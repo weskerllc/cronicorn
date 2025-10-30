@@ -20,9 +20,11 @@ export type JobsRepo = {
   // Job lifecycle operations (Phase 3)
   createJob: (job: Omit<Job, "id" | "createdAt" | "updatedAt">) => Promise<Job>;
   getJob: (id: string) => Promise<Job | null>;
-  listJobs: (userId: string, filters?: { status?: "active" | "archived" }) => Promise<Array<Job & { endpointCount: number }>>;
+  listJobs: (userId: string, filters?: { status?: "active" | "paused" | "archived" }) => Promise<Array<Job & { endpointCount: number }>>;
   updateJob: (id: string, patch: { name?: string; description?: string }) => Promise<Job>;
   archiveJob: (id: string) => Promise<Job>;
+  pauseJob: (id: string) => Promise<Job>;
+  resumeJob: (id: string) => Promise<Job>;
 
   // Endpoint operations (existing + Phase 3 extensions)
   addEndpoint: (ep: JobEndpoint) => Promise<void>;

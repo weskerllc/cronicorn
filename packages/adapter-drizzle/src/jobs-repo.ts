@@ -468,6 +468,44 @@ export class DrizzleJobsRepo implements JobsRepo {
     return archived;
   }
 
+  async pauseJob(id: string): Promise<Job> {
+    const now = this.now();
+
+    await this.tx
+      .update(jobs)
+      .set({
+        status: "paused",
+        updatedAt: now,
+      })
+      .where(eq(jobs.id, id));
+
+    const paused = await this.getJob(id);
+    if (!paused) {
+      throw new Error(`Job not found: ${id}`);
+    }
+
+    return paused;
+  }
+
+  async resumeJob(id: string): Promise<Job> {
+    const now = this.now();
+
+    await this.tx
+      .update(jobs)
+      .set({
+        status: "active",
+        updatedAt: now,
+      })
+      .where(eq(jobs.id, id));
+
+    const resumed = await this.getJob(id);
+    if (!resumed) {
+      throw new Error(`Job not found: ${id}`);
+    }
+
+    return resumed;
+  }
+
   // ============================================================================
   // Phase 3: Endpoint Relationship Operations
   // ============================================================================
@@ -576,7 +614,22 @@ export class DrizzleJobsRepo implements JobsRepo {
    * Convert DB job row to domain entity.
    */
   private jobRowToEntity(row: JobRow): Job {
-    const status: "active" | "archived" = row.status === "archived" ? "archived" : "active";
+    // Type-safe status mapping with exhaustive check
+    let status: Job["status"];
+    if (row.status === "active") {
+      status = "active";
+    }
+    else if (row.status === "paused") {
+      status = "paused";
+    }
+    else if (row.status === "archived") {
+      status = "archived";
+    }
+    else {
+      // Fallback for unexpected values (defensive programming)
+      status = "active";
+    }
+
     return {
       id: row.id,
       userId: row.userId,
