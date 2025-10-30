@@ -76,7 +76,7 @@ function JobsListPage() {
         <Link
           to="/jobs/$id"
           params={{ id: row.original.id }}
-          className="font-medium text-accent hover:underline"
+          className="font-medium hover:underline"
         >
           {row.original.name}
         </Link>

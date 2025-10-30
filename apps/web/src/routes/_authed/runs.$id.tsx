@@ -146,17 +146,6 @@ function RunDetailsPage() {
                 )}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Scheduling Info</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Scheduling information is available on the endpoint configuration page.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </>
   );

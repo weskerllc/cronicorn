@@ -46,6 +46,10 @@ function validateCronExpression(expr: string): boolean {
 
 const EndpointFieldsBaseSchema = z.object({
   name: z.string().min(1).max(255),
+  description: z.string().max(2000).optional().openapi({
+    description: "Endpoint-specific context: what it does, response schema, thresholds, coordination logic",
+    example: "Monitors website traffic and page load times. Returns {visitors: number, loadTimeMs: number}. Normal: <1000 visitors/min, Surge: >3000. Tighten from 5min to 30s during surge.",
+  }),
   baselineCron: z
     .string()
     .optional()
@@ -97,7 +101,9 @@ export const UpdateEndpointRequestSchema = EndpointFieldsBaseSchema.partial().re
 
 export const EndpointResponseSchema = z.object({
   id: z.string(),
+  jobId: z.string().optional(),
   name: z.string(),
+  description: z.string().optional(),
   baselineCron: z.string().optional(),
   baselineIntervalMs: z.number().optional(),
   minIntervalMs: z.number().optional(),

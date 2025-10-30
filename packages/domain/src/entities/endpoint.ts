@@ -20,6 +20,7 @@ export type JobEndpoint = {
   jobId?: string; // Phase 3: Optional FK to parent Job (for organizational grouping)
   tenantId: string;
   name: string;
+  description?: string; // Endpoint-specific context: behavior, thresholds, response schema, coordination logic
 
   // Baseline cadence (choose one)
   baselineCron?: string;
