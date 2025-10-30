@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/weskerllc/cronicorn/compare/v1.1.2...v1.1.3) (2025-10-30)
+
+
+### Bug Fixes
+
+* Transform mutation to update endpoint ([b5d8c22](https://github.com/weskerllc/cronicorn/commit/b5d8c220206a2370c831efd7627d183b3cf55edd))
+
 ## [1.1.2](https://github.com/weskerllc/cronicorn/compare/v1.1.1...v1.1.2) (2025-10-30)
 
 
