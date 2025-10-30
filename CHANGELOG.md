@@ -1,3 +1,13 @@
+# [1.2.0](https://github.com/weskerllc/cronicorn/compare/v1.1.3...v1.2.0) (2025-10-30)
+
+
+### Features
+
+* Add job details card with pause/resume functionality ([3a41f13](https://github.com/weskerllc/cronicorn/commit/3a41f1348a2c804a3edb06d26b41926e082aa83d))
+* Add paused status to jobs, fix cache invalidation, optimize production devtools ([520f1db](https://github.com/weskerllc/cronicorn/commit/520f1dbd64ab74000d1ab6c0e66e7ad443976b10))
+* **endpoints:** add description field to UI forms ([de41bfd](https://github.com/weskerllc/cronicorn/commit/de41bfdb2982ffb8d0838021c93ffc093dce043c))
+* Respect paused job status in scheduler and AI planner ([ffdb13e](https://github.com/weskerllc/cronicorn/commit/ffdb13eddf65777f9620448113ee9def1655ab79))
+
 ## [1.1.3](https://github.com/weskerllc/cronicorn/compare/v1.1.2...v1.1.3) (2025-10-30)
 
 
