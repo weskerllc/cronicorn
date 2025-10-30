@@ -1,3 +1,21 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+
+# Restrict access to private areas
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /_authed/
+
+# Allow social media crawlers
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Sitemap location
+Sitemap: https://cronicorn.com/sitemap.xml

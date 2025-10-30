@@ -25,7 +25,7 @@
     "test:coverage": "dotenv -e .env.test vitest run --coverage",
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --max-warnings 0 --fix",
-    "lint:web": "pnpm -F @cronicorn/web lint",
+    "lint:web": "pnpm -F @cronicorn/web lint --fix",
     "sim": "pnpm run -r --parallel sim",
     "🚀 ---------- VERSIONING ----------": "",
     "release": "semantic-release",

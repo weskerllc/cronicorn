@@ -60,10 +60,10 @@ const columns: Array<ColumnDef<RunRow>> = [
     accessorKey: "endpointName",
     header: "Endpoint",
     cell: ({ row }) => (
-      <div className="flex flex-col">
+      <Link to="/runs/$id" params={{ id: row.original.id }} className="flex flex-col hover:underline ">
         <span className="font-medium">{row.original.endpointName}</span>
         <span className="text-muted-foreground text-xs">{row.original.jobName}</span>
-      </div>
+      </Link>
     ),
     enableHiding: false,
   },

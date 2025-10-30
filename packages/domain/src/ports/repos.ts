@@ -130,7 +130,7 @@ export type JobsRepo = {
   }) => Promise<void>;
 
   /**
-   * Get usage statistics for quota enforcement and display.
+   * Get usage statistics for a user.
    *
    * @param userId - User ID
    * @param since - Start date for usage calculation (typically start of current month)
@@ -141,6 +141,8 @@ export type JobsRepo = {
     aiCallsLimit: number;
     endpointsUsed: number;
     endpointsLimit: number;
+    totalRuns: number;
+    totalRunsLimit: number;
   }>;
 };
 
@@ -230,9 +232,10 @@ export type RunsRepo = {
    *
    * @param endpointId - The endpoint to query
    * @param limit - Maximum number of responses (max 50)
+   * @param offset - Number of responses to skip (0 = most recent)
    * @returns Array of recent responses, ordered newest to oldest
    */
-  getResponseHistory: (endpointId: string, limit: number) => Promise<Array<{
+  getResponseHistory: (endpointId: string, limit: number, offset?: number) => Promise<Array<{
     responseBody: import("../entities/index.js").JsonValue | null;
     timestamp: Date;
     status: string;
