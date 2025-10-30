@@ -29,6 +29,8 @@ describe("subscriptionsManager", () => {
       listJobs: vi.fn(),
       updateJob: vi.fn(),
       archiveJob: vi.fn(),
+      pauseJob: vi.fn(),
+      resumeJob: vi.fn(),
       addEndpoint: vi.fn(),
       updateEndpoint: vi.fn(),
       listEndpointsByJob: vi.fn(),

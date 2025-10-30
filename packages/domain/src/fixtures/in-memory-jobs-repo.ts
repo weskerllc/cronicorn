@@ -39,7 +39,7 @@ export class InMemoryJobsRepo implements JobsRepo {
     return job ? structuredClone(job) : null;
   }
 
-  async listJobs(userId: string, filters?: { status?: "active" | "archived" }): Promise<Array<Job & { endpointCount: number }>> {
+  async listJobs(userId: string, filters?: { status?: "active" | "paused" | "archived" }): Promise<Array<Job & { endpointCount: number }>> {
     const userJobs = [...this.jobs.values()]
       .filter(j => j.userId === userId)
       .filter(j => !filters?.status || j.status === filters.status);
@@ -79,6 +79,34 @@ export class InMemoryJobsRepo implements JobsRepo {
     };
     this.jobs.set(id, archived);
     return structuredClone(archived);
+  }
+
+  async pauseJob(id: string): Promise<Job> {
+    const job = this.jobs.get(id);
+    if (!job)
+      throw new Error(`Job not found: ${id}`);
+
+    const paused: Job = {
+      ...job,
+      status: "paused",
+      updatedAt: this.now(),
+    };
+    this.jobs.set(id, paused);
+    return structuredClone(paused);
+  }
+
+  async resumeJob(id: string): Promise<Job> {
+    const job = this.jobs.get(id);
+    if (!job)
+      throw new Error(`Job not found: ${id}`);
+
+    const resumed: Job = {
+      ...job,
+      status: "active",
+      updatedAt: this.now(),
+    };
+    this.jobs.set(id, resumed);
+    return structuredClone(resumed);
   }
 
   // Endpoint operations (existing)

@@ -13,6 +13,7 @@ type UpdateEndpointRequest = z.infer<typeof UpdateEndpointRequestSchema>;
 export function transformCreatePayload(data: CreateEndpointForm): AddEndpointRequest {
     const payload: Partial<AddEndpointRequest> = {
         name: data.name,
+        description: data.description,
         url: data.url,
         method: data.method,
     };
@@ -44,6 +45,7 @@ export function transformCreatePayload(data: CreateEndpointForm): AddEndpointReq
 export function transformUpdatePayload(data: UpdateEndpointForm): UpdateEndpointRequest {
     const payload: Partial<UpdateEndpointRequest> = {
         name: data.name,
+        description: data.description,
         url: data.url,
         method: data.method,
     };
@@ -87,6 +89,7 @@ export function endpointToFormData(endpoint: any) {
     return {
         scheduleType,
         name: endpoint.name,
+        description: endpoint.description,
         url: endpoint.url || "",
         method: endpoint.method || "GET",
         baselineIntervalMinutes: endpoint.baselineIntervalMs

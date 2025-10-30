@@ -9,6 +9,8 @@ const router = createRouter()
   .openapi(routes.listJobs, handlers.listJobs)
   .openapi(routes.updateJob, handlers.updateJob)
   .openapi(routes.archiveJob, handlers.archiveJob)
+  .openapi(routes.pauseJob, handlers.pauseJob)
+  .openapi(routes.resumeJob, handlers.resumeJob)
 
   // ==================== Endpoint Orchestration Routes ====================
   .openapi(routes.addEndpoint, handlers.addEndpoint)

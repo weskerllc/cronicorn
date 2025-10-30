@@ -232,6 +232,27 @@ function EditEndpointPage() {
 
                     <FormField
                         control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Description (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        placeholder="e.g., Fetches user data for analytics dashboard"
+                                        {...field}
+                                        disabled={updatePending}
+                                    />
+                                </FormControl>
+                                <FormDescription>
+                                    Endpoint-specific context: what it does, response schema, thresholds
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
                         name="url"
                         render={({ field }) => (
                             <FormItem>

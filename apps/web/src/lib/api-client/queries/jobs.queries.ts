@@ -111,6 +111,32 @@ export async function archiveJob(id: string): Promise<ArchiveJobResponse> {
   return json;
 }
 
+const $pauseJob = apiClient.api.jobs[":id"].pause.$post;
+type PauseJobResponse = SuccessResponse<InferResponseType<typeof $pauseJob>>;
+
+export async function pauseJob(id: string): Promise<PauseJobResponse> {
+  const resp = await apiClient.api.jobs[":id"].pause.$post({ param: { id } });
+  const json = await resp.json();
+
+  if ("message" in json) {
+    throw new Error(json.message);
+  }
+  return json;
+}
+
+const $resumeJob = apiClient.api.jobs[":id"].resume.$post;
+type ResumeJobResponse = SuccessResponse<InferResponseType<typeof $resumeJob>>;
+
+export async function resumeJob(id: string): Promise<ResumeJobResponse> {
+  const resp = await apiClient.api.jobs[":id"].resume.$post({ param: { id } });
+  const json = await resp.json();
+
+  if ("message" in json) {
+    throw new Error(json.message);
+  }
+  return json;
+}
+
 // ==================== Query Options Factories ====================
 
 export const JOBS_QUERY_KEY = ["jobs"] as const;

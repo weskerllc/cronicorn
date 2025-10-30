@@ -1,7 +1,7 @@
 import type { HealthSummary, JsonValue, RunsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, avg, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 
 import { jobEndpoints, jobs, runs } from "./schema.js";
 
@@ -271,10 +271,21 @@ export class DrizzleRunsRepo implements RunsRepo {
   }
 
   async getEndpointsWithRecentRuns(since: Date): Promise<string[]> {
+    // Only return endpoints from non-paused jobs (or endpoints without jobs for backward compat)
     const results = await this.tx
       .selectDistinct({ endpointId: runs.endpointId })
       .from(runs)
-      .where(gte(runs.startedAt, since));
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .leftJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(
+        and(
+          gte(runs.startedAt, since),
+          or(
+            isNull(jobs.status), // No job associated (backward compat)
+            ne(jobs.status, "paused"), // Job exists and is not paused
+          ),
+        ),
+      );
 
     return results.map(r => r.endpointId);
   }
