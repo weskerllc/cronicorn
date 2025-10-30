@@ -387,7 +387,7 @@ export class DrizzleJobsRepo implements JobsRepo {
 
   async listJobs(
     userId: string,
-    filters?: { status?: "active" | "archived" },
+    filters?: { status?: "active" | "paused" | "archived" },
   ): Promise<Array<Job & { endpointCount: number }>> {
     // Build base query with endpoint count
     const query = this.tx
