@@ -9,7 +9,7 @@
 const siteConfig = {
   /** Core site information */
   siteName: "Cronicorn",
-  url: import.meta.env.VITE_SITE_URL || "http://localhost:5173",
+  url: import.meta.env.VITE_API_URL || "http://localhost:5173",
   apiUrl: import.meta.env.VITE_API_URL || "http://localhost:3333",
   tagline: "Adaptive task scheduler that learns from your system patterns",
   description: "Intelligent cron alternative with AI job scheduling that automatically adjusts to real-time system conditions. Multi-tier coordination from health checks to auto-recovery across diverse use cases.",
@@ -132,13 +132,13 @@ const siteConfig = {
       siteName: "Cronicorn",
       images: [
         {
-          url: `${import.meta.env.VITE_SITE_URL || "http://localhost:5173"}/og-image.png`,
+          url: `${import.meta.env.VITE_API_URL || "http://localhost:5173"}/og-image.png`,
           width: 1200,
           height: 630,
           alt: "Cronicorn - Adaptive Job Scheduling Platform"
         },
         {
-          url: `${import.meta.env.VITE_SITE_URL || "http://localhost:5173"}/og-image-square.png`,
+          url: `${import.meta.env.VITE_API_URL || "http://localhost:5173"}/og-image-square.png`,
           width: 1200,
           height: 1200,
           alt: "Cronicorn - AI-Powered Job Scheduling"
@@ -149,7 +149,7 @@ const siteConfig = {
       handle: "@cronicorn",
       site: "@cronicorn",
       cardType: "summary_large_image",
-      image: `${import.meta.env.VITE_SITE_URL || "http://localhost:5173"}/twitter-image.png`
+      image: `${import.meta.env.VITE_API_URL || "http://localhost:5173"}/twitter-image.png`
     }
   },
 
