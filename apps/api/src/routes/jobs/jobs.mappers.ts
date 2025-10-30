@@ -44,6 +44,7 @@ export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
     id: endpoint.id,
     jobId: endpoint.jobId,
     name: endpoint.name,
+    description: endpoint.description,
     baselineCron: endpoint.baselineCron,
     baselineIntervalMs: endpoint.baselineIntervalMs,
     minIntervalMs: endpoint.minIntervalMs,
