@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to build (e.g., v1.2.3)'
+        description: "Tag to build (e.g., v1.2.3)"
         required: true
         type: string
 
@@ -118,7 +118,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 6  # Higher parallelism since base layers are pre-cached
+      max-parallel: 6 # Higher parallelism since base layers are pre-cached
       matrix:
         service:
           - name: api
@@ -333,4 +333,4 @@ jobs:
   #             body: updatedBody
   #           });
 
-      #           console.log('Release notes updated with Docker image information');
+  #           console.log('Release notes updated with Docker image information');

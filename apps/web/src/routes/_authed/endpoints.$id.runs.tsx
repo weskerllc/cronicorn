@@ -12,16 +12,16 @@ import {
 } from "@cronicorn/ui-library/components/select";
 import { Button } from "@cronicorn/ui-library/components/button";
 
+import { ListRunsQuerySchema } from "@cronicorn/api-contracts/jobs";
 import { PageHeader } from "../../components/page-header";
 import { DataTable } from "../../components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
 
-// Validate search params for filtering
-const runsSearchSchema = z.object({
+// Extend API contract schema for UI-specific needs (like "all" option)
+const runsSearchSchema = ListRunsQuerySchema.extend({
   status: z.enum(["all", "success", "failed"]).optional().default("all"),
-  dateRange: z.string().optional(),
-});
+}).omit({ endpointId: true, limit: true, offset: true });
 
 export const Route = createFileRoute("/_authed/endpoints/$id/runs")({
   validateSearch: runsSearchSchema,
