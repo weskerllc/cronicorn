@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet-async';
+import { useHead } from '@unhead/react';
 import siteConfig from '../site-config';
 
 interface SEOProps {
@@ -35,55 +35,57 @@ export function SEO({
     // Default image
     const ogImage = image || siteConfig.seo.openGraph.images[0].url;
 
+    // Twitter-specific image (separate from OG image)
+    const twitterImage = image || siteConfig.seo.twitter.image;
+
     // Full URL
     const fullUrl = url ? `${siteConfig.url}${url}` : siteConfig.url;
 
     // Canonical URL
     const canonicalUrl = canonical || fullUrl;
 
-    return (
-        <Helmet>
-            {/* Primary Meta Tags */}
-            <title>{pageTitle}</title>
-            <meta name="title" content={pageTitle} />
-            <meta name="description" content={description} />
-            <meta name="keywords" content={allKeywords.join(', ')} />
+    // Use Unhead to inject meta tags
+    useHead({
+        title: pageTitle,
+        meta: [
+            { name: 'title', content: pageTitle },
+            { name: 'description', content: description },
+            { name: 'keywords', content: allKeywords.join(', ') },
+            { name: 'robots', content: noindex ? 'noindex, nofollow' : 'index, follow' },
 
-            {/* Robots */}
-            <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+            // Open Graph
+            { property: 'og:type', content: type },
+            { property: 'og:url', content: fullUrl },
+            { property: 'og:title', content: pageTitle },
+            { property: 'og:description', content: description },
+            { property: 'og:image', content: ogImage },
+            { property: 'og:image:width', content: '1200' },
+            { property: 'og:image:height', content: '630' },
+            { property: 'og:image:alt', content: pageTitle },
+            { property: 'og:site_name', content: siteConfig.seo.openGraph.siteName },
+            { property: 'og:locale', content: siteConfig.seo.openGraph.locale },
 
-            {/* Canonical URL */}
-            <link rel="canonical" href={canonicalUrl} />
+            // Twitter Card
+            { name: 'twitter:card', content: siteConfig.seo.twitter.cardType },
+            { name: 'twitter:site', content: siteConfig.seo.twitter.site },
+            { name: 'twitter:creator', content: siteConfig.seo.twitter.handle },
+            { name: 'twitter:url', content: fullUrl },
+            { name: 'twitter:title', content: pageTitle },
+            { name: 'twitter:description', content: description },
+            { name: 'twitter:image', content: twitterImage },
+        ],
+        link: [
+            { rel: 'canonical', href: canonicalUrl },
+        ],
+        script: structuredData ? [
+            {
+                type: 'application/ld+json',
+                innerHTML: JSON.stringify(structuredData),
+            },
+        ] : [],
+    });
 
-            {/* Open Graph */}
-            <meta property="og:type" content={type} />
-            <meta property="og:url" content={fullUrl} />
-            <meta property="og:title" content={pageTitle} />
-            <meta property="og:description" content={description} />
-            <meta property="og:image" content={ogImage} />
-            <meta property="og:image:width" content="1200" />
-            <meta property="og:image:height" content="630" />
-            <meta property="og:image:alt" content={pageTitle} />
-            <meta property="og:site_name" content={siteConfig.seo.openGraph.siteName} />
-            <meta property="og:locale" content={siteConfig.seo.openGraph.locale} />
-
-            {/* Twitter Card */}
-            <meta name="twitter:card" content={siteConfig.seo.twitter.cardType} />
-            <meta name="twitter:site" content={siteConfig.seo.twitter.site} />
-            <meta name="twitter:creator" content={siteConfig.seo.twitter.handle} />
-            <meta name="twitter:url" content={fullUrl} />
-            <meta name="twitter:title" content={pageTitle} />
-            <meta name="twitter:description" content={description} />
-            <meta name="twitter:image" content={ogImage} />
-
-            {/* Structured Data */}
-            {structuredData && (
-                <script type="application/ld+json">
-                    {JSON.stringify(structuredData)}
-                </script>
-            )}
-        </Helmet>
-    );
+    return null;
 }
 
 // Utility functions for generating structured data
