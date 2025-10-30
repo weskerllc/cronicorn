@@ -1,6 +1,7 @@
 {
-  "short_name": "TanStack App",
-  "name": "Create TanStack App Sample",
+  "short_name": "Cronicorn",
+  "name": "Cronicorn - AI-Powered Job Scheduling",
+  "description": "Adaptive job scheduling with AI-powered interval optimization",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,18 +9,33 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "favicon-16x16.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "16x16"
     },
     {
-      "src": "logo512.png",
+      "src": "favicon-32x32.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "32x32"
+    },
+    {
+      "src": "android-chrome-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "android-chrome-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "developer tools", "automation"]
 }

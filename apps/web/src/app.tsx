@@ -1,5 +1,5 @@
 import { RouterProvider } from '@tanstack/react-router'
-import { HelmetProvider } from 'react-helmet-async'
+import { UnheadProvider, createHead } from '@unhead/react/client'
 
 import React from 'react';
 import { ThemeProvider } from "@cronicorn/ui-library/components/theme-provider"
@@ -26,14 +26,16 @@ function InnerApp() {
 }
 
 export default function App() {
+  const head = createHead()
+
   return (
-    <HelmetProvider>
+    <UnheadProvider head={head}>
       <AuthProvider>
         <ThemeProvider storageKey="cronicorn-ui-theme">
           <InnerApp />
         </ThemeProvider>
       </AuthProvider>
-    </HelmetProvider>
+    </UnheadProvider>
   )
 }
 
