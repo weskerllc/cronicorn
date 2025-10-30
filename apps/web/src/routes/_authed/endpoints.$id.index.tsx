@@ -30,6 +30,7 @@ import { clearHints, endpointByIdQueryOptions, pauseEndpoint, resetFailures, upd
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
 import {
     endpointToFormData,
+    transformUpdatePayload,
     updateEndpointSchema
 } from "@/lib/endpoint-forms";
 
@@ -70,7 +71,8 @@ function EditEndpointPage() {
             if (!endpoint.jobId) {
                 throw new Error("Endpoint is missing jobId");
             }
-            return updateEndpoint(endpoint.jobId, id, data);
+            const payload = transformUpdatePayload(data);
+            return updateEndpoint(endpoint.jobId, id, payload);
         },
         onSuccess: async () => {
             // Invalidate the flat endpoint query
