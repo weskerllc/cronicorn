@@ -61,7 +61,7 @@ export const listJobs = createRoute({
   summary: "List all jobs for the authenticated user",
   request: {
     query: z.object({
-      status: z.enum(["active", "archived"]).optional(),
+      status: z.enum(["active", "paused", "archived"]).optional(),
     }),
   },
   responses: {
@@ -98,6 +98,34 @@ export const archiveJob = createRoute({
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(schemas.JobResponseSchema, "Archived job"),
+    ...errorResponses,
+  },
+});
+
+export const pauseJob = createRoute({
+  path: "/jobs/:id/pause",
+  method: "post",
+  tags,
+  summary: "Pause a job",
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(schemas.JobResponseSchema, "Paused job"),
+    ...errorResponses,
+  },
+});
+
+export const resumeJob = createRoute({
+  path: "/jobs/:id/resume",
+  method: "post",
+  tags,
+  summary: "Resume a paused job",
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(schemas.JobResponseSchema, "Resumed job"),
     ...errorResponses,
   },
 });
@@ -306,6 +334,8 @@ export type GetJobRoute = typeof getJob;
 export type ListJobsRoute = typeof listJobs;
 export type UpdateJobRoute = typeof updateJob;
 export type ArchiveJobRoute = typeof archiveJob;
+export type PauseJobRoute = typeof pauseJob;
+export type ResumeJobRoute = typeof resumeJob;
 
 export type AddEndpointRoute = typeof addEndpoint;
 export type UpdateEndpointRoute = typeof updateEndpoint;

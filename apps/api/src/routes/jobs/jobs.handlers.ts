@@ -83,6 +83,44 @@ export const archiveJob: AppRouteHandler<routes.ArchiveJobRoute> = async (c) => 
   });
 };
 
+export const pauseJob: AppRouteHandler<routes.PauseJobRoute> = async (c) => {
+  const { id } = c.req.valid("param");
+  const { userId } = getAuthContext(c);
+
+  return c.get("withJobsManager")(async (manager) => {
+    try {
+      const job = await manager.pauseJob(userId, id);
+      return c.json(mappers.mapJobToResponse(job), HTTPStatusCodes.OK);
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : "Pause failed";
+      if (message.includes("not found") || message.includes("unauthorized")) {
+        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
+      }
+      throw error;
+    }
+  });
+};
+
+export const resumeJob: AppRouteHandler<routes.ResumeJobRoute> = async (c) => {
+  const { id } = c.req.valid("param");
+  const { userId } = getAuthContext(c);
+
+  return c.get("withJobsManager")(async (manager) => {
+    try {
+      const job = await manager.resumeJob(userId, id);
+      return c.json(mappers.mapJobToResponse(job), HTTPStatusCodes.OK);
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : "Resume failed";
+      if (message.includes("not found") || message.includes("unauthorized")) {
+        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
+      }
+      throw error;
+    }
+  });
+};
+
 // ==================== Endpoint Orchestration Handlers ====================
 
 export const addEndpoint: AppRouteHandler<routes.AddEndpointRoute> = async (c) => {
