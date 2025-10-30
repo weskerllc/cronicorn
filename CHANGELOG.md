@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/weskerllc/cronicorn/compare/v1.0.5...v1.1.0) (2025-10-30)
+
+
+### Features
+
+* Web and Agent enhancements ([#1](https://github.com/weskerllc/cronicorn/issues/1)) ([779bdf3](https://github.com/weskerllc/cronicorn/commit/779bdf37a157ae4402a9e333ead3f507cdf1f957))
+
 ## [1.0.5](https://github.com/weskerllc/cronicorn/compare/v1.0.4...v1.0.5) (2025-10-27)
 
 
