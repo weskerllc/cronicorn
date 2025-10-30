@@ -1,3 +1,5 @@
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+
 import { schema } from "@cronicorn/adapter-drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -15,4 +17,5 @@ export function createDatabase(config: Env) {
   return drizzle(pool, { schema });
 }
 
-export type Database = ReturnType<typeof createDatabase>;
+// export type Database = ReturnType<typeof createDatabase>;
+export type Database = NodePgDatabase<typeof schema>;

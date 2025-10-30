@@ -7,6 +7,27 @@ import type { Database } from "../db.js";
 /**
  * Creates a test database connection for integration tests.
  *
+ * @deprecated Use the transactional fixture pattern from `./fixtures.ts` instead.
+ * This function creates a database connection but does NOT provide transaction isolation,
+ * which means tests can pollute the database. The fixture pattern automatically wraps
+ * each test in BEGIN/ROLLBACK for perfect isolation.
+ *
+ * Example migration:
+ * ```ts
+ * // Old pattern (deprecated):
+ * beforeEach(async () => {
+ *   const testDb = await createTestDatabase();
+ *   db = testDb.db;
+ * });
+ *
+ * // New pattern (recommended):
+ * import { test, expect, closeTestPool } from "../lib/__tests__/fixtures.js";
+ * test("my test", async ({ tx }) => {
+ *   const app = await createApp(tx, testConfig, mockAuth);
+ *   // ... test code runs in transaction, auto-rollback after
+ * });
+ * ```
+ *
  * Uses DATABASE_URL from environment (should be loaded by vitest from .env.test).
  * Returns a database instance and cleanup function.
  */
