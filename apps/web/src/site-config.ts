@@ -39,6 +39,35 @@ const siteConfig = {
   githubUrl: "https://github.com/weskerllc/cronicorn",
   supportUrl: "https://github.com/weskerllc/cronicorn/issues/new",
 
+  /** Documentation and resource URLs */
+  urls: {
+    // Product pages
+    home: "/",
+    pricing: "/pricing",
+    faq: "/faq",
+    dashboard: "/dashboard",
+    login: "/login",
+    register: "/register",
+
+    // Documentation
+    documentation: "https://github.com/weskerllc/cronicorn#readme",
+    quickstart: "https://github.com/weskerllc/cronicorn/blob/main/docs/quickstart.md",
+    useCases: "https://github.com/weskerllc/cronicorn/blob/main/docs/use-cases.md",
+    architecture: "https://github.com/weskerllc/cronicorn/blob/main/docs/architecture.md",
+    apiReference: "https://github.com/weskerllc/cronicorn/blob/main/docs/api-reference.md",
+
+    // Community
+    github: "https://github.com/weskerllc/cronicorn",
+    support: "https://github.com/weskerllc/cronicorn/issues/new",
+    contributing: "https://github.com/weskerllc/cronicorn/blob/main/docs/contributing.md",
+    changelog: "https://github.com/weskerllc/cronicorn/blob/main/CHANGELOG.md",
+
+    // Legal
+    privacy: "/privacy",
+    terms: "/terms",
+    contact: "mailto:support@cronicorn.com",
+  },
+
   /**
    * SEO Configuration
    * Includes keywords, OpenGraph, and Twitter Card settings

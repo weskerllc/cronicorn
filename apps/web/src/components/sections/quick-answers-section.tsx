@@ -48,7 +48,7 @@ export default function QuickAnswersSection() {
                         <p className="mb-3 leading-relaxed">
                             Data pipelines <strong className="text-foreground">accelerate when backlogs grow</strong>. Social posts <strong className="text-foreground">shift to peak engagement</strong>. Web scrapers <strong className="text-foreground">slow when rate-limited</strong>. Billing cycles <strong className="text-foreground">speed up near quotas</strong>.
                         </p>
-                        <div className="flex items-start gap-2 text-sm bg-primary/10 border-l-2 border-primary px-3 py-2 rounded">
+                        <div className="flex items-start gap-2 text-sm bg-primary/10 hover:bg-primary/15 border-l-2 border-primary px-3 py-2 rounded-xs">
                             <Sparkles className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                             <p className="text-foreground/90">
                                 Every change includes transparent reasoning: <em className="text-primary">"Backlog detected—increasing ETL to 2 minutes."</em>
@@ -83,19 +83,19 @@ export default function QuickAnswersSection() {
             case "examples":
                 return (
                     <ul className="space-y-3">
-                        <li className="flex items-start gap-3 p-3 rounded-lg bg-blue-500/5 hover:bg-blue-500/10 transition-colors border-l-2 border-blue-500/30">
+                        <li className="flex items-start gap-3 p-3 rounded-xs bg-blue-500/5 hover:bg-blue-500/10 transition-colors border-l-2 border-blue-500/30">
                             <ArrowRight className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                             <span><strong className="text-foreground">Data Pipeline:</strong> ETL runs every hour → backlog detected → increases to 15min → clears → back to hourly</span>
                         </li>
-                        <li className="flex items-start gap-3 p-3 rounded-lg bg-purple-500/5 hover:bg-purple-500/10 transition-colors border-l-2 border-purple-500/30">
+                        <li className="flex items-start gap-3 p-3 rounded-xs bg-purple-500/5 hover:bg-purple-500/10 transition-colors border-l-2 border-purple-500/30">
                             <ArrowRight className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
                             <span><strong className="text-foreground">Content Publishing:</strong> Posts scheduled for 9am → high engagement detected → AI suggests immediate follow-up</span>
                         </li>
-                        <li className="flex items-start gap-3 p-3 rounded-lg bg-green-500/5 hover:bg-green-500/10 transition-colors border-l-2 border-green-500/30">
+                        <li className="flex items-start gap-3 p-3 rounded-xs bg-green-500/5 hover:bg-green-500/10 transition-colors border-l-2 border-green-500/30">
                             <ArrowRight className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                             <span><strong className="text-foreground">Web Scraping:</strong> Requests every 5sec → rate limit warning → slows to 30sec → recovers → resumes</span>
                         </li>
-                        <li className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/5 hover:bg-orange-500/10 transition-colors border-l-2 border-orange-500/30">
+                        <li className="flex items-start gap-3 p-3 rounded-xs bg-orange-500/5 hover:bg-orange-500/10 transition-colors border-l-2 border-orange-500/30">
                             <ArrowRight className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
                             <span><strong className="text-foreground">E-commerce:</strong> Health checks every 5min → traffic surge → tightens to 30sec → stabilizes → relaxes</span>
                         </li>
@@ -104,7 +104,7 @@ export default function QuickAnswersSection() {
 
             case "comparison":
                 return (
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-1 md:grid-cols-1 gap-4">
                         <div className="p-4 rounded-lg bg-destructive/5 border-l-4 border-destructive/30 hover:bg-destructive/10 transition-colors">
                             <p className="text-sm font-semibold mb-2 text-destructive">Traditional Cron</p>
                             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -137,41 +137,36 @@ export default function QuickAnswersSection() {
                 description="Everything you need to know about intelligent job scheduling"
             />
 
-            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+            <div className="grid lg:grid-cols-2 border-muted-foreground/10 border-t">
                 {quickAnswers.map((qa, index) => (
                     <article
                         key={index}
                         className={cn(
                             "group relative",
-                            "bg-gradient-to-b from-card to-card/50",
-                            "hover:from-card hover:to-accent/5",
-                            "border border-border/50 hover:border-primary/30",
-                            "rounded-xl p-8 md:p-10",
-                            "shadow-sm hover:shadow-lg",
-                            "transform hover:-translate-y-1",
+                            " odd:border-r border-b border-muted-foreground/10",
+                            " p-8 md:p-10",
+                            // "shadow-sm hover:shadow-lg",
+                            // "transform hover:-translate-y-1",
                             "transition-all duration-300 ease-out"
                         )}
                         itemScope
                         itemType="https://schema.org/Question"
                     >
-                        {/* Visual anchor icon */}
-                        <div className="mb-4 flex items-center gap-3">
-                            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                {qa.icon}
-                            </div>
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
-                                <span className="text-sm font-semibold text-muted-foreground">{index + 1}</span>
-                            </div>
-                        </div>
 
-                        <header className="mb-6">
-                            <h3
-                                className="font-semibold text-xl md:text-2xl mb-3 tracking-tight text-foreground group-hover:text-primary transition-colors leading-tight"
-                                itemProp="name"
-                            >
-                                {qa.question}
-                            </h3>
-                            <p className="text-base font-medium text-foreground/90 leading-relaxed">
+
+                        <header className="mb-6 space-y-4">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                {qa.icon}
+
+                                <h3
+                                    className=" text-sm  tracking-tight transition-colors leading-tight"
+                                    itemProp="name"
+                                >
+                                    {qa.question}
+                                </h3>
+                            </div>
+
+                            <p className="text-xl font-medium text-foreground/90 leading-tight">
                                 {qa.powerSentence}
                             </p>
                         </header>
@@ -181,7 +176,7 @@ export default function QuickAnswersSection() {
                             <meta itemProp="text" content={qa.seoText} />
 
                             {/* Visible rich content */}
-                            <div className="text-muted-foreground text-sm md:text-base">
+                            <div className="text-muted-foreground text-sm ">
                                 {renderContent(qa.format)}
                             </div>
                         </div>
