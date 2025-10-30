@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { AlertCircle, Plus, Save, X, Zap } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 
@@ -26,12 +26,11 @@ import { toast } from "sonner";
 
 import { PageHeader } from "../../components/page-header";
 import type { UpdateEndpointForm } from "@/lib/endpoint-forms";
-import { clearHints, endpointByIdQueryOptions, endpointQueryOptions, pauseEndpoint, resetFailures, updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
+import { clearHints, endpointByIdQueryOptions, pauseEndpoint, resetFailures, updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
 import {
     endpointToFormData,
-    transformUpdatePayload,
-    updateEndpointSchema,
+    updateEndpointSchema
 } from "@/lib/endpoint-forms";
 
 export const Route = createFileRoute("/_authed/endpoints/$id/")({
