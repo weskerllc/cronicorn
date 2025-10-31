@@ -9,11 +9,9 @@
 const siteConfig = {
   /** Core site information */
   siteName: "Cronicorn",
-  url: import.meta.env.VITE_API_URL || "http://localhost:5173",
-  apiUrl: import.meta.env.VITE_API_URL || "http://localhost:3333",
-  tagline: "Adaptive task scheduler that learns from your system patterns",
-  description: "Intelligent cron alternative with AI job scheduling that automatically adjusts to real-time system conditions. Multi-tier coordination from health checks to auto-recovery across diverse use cases.",
-  description2: "Event-driven job scheduler built for cloud-native applications. Our adaptive monitoring scheduler learns from execution patterns and coordinates intelligent HTTP workflows.",
+  url: import.meta.env.VITE_SITE_URL || "http://localhost:5173",
+  tagline: "Intelligent job scheduling that adapts to your reality",
+  description: "AI-powered HTTP job scheduler that automatically adapts to real-time conditions—tightening monitoring during incidents and relaxing during recovery. Reduce alert fatigue, speed up recovery, and sleep better.",
 
   /** Headlines and messaging used throughout marketing pages */
   headlines: {
@@ -31,13 +29,21 @@ const siteConfig = {
 
   /** Meta descriptions optimized for search engines */
   metaDescriptions: {
-    home: "Adaptive task scheduler that adjusts to real-time conditions. Intelligent cron alternative with transparent AI decisions. Early access available.",
+    home: "Intelligent job scheduling that automatically adjusts to your system's reality. Reduce alert fatigue, speed up recovery, and sleep better. Try free.",
     pricing: "Flexible pricing for adaptive monitoring. Start with early access. Enterprise features for intelligent HTTP scheduler and workflow orchestration.",
-    docs: "Complete documentation for adaptive scheduling with AI hints. Quick start guides, API reference. Get started with intelligent cron alternatives."
+    docs: "Complete documentation for adaptive scheduling with AI hints. Quick start guides, API reference. Get started with intelligent cron alternatives.",
+    faq: "Get answers to common questions about Cronicorn's AI-powered job scheduling. Learn about adaptive intervals, workflow orchestration, and intelligent automation.",
+    login: "Sign in to your Cronicorn account to access powerful AI-driven job scheduling, analytics, and automation tools. Multiple authentication options available.",
+    register: "Join Cronicorn today and transform your job scheduling with AI. Get started with 100 free jobs per month, intelligent recommendations, and powerful analytics."
   },
 
-  githubUrl: "https://github.com/weskerllc/cronicorn",
-  supportUrl: "https://github.com/weskerllc/cronicorn/issues/new",
+  /** Page titles for SEO (used with titleTemplate) */
+  pageTitles: {
+    pricing: "Pricing Plans - Choose Your AI Scheduling Solution",
+    login: "Login - Access Your AI Scheduling Dashboard",
+    register: "Create Account - Start AI-Powered Scheduling",
+    faq: "Frequently Asked Questions"
+  },
 
   /** Documentation and resource URLs */
   urls: {
@@ -73,7 +79,7 @@ const siteConfig = {
    * Includes keywords, OpenGraph, and Twitter Card settings
    */
   seo: {
-    defaultTitle: "Cronicorn - AI Job Scheduler | Intelligent Cron Alternative",
+    defaultTitle: "Cronicorn: AI-Powered HTTP Job Scheduler That Adapts",
     titleTemplate: "%s | Cronicorn",
     keywords: [
       // Tier 1 primary keywords
@@ -132,13 +138,13 @@ const siteConfig = {
       siteName: "Cronicorn",
       images: [
         {
-          url: `${import.meta.env.VITE_API_URL || "http://localhost:5173"}/og-image.png`,
+          url: `${import.meta.env.VITE_SITE_URL || "http://localhost:5173"}/og-image.png`,
           width: 1200,
           height: 630,
           alt: "Cronicorn - Adaptive Job Scheduling Platform"
         },
         {
-          url: `${import.meta.env.VITE_API_URL || "http://localhost:5173"}/og-image-square.png`,
+          url: `${import.meta.env.VITE_SITE_URL || "http://localhost:5173"}/og-image-square.png`,
           width: 1200,
           height: 1200,
           alt: "Cronicorn - AI-Powered Job Scheduling"
@@ -149,7 +155,7 @@ const siteConfig = {
       handle: "@cronicorn",
       site: "@cronicorn",
       cardType: "summary_large_image",
-      image: `${import.meta.env.VITE_API_URL || "http://localhost:5173"}/twitter-image.png`
+      image: `${import.meta.env.VITE_SITE_URL || "http://localhost:5173"}/twitter-image.png`
     }
   },
 
@@ -230,11 +236,11 @@ const siteConfig = {
       },
       secondary: {
         text: "View Documentation",
-        href: "/docs"
+        href: "https://github.com/weskerllc/cronicorn#readme"
       },
       github: {
         text: "View us on Github",
-        href: "https://github.com/bcanfield/cron-mvp"
+        href: "https://github.com/weskerllc/cronicorn"
       }
     }
   },
@@ -264,7 +270,7 @@ const siteConfig = {
     sameAs: [
       "https://twitter.com/cronicorn",
       "https://linkedin.com/company/cronicorn",
-      "https://github.com/cronicorn"
+      "https://github.com/weskerllc/cronicorn"
     ]
   },
 

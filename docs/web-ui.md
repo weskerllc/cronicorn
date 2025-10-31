@@ -118,7 +118,6 @@ pnpm install
 
 # Configure environment
 cp .env.example .env.local
-# Edit VITE_API_URL
 
 # Start dev server
 pnpm dev

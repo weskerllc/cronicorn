@@ -119,8 +119,8 @@ function RouteComponent() {
   return (
     <>
       <SEO
-        title="Login - Access Your AI Scheduling Dashboard"
-        description="Sign in to your Cronicorn account to access powerful AI-driven job scheduling, analytics, and automation tools. Multiple authentication options available."
+        title={siteConfig.pageTitles.login}
+        description={siteConfig.metaDescriptions.login}
         keywords={["login", "sign in", "authentication", "user account", "dashboard access"]}
         url="/login"
         noindex={true}

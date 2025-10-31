@@ -1,8 +1,10 @@
 import { apiKeyClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
-const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3333";
-const authUrl = `${apiUrl}/api/auth`;
+// API is proxied at /api, no need for full URL
+const siteUrl = import.meta.env.VITE_SITE_URL || "http://localhost:5173";
+
+const authUrl = `${siteUrl}/api/auth`;
 
 export const authClient = createAuthClient({
   baseURL: authUrl,

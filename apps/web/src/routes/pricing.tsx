@@ -109,7 +109,7 @@ function Pricing() {
   return (
     <>
       <SEO
-        title="Pricing Plans - Choose Your AI Scheduling Solution"
+        title={siteConfig.pageTitles.pricing}
         description={siteConfig.metaDescriptions.pricing}
         keywords={["pricing", "plans", "subscription", "AI scheduling cost", "cron job pricing", "enterprise scheduling"]}
         url="/pricing"
