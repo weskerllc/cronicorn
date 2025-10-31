@@ -42,7 +42,6 @@ function Index() {
   return (
     <>
       <SEO
-        title="Adaptive Job Scheduling Platform"
         description={siteConfig.metaDescriptions.home}
         keywords={[...siteConfig.seo.keywords]}
         url="/"

@@ -39,7 +39,7 @@ GITHUB_CLIENT_SECRET=your-client-secret
 
 **Web UI** (`.env.local`):
 ```bash
-VITE_API_URL=http://localhost:3000
+VITE_SITE_URL=http://localhost:5173
 ```
 
 ### Production Setup

@@ -46,9 +46,9 @@ RUN pnpm deploy --filter=@cronicorn/ai-planner-app --prod --legacy /prod/ai-plan
 
 FROM build AS deploy-web
 # Pass build-time environment variables for Vite
-ARG VITE_API_URL
+ARG VITE_SITE_URL
 ARG NODE_ENV=production
-ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_SITE_URL=$VITE_SITE_URL
 ENV NODE_ENV=$NODE_ENV
 RUN pnpm --filter @cronicorn/web run build
 RUN pnpm deploy --filter=@cronicorn/web --prod --legacy /prod/web

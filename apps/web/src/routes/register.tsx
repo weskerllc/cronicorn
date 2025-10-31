@@ -100,8 +100,8 @@ function RouteComponent() {
   return (
     <>
       <SEO
-        title="Create Account - Start AI-Powered Scheduling"
-        description="Join Cronicorn today and transform your job scheduling with AI. Get started with 100 free jobs per month, intelligent recommendations, and powerful analytics."
+        title={siteConfig.pageTitles.register}
+        description={siteConfig.metaDescriptions.register}
         keywords={["sign up", "create account", "register", "free trial", "AI scheduling", "join"]}
         url="/register"
         noindex={true}

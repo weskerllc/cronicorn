@@ -2,7 +2,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@c
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "../components/page-header";
-import { SEO, createFAQSchema, createProductSchema } from "@/components/SEO";
+import { SEO, createFAQSchema } from "@/components/SEO";
 import siteConfig from "@/site-config";
 
 export const Route = createFileRoute("/faq")({
@@ -16,11 +16,10 @@ function Faq() {
 
     const faqs = [...siteConfig.faq.primary];
 
-    // Structured data for each pricing tier
-    const tierStructuredData = {
+    // Structured data for FAQ page
+    const faqStructuredData = {
         "@context": "https://schema.org",
         "@graph": [
-            ...siteConfig.pricing.map((tier) => createProductSchema(tier)),
             createFAQSchema(faqs)
         ]
     };
@@ -28,11 +27,11 @@ function Faq() {
     return (
         <>
             <SEO
-                title="Pricing Plans - Choose Your AI Scheduling Solution"
-                description={siteConfig.metaDescriptions.pricing}
-                keywords={["pricing", "plans", "subscription", "AI scheduling cost", "cron job pricing", "enterprise scheduling"]}
-                url="/pricing"
-                structuredData={tierStructuredData}
+                title={siteConfig.pageTitles.faq}
+                description={siteConfig.metaDescriptions.faq}
+                keywords={["faq", "questions", "AI scheduling help", "intelligent cron questions", "adaptive monitoring faq"]}
+                url="/faq"
+                structuredData={faqStructuredData}
             />
 
             <main className="max-w-7xl mx-auto space-y-16 p-8" role="main">

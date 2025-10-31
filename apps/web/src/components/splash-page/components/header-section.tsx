@@ -34,7 +34,7 @@ export default function HeaderSection() {
                     <a href='/faq' className="text-foreground/70 hover:text-foreground transition-colors duration-150 text-sm font-medium">
                         FAQ
                     </a>
-                    <a href={siteConfig.apiUrl} target="_blank" className="text-foreground/70 hover:text-foreground transition-colors duration-150 text-sm font-medium">
+                    <a href="/api" target="_blank" className="text-foreground/70 hover:text-foreground transition-colors duration-150 text-sm font-medium">
                         API Playground
                     </a>
                     <a
