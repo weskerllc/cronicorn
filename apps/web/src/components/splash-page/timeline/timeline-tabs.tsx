@@ -37,7 +37,7 @@ export function TimelineTabs({ tabs, className, onTabChange }: AnimatedTabsProps
             <TabsList className="flex h-auto bg-transparent min-w-full p-0 gap-0 rounded-none border-b border-border/20">
               {tabs.map(tab => (
                 <TabsTrigger
-                  className="relative rounded-none border-0 bg-transparent px-4 md:px-5 py-3 text-sm font-medium text-muted-foreground/70 shadow-none transition-all duration-150 hover:text-foreground/90 data-[state=active]:bg-transparent! data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-transparent data-[state=active]:after:bg-primary"
+                  className="relative rounded-none border-0 bg-transparent px-4 md:px-5 py-3 text-sm font-medium text-muted-foreground shadow-none transition-all duration-150 hover:text-foreground/90 data-[state=active]:bg-transparent! data-[state=active]:text-foreground data-[state=active]:shadow-none after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-transparent data-[state=active]:after:bg-primary"
                   key={`${tab.label}-tab-trigger`}
                   value={tab.id}
                 >
