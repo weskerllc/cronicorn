@@ -192,3 +192,29 @@ export const aiAnalysisSessions = pgTable("ai_analysis_sessions", {
   tokenUsage: integer("token_usage"), // Total tokens consumed
   durationMs: integer("duration_ms"), // Analysis duration
 });
+
+/**
+ * Device Authorization tables (Better Auth OAuth Device Flow).
+ * Better Auth automatically creates and manages these tables.
+ * We define them here for Drizzle type safety and migration tracking.
+ */
+export const deviceCodes = pgTable("device_codes", {
+  id: text("id").primaryKey(),
+  deviceCode: text("device_code").notNull().unique(),
+  userCode: text("user_code").notNull().unique(),
+  clientId: text("client_id").notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull(),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("pending"), // "pending" | "approved" | "denied" | "expired"
+});
+
+export const oauthTokens = pgTable("oauth_tokens", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  deviceCodeId: text("device_code_id").references(() => deviceCodes.id, { onDelete: "cascade" }),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at", { mode: "date" }),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull(),
+});

@@ -30,10 +30,10 @@
 ## 🔧 Phase 1: Backend OAuth Setup (Week 1)
 
 ### Database & Schema
-- [ ] Add `deviceAuthorization` plugin to Better Auth config (`apps/api/src/auth/config.ts`)
-- [ ] Run database migrations to create device flow tables
-- [ ] Verify tables created: `device_codes`, `oauth_tokens`
-- [ ] Test database schema with manual inserts
+- [x] Add `deviceAuthorization` plugin to Better Auth config (`apps/api/src/auth/config.ts`)
+- [x] Run database migrations to create device flow tables
+- [x] Verify tables created: `device_codes`, `oauth_tokens`
+- [x] Test database schema with manual inserts
 
 ### Better Auth Configuration
 - [ ] Import `deviceAuthorization` from `better-auth/plugins`

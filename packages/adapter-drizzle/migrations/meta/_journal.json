@@ -64,6 +64,13 @@
       "when": 1761834711260,
       "tag": "0008_furry_alice",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1761928721359,
+      "tag": "0009_cheerful_husk",
+      "breakpoints": true
     }
   ]
 }
