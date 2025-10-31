@@ -2,6 +2,7 @@ import { cn } from "@cronicorn/ui-library/lib/utils";
 import { ArrowRight, Code, GitCompare, Layers, Sparkles, Zap } from "lucide-react";
 import SectionContainer from "@/components/ui/section-container";
 import SectionHeader from "@/components/ui/section-header";
+import siteConfig from "@/site-config";
 
 /**
  * Quick Answers section displaying FAQ-style content optimized for SEO
@@ -133,8 +134,8 @@ export default function QuickAnswersSection() {
         >
             <SectionHeader
                 id="quick-answers-heading"
-                heading="Quick Answers"
-                description="Everything you need to know about intelligent job scheduling"
+                heading={siteConfig.splash.sections.quickAnswers.heading}
+                description={siteConfig.splash.sections.quickAnswers.description}
             />
 
             <div className="grid lg:grid-cols-2 border-muted-foreground/10 border-t">

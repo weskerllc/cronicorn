@@ -61,7 +61,7 @@ const data = {
     },
     {
       title: "Get Help",
-      url: siteConfig.supportUrl,
+      url: siteConfig.urls.support,
       icon: IconHelp,
     },
   ],
