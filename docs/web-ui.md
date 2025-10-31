@@ -155,7 +155,7 @@ See [Future Improvements](#future-improvements) for planned enhancements.
 ### Environment Variables
 ```bash
 # Required
-VITE_API_URL=https://api.yourdomain.com
+VITE_SITE_URL=https://yourdomain.com
 
 # Optional (defaults to production)
 NODE_ENV=production
@@ -206,7 +206,7 @@ pnpm build
 ```
 
 ### API Connection Issues
-- Verify `VITE_API_URL` matches your API server
+- Verify `VITE_SITE_URL` matches your site URL (API is proxied at /api)
 - Check CORS configuration in API server
 - Ensure API server is running and accessible
 
