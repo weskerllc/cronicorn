@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/weskerllc/cronicorn/compare/v1.3.0...v1.3.1) (2025-10-31)
+
+
+### Bug Fixes
+
+* SEO fix ([8d62122](https://github.com/weskerllc/cronicorn/commit/8d62122ade091ebb8dcd29e7df1619e79f9b1295))
+
 # [1.3.0](https://github.com/weskerllc/cronicorn/compare/v1.2.0...v1.3.0) (2025-10-31)
 
 
