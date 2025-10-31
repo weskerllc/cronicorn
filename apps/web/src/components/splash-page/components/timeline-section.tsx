@@ -25,7 +25,7 @@ export default function TimelineSection({ tabData }: TimelineSectionProps) {
                     <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2.5 tracking-tight">
                         See Cronicorn in Action
                     </h2>
-                    <p className="text-muted-foreground/80 text-sm md:text-base max-w-2xl mx-auto">
+                    <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto">
                         Watch how AI adapts to real-world scenarios
                     </p>
                 </div>
@@ -41,12 +41,12 @@ export default function TimelineSection({ tabData }: TimelineSectionProps) {
                     {/* Condensed Benefits - subtle footer */}
                     <div className="border-t border-border/20 pt-5 px-2">
                         <div className="flex items-start gap-3 text-sm">
-                            <span className="text-muted-foreground/70 font-medium text-xs">Automated:</span>
+                            <span className="text-muted-foreground font-medium text-xs">Automated:</span>
                             <div className="space-y-2.5">
                                 {currentBenefits.map((item, index) => (
                                     <div key={index} className="flex items-start gap-2">
                                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500 flex-shrink-0 mt-0.5" />
-                                        <span className="text-muted-foreground/70 leading-relaxed text-xs">{item}</span>
+                                        <span className="text-muted-foreground leading-relaxed text-xs">{item}</span>
                                     </div>
                                 ))}
                             </div>

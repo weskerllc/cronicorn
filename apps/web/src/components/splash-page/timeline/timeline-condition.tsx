@@ -45,7 +45,7 @@ export function TimelineConditionCard({ condition, className }: TimelineConditio
       role="status"
       aria-label={`${condition.label}: ${condition.value} - ${condition.description}`}
     >
-      <span className="text-xs font-medium text-muted-foreground/80 min-w-[100px]">
+      <span className="text-xs font-medium text-muted-foreground min-w-[100px]">
         {condition.label}
       </span>
       <span className="text-sm font-bold text-foreground font-mono tabular-nums">

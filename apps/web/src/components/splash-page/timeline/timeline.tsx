@@ -29,7 +29,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
             {/* Live Conditions Section */}
             <section aria-labelledby="conditions-heading">
               <div className="mb-3">
-                <h2 id="conditions-heading" className="text-xs font-medium text-muted-foreground/80">
+                <h2 id="conditions-heading" className="text-xs font-medium text-muted-foreground">
                   Live conditions
                 </h2>
               </div>
@@ -44,7 +44,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
             {/* Timeline Section */}
             <section aria-labelledby="timeline-heading">
               <div className="flex items-center justify-between mb-3">
-                <h2 id="timeline-heading" className="text-xs font-medium text-muted-foreground/80">
+                <h2 id="timeline-heading" className="text-xs font-medium text-muted-foreground">
                   Execution timeline
                 </h2>
 
@@ -56,7 +56,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
                     aria-live="polite"
                     aria-label={`Current time: ${Math.floor(currentTime)} minutes`}
                   >
-                    <span className="text-[10px] font-medium text-muted-foreground/80 font-mono tabular-nums">
+                    <span className="text-[10px] font-medium text-muted-foreground font-mono tabular-nums">
                       {Math.floor(currentTime)}m
                     </span>
                   </div>
@@ -77,7 +77,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
                   {Array.from({ length: 5 }, (_, i) => i * (config.maxTime / 4)).map(time => (
                     <div key={time} className="flex flex-col items-center">
                       <div className="w-px h-2 bg-border/50" />
-                      <span className="text-[10px] font-medium text-muted-foreground/80 font-mono mt-1.5 tabular-nums">
+                      <span className="text-[10px] font-medium text-muted-foreground font-mono mt-1.5 tabular-nums">
                         {time}m
                       </span>
                     </div>
@@ -108,7 +108,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
           <div className="text-left mt-3 px-1" role="status" aria-live="polite">
             <div
               key={currentStep}
-              className="text-xs text-muted-foreground/80"
+              className="text-xs text-muted-foreground"
             >
               {currentData?.caption}
             </div>
