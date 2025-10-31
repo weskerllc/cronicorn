@@ -50,7 +50,7 @@ jobs:
         run: pnpm run build
 
       - name: Start PostgreSQL database
-        run: docker compose -f docker-compose.dev.yml --env-file .env.test up -d
+        run: DB_PORT=5432 docker compose -f docker-compose.dev.yml up -d
 
       - name: Wait for PostgreSQL to be ready
         run: |
@@ -69,10 +69,14 @@ jobs:
           echo "PostgreSQL is ready!"
 
       - name: Run database migrations and reset
-        run: pnpm exec dotenv -e .env.test -- pnpm db:migrate
+        run: pnpm run -r --parallel migrate
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/db
 
       - name: Run tests with coverage
-        run: pnpm exec dotenv -e .env.test pnpm test
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/db
 
   release:
     runs-on: ubuntu-latest

@@ -28,7 +28,7 @@ import type { Database } from "../db.js";
  * });
  * ```
  *
- * Uses DATABASE_URL from environment (should be loaded by vitest from .env.test).
+ * Uses DATABASE_URL from environment (should be loaded by vitest from .env).
  * Returns a database instance and cleanup function.
  */
 export async function createTestDatabase(): Promise<{

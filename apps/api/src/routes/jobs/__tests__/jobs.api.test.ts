@@ -52,7 +52,7 @@ describe("jobs API", () => {
     test("creates job with valid input", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const res = await app.request("/api/jobs", {
         method: "POST",
@@ -81,7 +81,7 @@ describe("jobs API", () => {
     test("returns job by id", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       // First create a job
       const createRes = await app.request("/api/jobs", {
@@ -109,7 +109,7 @@ describe("jobs API", () => {
     test("returns 404 for non-existent job", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const res = await app.request("/api/jobs/nonexistent-id", {
         method: "GET",
@@ -123,7 +123,7 @@ describe("jobs API", () => {
     test("lists all jobs for user", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       // Create two jobs
       await app.request("/api/jobs", {
@@ -150,7 +150,7 @@ describe("jobs API", () => {
     test("filters jobs by status", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       // Create and archive a job
       const createRes = await app.request("/api/jobs", {
@@ -185,7 +185,7 @@ describe("jobs API", () => {
     test("updates job name and description", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const createRes = await app.request("/api/jobs", {
         method: "POST",
@@ -213,7 +213,7 @@ describe("jobs API", () => {
     test("archives job (soft delete)", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const createRes = await app.request("/api/jobs", {
         method: "POST",
@@ -238,7 +238,7 @@ describe("jobs API", () => {
     test("adds endpoint to job with cron schedule", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -271,7 +271,7 @@ describe("jobs API", () => {
     test("adds endpoint with interval schedule", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -305,7 +305,7 @@ describe("jobs API", () => {
     test("lists all endpoints for a job", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -350,7 +350,7 @@ describe("jobs API", () => {
     test("updates endpoint configuration", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -391,7 +391,7 @@ describe("jobs API", () => {
     test("deletes endpoint", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -426,7 +426,7 @@ describe("jobs API", () => {
     test("applies interval hint", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -465,7 +465,7 @@ describe("jobs API", () => {
     test("schedules one-shot run", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -505,7 +505,7 @@ describe("jobs API", () => {
     test("pauses endpoint", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -542,7 +542,7 @@ describe("jobs API", () => {
     test("resumes endpoint when untilIso is null", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -580,7 +580,7 @@ describe("jobs API", () => {
     test("clears all hints", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -613,7 +613,7 @@ describe("jobs API", () => {
     test("resets failure count", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -648,7 +648,7 @@ describe("jobs API", () => {
     test("lists run history", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -682,7 +682,7 @@ describe("jobs API", () => {
     test("filters runs by status", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -715,7 +715,7 @@ describe("jobs API", () => {
     test("returns health summary", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",

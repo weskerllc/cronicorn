@@ -65,11 +65,9 @@ To run contract tests against the real Drizzle adapter:
 2. **Configure environment:**
 
    ```bash
-   # Copy example config
-   cp .env.test.example .env.test
-
-   # Edit .env.test with your DATABASE_URL
-   # Vitest automatically loads .env.test files
+   # Create .env file with your DATABASE_URL
+   # Vitest automatically loads .env files
+   DATABASE_URL="postgresql://user:password@localhost:6666/db"
    ```
 
 3. **Run tests:**

@@ -24,6 +24,7 @@ export async function createApp(
   db: Database,
   config: Env,
   authInstance?: Auth, // Optional auth for testing
+  options?: { useTransactions?: boolean }, // Explicit control for tests
 ) {
   // Initialize Better Auth (pass Drizzle instance, not raw pool)
   // Use provided auth instance for testing, or create new one for production
@@ -32,6 +33,11 @@ export async function createApp(
   // Create stateless singletons (safe to reuse across requests)
   const clock = new SystemClock();
   const cron = new CronParserAdapter();
+
+  // Determine if we should create new transactions or use the passed db directly
+  // In tests, db is already a transaction, so we pass useTransactions: false
+  // In production, db is a pool, so we default to creating transactions per request
+  const shouldCreateTransactions = options?.useTransactions ?? true;
 
   // Initialize Stripe payment provider
   const stripeProvider = new StripePaymentProvider({
@@ -71,18 +77,32 @@ export async function createApp(
 
     // Provide transaction wrapper that auto-creates JobsManager
     c.set("withJobsManager", (fn) => {
-      return db.transaction(async (tx) => {
-        const manager = createJobsManager(tx, clock, cron);
+      if (shouldCreateTransactions) {
+        // Production: create a new transaction per request
+        return db.transaction(async (tx) => {
+          const manager = createJobsManager(tx, clock, cron);
+          return fn(manager);
+        });
+      }
+      else {
+        // Tests: use the existing transaction passed as db
+        const manager = createJobsManager(db, clock, cron);
         return fn(manager);
-      });
+      }
     });
 
     // Provide transaction wrapper that auto-creates DashboardManager
     c.set("withDashboardManager", (fn) => {
-      return db.transaction(async (tx) => {
-        const manager = createDashboardManager(tx, clock);
+      if (shouldCreateTransactions) {
+        return db.transaction(async (tx) => {
+          const manager = createDashboardManager(tx, clock);
+          return fn(manager);
+        });
+      }
+      else {
+        const manager = createDashboardManager(db, clock);
         return fn(manager);
-      });
+      }
     });
 
     // Create SubscriptionsManager using composition helper
