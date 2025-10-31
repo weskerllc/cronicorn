@@ -12,7 +12,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
   const { steps, config } = scenario;
   const { currentData, currentStep } = useTimeline({ steps, config });
 
-  const currentTime = currentData?.executions[currentData.executions.length - 1]?.time || 0;
+  const currentTime = currentData.executions[currentData.executions.length - 1]?.time || 0;
 
   return (
     <div className={cn("w-full max-w-5xl mx-auto lg:h-full ")}>
@@ -35,7 +35,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
               </div>
 
               <div className="grid  grid-cols-1  gap-3" role="group" aria-label="System conditions">
-                {currentData?.conditions.map(condition => (
+                {currentData.conditions.map(condition => (
                   <TimelineConditionCard key={condition.id} condition={condition} />
                 ))}
               </div>
@@ -92,7 +92,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
                 />
 
                 {/* Enhanced Execution Dots */}
-                {currentData?.executions.map((execution, index) => (
+                {currentData.executions.map((execution, index) => (
                   <TimelineExecutionDot
                     key={execution.id}
                     execution={execution}
@@ -110,7 +110,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
               key={currentStep}
               className="text-xs text-muted-foreground"
             >
-              {currentData?.caption}
+              {currentData.caption}
             </div>
           </div>
 

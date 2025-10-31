@@ -15,7 +15,7 @@ interface TimelineSectionProps {
 export default function TimelineSection({ tabData }: TimelineSectionProps) {
     const [activeScenario, setActiveScenario] = useState("ecommerce-flash-sale")
 
-    const currentBenefits = scenarioBenefits[activeScenario] || scenarioBenefits["ecommerce-flash-sale"]
+    const currentBenefits = scenarioBenefits[activeScenario]
 
     return (
         <section className="relative w-full flex flex-col items-center justify-start px-6 py-16 md:py-20 border-b border-border/40">

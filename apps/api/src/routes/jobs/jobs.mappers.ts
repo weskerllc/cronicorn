@@ -160,9 +160,9 @@ export function mapHealthSummaryToResponse(summary: {
     avgDurationMs: summary.avgDurationMs,
     lastRun: summary.lastRun
       ? {
-        status: summary.lastRun.status,
-        at: summary.lastRun.at.toISOString(),
-      }
+          status: summary.lastRun.status,
+          at: summary.lastRun.at.toISOString(),
+        }
       : null,
     failureStreak: summary.failureStreak,
   };
