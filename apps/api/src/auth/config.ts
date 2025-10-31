@@ -1,7 +1,7 @@
 import { schema } from "@cronicorn/adapter-drizzle";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { apiKey } from "better-auth/plugins";
+import { apiKey, deviceAuthorization } from "better-auth/plugins";
 
 import type { Env } from "../lib/config";
 import type { Database } from "../lib/db";
@@ -42,6 +42,11 @@ export function createAuth(config: Env, db: Database) {
           timeWindow: 60 * 1000, // 1 minute
           maxRequests: 100,
         },
+      }),
+      deviceAuthorization({
+        // OAuth Device Flow for AI agents (MCP servers, CLI tools, etc.)
+        expiresIn: "30m", // Device code expiration time (30 minutes)
+        interval: "5s", // Minimum polling interval (5 seconds)
       }),
     ],
   });
