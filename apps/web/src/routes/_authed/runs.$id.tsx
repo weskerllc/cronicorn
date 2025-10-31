@@ -57,6 +57,22 @@ function RunDetailsPage() {
                   {run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "N/A"}
                 </p>
               </div>
+              {run.source && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Triggered By</p>
+                  <Badge variant="outline" className="capitalize">
+                    {run.source.replace(/-/g, " ")}
+                  </Badge>
+                </div>
+              )}
+              {typeof run.attempt === "number" && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Attempt</p>
+                  <p className="font-medium">
+                    {run.attempt === 0 ? "First run" : `Retry #${run.attempt}`}
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
