@@ -34,6 +34,32 @@ export function transformCreatePayload(data: CreateEndpointForm): AddEndpointReq
         }, {} as Record<string, string>);
     }
 
+    // Parse and validate bodyJson if provided
+    if (data.bodyJson && data.bodyJson.trim()) {
+        try {
+            payload.bodyJson = JSON.parse(data.bodyJson);
+        } catch (error) {
+            throw new Error(`Invalid JSON in request body: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    // Advanced configuration (convert minutes to milliseconds)
+    if (data.minIntervalMinutes) {
+        payload.minIntervalMs = data.minIntervalMinutes * 60 * 1000;
+    }
+    if (data.maxIntervalMinutes) {
+        payload.maxIntervalMs = data.maxIntervalMinutes * 60 * 1000;
+    }
+    if (data.timeoutMs) {
+        payload.timeoutMs = data.timeoutMs;
+    }
+    if (data.maxExecutionTimeMs) {
+        payload.maxExecutionTimeMs = data.maxExecutionTimeMs;
+    }
+    if (data.maxResponseSizeKb) {
+        payload.maxResponseSizeKb = data.maxResponseSizeKb;
+    }
+
     // Use API contract schema for validation - this is the single source of truth
     return AddEndpointRequestSchema.parse(payload);
 }
@@ -70,6 +96,36 @@ export function transformUpdatePayload(data: UpdateEndpointForm): UpdateEndpoint
         payload.headersJson = {}; // Clear headers if none provided
     }
 
+    // Parse and validate bodyJson if provided
+    if (data.bodyJson !== undefined) {
+        if (data.bodyJson && data.bodyJson.trim()) {
+            try {
+                payload.bodyJson = JSON.parse(data.bodyJson);
+            } catch (error) {
+                throw new Error(`Invalid JSON in request body: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        } else {
+            payload.bodyJson = undefined; // Clear body if empty
+        }
+    }
+
+    // Advanced configuration (convert minutes to milliseconds)
+    if (data.minIntervalMinutes !== undefined) {
+        payload.minIntervalMs = data.minIntervalMinutes ? data.minIntervalMinutes * 60 * 1000 : undefined;
+    }
+    if (data.maxIntervalMinutes !== undefined) {
+        payload.maxIntervalMs = data.maxIntervalMinutes ? data.maxIntervalMinutes * 60 * 1000 : undefined;
+    }
+    if (data.timeoutMs !== undefined) {
+        payload.timeoutMs = data.timeoutMs;
+    }
+    if (data.maxExecutionTimeMs !== undefined) {
+        payload.maxExecutionTimeMs = data.maxExecutionTimeMs;
+    }
+    if (data.maxResponseSizeKb !== undefined) {
+        payload.maxResponseSizeKb = data.maxResponseSizeKb;
+    }
+
     // Use API contract schema for validation - this is the single source of truth
     return UpdateEndpointRequestSchema.parse(payload);
 }
@@ -86,6 +142,9 @@ export function endpointToFormData(endpoint: any) {
     // Determine schedule type based on existing data
     const scheduleType = endpoint.baselineCron ? "cron" : "interval";
 
+    // Convert bodyJson to string for form
+    const bodyJson = endpoint.bodyJson ? JSON.stringify(endpoint.bodyJson, null, 2) : "";
+
     return {
         scheduleType,
         name: endpoint.name,
@@ -97,5 +156,16 @@ export function endpointToFormData(endpoint: any) {
             : undefined,
         baselineCron: endpoint.baselineCron || "",
         headers: headersArray,
+        bodyJson,
+        // Advanced configuration (convert milliseconds to minutes)
+        minIntervalMinutes: endpoint.minIntervalMs
+            ? Math.round(endpoint.minIntervalMs / 60000)
+            : undefined,
+        maxIntervalMinutes: endpoint.maxIntervalMs
+            ? Math.round(endpoint.maxIntervalMs / 60000)
+            : undefined,
+        timeoutMs: endpoint.timeoutMs,
+        maxExecutionTimeMs: endpoint.maxExecutionTimeMs,
+        maxResponseSizeKb: endpoint.maxResponseSizeKb,
     };
 }
