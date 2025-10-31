@@ -1,7 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus, Save, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Save, X } from "lucide-react";
+import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
@@ -20,6 +21,7 @@ import { Input } from "@cronicorn/ui-library/components/input";
 import { Label } from "@cronicorn/ui-library/components/label";
 import { RadioGroup, RadioGroupItem } from "@cronicorn/ui-library/components/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
+import { Textarea } from "@cronicorn/ui-library/components/textarea";
 
 import { PageHeader } from "../../components/page-header";
 import type { CreateEndpointForm } from "@/lib/endpoint-forms";
@@ -42,6 +44,7 @@ function CreateEndpointPage() {
   const { data: job } = useSuspenseQuery(jobQueryOptions(jobId));
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const form = useForm<CreateEndpointForm>({
     resolver: zodResolver(createEndpointSchema),
@@ -51,6 +54,7 @@ function CreateEndpointPage() {
       url: "",
       method: "GET",
       headers: [],
+      bodyJson: "",
     },
   });
 
@@ -254,7 +258,7 @@ function CreateEndpointPage() {
                           {...field}
                           disabled={isPending}
                           onChange={(e) =>
-                            field.onChange(e.target.value ? Number.parseInt(e.target.value, 10) : "")
+                            field.onChange(e.target.value ? Number(e.target.value) : "")
                           }
                         />
                       </FormControl>
@@ -357,6 +361,220 @@ function CreateEndpointPage() {
                 Add Header
               </Button>
             </CardContent>
+          </Card>
+
+          {/* Request Body (for POST/PUT/PATCH/DELETE) */}
+          {form.watch("method") !== "GET" && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Request Body</CardTitle>
+                <CardDescription>
+                  JSON payload to send with {form.watch("method")} requests
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="bodyJson"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>JSON Body (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={'{\n  "key": "value"\n}'}
+                          rows={8}
+                          className="font-mono text-sm"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Enter valid JSON. Will be parsed and validated before submission.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Advanced Configuration */}
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Advanced Configuration</CardTitle>
+                  <CardDescription>
+                    Optional timeout, execution limits, and AI scheduling constraints
+                  </CardDescription>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                >
+                  {showAdvanced ? (
+                    <>
+                      <ChevronUp className="size-4 mr-1" />
+                      Hide
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="size-4 mr-1" />
+                      Show
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            {showAdvanced && (
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="timeoutMs"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Request Timeout (ms)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="e.g., 30000"
+                            {...field}
+                            disabled={isPending}
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          HTTP request timeout in milliseconds
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="maxExecutionTimeMs"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Execution Time (ms)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="1800000"
+                            placeholder="e.g., 60000 (1 min)"
+                            {...field}
+                            disabled={isPending}
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Lock duration for distributed execution (max: 30 min)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="maxResponseSizeKb"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Response Size (KB)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="e.g., 1024"
+                            {...field}
+                            disabled={isPending}
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Maximum response body size to capture
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="pt-4 border-t">
+                  <h4 className="text-sm font-medium mb-3">AI Scheduling Constraints</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="minIntervalMinutes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Min Interval (minutes)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="1"
+                              placeholder="e.g., 5"
+                              {...field}
+                              disabled={isPending}
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                              }
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Minimum time between AI-adjusted runs
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="maxIntervalMinutes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max Interval (minutes)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="1"
+                              placeholder="e.g., 60"
+                              {...field}
+                              disabled={isPending}
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                              }
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Maximum time between AI-adjusted runs
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            )}
           </Card>
 
           <div className="flex items-center justify-end gap-2">

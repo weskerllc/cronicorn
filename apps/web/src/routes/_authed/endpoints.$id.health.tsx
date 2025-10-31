@@ -92,6 +92,11 @@ function EndpointHealthPage() {
             <div className="text-2xl font-bold text-destructive">
               {health.failureCount || 0}
             </div>
+            {health.failureStreak > 0 && (
+              <Badge variant="destructive" className="mt-2">
+                {health.failureStreak} consecutive {health.failureStreak === 1 ? "failure" : "failures"}
+              </Badge>
+            )}
           </CardContent>
         </Card>
       </div>
