@@ -202,11 +202,18 @@ export const deviceCodes = pgTable("device_codes", {
   id: text("id").primaryKey(),
   deviceCode: text("device_code").notNull().unique(),
   userCode: text("user_code").notNull().unique(),
-  clientId: text("client_id").notNull(),
+  clientId: text("client_id"),
   expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
   status: text("status").notNull().default("pending"), // "pending" | "approved" | "denied" | "expired"
+  lastPolledAt: timestamp("last_polled_at", { mode: "date" }),
+  pollingInterval: integer("polling_interval"), // Polling interval in milliseconds
+  scope: text("scope"), // OAuth scope
 });
 
 export const oauthTokens = pgTable("oauth_tokens", {
@@ -216,5 +223,9 @@ export const oauthTokens = pgTable("oauth_tokens", {
   accessToken: text("access_token").notNull(),
   refreshToken: text("refresh_token"),
   expiresAt: timestamp("expires_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });

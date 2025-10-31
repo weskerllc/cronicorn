@@ -18,9 +18,12 @@ export function createAuth(config: Env, db: Database) {
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
+      usePlural: true, // Our tables use plural names (deviceCodes, oauthTokens, etc.)
       schema: {
         ...schema,
         apikey: schema.apiKey, // Map Better Auth's expected "apikey" to our "apiKey" export
+        deviceCodes: schema.deviceCodes, // Device authorization codes
+        oauthTokens: schema.oauthTokens, // OAuth tokens for device flow
       },
     }),
     secret: config.BETTER_AUTH_SECRET,

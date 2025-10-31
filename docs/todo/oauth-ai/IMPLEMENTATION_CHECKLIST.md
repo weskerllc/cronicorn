@@ -36,36 +36,36 @@
 - [x] Test database schema with manual inserts
 
 ### Better Auth Configuration
-- [ ] Import `deviceAuthorization` from `better-auth/plugins`
-- [ ] Add plugin to `plugins` array in `betterAuth()` config
-- [ ] Configure device code TTL (default: 30 minutes)
-- [ ] Configure polling interval (default: 5 seconds)
-- [ ] Test plugin initialization (server starts without errors)
+- [x] Import `deviceAuthorization` from `better-auth/plugins`
+- [x] Add plugin to `plugins` array in `betterAuth()` config
+- [x] Configure device code TTL (default: 30 minutes)
+- [x] Configure polling interval (default: 5 seconds)
+- [x] Test plugin initialization (server starts without errors)
 
 ### API Endpoints Verification
-- [ ] Start API server locally: `cd apps/api && pnpm dev`
-- [ ] Test `POST /api/auth/device/code` endpoint
+- [x] Start API server locally: `cd apps/api && pnpm dev`
+- [x] Test `POST /api/auth/device/code` endpoint
   ```bash
   curl -X POST http://localhost:3333/api/auth/device/code \
     -H "Content-Type: application/json" \
     -d '{"client_id": "cronicorn-mcp"}'
   ```
-- [ ] Verify response contains: `device_code`, `user_code`, `verification_uri`, `expires_in`, `interval`
-- [ ] Test `GET /api/auth/device?user_code=XXXX` endpoint
-- [ ] Test `POST /api/auth/device/token` polling endpoint (should return `authorization_pending`)
+- [x] Verify response contains: `device_code`, `user_code`, `verification_uri`, `expires_in`, `interval`
+- [x] Test `GET /api/auth/device?user_code=XXXX` endpoint
+- [x] Test `POST /api/auth/device/token` polling endpoint (should return `authorization_pending`)
 
 ### Authentication Middleware
-- [ ] Verify existing middleware supports OAuth tokens (`apps/api/src/auth/middleware.ts`)
-- [ ] Test middleware with mock OAuth token
-- [ ] Ensure both API keys and OAuth tokens work
-- [ ] Add logging for auth method used (API key vs OAuth)
+- [x] Verify existing middleware supports OAuth tokens (`apps/api/src/auth/middleware.ts`)
+- [x] Test middleware with mock OAuth token
+- [x] Ensure both API keys and OAuth tokens work
+- [x] Add logging for auth method used (API key vs OAuth)
 
 ### Testing
-- [ ] Write unit tests for device flow endpoints
-- [ ] Test device code expiration (mock time)
-- [ ] Test polling rate limiting
-- [ ] Test authorization denial flow
-- [ ] Document backend setup in ADR
+- [x] Write unit tests for device flow endpoints
+- [x] Test device code expiration (mock time)
+- [x] Test polling rate limiting
+- [x] Test authorization denial flow
+- [x] Document backend setup in ADR
 
 ---
 
