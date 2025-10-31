@@ -65,11 +65,8 @@ const Footer2 = ({
                 { text: "LinkedIn", url: "#" },
             ],
         },
-    ],
-    copyright = "© 2024 Shadcnblocks.com. All rights reserved.",
-    bottomLinks = [
-        { text: "Terms and Conditions", url: "#" },
-        { text: "Privacy Policy", url: "#" },
+
+
     ],
 }: Footer2Props) => {
     const { setTheme, theme } = useTheme()
