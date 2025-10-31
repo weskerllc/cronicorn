@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Archive, Edit, Plus } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@cronicorn/ui-library/components/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
 import { IconDotsVertical } from "@tabler/icons-react";
 import { EmptyCTA } from "../../components/empty-cta";
 import { PageHeader } from "../../components/page-header";
@@ -28,6 +29,8 @@ import { DataTable } from "@/components/data-table";
 
 type JobRow = GetJobsResponse["jobs"][number];
 
+type StatusFilter = "all" | "active" | "paused" | "archived";
+
 export const Route = createFileRoute("/_authed/jobs/")({
   loader: ({ context: { queryClient } }) => {
     return queryClient.ensureQueryData(jobsQueryOptions());
@@ -37,15 +40,15 @@ export const Route = createFileRoute("/_authed/jobs/")({
 
 function JobsListPage() {
   const queryClient = useQueryClient();
-  const { data: jobsData } = useSuspenseQuery(jobsQueryOptions());
-  const [showArchived, setShowArchived] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
 
-  // Filter jobs based on archived status
-  const jobs = useMemo(() => {
-    return showArchived
-      ? jobsData.jobs
-      : jobsData.jobs.filter(job => job.status !== "archived");
-  }, [jobsData.jobs, showArchived]);
+  // Query with status filter
+  const { data: jobsData } = useSuspenseQuery(
+    jobsQueryOptions(statusFilter === "all" ? {} : { status: statusFilter })
+  );
+
+  // Since we're filtering at the API level now, use all jobs returned
+  const jobs = jobsData.jobs;
 
   const archiveMutation = useMutation({
     mutationFn: archiveJob,
@@ -163,13 +166,18 @@ function JobsListPage() {
         text="Jobs"
         description="Manage your scheduled jobs and their endpoints"
         slotRight={
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowArchived(!showArchived)}
-            >
-              {showArchived ? "Hide Archived" : "Show Archived"}
-            </Button>
+          <div className="flex gap-2 items-center">
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Jobs</SelectItem>
+                <SelectItem value="active">Active Only</SelectItem>
+                <SelectItem value="paused">Paused Only</SelectItem>
+                <SelectItem value="archived">Archived Only</SelectItem>
+              </SelectContent>
+            </Select>
             <Button asChild>
               <Link to="/jobs/new">
                 <Plus className="size-4" />
