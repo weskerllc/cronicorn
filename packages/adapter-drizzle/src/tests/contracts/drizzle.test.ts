@@ -9,12 +9,11 @@ import { closeTestPool, expect, test } from "../fixtures.js";
  * Uses transaction-per-test pattern for isolation via Vitest fixtures.
  * Each test gets a fresh transaction that is rolled back after the test.
  *
- * Requires DATABASE_URL environment variable (loaded from .env.test by vitest).
+ * Requires DATABASE_URL environment variable (loaded from .env by vitest).
  *
  * Setup:
- * 1. Copy .env.test.example to .env.test
- * 2. Set DATABASE_URL in .env.test
- * 3. Run: pnpm test
+ * 1. Set DATABASE_URL in .env
+ * 2. Run: pnpm test
  */
 
 describe("drizzle Repos (PostgreSQL)", () => {

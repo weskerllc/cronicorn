@@ -146,7 +146,6 @@ Services available:
 ### Database
 ```bash
 pnpm db              # Start database
-pnpm db:down         # Stop database
 pnpm db:reset        # Destroy and recreate
 pnpm db:migrate      # Run migrations
 ```
@@ -267,7 +266,6 @@ kill -9 <PID>
 docker ps
 
 # Restart database
-pnpm db:down
 pnpm db
 pnpm db:migrate
 ```

@@ -71,10 +71,6 @@ pnpm db:migrate
 pnpm db:reset
 ```
 
-### Stop Services
-```bash
-pnpm db:down
-```
 
 ## Production Deployment
 
@@ -107,7 +103,6 @@ pnpm docker:logs
 ```bash
 # Database Management
 pnpm db              # Start database
-pnpm db:down         # Stop all services
 pnpm db:reset        # Reset database (destroy + recreate)
 pnpm db:migrate      # Run migrations
 

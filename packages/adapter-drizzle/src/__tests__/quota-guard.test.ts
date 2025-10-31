@@ -275,8 +275,12 @@ describe("drizzleQuotaGuard", () => {
       }).returning();
 
       const now = new Date();
-      const lastMonth = new Date(now);
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      // Create a date that's definitely in the previous month (UTC)
+      const lastMonth = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth() - 1,
+        15, // Mid-month to avoid edge cases
+      ));
 
       // Last month usage (ignored)
       await tx.insert(schema.aiAnalysisSessions).values({
