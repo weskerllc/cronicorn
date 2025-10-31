@@ -9,6 +9,7 @@
 const siteConfig = {
   /** Core site information */
   siteName: "Cronicorn",
+  url: import.meta.env.VITE_API_URL || "http://localhost:5173",
   apiUrl: import.meta.env.VITE_API_URL || "http://localhost:3333",
   tagline: "Adaptive task scheduler that learns from your system patterns",
   description: "Intelligent cron alternative with AI job scheduling that automatically adjusts to real-time system conditions. Multi-tier coordination from health checks to auto-recovery across diverse use cases.",
@@ -35,9 +36,37 @@ const siteConfig = {
     docs: "Complete documentation for adaptive scheduling with AI hints. Quick start guides, API reference. Get started with intelligent cron alternatives."
   },
 
-  url: "https://cronicorn.com",
   githubUrl: "https://github.com/weskerllc/cronicorn",
   supportUrl: "https://github.com/weskerllc/cronicorn/issues/new",
+
+  /** Documentation and resource URLs */
+  urls: {
+    // Product pages
+    home: "/",
+    pricing: "/pricing",
+    faq: "/faq",
+    dashboard: "/dashboard",
+    login: "/login",
+    register: "/register",
+
+    // Documentation
+    documentation: "https://github.com/weskerllc/cronicorn#readme",
+    quickstart: "https://github.com/weskerllc/cronicorn/blob/main/docs/quickstart.md",
+    useCases: "https://github.com/weskerllc/cronicorn/blob/main/docs/use-cases.md",
+    architecture: "https://github.com/weskerllc/cronicorn/blob/main/docs/architecture.md",
+    apiReference: "https://github.com/weskerllc/cronicorn/blob/main/docs/api-reference.md",
+
+    // Community
+    github: "https://github.com/weskerllc/cronicorn",
+    support: "https://github.com/weskerllc/cronicorn/issues/new",
+    contributing: "https://github.com/weskerllc/cronicorn/blob/main/docs/contributing.md",
+    changelog: "https://github.com/weskerllc/cronicorn/blob/main/CHANGELOG.md",
+
+    // Legal
+    privacy: "/privacy",
+    terms: "/terms",
+    contact: "mailto:support@cronicorn.com",
+  },
 
   /**
    * SEO Configuration
@@ -103,17 +132,24 @@ const siteConfig = {
       siteName: "Cronicorn",
       images: [
         {
-          url: "https://cronicorn.com/og-image.png",
+          url: `${import.meta.env.VITE_API_URL || "http://localhost:5173"}/og-image.png`,
           width: 1200,
           height: 630,
           alt: "Cronicorn - Adaptive Job Scheduling Platform"
+        },
+        {
+          url: `${import.meta.env.VITE_API_URL || "http://localhost:5173"}/og-image-square.png`,
+          width: 1200,
+          height: 1200,
+          alt: "Cronicorn - AI-Powered Job Scheduling"
         }
       ]
     },
     twitter: {
       handle: "@cronicorn",
       site: "@cronicorn",
-      cardType: "summary_large_image"
+      cardType: "summary_large_image",
+      image: `${import.meta.env.VITE_API_URL || "http://localhost:5173"}/twitter-image.png`
     }
   },
 
@@ -201,36 +237,6 @@ const siteConfig = {
         href: "https://github.com/bcanfield/cron-mvp"
       }
     }
-  },
-
-  /**
-   * Zero-Click Optimization Content
-   * Quick answers optimized for featured snippets and voice search
-   */
-  zeroClick: {
-    // Quick answers for featured snippets
-    quickAnswers: [
-      {
-        question: "How does Cronicorn know when to run your code?",
-        answer: "It adapts HTTP request timing based on real conditions. Data pipelines run faster when processing backlogs, social media posts shift to peak engagement windows, web scrapers slow down when rate-limited, billing cycles accelerate near quota limits. AI adjusts intervals automatically with clear reasoning: 'Backlog detected—increasing ETL frequency to 2 minutes.'",
-        format: "definition"
-      },
-      {
-        question: "How does Cronicorn work across different use cases?",
-        answer: "1. Set up HTTP endpoints with baseline schedules\n2. Cronicorn executes and learns patterns\n3. AI adapts timing based on conditions (traffic, failures, engagement, quotas)\n4. Coordinate multi-tier workflows (Extract→Transform→Load, Health→Investigation→Recovery)\n5. Every adjustment explained: 'High engagement detected—posting immediately'\n\nWorks for DevOps, e-commerce, content, data pipelines, billing, scraping.",
-        format: "steps"
-      },
-      {
-        question: "Real examples: How Cronicorn adapts across domains",
-        answer: "• Data Pipeline: ETL runs every hour → backlog detected → increases to 15min → clears → back to hourly\n• Content Publishing: Posts scheduled for 9am → high engagement detected → AI suggests immediate follow-up post\n• Web Scraping: Requests every 5sec → rate limit warning → slows to 30sec → proxy recovers → resumes 5sec\n• E-commerce: Health checks every 5min → traffic surge → tightens to 30sec → systems stable → relaxes",
-        format: "list"
-      },
-      {
-        question: "What makes this different from regular cron jobs?",
-        answer: "Regular Cron: 'Run this HTTP request every 5 minutes' regardless of context—whether your data pipeline has a massive backlog or your social posts are going viral.\n\nCronicorn: 'Data backlog growing—increasing ETL to every 2 minutes' or 'Post engagement spiking—suggesting immediate follow-up' or 'Rate limit hit—slowing scraper to 30 seconds.'",
-        format: "comparison"
-      }
-    ]
   },
 
   /**

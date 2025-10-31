@@ -15,17 +15,58 @@ applyTo: '**'
 
 **Why**: Clean DB state without truncation, deterministic tests
 
+**Implementation**: Use Vitest's `test.extend()` to provide a transactional fixture:
+
 ```typescript
-// Global test setup
-beforeEach(async () => {
-  tx = await db.begin();
-  // Bind repos to transaction
+// In fixtures.ts (see packages/adapter-drizzle/src/tests/fixtures.ts or apps/api/src/lib/__tests__/fixtures.ts)
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import { test as base } from "vitest";
+
+export const test = base.extend<{ tx: NodePgDatabase<typeof schema> }>({
+  tx: async ({ }, use) => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const tx = drizzle(client, { schema });
+      await use(tx); // Test runs here with transaction
+      await client.query("ROLLBACK"); // Clean slate
+    } finally {
+      client.release();
+    }
+  },
 });
 
-afterEach(async () => {
-  await tx.rollback(); // Clean slate
+export { expect } from "vitest";
+export async function closeTestPool() { await pool.end(); }
+```
+
+**Usage in Tests**:
+
+```typescript
+import { test, expect, closeTestPool } from "./fixtures.js";
+import { afterAll, describe } from "vitest";
+
+describe("my feature", () => {
+  afterAll(async () => {
+    await closeTestPool();
+  });
+
+  test("creates record", async ({ tx }) => {
+    const repo = new MyRepo(tx);
+    const result = await repo.create({ name: "test" });
+    expect(result.id).toBeDefined();
+    // Transaction automatically rolls back after test
+  });
 });
 ```
+
+**Key Benefits**:
+- Zero database pollution
+- Perfect test isolation
+- Fast execution (rollback is instant)
+- No manual cleanup needed
+- Consistent pattern across all integration tests
 
 ## Test Organization
 
@@ -53,23 +94,44 @@ test("creates job with defaults", async () => {
 
 ### Integration Tests (Repos)
 ```typescript
-await db.transaction(async (tx) => {
-  const repo = new JobsRepo(tx);
-  const job = await repo.create(values);
-  expect(job.id).toBeDefined();
-  // Transaction rolls back automatically
+import { test, expect, closeTestPool } from "../tests/fixtures.js";
+import { afterAll, describe } from "vitest";
+
+describe("MyRepo", () => {
+  afterAll(async () => {
+    await closeTestPool();
+  });
+
+  test("creates and retrieves record", async ({ tx }) => {
+    const repo = new MyRepo(tx);
+    const created = await repo.create(values);
+    expect(created.id).toBeDefined();
+    // Transaction rolls back automatically - no cleanup needed
+  });
 });
 ```
 
 ### API Tests (Routes)
 ```typescript
-const app = createApp();
-const res = await app.request("/jobs", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(validInput)
+import { test, expect, closeTestPool } from "../lib/__tests__/fixtures.js";
+import { afterAll, describe } from "vitest";
+
+describe("API routes", () => {
+  afterAll(async () => {
+    await closeTestPool();
+  });
+
+  test("creates resource via API", async ({ tx }) => {
+    const app = await createApp(tx, testConfig, mockAuth);
+    const res = await app.request("/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(validInput)
+    });
+    expect(res.status).toBe(201);
+    // All data created in this test is automatically rolled back
+  });
 });
-expect(res.status).toBe(201);
 ```
 
 ## Test Coverage Goals

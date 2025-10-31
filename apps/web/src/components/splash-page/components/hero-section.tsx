@@ -8,7 +8,7 @@ export default function HeroSection() {
                 <h1 className="font-sans text-foreground text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-bold mb-5 tracking-tight leading-[1.1]">
                     {siteConfig.headlines.hero.primary}
                 </h1>
-                <p className="font-sans text-muted-foreground/90 text-base md:text-lg font-normal leading-relaxed max-w-2xl mx-auto mb-8">
+                <p className="font-sans text-muted-foreground text-base md:text-lg font-normal leading-relaxed max-w-2xl mx-auto mb-8">
                     {siteConfig.headlines.hero.secondary}
                 </p>
 
