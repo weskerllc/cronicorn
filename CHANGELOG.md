@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/weskerllc/cronicorn/compare/v1.3.1...v1.3.2) (2025-10-31)
+
+
+### Bug Fixes
+
+* Endpoint UI ([180daf2](https://github.com/weskerllc/cronicorn/commit/180daf21d9e0e9a78c17958b400a8da2c50b6f69))
+
 ## [1.3.1](https://github.com/weskerllc/cronicorn/compare/v1.3.0...v1.3.1) (2025-10-31)
 
 
