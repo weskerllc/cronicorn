@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  # TODO: Enable workflow on pull requests
 
 jobs:
   quality:
