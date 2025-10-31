@@ -148,6 +148,42 @@ export async function clearHints(id: string): Promise<void> {
   }
 }
 
+const $applyIntervalHint = apiClient.api.endpoints[":id"].hints.interval.$post;
+type ApplyIntervalHintRequest = InferRequestType<typeof $applyIntervalHint>["json"];
+
+export async function applyIntervalHint(id: string, data: ApplyIntervalHintRequest): Promise<void> {
+  const resp = await apiClient.api.endpoints[":id"].hints.interval.$post({
+    param: { id },
+    json: data,
+  });
+
+  if (!resp.ok) {
+    const json = await resp.json();
+    if ("message" in json) {
+      throw new Error(json.message);
+    }
+    throw new Error("Failed to apply interval hint");
+  }
+}
+
+const $scheduleOneShot = apiClient.api.endpoints[":id"].hints.oneshot.$post;
+type ScheduleOneShotRequest = InferRequestType<typeof $scheduleOneShot>["json"];
+
+export async function scheduleOneShot(id: string, data: ScheduleOneShotRequest): Promise<void> {
+  const resp = await apiClient.api.endpoints[":id"].hints.oneshot.$post({
+    param: { id },
+    json: data,
+  });
+
+  if (!resp.ok) {
+    const json = await resp.json();
+    if ("message" in json) {
+      throw new Error(json.message);
+    }
+    throw new Error("Failed to schedule one-shot run");
+  }
+}
+
 // ==================== Query Options Factories ====================
 
 /**
