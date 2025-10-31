@@ -12,13 +12,13 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
   const { steps, config } = scenario;
   const { currentData, currentStep } = useTimeline({ steps, config });
 
-  const currentTime = currentData?.executions[currentData.executions.length - 1]?.time || 0;
+  const currentTime = currentData.executions[currentData.executions.length - 1]?.time || 0;
 
   return (
     <div className={cn("w-full max-w-5xl mx-auto lg:h-full ")}>
       {/* Main Timeline Component with enhanced styling */}
       <div
-        className="relative bg-muted/10 lg:h-full rounded border border-border/50 p-3 lg:p-3 overflow-hidden"
+        className="relative bg-gradient-to-b from-muted/5 to-muted/10 lg:h-full rounded border border-border/50 p-3 lg:p-3 overflow-hidden"
         role="region"
         aria-label="Dynamic Schedule Timeline"
       >
@@ -29,13 +29,13 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
             {/* Live Conditions Section */}
             <section aria-labelledby="conditions-heading">
               <div className="mb-3">
-                <h2 id="conditions-heading" className="text-xs font-medium text-muted-foreground/80">
+                <h2 id="conditions-heading" className="text-xs font-medium text-muted-foreground">
                   Live conditions
                 </h2>
               </div>
 
               <div className="grid  grid-cols-1  gap-3" role="group" aria-label="System conditions">
-                {currentData?.conditions.map(condition => (
+                {currentData.conditions.map(condition => (
                   <TimelineConditionCard key={condition.id} condition={condition} />
                 ))}
               </div>
@@ -44,7 +44,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
             {/* Timeline Section */}
             <section aria-labelledby="timeline-heading">
               <div className="flex items-center justify-between mb-3">
-                <h2 id="timeline-heading" className="text-xs font-medium text-muted-foreground/80">
+                <h2 id="timeline-heading" className="text-xs font-medium text-muted-foreground">
                   Execution timeline
                 </h2>
 
@@ -56,7 +56,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
                     aria-live="polite"
                     aria-label={`Current time: ${Math.floor(currentTime)} minutes`}
                   >
-                    <span className="text-[10px] font-medium text-muted-foreground/80 font-mono tabular-nums">
+                    <span className="text-[10px] font-medium text-muted-foreground font-mono tabular-nums">
                       {Math.floor(currentTime)}m
                     </span>
                   </div>
@@ -77,7 +77,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
                   {Array.from({ length: 5 }, (_, i) => i * (config.maxTime / 4)).map(time => (
                     <div key={time} className="flex flex-col items-center">
                       <div className="w-px h-2 bg-border/50" />
-                      <span className="text-[10px] font-medium text-muted-foreground/80 font-mono mt-1.5 tabular-nums">
+                      <span className="text-[10px] font-medium text-muted-foreground font-mono mt-1.5 tabular-nums">
                         {time}m
                       </span>
                     </div>
@@ -92,7 +92,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
                 />
 
                 {/* Enhanced Execution Dots */}
-                {currentData?.executions.map((execution, index) => (
+                {currentData.executions.map((execution, index) => (
                   <TimelineExecutionDot
                     key={execution.id}
                     execution={execution}
@@ -108,9 +108,9 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
           <div className="text-left mt-3 px-1" role="status" aria-live="polite">
             <div
               key={currentStep}
-              className="text-xs text-muted-foreground/80"
+              className="text-xs text-muted-foreground"
             >
-              {currentData?.caption}
+              {currentData.caption}
             </div>
           </div>
 

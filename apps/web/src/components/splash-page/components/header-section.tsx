@@ -24,10 +24,10 @@ export default function HeaderSection() {
             {/* <header className={`fixed top-0 left-0 w-full z-20 bg-transparent backdrop-blur-sm transition-all duration-200 ${isScrolled ? 'border-b border-border/50' : ''}`}> */}
             <nav className="flex items-center justify-between max-w-7xl mx-auto px-6 py-4">
                 {/* Logo/Brand */}
-                <div className="flex items-center space-x-2.5">
-                    <AppLogo className="w-6 h-6 md:w-7 md:h-7 text-foreground" aria-label="Cronicorn intelligent cron job scheduling platform logo" />
-                    <span className="font-semibold text-lg text-foreground">Cronicorn</span>
-                </div>
+                <a href={siteConfig.url} className="flex items-center space-x-2">
+                    <AppLogo className="size-7 fill-foreground" aria-label="Cronicorn intelligent cron job scheduling platform logo" />
+                    <span className="font-medium text-lg text-foreground">{siteConfig.siteName}</span>
+                </a>
 
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center gap-6">
