@@ -72,14 +72,28 @@
 ## 🎨 Phase 2: Frontend Device Approval UI (Week 1)
 
 ### Device Approval Page
-- [ ] Create `apps/web/src/app/device/approve/page.tsx`
-- [ ] Create `apps/web/src/pages/device/approve.tsx` component
-- [ ] Add Better Auth client plugin (`deviceAuthorizationClient`)
-- [ ] Implement user code verification
-- [ ] Implement approve/deny buttons
-- [ ] Add loading states (pending, success, error)
-- [ ] Add user information display (show which AI agent is requesting access)
-- [ ] Test with query param: `http://localhost:3000/device/approve?user_code=ABCD-EFGH`
+- [x] Create `apps/web/src/routes/device.approve.tsx`
+- [x] Add Better Auth client plugin (`deviceAuthorizationClient`)
+- [x] Implement user code verification
+- [x] Implement approve/deny buttons
+- [x] Add loading states (pending, success, error)
+- [x] Add user information display (show which AI agent is requesting access)
+- [x] Test with query param: `http://localhost:5173/device/approve?user_code=ABCD-EFGH`
+- [x] Test approve flow end-to-end
+- [x] Test deny flow end-to-end
+- [x] Verify token polling returns access token after approval
+
+### Connected Devices Dashboard
+- [x] Create `/settings/connected-devices` route
+- [x] Design UI for listing active OAuth sessions
+- [x] Create API endpoints for listing connected devices (`GET /api/devices`)
+- [x] Create API endpoint for revoking devices (`DELETE /api/devices/:tokenId`)
+- [x] Create type-safe query functions using Hono RPC (`devices.queries.ts`)
+- [x] Connect frontend to backend APIs
+- [x] Verify queries working with test data
+- [x] Add revoke confirmation dialog (using AlertDialog component)
+- [x] **RESOLVED**: Better Auth stores device flow sessions in `session` table, not `oauth_tokens` - updated queries
+- [x] Test revoking a device removes access (end-to-end)
 
 ### Device Approval UX
 - [ ] Design approval page UI (device icon, scopes requested, approve/deny buttons)

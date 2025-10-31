@@ -15,6 +15,7 @@ import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.j
 import { errorHandler } from "./lib/error-handler.js";
 import configureOpenAPI from "./lib/openapi.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
+import devices from "./routes/devices/devices.index.js";
 import jobs from "./routes/jobs/jobs.index.js";
 import subscriptions from "./routes/subscriptions/subscriptions.index.js";
 import webhooks from "./routes/webhooks.js";
@@ -143,6 +144,11 @@ export async function createApp(
     return requireAuth(auth)(c, next);
   });
 
+  app.use("/devices/*", async (c, next) => {
+    const auth = c.get("auth");
+    return requireAuth(auth)(c, next);
+  });
+
   // Health check endpoint (no auth required)
   app.get("/health", (c) => {
     return c.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -157,6 +163,7 @@ export async function createApp(
   // Mount job routes (protected by auth middleware)
   const routes = [
     dashboard,
+    devices,
     jobs,
     subscriptions,
     webhooks,

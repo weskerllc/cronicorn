@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@cronicorn/adapter-drizzle": "workspace:*",
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "catalog:",
     "pg": "^8.13.1"
   },
   "devDependencies": {

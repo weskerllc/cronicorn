@@ -14,7 +14,7 @@
     "@cronicorn/adapter-drizzle": "workspace:*",
     "@cronicorn/adapter-system-clock": "workspace:*",
     "@cronicorn/worker-ai-planner": "workspace:*",
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "catalog:",
     "pg": "^8.13.1",
     "zod": "catalog:"
   },

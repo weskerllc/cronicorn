@@ -18,12 +18,17 @@ export function createAuth(config: Env, db: Database) {
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
-      usePlural: true, // Our tables use plural names (deviceCodes, oauthTokens, etc.)
       schema: {
-        ...schema,
-        apikey: schema.apiKey, // Map Better Auth's expected "apikey" to our "apiKey" export
-        deviceCodes: schema.deviceCodes, // Device authorization codes
-        oauthTokens: schema.oauthTokens, // OAuth tokens for device flow
+        // Built-in Better Auth tables (singular names from our schema)
+        user: schema.user,
+        session: schema.session,
+        account: schema.account,
+        verification: schema.verification,
+
+        // Custom plugin tables
+        apikey: schema.apiKey,
+        deviceCode: schema.deviceCodes, // Device flow uses plural table name
+        oauthToken: schema.oauthTokens, // Device flow uses plural table name
       },
     }),
     secret: config.BETTER_AUTH_SECRET,
