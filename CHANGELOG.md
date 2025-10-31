@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/weskerllc/cronicorn/compare/v1.2.0...v1.3.0) (2025-10-31)
+
+
+### Bug Fixes
+
+* CI, tests ([41d9d0d](https://github.com/weskerllc/cronicorn/commit/41d9d0dc6d085d95d8132c221b2ac26c07bb6991))
+
+
+### Features
+
+* Homepage and integration bugs ([#4](https://github.com/weskerllc/cronicorn/issues/4)) ([a7012d0](https://github.com/weskerllc/cronicorn/commit/a7012d0bcc0eb5ed1ff6e6913f974c85e74e9c74))
+
 # [1.2.0](https://github.com/weskerllc/cronicorn/compare/v1.1.3...v1.2.0) (2025-10-30)
 
 
