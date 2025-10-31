@@ -1,2 +1,2 @@
-# Add .env.test to gitignore (contains local DATABASE_URL)
-.env.test
+# Environment files are already ignored by root .gitignore
+# This file can be removed, but kept for documentation
