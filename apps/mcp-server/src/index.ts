@@ -12,12 +12,14 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { authenticate } from "./auth/device-flow.js";
 import { getCredentials } from "./auth/token-store.js";
+import { loadConfig } from "./env.js";
 import { registerTools } from "./tools/index.js";
 
-// eslint-disable-next-line node/no-process-env
-const API_URL = process.env.CRONICORN_API_URL || "https://api.cronicorn.com";
-
 async function main() {
+  // Load configuration
+  const env = loadConfig();
+  console.error(`🔧 Config loaded:`, JSON.stringify(env, null, 2));
+
   // Initialize MCP server
   const server = new McpServer({
     name: "cronicorn",
@@ -28,12 +30,15 @@ async function main() {
   let credentials = await getCredentials();
   if (!credentials) {
     console.error("No credentials found. Starting OAuth device authorization...");
-    credentials = await authenticate();
+    credentials = await authenticate({
+      apiUrl: env.CRONICORN_API_URL,
+      webUrl: env.CRONICORN_WEB_URL,
+    });
     console.error("✅ Authentication successful!");
   }
 
   // Register all tools (create_job, list_jobs, pause_job, get_job_history)
-  registerTools(server, API_URL, credentials);
+  registerTools(server, env.CRONICORN_API_URL, credentials);
 
   // Connect via stdio transport
   const transport = new StdioServerTransport();

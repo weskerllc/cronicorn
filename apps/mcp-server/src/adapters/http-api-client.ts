@@ -15,7 +15,7 @@ import { ApiError } from "../ports/api-client.js";
 export type HttpApiClientConfig = {
     /** Base URL for the API (e.g., "https://api.cronicorn.com") */
     baseUrl: string;
-    /** OAuth access token for authentication */
+    /** OAuth access token for authentication (from device flow) */
     accessToken: string;
 };
 

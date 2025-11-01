@@ -12,9 +12,6 @@ import open from "open";
 
 import { saveCredentials } from "./token-store.js";
 
-const API_URL = process.env.CRONICORN_API_URL || "https://api.cronicorn.com";
-const WEB_URL = process.env.CRONICORN_WEB_URL || "https://app.cronicorn.com";
-
 type DeviceCodeResponse = {
   device_code: string;
   user_code: string;
@@ -28,6 +25,12 @@ type TokenResponse = {
   refresh_token: string;
   expires_in: number;
   token_type: string;
+  session_token?: string; // Better Auth includes this
+};
+
+type TokenWithCookies = {
+  token: TokenResponse;
+  cookies: string[];
 };
 
 type Credentials = {
@@ -39,11 +42,15 @@ type Credentials = {
 /**
  * Initiate OAuth device authorization flow
  */
-export async function authenticate(): Promise<Credentials> {
+export async function authenticate({ apiUrl, webUrl }: { apiUrl: string; webUrl: string }): Promise<Credentials> {
   // Step 1: Request device code
-  const deviceCodeRes = await fetch(`${API_URL}/auth/device-code`, {
+  const deviceCodeRes = await fetch(`${apiUrl}/auth/device/code`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: "cronicorn-mcp-server",
+      scope: "openid profile email",
+    }),
   });
 
   if (!deviceCodeRes.ok) {
@@ -53,12 +60,12 @@ export async function authenticate(): Promise<Credentials> {
   const deviceData: DeviceCodeResponse = await deviceCodeRes.json();
 
   // Step 2: Display instructions to user
-  const verificationUrl = `${WEB_URL}/device/approve`;
+  const verificationUrl = `${webUrl}/device/approve?user_code=${deviceData.user_code}`;
   console.error("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.error("🔐 Cronicorn Device Authorization");
   console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.error(`\n1. Opening browser to: ${verificationUrl}`);
-  console.error(`2. Enter this code: ${deviceData.user_code}`);
+  console.error(`2. User code: ${deviceData.user_code}`);
   console.error(`\n   Code expires in ${Math.floor(deviceData.expires_in / 60)} minutes\n`);
 
   // Open browser automatically
@@ -66,24 +73,28 @@ export async function authenticate(): Promise<Credentials> {
     await open(verificationUrl);
   }
   catch (error) {
-    console.error("⚠️  Could not open browser automatically");
+    console.error("⚠️  Could not open browser automatically", error);
   }
 
   // Step 3: Poll for token
-  const token = await pollForToken(
+  const { token } = await pollForToken(
     deviceData.device_code,
     deviceData.interval,
     deviceData.expires_in,
+    apiUrl,
   );
 
-  // Step 4: Save credentials
+  console.error("✅ Authorization successful!");
+
+  // Step 4: Save access token as credentials (use directly with Bearer auth)
   const credentials: Credentials = {
     access_token: token.access_token,
-    refresh_token: token.refresh_token,
-    expires_at: Date.now() + token.expires_in * 1000,
+    refresh_token: token.refresh_token || "",
+    expires_at: Date.now() + (token.expires_in * 1000),
   };
 
   await saveCredentials(credentials);
+  console.error("✅ Credentials saved!");
   return credentials;
 }
 
@@ -94,21 +105,29 @@ async function pollForToken(
   deviceCode: string,
   intervalSeconds: number,
   expiresIn: number,
-): Promise<TokenResponse> {
+  apiUrl: string,
+): Promise<TokenWithCookies> {
   const startTime = Date.now();
   const expiresAt = startTime + expiresIn * 1000;
 
   while (Date.now() < expiresAt) {
     await sleep(intervalSeconds * 1000);
 
-    const tokenRes = await fetch(`${API_URL}/auth/device-token`, {
+    const tokenRes = await fetch(`${apiUrl}/auth/device/token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ device_code: deviceCode }),
+      body: JSON.stringify({
+        grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+        device_code: deviceCode,
+        client_id: "cronicorn-mcp-server",
+      }),
     });
 
     if (tokenRes.ok) {
-      return await tokenRes.json();
+      const token = await tokenRes.json();
+      // Get all Set-Cookie headers (not used with Bearer token auth)
+      const setCookieHeaders = tokenRes.headers.getSetCookie?.() || [];
+      return { token, cookies: setCookieHeaders };
     }
 
     const error = await tokenRes.json().catch(() => ({}));
