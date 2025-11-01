@@ -1,18 +1,19 @@
 import { schema } from "@cronicorn/adapter-drizzle";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { apiKey, deviceAuthorization } from "better-auth/plugins";
+import { apiKey, bearer, deviceAuthorization } from "better-auth/plugins";
 
 import type { Env } from "../lib/config";
 import type { Database } from "../lib/db";
 
 /**
- * Creates Better Auth instance with dual authentication:
- * 1. GitHub OAuth for web UI users
- * 2. API keys for service-to-service authentication
+ * Creates Better Auth instance with three authentication methods:
+ * 1. GitHub OAuth for web UI users (session cookies)
+ * 2. Device Authorization for AI agents/CLI tools (Bearer tokens)
+ * 3. API keys for service-to-service authentication
  *
- * Better Auth manages both OAuth sessions and API key storage/validation.
- * Our middleware handles checking both authentication methods.
+ * Better Auth manages all authentication and session storage/validation.
+ * Our middleware handles checking each authentication method in order.
  */
 export function createAuth(config: Env, db: Database) {
   return betterAuth({
@@ -42,6 +43,7 @@ export function createAuth(config: Env, db: Database) {
       },
     },
     plugins: [
+      bearer(), // Enable Bearer token authentication for device flow
       apiKey({
         // API key configuration
         apiKeyHeaders: "x-api-key",

@@ -26,8 +26,8 @@
   "scripts": {
     "build": "tsup",
     "watch": "tsup --watch",
-    "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "inspect": "NODE_ENV=development pnpx @modelcontextprotocol/inspector ./dist/index.js"
   },
   "keywords": [
     "mcp",
@@ -38,11 +38,13 @@
     "ai"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.20.2"
+    "@modelcontextprotocol/sdk": "^1.20.2",
+    "@cronicorn/api-contracts": "workspace:*"
   },
   "devDependencies": {
-    "tsup": "^8.5.0",
+    "@modelcontextprotocol/inspector": "^0.17.2",
     "open": "^10.2.0",
+    "tsup": "^8.5.0",
     "zod": "catalog:"
   }
 }

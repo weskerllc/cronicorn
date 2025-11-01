@@ -43,6 +43,7 @@ See `.github/workflows/PUBLISHING_MCP_SERVER.md` for usage instructions.
 ## MCP Server: 1:1 API Endpoint Pattern vs Custom Tools
 
 **Date:** 2025-11-01
+**Status:** ✅ VALIDATED - Pattern Ready for Template Use
 **Severity:** Medium
 **Area:** MCP Server Architecture
 
@@ -62,17 +63,25 @@ Implement 1:1 API endpoint mirroring pattern where:
 - All API operations automatically available
 - AI models compose primitives for workflows
 
-**Proof of Concept:**
-Created `tools/api/post-jobs.ts` as example:
-- ~45 lines vs ~70+ for custom tool
-- Zero schema drift (uses `CreateJobRequestSchema` directly)
-- Runtime validation via api-contracts
-- Works as tested
+**Validation Results (2025-01-10):**
+✅ Pattern validated against MCP TypeScript SDK best practices
+✅ Fixed critical issues:
+  - Schema definitions: Must use `{ ...Schema.shape }` not `.shape` directly
+  - Error handling: Added comprehensive try/catch with `isError: true` flag
+  - API errors vs validation errors: Differentiated handling
+✅ Created documentation: `apps/mcp-server/docs/1-to-1-API-TOOL-PATTERN.md`
+✅ Updated POST_jobs as validated template
 
-**Decision Needed:**
-1. Migrate all existing custom tools to 1:1 pattern?
-2. Keep both approaches (custom + 1:1) for comparison?
-3. Timeline for migration?
+**Pattern Ready For:**
+- ✅ Use as template for all new API endpoint tools
+- ✅ Migration of existing custom tools
+- ✅ Code generation from OpenAPI spec (future)
+
+**Next Steps:**
+1. Migrate existing custom tools to 1:1 pattern
+2. Create generator script for bulk conversion
+3. Add comprehensive test coverage for error cases
+4. Consider extracting common error handler wrapper
 
 **Benefits of Migration:**
 - 50% less code to maintain
