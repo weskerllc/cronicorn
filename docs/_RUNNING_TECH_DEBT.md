@@ -34,6 +34,10 @@ See `apps/mcp-server/BUNDLING.md` for full technical details.
 
 **ADR:** Created `.adr/0040-mcp-server-bundling-strategy.md`
 
+**Publishing Workflow:**
+Created `.github/workflows/publish-mcp-server.yml` for automated npm publishing.
+See `.github/workflows/PUBLISHING_MCP_SERVER.md` for usage instructions.
+
 ---
 
 ## MCP Server: 1:1 API Endpoint Pattern vs Custom Tools
