@@ -1,0 +1,176 @@
+name: Publish MCP Server to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      npm_tag:
+        description: "npm dist-tag (e.g., latest, beta)"
+        required: false
+        default: "latest"
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.17.1
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build api-contracts (dependency)
+        run: pnpm --filter @cronicorn/api-contracts build
+
+      - name: Bump version
+        id: version
+        working-directory: apps/mcp-server
+        run: |
+          # Bump version and capture the new version
+          npm version ${{ inputs.version_bump }} --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 New version: $NEW_VERSION"
+
+      - name: Build MCP server bundle
+        run: pnpm --filter @cronicorn/mcp-server build
+
+      - name: Verify bundle
+        working-directory: apps/mcp-server
+        run: |
+          echo "🔍 Verifying bundle contents..."
+          pnpm pack --dry-run
+          
+          echo "📊 Bundle size:"
+          ls -lh dist/index.js
+          
+          echo "✅ Verifying shebang:"
+          head -1 dist/index.js
+          
+          echo "✅ Verifying no workspace references:"
+          ! grep -q "@cronicorn/api-contracts" dist/index.js || (echo "❌ Found workspace reference in bundle" && exit 1)
+          
+          echo "✅ Verifying api-contracts code is bundled:"
+          grep -q "CreateJobRequestSchema" dist/index.js || (echo "❌ api-contracts not bundled" && exit 1)
+          
+          echo "✅ Bundle verification passed!"
+
+      - name: Publish to npm
+        working-directory: apps/mcp-server
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "📤 Publishing @cronicorn/mcp-server@${{ steps.version.outputs.new_version }} to npm..."
+          npm publish --access public --tag ${{ inputs.npm_tag }} --provenance
+          echo "✅ Published successfully!"
+
+      - name: Commit version bump
+        run: |
+          git add apps/mcp-server/package.json
+          git commit -m "chore(mcp-server): release v${{ steps.version.outputs.new_version }} [skip ci]"
+          git tag "mcp-server-v${{ steps.version.outputs.new_version }}"
+
+      - name: Push changes
+        run: |
+          git push origin main
+          git push origin "mcp-server-v${{ steps.version.outputs.new_version }}"
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const version = '${{ steps.version.outputs.new_version }}';
+            const tag = `mcp-server-v${version}`;
+            
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `MCP Server v${version}`,
+              body: `## MCP Server v${version}
+            
+            Published to npm: https://www.npmjs.com/package/@cronicorn/mcp-server/v/${version}
+            
+            ### Installation
+            
+            \`\`\`bash
+            npm install -g @cronicorn/mcp-server@${version}
+            # or
+            pnpm add -g @cronicorn/mcp-server@${version}
+            \`\`\`
+            
+            ### Usage
+            
+            See [README](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server/README.md) for configuration and usage instructions.
+            
+            ---
+            
+            **npm package:** [@cronicorn/mcp-server](https://www.npmjs.com/package/@cronicorn/mcp-server)  
+            **npm tag:** \`${inputs.npm_tag || 'latest'}\`  
+            **Bundle size:** ~470KB  
+            **Node version:** >=20.0.0`,
+              draft: false,
+              prerelease: inputs.npm_tag !== 'latest'
+            });
+            
+            console.log(`✅ Created GitHub release: ${release.data.html_url}`);
+
+      - name: Summary
+        run: |
+          echo "## 🎉 MCP Server Published!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**npm tag:** \`${{ inputs.npm_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** [@cronicorn/mcp-server](https://www.npmjs.com/package/@cronicorn/mcp-server/v/${{ steps.version.outputs.new_version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "npm install -g @cronicorn/mcp-server@${{ steps.version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
