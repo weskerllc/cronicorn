@@ -25,55 +25,39 @@ const baseEndpointFields = {
 
 // Minimal UI-only form schemas for presentation layer
 // Actual validation is handled by API contracts in transform functions
+const intervalEndpointSchema = z.object({
+    scheduleType: z.literal("interval"),
+    ...baseEndpointFields,
+    baselineIntervalMinutes: z.number().min(1, "Must be at least 1 minute"),
+});
+
+const cronEndpointSchema = z.object({
+    scheduleType: z.literal("cron"),
+    ...baseEndpointFields,
+    baselineCron: z.string().min(1, "Cron expression is required"),
+});
+
 export const createEndpointSchema = z.discriminatedUnion("scheduleType", [
-    z.object({
-        scheduleType: z.literal("interval"),
-        ...baseEndpointFields,
-        baselineIntervalMinutes: z.number().min(1, "Must be at least 1 minute"),
-    }).refine(
-        data => !data.minIntervalMinutes || !data.maxIntervalMinutes || data.minIntervalMinutes <= data.maxIntervalMinutes,
-        {
-            message: "Min interval must be less than or equal to max interval",
-            path: ["minIntervalMinutes"],
-        },
-    ),
-    z.object({
-        scheduleType: z.literal("cron"),
-        ...baseEndpointFields,
-        baselineCron: z.string().min(1, "Cron expression is required"),
-    }).refine(
-        data => !data.minIntervalMinutes || !data.maxIntervalMinutes || data.minIntervalMinutes <= data.maxIntervalMinutes,
-        {
-            message: "Min interval must be less than or equal to max interval",
-            path: ["minIntervalMinutes"],
-        },
-    ),
-]);
+    intervalEndpointSchema,
+    cronEndpointSchema,
+]).refine(
+    data => !data.minIntervalMinutes || !data.maxIntervalMinutes || data.minIntervalMinutes <= data.maxIntervalMinutes,
+    {
+        message: "Min interval must be less than or equal to max interval",
+        path: ["minIntervalMinutes"],
+    },
+);
 
 export const updateEndpointSchema = z.discriminatedUnion("scheduleType", [
-    z.object({
-        scheduleType: z.literal("interval"),
-        ...baseEndpointFields,
-        baselineIntervalMinutes: z.number().min(1, "Must be at least 1 minute"),
-    }).refine(
-        data => !data.minIntervalMinutes || !data.maxIntervalMinutes || data.minIntervalMinutes <= data.maxIntervalMinutes,
-        {
-            message: "Min interval must be less than or equal to max interval",
-            path: ["minIntervalMinutes"],
-        },
-    ),
-    z.object({
-        scheduleType: z.literal("cron"),
-        ...baseEndpointFields,
-        baselineCron: z.string().min(1, "Cron expression is required"),
-    }).refine(
-        data => !data.minIntervalMinutes || !data.maxIntervalMinutes || data.minIntervalMinutes <= data.maxIntervalMinutes,
-        {
-            message: "Min interval must be less than or equal to max interval",
-            path: ["minIntervalMinutes"],
-        },
-    ),
-]);
+    intervalEndpointSchema,
+    cronEndpointSchema,
+]).refine(
+    data => !data.minIntervalMinutes || !data.maxIntervalMinutes || data.minIntervalMinutes <= data.maxIntervalMinutes,
+    {
+        message: "Min interval must be less than or equal to max interval",
+        path: ["minIntervalMinutes"],
+    },
+);
 
 export type CreateEndpointForm = z.infer<typeof createEndpointSchema>;
 export type UpdateEndpointForm = z.infer<typeof updateEndpointSchema>;

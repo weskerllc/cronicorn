@@ -1,0 +1,30 @@
+{
+  "name": "@cronicorn/mcp-server",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "MCP server for Cronicorn - enables AI agents to manage cron jobs via Model Context Protocol",
+  "bin": {
+    "cronicorn-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cronicorn",
+    "cron",
+    "scheduler",
+    "ai"
+  ],
+  "dependencies": {
+    "@cronicorn/api-contracts": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.20.2",
+    "open": "^10.2.0",
+    "zod": "catalog:"
+  }
+}

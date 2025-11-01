@@ -8,7 +8,8 @@ catalog:
   react-dom: ^19.2.0
   typescript: ~5.7.3
   vitest: ~3.2.4
-  zod: ^4.1.12
+  # Pinned to avoid issues with typescript mcp
+  zod: ^3.25.76
 
 syncInjectedDepsAfterScripts:
   - build
