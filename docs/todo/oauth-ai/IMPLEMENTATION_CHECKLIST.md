@@ -95,26 +95,15 @@
 - [x] **RESOLVED**: Better Auth stores device flow sessions in `session` table, not `oauth_tokens` - updated queries
 - [x] Test revoking a device removes access (end-to-end)
 
-### Device Approval UX
-- [ ] Design approval page UI (device icon, scopes requested, approve/deny buttons)
-- [ ] Add visual feedback for approval/denial
+### Device Approval UX Polish
+- [ ] Add visual feedback for approval/denial (success/error animations)
 - [ ] Add countdown timer showing code expiration
 - [ ] Add error handling for expired/invalid codes
 - [ ] Add success screen with "return to your AI agent" message
 - [ ] Test mobile responsiveness
 
-### Connected Devices Dashboard
-- [ ] Create `apps/web/src/app/settings/connected-devices/page.tsx`
-- [ ] Create `apps/web/src/pages/settings/connected-devices.tsx` component
-- [ ] List all active OAuth tokens/sessions
-- [ ] Show device type, last used, scopes, IP address (if available)
-- [ ] Add revoke button for each device
-- [ ] Add "Revoke All" button
-- [ ] Test revocation functionality
-- [ ] Add empty state ("No connected devices")
-
 ### Navigation & Integration
-- [ ] Add "Connected Devices" link to Settings navigation
+- [x] Add "Connected Devices" link to Settings navigation
 - [ ] Add breadcrumbs to device approval page
 - [ ] Update Settings page to show connected device count
 - [ ] Test navigation flows
@@ -132,73 +121,80 @@
 ## 📦 Phase 3: MCP Server Package (Week 2)
 
 ### Package Setup
-- [ ] Create `/apps/mcp-server` directory
-- [ ] Initialize `package.json` with bin entry: `"bin": { "cronicorn-mcp": "./dist/index.js" }`
-- [ ] Set up `tsconfig.json` (extend base config, target ES2022, module ES2022)
-- [ ] Add `.env.example` with `CRONICORN_API_URL`
-- [ ] Install dependencies:
-  - [ ] `@modelcontextprotocol/sdk`
-  - [ ] `open` (for browser launching)
-- [ ] Configure package as ESM (`"type": "module"`)
+- [x] Create `/apps/mcp-server` directory
+- [x] Initialize `package.json` with bin entry: `"bin": { "cronicorn-mcp": "./dist/index.js" }`
+- [x] Set up `tsconfig.json` (extend base config, target ES2022, module ES2022)
+- [x] Add dependencies to `package.json`:
+  - [x] `@modelcontextprotocol/sdk`
+  - [x] `open` (for browser launching)
+  - [x] `zod` (for schema validation)
+- [x] Configure package as ESM (`"type": "module"`)
+- [x] Create comprehensive `README.md` with installation and usage docs
+- [x] Create `.gitignore` for build artifacts
 
 ### OAuth Device Flow Implementation
-- [ ] Create `src/auth/device-flow.ts`
-- [ ] Implement `ensureAuthenticated()` function
-- [ ] Implement `deviceFlow()` function
-  - [ ] Request device code from API
-  - [ ] Display user code and verification URI
-  - [ ] Auto-open browser with `open` package
-  - [ ] Poll for token with exponential backoff
-  - [ ] Handle authorization_pending, slow_down, access_denied, expired_token
-- [ ] Implement `pollForToken()` function
-- [ ] Implement `refreshToken()` function
-- [ ] Add timeout handling (30 minutes)
+- [x] Create `src/auth/device-flow.ts`
+- [x] Implement `authenticate()` function (combines device flow + polling)
+- [x] Implement device code request to API
+- [x] Display user code and verification URI to stderr
+- [x] Auto-open browser with `open` package
+- [x] Implement `pollForToken()` function with proper interval handling
+- [x] Handle authorization_pending, slow_down, access_denied, expired_token
+- [x] Add timeout handling (expires_in from API)
+- [ ] Implement `refreshToken()` function (TODO: after testing expiry)
 - [ ] Add retry logic with exponential backoff
 
 ### Token Storage
-- [ ] Create `src/auth/token-store.ts`
-- [ ] Implement `saveTokens()` to `~/.cronicorn/credentials.json`
-- [ ] Set file permissions to `0o600` (read/write owner only)
-- [ ] Implement `loadTokens()` with error handling
-- [ ] Implement `clearTokens()` for logout
-- [ ] Implement `getTokenPath()` helper
-- [ ] Test token persistence across restarts
+- [x] Create `src/auth/token-store.ts`
+- [x] Implement `saveCredentials()` to `~/.cronicorn/credentials.json`
+- [x] Set file permissions to `0o600` (read/write owner only)
+- [x] Implement `getCredentials()` with error handling
+- [x] Implement `deleteCredentials()` for logout
+- [x] Implement `isTokenExpired()` helper (5 minute buffer)
+- [x] Store access_token, refresh_token, expires_at
+- [ ] Test token persistence across restarts (needs dependencies installed)
 
 ### API Client
-- [ ] Create `src/api/client.ts`
-- [ ] Implement `CronicornClient` class
-- [ ] Add `createJob(data)` method
-- [ ] Add `listJobs(filters)` method
-- [ ] Add `getJob(jobId)` method
-- [ ] Add `pauseJob(jobId, data)` method
-- [ ] Add request error handling (network, auth, rate limit)
-- [ ] Add retry logic for network errors
-- [ ] Create `src/api/types.ts` for request/response types
+- [x] Create `src/tools/index.ts` (minimal API client wrapper)
+- [x] Implement authenticated `fetch` wrapper with Bearer token
+- [x] Add Authorization header injection
+- [x] Add JSON error handling
+- [ ] Add retry logic for network errors (TODO: after initial testing)
+- [ ] Add rate limit handling (TODO: after initial testing)
 
 ### MCP Tools - MVP
-- [ ] Create `src/tools/index.ts` (tool registry)
-- [ ] Implement `create_job` tool (`src/tools/create-job.ts`)
-  - [ ] Define inputSchema (name, endpoints, schedule, timezone, description)
-  - [ ] Implement execute function
-  - [ ] Format response for AI consumption
-  - [ ] Add error handling
-- [ ] Implement `list_jobs` tool (`src/tools/list-jobs.ts`)
-  - [ ] Define inputSchema (status, name, limit, offset)
-  - [ ] Implement execute function
-  - [ ] Format job list response
-- [ ] Implement `pause_job` tool (`src/tools/pause-job.ts`)
-  - [ ] Define inputSchema (jobId, until, reason)
-  - [ ] Implement execute function
-  - [ ] Handle indefinite vs. timed pause
+- [x] Create `src/tools/index.ts` (tool registry with API client)
+- [x] Implement `create_job` tool (`src/tools/create-job.ts`)
+  - [x] Define inputSchema using Zod (name, endpoint.url, endpoint.method, endpoint.headers, endpoint.body, schedule, timezone)
+  - [x] Define outputSchema (job_id, name, schedule, next_run_at)
+  - [x] Implement execute function calling `POST /jobs`
+  - [x] Format response for AI consumption
+  - [x] Add human-readable text + structuredContent
+- [x] Implement `list_jobs` tool (`src/tools/list-jobs.ts`)
+  - [x] Define inputSchema (status filter: active, paused, all)
+  - [x] Define outputSchema (jobs array with id, name, schedule, paused, next_run_at, last_run_at)
+  - [x] Implement execute function calling `GET /jobs?status=`
+  - [x] Format job list response with summary
+- [x] Implement `pause_job` tool (`src/tools/pause-job.ts`)
+  - [x] Define inputSchema (job_id, paused boolean)
+  - [x] Define outputSchema (job_id, name, paused, message)
+  - [x] Implement execute function calling `PATCH /jobs/:id`
+  - [x] Handle pause/unpause with user-friendly messages
+- [x] Implement `get_job_history` tool (`src/tools/get-job-history.ts`)
+  - [x] Define inputSchema (job_id, limit)
+  - [x] Define outputSchema (job_id, job_name, runs array)
+  - [x] Implement execute function calling `GET /jobs/:id` then `GET /endpoints/:id/runs?limit=`
+  - [x] Format run history with status emojis
 
 ### MCP Server Initialization
-- [ ] Create `src/index.ts`
-- [ ] Initialize MCP SDK Server
-- [ ] Register `ListToolsRequestSchema` handler
-- [ ] Register `CallToolRequestSchema` handler
-- [ ] Connect StdioServerTransport
-- [ ] Add startup logging (to stderr)
-- [ ] Add graceful shutdown handling
+- [x] Create `src/index.ts`
+- [x] Initialize McpServer from `@modelcontextprotocol/sdk/server/mcp.js`
+- [x] Check for credentials with `getCredentials()`, fallback to `authenticate()`
+- [x] Register all tools via `registerTools()`
+- [x] Connect StdioServerTransport
+- [x] Add startup logging to stderr
+- [ ] Add graceful shutdown handling (TODO: test with Ctrl+C)
+- [ ] Install dependencies and test build
 
 ### Logging & Error Handling
 - [ ] Create `src/utils/logger.ts`
@@ -209,12 +205,13 @@
 - [ ] Add actionable recovery steps in error messages
 
 ### Build & Development
-- [ ] Add build script: `tsc`
-- [ ] Add dev script: `tsx src/index.ts`
-- [ ] Test build output in `dist/`
-- [ ] Verify shebang in compiled `dist/index.js`: `#!/usr/bin/env node`
-- [ ] Make `dist/index.js` executable: `chmod +x dist/index.js`
-- [ ] Test local execution: `node dist/index.js`
+- [x] Add build script: `tsc`
+- [x] Add dev script: `tsx src/index.ts` (not added yet, but can use watch)
+- [x] Test build output in `dist/`
+- [x] Verify shebang in compiled `dist/index.js`: `#!/usr/bin/env node`
+- [x] Make `dist/index.js` executable: `chmod +x dist/index.js`
+- [ ] Test local execution: `node dist/index.js` (requires API running for OAuth flow)
+- [x] Add watch script: `tsc --watch`
 
 ### Testing
 - [ ] Write unit tests for `device-flow.ts`

@@ -3,12 +3,12 @@ import { sql } from "drizzle-orm";
 import type { Database } from "./db.js";
 
 export type ConnectedDevice = {
-    id: string;
-    token: string;
-    userAgent: string | null;
-    ipAddress: string | null;
-    createdAt: Date | string;
-    expiresAt: Date | string;
+  id: string;
+  token: string;
+  userAgent: string | null;
+  ipAddress: string | null;
+  createdAt: Date | string;
+  expiresAt: Date | string;
 };
 
 /**
@@ -28,23 +28,23 @@ export type ConnectedDevice = {
  * are incompatible with apps/api's Database type due to pnpm workspace module resolution.
  */
 export class DevicesService {
-    constructor(private readonly db: Database) { }
+  constructor(private readonly db: Database) { }
 
-    /**
-     * List all connected devices (sessions) for a user.
-     *
-     * @param userId - The user ID
-     * @returns Array of connected sessions
-     */
-    async listConnectedDevices(userId: string): Promise<ConnectedDevice[]> {
-        const results = await this.db.execute<{
-            id: string;
-            token: string;
-            user_agent: string | null;
-            ip_address: string | null;
-            created_at: Date;
-            expires_at: Date;
-        }>(sql`
+  /**
+   * List all connected devices (sessions) for a user.
+   *
+   * @param userId - The user ID
+   * @returns Array of connected sessions
+   */
+  async listConnectedDevices(userId: string): Promise<ConnectedDevice[]> {
+    const results = await this.db.execute<{
+      id: string;
+      token: string;
+      user_agent: string | null;
+      ip_address: string | null;
+      created_at: Date;
+      expires_at: Date;
+    }>(sql`
       SELECT 
         id,
         token,
@@ -57,45 +57,45 @@ export class DevicesService {
       ORDER BY created_at DESC
     `);
 
-        return results.rows.map(row => ({
-            id: row.id,
-            token: row.token,
-            userAgent: row.user_agent,
-            ipAddress: row.ip_address,
-            createdAt: row.created_at,
-            expiresAt: row.expires_at,
-        }));
-    }
+    return results.rows.map(row => ({
+      id: row.id,
+      token: row.token,
+      userAgent: row.user_agent,
+      ipAddress: row.ip_address,
+      createdAt: row.created_at,
+      expiresAt: row.expires_at,
+    }));
+  }
 
-    /**
-     * Get a single session and verify ownership.
-     *
-     * @param sessionId - The session ID
-     * @returns Session with userId, or null if not found
-     */
-    async getToken(sessionId: string): Promise<{ userId: string } | null> {
-        const result = await this.db.execute<{ user_id: string }>(sql`
+  /**
+   * Get a single session and verify ownership.
+   *
+   * @param sessionId - The session ID
+   * @returns Session with userId, or null if not found
+   */
+  async getToken(sessionId: string): Promise<{ userId: string } | null> {
+    const result = await this.db.execute<{ user_id: string }>(sql`
       SELECT user_id
       FROM session
       WHERE id = ${sessionId}
       LIMIT 1
     `);
 
-        const row = result.rows[0];
-        return row ? { userId: row.user_id } : null;
-    }
+    const row = result.rows[0];
+    return row ? { userId: row.user_id } : null;
+  }
 
-    /**
-     * Revoke a session (disconnect device).
-     *
-     * @param sessionId - The session ID to revoke
-     */
-    async revokeToken(sessionId: string): Promise<void> {
-        await this.db.execute(sql`
+  /**
+   * Revoke a session (disconnect device).
+   *
+   * @param sessionId - The session ID to revoke
+   */
+  async revokeToken(sessionId: string): Promise<void> {
+    await this.db.execute(sql`
       DELETE FROM session
       WHERE id = ${sessionId}
     `);
-    }
+  }
 }
 
 /**
@@ -103,5 +103,5 @@ export class DevicesService {
  * Used by middleware to provide transactional service access.
  */
 export function createDevicesService(db: Database) {
-    return new DevicesService(db);
+  return new DevicesService(db);
 }
