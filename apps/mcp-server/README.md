@@ -14,6 +14,14 @@ Authentication uses OAuth 2.0 Device Authorization Grant (RFC 8628) to securely 
 
 ## Installation
 
+### Published Package (Recommended)
+
+```bash
+npm install -g @cronicorn/mcp-server
+# or
+pnpm add -g @cronicorn/mcp-server
+```
+
 ### From Source (Development)
 
 ```bash
@@ -24,12 +32,6 @@ pnpm --filter @cronicorn/mcp-server build
 # Link globally (optional)
 cd apps/mcp-server
 pnpm link --global
-```
-
-### Published Package (Coming Soon)
-
-```bash
-npm install -g @cronicorn/mcp-server
 ```
 
 ## Usage
@@ -150,6 +152,43 @@ pnpm watch
 # Type check
 pnpm typecheck
 ```
+
+## Publishing
+
+The MCP server is published as a **bundled package** - all dependencies (including `@cronicorn/api-contracts`) are bundled into a single executable. See [BUNDLING.md](./BUNDLING.md) for technical details.
+
+### Release Workflow
+
+```bash
+# 1. Update version
+cd apps/mcp-server
+npm version patch|minor|major
+
+# 2. Build the bundle
+pnpm build
+
+# 3. Verify bundle contents
+pnpm pack
+tar -tzf cronicorn-mcp-server-*.tgz
+
+# 4. Publish to npm
+pnpm publish --access public
+
+# 5. Tag and push
+git add package.json
+git commit -m "chore(mcp-server): release v0.1.x"
+git tag mcp-server-v0.1.x
+git push --follow-tags
+```
+
+### What Gets Published
+
+- `dist/index.js` (470KB bundled executable)
+- `dist/index.js.map` (source maps)
+- `package.json`
+- `README.md`
+
+**Note**: Only production dependency is `@modelcontextprotocol/sdk` - everything else is bundled.
 
 ## Security
 

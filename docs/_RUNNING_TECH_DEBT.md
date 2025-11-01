@@ -2,6 +2,40 @@
 
 This document tracks technical debt, TODOs, and uncertainties discovered during development.
 
+## MCP Server: Bundling Strategy Decision
+
+**Date:** 2025-11-01
+**Status:** ✅ RESOLVED
+**Area:** MCP Server Publishing & Distribution
+
+**Problem:**
+When publishing `@cronicorn/mcp-server` to npm, needed to decide whether to:
+1. Publish both `@cronicorn/api-contracts` and `@cronicorn/mcp-server` separately
+2. Bundle api-contracts into mcp-server dist
+
+**Resolution:**
+Chose **Option 2: Bundle api-contracts** using tsup bundler.
+
+**Implementation:**
+- Added `tsup@^8.5.0` as build tool
+- Configured to bundle all dependencies except `@modelcontextprotocol/sdk`
+- api-contracts code is included in 470KB executable
+- Only one package to publish/install
+
+**Rationale:**
+- Simpler user experience (one `npm install`)
+- No version coordination needed
+- api-contracts has no standalone use case
+- Smaller attack surface
+- Faster cold starts
+
+**Documentation:**
+See `apps/mcp-server/BUNDLING.md` for full technical details.
+
+**ADR:** Created `.adr/0040-mcp-server-bundling-strategy.md`
+
+---
+
 ## MCP Server: 1:1 API Endpoint Pattern vs Custom Tools
 
 **Date:** 2025-11-01
