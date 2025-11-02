@@ -6,14 +6,15 @@ import type { Auth } from "./config";
 import type { AuthContext } from "./types";
 
 /**
- * Unified authentication middleware for both OAuth sessions and API keys.
+ * Unified authentication middleware supporting multiple auth methods.
  *
  * Authentication precedence:
- * 1. Check for OAuth session cookie (set by Better Auth after GitHub login)
- * 2. Check for x-api-key header (validated against Better Auth's API key storage)
+ * 1. OAuth session cookie (Better Auth after GitHub login in web UI)
+ * 2. Bearer token (Better Auth device flow for MCP servers/CLI tools)
+ * 3. API key header (Better Auth API key for service-to-service auth)
  *
- * Better Auth handles validation for both methods. This middleware just
- * checks the appropriate source and extracts the user info.
+ * Better Auth handles validation for all methods. This middleware checks
+ * each source in order and extracts user info from the first valid method.
  */
 export function requireAuth(auth: Auth) {
   return async (c: Context, next: Next) => {
@@ -24,6 +25,30 @@ export function requireAuth(auth: Auth) {
       c.set("session", sessionResult);
       c.set("userId", sessionResult.user.id);
       return next();
+    }
+
+    // Try Bearer token (for OAuth device flow)
+    // Better Auth handles Bearer token validation internally
+    // We just need to pass the Authorization header
+    const authHeader = c.req.header("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        // Pass the entire request headers to Better Auth
+        // It will validate the Bearer token and return the session if valid
+        const bearerSessionResult = await auth.api.getSession({
+          headers: c.req.raw.headers,
+        });
+
+        if (bearerSessionResult?.user) {
+          c.set("session", bearerSessionResult);
+          c.set("userId", bearerSessionResult.user.id);
+          return next();
+        }
+      }
+      catch {
+        // Bearer token validation failed, continue to other auth methods
+        // (errors are expected for invalid/expired tokens)
+      }
     }
 
     // Try API key authentication
@@ -47,7 +72,7 @@ export function requireAuth(auth: Auth) {
 
     // No valid authentication found
     throw new HTTPException(401, {
-      message: "Unauthorized - Valid session cookie or API key required",
+      message: "Unauthorized - Valid session cookie, Bearer token, or API key required",
     });
   };
 }

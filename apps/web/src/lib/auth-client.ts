@@ -1,4 +1,4 @@
-import { apiKeyClient } from "better-auth/client/plugins";
+import { apiKeyClient, deviceAuthorizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 // API is proxied at /api, no need for full URL
@@ -13,6 +13,7 @@ export const authClient = createAuthClient({
   },
   plugins: [
     apiKeyClient(),
+    deviceAuthorizationClient(), // OAuth Device Flow for AI agents
   ],
 });
 

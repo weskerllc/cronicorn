@@ -14,7 +14,7 @@
     "@cronicorn/adapter-pino": "workspace:*",
     "@cronicorn/adapter-system-clock": "workspace:*",
     "@cronicorn/worker-scheduler": "workspace:*",
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "catalog:",
     "pg": "^8.13.1",
     "pino": "^10.1.0",
     "pino-pretty": "^11.0.0",

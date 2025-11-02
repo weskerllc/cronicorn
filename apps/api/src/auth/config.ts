@@ -1,31 +1,45 @@
 import { schema } from "@cronicorn/adapter-drizzle";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { apiKey } from "better-auth/plugins";
+import { apiKey, bearer, deviceAuthorization } from "better-auth/plugins";
 
 import type { Env } from "../lib/config";
 import type { Database } from "../lib/db";
 
 /**
- * Creates Better Auth instance with dual authentication:
- * 1. GitHub OAuth for web UI users
- * 2. API keys for service-to-service authentication
+ * Creates Better Auth instance with three authentication methods:
+ * 1. GitHub OAuth for web UI users (session cookies)
+ * 2. Device Authorization for AI agents/CLI tools (Bearer tokens)
+ * 3. API keys for service-to-service authentication
  *
- * Better Auth manages both OAuth sessions and API key storage/validation.
- * Our middleware handles checking both authentication methods.
+ * Better Auth manages all authentication and session storage/validation.
+ * Our middleware handles checking each authentication method in order.
  */
 export function createAuth(config: Env, db: Database) {
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {
-        ...schema,
-        apikey: schema.apiKey, // Map Better Auth's expected "apikey" to our "apiKey" export
+        // Built-in Better Auth tables (singular names from our schema)
+        user: schema.user,
+        session: schema.session,
+        account: schema.account,
+        verification: schema.verification,
+
+        // Custom plugin tables
+        apikey: schema.apiKey,
+        deviceCode: schema.deviceCodes, // Device flow uses plural table name
+        oauthToken: schema.oauthTokens, // Device flow uses plural table name
       },
     }),
     secret: config.BETTER_AUTH_SECRET,
     baseURL: config.BETTER_AUTH_URL,
     trustedOrigins: [config.WEB_URL],
+    // Long-lived sessions for MCP/CLI tools (30 days)
+    session: {
+      expiresIn: 60 * 60 * 24 * 30, // 30 days
+      updateAge: 60 * 60 * 24 * 7, // Refresh session weekly
+    },
     socialProviders: {
       github: {
         clientId: config.GITHUB_CLIENT_ID,
@@ -34,6 +48,10 @@ export function createAuth(config: Env, db: Database) {
       },
     },
     plugins: [
+      bearer({
+        // Bearer tokens inherit session expiresIn (30 days from session config above)
+        // Note: better-auth v1.3.34 bearer plugin doesn't support expiresIn parameter
+      }),
       apiKey({
         // API key configuration
         apiKeyHeaders: "x-api-key",
@@ -42,6 +60,11 @@ export function createAuth(config: Env, db: Database) {
           timeWindow: 60 * 1000, // 1 minute
           maxRequests: 100,
         },
+      }),
+      deviceAuthorization({
+        // OAuth Device Flow for AI agents (MCP servers, CLI tools, etc.)
+        expiresIn: "30m", // Device code expiration time (30 minutes)
+        interval: "5s", // Minimum polling interval (5 seconds)
       }),
     ],
   });
