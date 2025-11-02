@@ -1,0 +1,52 @@
+{
+  "name": "@cronicorn/mcp-server",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "MCP server for Cronicorn - enables AI agents to manage cron jobs via Model Context Protocol",
+  "author": "Cronicorn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weskerllc/cronicorn.git",
+    "directory": "apps/mcp-server"
+  },
+  "homepage": "https://cronicorn.com",
+  "bugs": {
+    "url": "https://github.com/weskerllc/cronicorn/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "cronicorn-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "watch": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "inspect": "NODE_ENV=development pnpx @modelcontextprotocol/inspector ./dist/index.js",
+    "test:refresh": "NODE_ENV=development pnpm exec tsx scripts/test-token-refresh.ts",
+    "test:expiry": "NODE_ENV=development pnpm exec tsx scripts/test-token-expiry.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cronicorn",
+    "cron",
+    "scheduler",
+    "ai"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.2",
+    "@cronicorn/api-contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.17.2",
+    "open": "^10.2.0",
+    "tsup": "^8.5.0",
+    "zod": "catalog:"
+  }
+}
