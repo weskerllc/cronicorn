@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/weskerllc/cronicorn/compare/v1.3.2...v1.4.0) (2025-11-02)
+
+
+### Features
+
+* MCP init ([63f68e9](https://github.com/weskerllc/cronicorn/commit/63f68e94adf14d102025ff0da9d2330a6f3365b4))
+
 ## [1.3.2](https://github.com/weskerllc/cronicorn/compare/v1.3.1...v1.3.2) (2025-10-31)
 
 
