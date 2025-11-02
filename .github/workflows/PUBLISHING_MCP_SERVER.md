@@ -1,6 +1,42 @@
 # MCP Server Publishing Workflow
 
-This document explains how to use the GitHub Actions workflow to publish the MCP server to npm.
+This document explains how the MCP server is published to npm, both automatically and manually.
+
+## Publishing Methods
+
+### Automatic Publishing (Recommended)
+
+The MCP server is **automatically published to npm** when semantic-release creates a GitHub release:
+
+1. You push a semantic commit to `main` (e.g., `fix: bug` or `feat: new feature`)
+2. Semantic-release runs and creates a GitHub release with a version tag (e.g., `v1.2.3`)
+3. The Docker workflow builds and pushes images
+4. **The npm workflow automatically triggers** and publishes `@cronicorn/mcp-server` to npm
+
+**No manual intervention needed!** The workflow:
+- Extracts the version from the release tag
+- Updates `package.json` to match
+- Publishes to npm with `latest` tag (or `beta` if marked as prerelease)
+- Adds deployment summary to the workflow run
+
+### Manual Publishing (Override)
+
+You can also manually trigger a publish via GitHub Actions:
+
+1. Go to repository **Actions** tab
+2. Select **"Publish MCP Server to npm"** workflow
+3. Click **"Run workflow"** dropdown
+4. Configure:
+   - **version_bump**: patch, minor, or major
+   - **npm_tag**: latest, beta, next, etc.
+5. Click **"Run workflow"**
+
+This method:
+- Bumps the version in `package.json`
+- Commits and pushes the version bump
+- Creates a git tag (`mcp-server-v{version}`)
+- Creates a GitHub release
+- Publishes to npm
 
 ## Prerequisites
 
@@ -48,6 +84,46 @@ The workflow needs to push commits and tags back to the repository:
 
 **Alternative:** The workflow will fall back to `GITHUB_TOKEN` if `PAT_TOKEN` is not set, but this may not trigger other workflows.
 
+## How It Works
+
+### Automatic Flow (on GitHub Release)
+
+```mermaid
+graph LR
+A[Semantic Commit] --> B[semantic-release]
+B --> C[GitHub Release Created]
+C --> D[Docker Workflow Runs]
+C --> E[npm Workflow Runs]
+E --> F[Extract Version from Tag]
+F --> G[Update package.json]
+G --> H[Build Bundle]
+H --> I[Publish to npm]
+```
+
+When a GitHub release is published:
+1. Workflow extracts version from release tag (e.g., `v1.2.3` → `1.2.3` or `mcp-server-v1.2.3` → `1.2.3`)
+2. Updates `apps/mcp-server/package.json` to match
+3. Builds api-contracts dependency
+4. Builds MCP server bundle
+5. Verifies bundle integrity
+6. Publishes to npm with:
+   - `latest` tag if it's a normal release
+   - `beta` tag if it's marked as a prerelease
+7. **Does NOT** create git commits/tags (they already exist from semantic-release)
+
+### Manual Flow (workflow_dispatch)
+
+When manually triggered:
+1. Bumps version in `package.json` based on input (patch/minor/major)
+2. Builds api-contracts dependency
+3. Builds MCP server bundle
+4. Verifies bundle integrity
+5. Publishes to npm with specified tag
+6. Commits version bump to repository
+7. Creates git tag (`mcp-server-v{version}`)
+8. Pushes commit and tag to main
+9. Creates GitHub release
+
 ## Usage
 
 ### Manual Publishing via GitHub Actions
@@ -68,6 +144,26 @@ The workflow needs to push commits and tags back to the repository:
 
 ### What the Workflow Does
 
+#### On Automatic Release Trigger
+
+The workflow automatically:
+
+1. ✅ Detects GitHub release event
+2. ✅ Extracts version from release tag
+3. ✅ Checks out the repository
+4. ✅ Installs dependencies
+5. ✅ Builds `@cronicorn/api-contracts` (bundled dependency)
+6. ✅ Updates version in `apps/mcp-server/package.json`
+7. ✅ Builds MCP server with tsup (creates 470KB bundle)
+8. ✅ Verifies bundle integrity:
+   - Checks for shebang
+   - Ensures api-contracts is bundled
+   - Confirms no workspace references remain
+9. ✅ Publishes to npm with provenance
+10. ✅ Determines npm tag based on prerelease status
+
+#### On Manual Trigger (workflow_dispatch)
+
 The workflow automatically:
 
 1. ✅ Checks out the repository
@@ -81,13 +177,19 @@ The workflow automatically:
    - Confirms no workspace references remain
 7. ✅ Publishes to npm with provenance
 8. ✅ Commits version bump to repository
-9. ✅ Creates git tag (`mcp-server-v0.1.0`)
+9. ✅ Creates git tag (`mcp-server-v{version}`)
 10. ✅ Pushes commit and tag to main
 11. ✅ Creates GitHub release with installation instructions
 
 ### Workflow Outputs
 
-**On Success:**
+**On Automatic Release:**
+
+- 📦 Package published to npm: https://www.npmjs.com/package/@cronicorn/mcp-server
+- ✅ Version matches GitHub release tag
+- 📊 Workflow summary with npm link
+
+**On Manual Trigger:**
 
 - 📦 Package published to npm: https://www.npmjs.com/package/@cronicorn/mcp-server
 - 🏷️ Git tag created: `mcp-server-v{version}`
