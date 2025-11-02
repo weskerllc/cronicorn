@@ -40,10 +40,10 @@
     "ai"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.20.2",
-    "@cronicorn/api-contracts": "workspace:*"
+    "@modelcontextprotocol/sdk": "^1.20.2"
   },
   "devDependencies": {
+    "@cronicorn/api-contracts": "workspace:*",
     "@modelcontextprotocol/inspector": "^0.17.2",
     "open": "^10.2.0",
     "tsup": "^8.5.0",
