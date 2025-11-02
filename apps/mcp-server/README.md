@@ -50,6 +50,90 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 }
 ```
 
+### VS Code / GitHub Copilot
+
+**Option 1: VS Code with GitHub Copilot (Native MCP Support)**
+
+GitHub Copilot in VS Code supports MCP through [agent mode](https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode). Configure in your VS Code settings:
+
+1. Open VS Code Settings (JSON) via `Cmd+Shift+P` → "Preferences: Open User Settings (JSON)"
+
+2. Add the MCP server configuration:
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "cronicorn": {
+      "command": "cronicorn-mcp"
+    }
+  }
+}
+```
+
+Alternatively, create an `mcp.json` file in your workspace or user config directory:
+
+**User config** (`~/.vscode/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "cronicorn": {
+      "command": "cronicorn-mcp"
+    }
+  }
+}
+```
+
+**Workspace config** (`.vscode/mcp.json` in project root):
+```json
+{
+  "mcpServers": {
+    "cronicorn": {
+      "command": "cronicorn-mcp"
+    }
+  }
+}
+```
+
+**Option 2: VS Code Extensions**
+
+Popular VS Code extensions with MCP support:
+
+**[Cline](https://github.com/cline/cline)** - Autonomous coding agent
+```json
+// In Cline's MCP settings
+{
+  "mcpServers": {
+    "cronicorn": {
+      "command": "cronicorn-mcp"
+    }
+  }
+}
+```
+
+**[Continue](https://github.com/continuedev/continue)** - AI code assistant
+```json
+// In Continue's config.json
+{
+  "mcpServers": {
+    "cronicorn": {
+      "command": "cronicorn-mcp"
+    }
+  }
+}
+```
+
+**[Cursor](https://docs.cursor.com/context/mcp)** - AI code editor (VS Code fork)
+```json
+// In Cursor's MCP settings
+{
+  "mcpServers": {
+    "cronicorn": {
+      "command": "cronicorn-mcp"
+    }
+  }
+}
+```
+
 ### First Run - OAuth Device Flow
 
 On first run, the server will:
@@ -60,6 +144,58 @@ On first run, the server will:
 4. Store credentials securely in `~/.cronicorn/credentials.json`
 
 Subsequent runs will use the stored access token automatically.
+
+## Keeping Updated
+
+The MCP server does not automatically update. When using `npx` or global installation, you'll continue using the cached version until you manually update.
+
+### Check Current Version
+
+```bash
+npx @cronicorn/mcp-server --version
+# or for global install
+cronicorn-mcp --version
+```
+
+### Update Methods
+
+**For npx users (recommended):**
+
+Option 1: Use the `@latest` tag to always get the newest version
+```json
+{
+  "mcpServers": {
+    "cronicorn": {
+      "command": "npx",
+      "args": ["-y", "@cronicorn/mcp-server@latest"]
+    }
+  }
+}
+```
+
+Option 2: Clear npm cache and reinstall
+```bash
+npm cache clean --force
+npx @cronicorn/mcp-server
+```
+
+**For global installations:**
+
+```bash
+npm update -g @cronicorn/mcp-server
+# or
+pnpm update -g @cronicorn/mcp-server
+```
+
+### Why Update?
+
+Regular updates ensure you have:
+- Latest bug fixes and security patches
+- New features and tools
+- Performance improvements
+- Compatibility with latest MCP clients
+
+**Note:** Using `@latest` in your configuration ensures you always run the newest version, but be aware this may occasionally introduce breaking changes. For production use, consider pinning to a specific version and updating manually after reviewing the [changelog](https://github.com/weskerllc/cronicorn/releases).
 
 ## Available Tools
 
