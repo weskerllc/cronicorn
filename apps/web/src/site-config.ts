@@ -33,15 +33,13 @@ const siteConfig = {
     pricing: "Flexible pricing for adaptive monitoring. Start with early access. Enterprise features for intelligent HTTP scheduler and workflow orchestration.",
     docs: "Complete documentation for adaptive scheduling with AI hints. Quick start guides, API reference. Get started with intelligent cron alternatives.",
     faq: "Get answers to common questions about Cronicorn's AI-powered job scheduling. Learn about adaptive intervals, workflow orchestration, and intelligent automation.",
-    login: "Sign in to your Cronicorn account to access powerful AI-driven job scheduling, analytics, and automation tools. Multiple authentication options available.",
-    register: "Join Cronicorn today and transform your job scheduling with AI. Get started with 100 free jobs per month, intelligent recommendations, and powerful analytics."
+    login: "Sign in to your Cronicorn account to access powerful AI-driven job scheduling, analytics, and automation tools.",
   },
 
   /** Page titles for SEO (used with titleTemplate) */
   pageTitles: {
     pricing: "Pricing Plans - Choose Your AI Scheduling Solution",
     login: "Login - Access Your AI Scheduling Dashboard",
-    register: "Create Account - Start AI-Powered Scheduling",
     faq: "Frequently Asked Questions"
   },
 
@@ -53,7 +51,6 @@ const siteConfig = {
     faq: "/faq",
     dashboard: "/dashboard",
     login: "/login",
-    register: "/register",
 
     // Documentation
     documentation: "https://github.com/weskerllc/cronicorn#readme",

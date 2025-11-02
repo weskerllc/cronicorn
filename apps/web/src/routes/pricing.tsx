@@ -192,7 +192,7 @@ function Pricing() {
                 <ul className="space-y-3" role="list">
                   {tier.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start gap-3">
-                      <Check className="size-4 text-green-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <Check className="size-4 text-green-500 mt-0.5 shrink-0" aria-hidden="true" />
                       <span className="text-sm">{feature}</span>
                     </li>
                   ))}
@@ -241,14 +241,11 @@ function Pricing() {
           <section className="text-center space-y-4 py-8 bg-muted/30 rounded-lg">
             <h2 className="text-2xl font-semibold">Ready to Get Started?</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Create your free account today and start scheduling with AI intelligence
+              Sign in with GitHub to start scheduling with AI intelligence
             </p>
             <div className="flex justify-center gap-4">
               <Button asChild size="lg">
-                <Link to="/register">Create Free Account</Link>
-              </Button>
-              <Button variant="outline" asChild size="lg">
-                <Link to="/login">Sign In</Link>
+                <Link to="/login">Sign In with GitHub</Link>
               </Button>
             </div>
           </section>
