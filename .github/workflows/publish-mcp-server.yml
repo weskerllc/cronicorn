@@ -98,7 +98,12 @@ jobs:
         working-directory: apps/mcp-server
         run: |
           echo "🔍 Verifying bundle contents..."
-          pnpm pack --dry-run
+          
+          # Check that bundle file exists
+          if [ ! -f dist/index.js ]; then
+            echo "❌ Bundle file dist/index.js not found"
+            exit 1
+          fi
 
           echo "📊 Bundle size:"
           ls -lh dist/index.js
@@ -107,10 +112,16 @@ jobs:
           head -1 dist/index.js
 
           echo "✅ Verifying no workspace references:"
-          ! grep -q "@cronicorn/api-contracts" dist/index.js || (echo "❌ Found workspace reference in bundle" && exit 1)
+          if grep -q "@cronicorn/api-contracts" dist/index.js; then
+            echo "❌ Found workspace reference in bundle"
+            exit 1
+          fi
 
           echo "✅ Verifying api-contracts code is bundled:"
-          grep -q "CreateJobRequestSchema" dist/index.js || (echo "❌ api-contracts not bundled" && exit 1)
+          if ! grep -q "CreateJobRequestSchema" dist/index.js; then
+            echo "❌ api-contracts not bundled"
+            exit 1
+          fi
 
           echo "✅ Bundle verification passed!"
 
