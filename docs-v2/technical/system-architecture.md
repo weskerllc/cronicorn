@@ -1,11 +1,14 @@
 ---
-title: "System Architecture"
-description: "Understanding Cronicorn's dual-worker architecture and how adaptive scheduling works"
-tags: ["architecture", "overview", "workers", "adaptation"]
-target_audience: "power users, AI agents, developers"
-prerequisites: []
-related: ["how-scheduling-works", "how-ai-adaptation-works"]
-last_updated: "2025-11-02"
+id: system-architecture
+title: System Architecture
+description: Dual-worker architecture with Scheduler and AI Planner
+tags: [assistant, technical, architecture]
+sidebar_position: 1
+mcp:
+  uri: file:///docs/technical/system-architecture.md
+  mimeType: text/markdown
+  priority: 0.85
+  lastModified: 2025-11-02T00:00:00Z
 ---
 
 # System Architecture

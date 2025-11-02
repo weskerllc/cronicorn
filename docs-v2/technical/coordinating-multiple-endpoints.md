@@ -1,9 +1,14 @@
 ---
+id: coordinating-endpoints
 title: Coordinating Multiple Endpoints
-description: Practical patterns for orchestrating workflows across multiple endpoints using AI-driven coordination
-tags: [orchestration, coordination, workflows, patterns, sibling-endpoints]
-prerequisites: [system-architecture, how-ai-adaptation-works]
-related: [how-scheduling-works, configuration-and-constraints]
+description: Orchestration patterns and multi-endpoint examples
+tags: [assistant, technical, orchestration]
+sidebar_position: 4
+mcp:
+  uri: file:///docs/technical/coordinating-multiple-endpoints.md
+  mimeType: text/markdown
+  priority: 0.80
+  lastModified: 2025-11-02T00:00:00Z
 ---
 
 # Coordinating Multiple Endpoints

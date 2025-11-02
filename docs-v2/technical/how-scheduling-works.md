@@ -1,9 +1,14 @@
 ---
+id: how-scheduling-works
 title: How Scheduling Works
-description: Deep-dive into the Scheduler worker, Governor decision logic, and scheduling safety mechanisms
-tags: [scheduler, governor, execution, constraints, safety]
-prerequisites: [system-architecture]
-related: [how-ai-adaptation-works, configuration-and-constraints]
+description: Scheduler loop, Governor safety, and nextRunAt calculation
+tags: [assistant, technical, scheduler]
+sidebar_position: 2
+mcp:
+  uri: file:///docs/technical/how-scheduling-works.md
+  mimeType: text/markdown
+  priority: 0.85
+  lastModified: 2025-11-02T00:00:00Z
 ---
 
 # How Scheduling Works

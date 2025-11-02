@@ -1,17 +1,18 @@
-import type { ReactNode } from 'react';
-import clsx from 'clsx';
-import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import Layout from '@theme/Layout';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
-import Heading from '@theme/Heading';
+import type { ReactNode } from "react";
 
-import styles from './index.module.css';
+import Link from "@docusaurus/Link";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import HomepageFeatures from "@site/src/components/HomepageFeatures";
+import Heading from "@theme/Heading";
+import Layout from "@theme/Layout";
+import clsx from "clsx";
+
+import styles from "./index.module.css";
 
 function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
+    <header className={clsx("hero hero--primary", styles.heroBanner)}>
       <div className="container">
         <Heading as="h1" className="hero__title">
           {siteConfig.title}
@@ -20,7 +21,8 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/intro">
+            to="/docs/introduction"
+          >
             Get Started →
           </Link>
         </div>
@@ -34,7 +36,8 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title={`${siteConfig.title} - AI-Powered Adaptive Scheduler`}
-      description="Cronicorn is an AI-powered adaptive scheduler for modern applications that need intelligent, dynamic task scheduling.">
+      description="Cronicorn is an AI-powered adaptive scheduler for modern applications that need intelligent, dynamic task scheduling."
+    >
       <HomepageHeader />
       <main>
         <HomepageFeatures />
