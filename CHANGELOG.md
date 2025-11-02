@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/weskerllc/cronicorn/compare/v1.4.1...v1.4.2) (2025-11-02)
+
+
+### Bug Fixes
+
+* Workflow ([d61a814](https://github.com/weskerllc/cronicorn/commit/d61a814acc55720b84273a773e9b25d07b75b457))
+
 ## [1.4.1](https://github.com/weskerllc/cronicorn/compare/v1.4.0...v1.4.1) (2025-11-02)
 
 
