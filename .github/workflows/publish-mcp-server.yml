@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version_bump:
-        description: "Version bump type"
+        description: Version bump type
         required: true
         type: choice
         options:
@@ -14,7 +14,7 @@ on:
       npm_tag:
         description: "npm dist-tag (e.g., latest, beta)"
         required: false
-        default: "latest"
+        default: latest
         type: string
 
 permissions:
@@ -86,19 +86,19 @@ jobs:
         run: |
           echo "🔍 Verifying bundle contents..."
           pnpm pack --dry-run
-          
+
           echo "📊 Bundle size:"
           ls -lh dist/index.js
-          
+
           echo "✅ Verifying shebang:"
           head -1 dist/index.js
-          
+
           echo "✅ Verifying no workspace references:"
           ! grep -q "@cronicorn/api-contracts" dist/index.js || (echo "❌ Found workspace reference in bundle" && exit 1)
-          
+
           echo "✅ Verifying api-contracts code is bundled:"
           grep -q "CreateJobRequestSchema" dist/index.js || (echo "❌ api-contracts not bundled" && exit 1)
-          
+
           echo "✅ Bundle verification passed!"
 
       - name: Publish to npm
@@ -128,38 +128,38 @@ jobs:
           script: |
             const version = '${{ steps.version.outputs.new_version }}';
             const tag = `mcp-server-v${version}`;
-            
+
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
               name: `MCP Server v${version}`,
               body: `## MCP Server v${version}
-            
+
             Published to npm: https://www.npmjs.com/package/@cronicorn/mcp-server/v/${version}
-            
+
             ### Installation
-            
+
             \`\`\`bash
             npm install -g @cronicorn/mcp-server@${version}
             # or
             pnpm add -g @cronicorn/mcp-server@${version}
             \`\`\`
-            
+
             ### Usage
-            
+
             See [README](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server/README.md) for configuration and usage instructions.
-            
+
             ---
-            
-            **npm package:** [@cronicorn/mcp-server](https://www.npmjs.com/package/@cronicorn/mcp-server)  
-            **npm tag:** \`${inputs.npm_tag || 'latest'}\`  
-            **Bundle size:** ~470KB  
+
+            **npm package:** [@cronicorn/mcp-server](https://www.npmjs.com/package/@cronicorn/mcp-server)
+            **npm tag:** \`${inputs.npm_tag || 'latest'}\`
+            **Bundle size:** ~470KB
             **Node version:** >=20.0.0`,
               draft: false,
               prerelease: inputs.npm_tag !== 'latest'
             });
-            
+
             console.log(`✅ Created GitHub release: ${release.data.html_url}`);
 
       - name: Summary
