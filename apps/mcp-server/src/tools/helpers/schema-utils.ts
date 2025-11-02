@@ -30,7 +30,7 @@ import { z } from "zod";
  * ```
  */
 export function toShape<T extends z.ZodObject<ZodRawShape>>(schema: T): T["shape"] {
-    return schema.shape;
+  return schema.shape;
 }
 
 /**
@@ -51,8 +51,8 @@ export function toShape<T extends z.ZodObject<ZodRawShape>>(schema: T): T["shape
  * ```
  */
 export function createSchemaAndShape<T extends ZodRawShape>(
-    shape: T,
+  shape: T,
 ): [z.ZodObject<T>, T] {
-    const schema = z.object(shape);
-    return [schema, shape];
+  const schema = z.object(shape);
+  return [schema, shape];
 }

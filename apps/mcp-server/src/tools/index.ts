@@ -32,45 +32,45 @@ import { registerPostOneShotHint } from "./api/post-oneshot-hint.js";
 import { registerPostResetFailures } from "./api/post-reset-failures.js";
 
 export function registerTools(
-    server: McpServer,
-    apiUrl: string,
-    credentials: Credentials,
+  server: McpServer,
+  apiUrl: string,
+  credentials: Credentials,
 ): void {
-    // Create authenticated API client (Dependency Injection)
-    const apiClient = createHttpApiClient({
-        baseUrl: apiUrl,
-        accessToken: credentials.access_token,
-    });
+  // Create authenticated API client (Dependency Injection)
+  const apiClient = createHttpApiClient({
+    baseUrl: apiUrl,
+    accessToken: credentials.access_token,
+  });
 
-    // Register all tools
-    // Job Lifecycle
-    registerPostJobs(server, apiClient);
-    registerGetJob(server, apiClient);
-    registerListJobs(server, apiClient);
-    registerPatchJob(server, apiClient);
-    registerDeleteJob(server, apiClient);
-    registerPauseJob(server, apiClient);
-    registerResumeJob(server, apiClient);
+  // Register all tools
+  // Job Lifecycle
+  registerPostJobs(server, apiClient);
+  registerGetJob(server, apiClient);
+  registerListJobs(server, apiClient);
+  registerPatchJob(server, apiClient);
+  registerDeleteJob(server, apiClient);
+  registerPauseJob(server, apiClient);
+  registerResumeJob(server, apiClient);
 
-    // Endpoints
-    registerPostEndpoint(server, apiClient);
-    registerGetEndpoint(server, apiClient);
-    registerListEndpoints(server, apiClient);
-    registerPatchEndpoint(server, apiClient);
-    registerDeleteEndpoint(server, apiClient);
+  // Endpoints
+  registerPostEndpoint(server, apiClient);
+  registerGetEndpoint(server, apiClient);
+  registerListEndpoints(server, apiClient);
+  registerPatchEndpoint(server, apiClient);
+  registerDeleteEndpoint(server, apiClient);
 
-    // Adaptive Scheduling
-    registerPostIntervalHint(server, apiClient);
-    registerPostOneShotHint(server, apiClient);
-    registerPostEndpointPause(server, apiClient);
-    registerDeleteHints(server, apiClient);
-    registerPostResetFailures(server, apiClient);
+  // Adaptive Scheduling
+  registerPostIntervalHint(server, apiClient);
+  registerPostOneShotHint(server, apiClient);
+  registerPostEndpointPause(server, apiClient);
+  registerDeleteHints(server, apiClient);
+  registerPostResetFailures(server, apiClient);
 
-    // Execution Visibility
-    registerGetEndpointRuns(server, apiClient);
-    registerGetRunDetails(server, apiClient);
-    registerGetEndpointHealth(server, apiClient);
+  // Execution Visibility
+  registerGetEndpointRuns(server, apiClient);
+  registerGetRunDetails(server, apiClient);
+  registerGetEndpointHealth(server, apiClient);
 
-    // Dashboard
-    registerGetDashboardStats(server, apiClient);
+  // Dashboard
+  registerGetDashboardStats(server, apiClient);
 }
