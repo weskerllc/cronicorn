@@ -29,7 +29,8 @@
     "typecheck": "tsc --noEmit",
     "inspect": "NODE_ENV=development pnpx @modelcontextprotocol/inspector ./dist/index.js",
     "test:refresh": "NODE_ENV=development pnpm exec tsx scripts/test-token-refresh.ts",
-    "test:expiry": "NODE_ENV=development pnpm exec tsx scripts/test-token-expiry.ts"
+    "test:expiry": "NODE_ENV=development pnpm exec tsx scripts/test-token-expiry.ts",
+    "clear-credentials": "rm -f ~/.cronicorn/credentials.json"
   },
   "keywords": [
     "mcp",
