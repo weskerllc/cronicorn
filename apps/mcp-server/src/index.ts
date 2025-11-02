@@ -11,7 +11,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { authenticate } from "./auth/device-flow.js";
-import { getCredentials } from "./auth/token-store.js";
+import { getCredentials, isTokenExpired } from "./auth/token-store.js";
 import { loadConfig } from "./env.js";
 import { registerTools } from "./tools/index.js";
 
@@ -28,13 +28,28 @@ async function main() {
 
   // Check for existing credentials, or initiate device flow
   let credentials = await getCredentials();
-  if (!credentials) {
-    console.error("No credentials found. Starting OAuth device authorization...");
+  if (!credentials || isTokenExpired(credentials)) {
+    if (credentials && isTokenExpired(credentials)) {
+      const expiresAtDate = new Date(credentials.expires_at);
+      console.error(`⚠️  Token expired at ${expiresAtDate.toISOString()}`);
+      console.error("Starting re-authentication...");
+    }
+    else {
+      console.error("No credentials found. Starting OAuth device authorization...");
+    }
+
     credentials = await authenticate({
       apiUrl: env.CRONICORN_API_URL,
       webUrl: env.CRONICORN_WEB_URL,
     });
     console.error("✅ Authentication successful!");
+  }
+  else {
+    // Valid credentials found - log expiry info
+    const expiresAtDate = new Date(credentials.expires_at);
+    const daysUntilExpiry = Math.floor((credentials.expires_at - Date.now()) / (1000 * 60 * 60 * 24));
+    console.error(`✅ Valid credentials found`);
+    console.error(`📅 Token expires: ${expiresAtDate.toISOString()} (in ~${daysUntilExpiry} days)`);
   }
 
   // Register all tools (create_job, list_jobs, pause_job, get_job_history)

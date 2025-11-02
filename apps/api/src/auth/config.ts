@@ -35,6 +35,11 @@ export function createAuth(config: Env, db: Database) {
     secret: config.BETTER_AUTH_SECRET,
     baseURL: config.BETTER_AUTH_URL,
     trustedOrigins: [config.WEB_URL],
+    // Long-lived sessions for MCP/CLI tools (30 days)
+    session: {
+      expiresIn: 60 * 60 * 24 * 30, // 30 days
+      updateAge: 60 * 60 * 24 * 7, // Refresh session weekly
+    },
     socialProviders: {
       github: {
         clientId: config.GITHUB_CLIENT_ID,
@@ -43,7 +48,10 @@ export function createAuth(config: Env, db: Database) {
       },
     },
     plugins: [
-      bearer(), // Enable Bearer token authentication for device flow
+      bearer({
+        // Bearer tokens inherit session expiresIn (30 days from session config above)
+        // Note: better-auth v1.3.34 bearer plugin doesn't support expiresIn parameter
+      }),
       apiKey({
         // API key configuration
         apiKeyHeaders: "x-api-key",

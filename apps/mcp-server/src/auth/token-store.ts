@@ -27,20 +27,21 @@ export async function getCredentials(): Promise<Credentials | null> {
         const data = await fs.readFile(CREDENTIALS_FILE, "utf-8");
         const credentials: Credentials = JSON.parse(data);
 
-        // Validate structure
-        if (!credentials.access_token || !credentials.refresh_token || !credentials.expires_at) {
+        // Validate structure (refresh_token can be empty string - Better Auth doesn't provide it for device flow)
+        if (!credentials.access_token || credentials.expires_at === undefined) {
             console.error("⚠️  Invalid credentials file format");
             return null;
         }
 
         return credentials;
     }
-    catch (error: any) {
-        if (error.code === "ENOENT") {
+    catch (error: unknown) {
+        if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
             // File doesn't exist - first run
             return null;
         }
-        console.error("Error reading credentials:", error.message);
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Error reading credentials:", message);
         return null;
     }
 }
@@ -61,8 +62,9 @@ export async function saveCredentials(credentials: Credentials): Promise<void> {
 
         console.error(`✅ Credentials saved to ${CREDENTIALS_FILE}`);
     }
-    catch (error: any) {
-        throw new Error(`Failed to save credentials: ${error.message}`);
+    catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to save credentials: ${message}`);
     }
 }
 
@@ -74,9 +76,10 @@ export async function deleteCredentials(): Promise<void> {
         await fs.unlink(CREDENTIALS_FILE);
         console.error("✅ Credentials deleted");
     }
-    catch (error: any) {
-        if (error.code !== "ENOENT") {
-            throw new Error(`Failed to delete credentials: ${error.message}`);
+    catch (error: unknown) {
+        if (error && typeof error === "object" && "code" in error && error.code !== "ENOENT") {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to delete credentials: ${message}`);
         }
     }
 }

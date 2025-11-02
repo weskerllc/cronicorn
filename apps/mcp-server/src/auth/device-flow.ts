@@ -87,14 +87,21 @@ export async function authenticate({ apiUrl, webUrl }: { apiUrl: string; webUrl:
   console.error("✅ Authorization successful!");
 
   // Step 4: Save access token as credentials (use directly with Bearer auth)
+  const expiresAtTimestamp = Date.now() + (token.expires_in * 1000);
   const credentials: Credentials = {
     access_token: token.access_token,
     refresh_token: token.refresh_token || "",
-    expires_at: Date.now() + (token.expires_in * 1000),
+    expires_at: expiresAtTimestamp,
   };
 
   await saveCredentials(credentials);
+
+  // Log expiry information
+  const expiresAtDate = new Date(expiresAtTimestamp);
+  const daysUntilExpiry = Math.floor((expiresAtTimestamp - Date.now()) / (1000 * 60 * 60 * 24));
   console.error("✅ Credentials saved!");
+  console.error(`📅 Token expires: ${expiresAtDate.toISOString()} (in ~${daysUntilExpiry} days)`);
+
   return credentials;
 }
 

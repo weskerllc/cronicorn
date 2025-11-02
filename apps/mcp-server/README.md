@@ -122,6 +122,25 @@ Show me the last 5 runs of my backup job
 
 ## Configuration
 
+### Token Lifetime
+
+Access tokens are valid for **30 days** from authentication. The server automatically:
+- Checks token expiry on startup
+- Displays expiry information and days remaining
+- Triggers re-authentication when tokens expire
+
+**When tokens expire:**
+- You'll see: `⚠️ Token expired at [timestamp]`
+- Server automatically starts device flow
+- Complete authorization in browser to get new 30-day token
+
+**Monitoring token expiry:**
+- On startup, server logs: `📅 Token expires: [ISO timestamp] (in ~X days)`
+- Tokens are refreshed weekly to maintain session
+- Manual re-auth required every 30 days
+
+This follows industry standards (AWS CLI, GitHub CLI use similar lifetimes).
+
 ### Credentials Storage
 
 Credentials are stored in `~/.cronicorn/credentials.json` with permissions `0600` (owner read/write only).
@@ -199,6 +218,14 @@ git push --follow-tags
 
 ## Troubleshooting
 
+### Token expired
+
+**Symptom:** Server shows `⚠️ Token expired at [timestamp]`
+
+**Solution:** Automatic - server triggers device flow for re-authentication. Complete authorization in browser.
+
+**Manual test:** Run `pnpm test:expiry` to check current token status and test expiry handling.
+
 ### "No credentials found" error
 
 Delete `~/.cronicorn/credentials.json` and re-authenticate.
@@ -209,7 +236,7 @@ Manually visit the URL shown in the terminal and enter the user code.
 
 ### "Invalid grant" error
 
-Your access token may have expired. Delete credentials and re-authenticate:
+Your access token may have expired or been revoked. Delete credentials and re-authenticate:
 
 ```bash
 rm ~/.cronicorn/credentials.json
