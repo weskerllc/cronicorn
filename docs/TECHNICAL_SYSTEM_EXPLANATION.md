@@ -42,42 +42,68 @@ The single source of truth containing:
 │    d. runs.finish() - record result + response     │
 │    e. **RE-READ** endpoint (catch AI hints)        │
 │    f. planNextRun(now, endpoint, cron)             │
-│    g. updateAfterRun() - persist new schedule      │
+│    g. SAFETY: If nextRunAt in past, reschedule     │
+│    h. updateAfterRun() - persist + clear hints     │
 └─────────────────────────────────────────────────────┘
+
+Zombie Run Cleanup Loop (every 5 minutes):
+  - Mark runs as "failed" if in "running" status 
+    beyond threshold (default 1 hour)
+  - Prevents orphaned run records from accumulating
 ```
 
-**Critical detail in step (e)**: The scheduler re-reads endpoint state *after* execution because the AI planner may have written hints concurrently. This ensures the freshest AI guidance informs the next scheduling decision.
+**Critical details:**
+- **Step (e)**: Re-reads endpoint state *after* execution because the AI planner may have written hints concurrently. This ensures the freshest AI guidance informs the next scheduling decision.
+- **Step (g)**: Safety check - if execution took longer than the interval, `nextRunAt` may be in the past. Reschedule from completion time using the intended interval to prevent immediate re-claiming.
+- **Step (h)**: `updateAfterRun()` persists the new schedule, updates `failureCount` (increment on failure, reset to 0 on success), sets `_lockedUntil = nextRunAt` to prevent re-claiming during horizon window, and clears expired AI hints if `clearExpiredHints: true`.
 
 ### **Phase 2: AI Planner Analysis** (Runs Independently)
 
 ```
-┌─ AIPlanner.analyzeEndpoint(id) ───────────────────┐
+┌─ AIPlanner.analyzeEndpoints(ids) ─────────────────┐
+│ Discovery Phase:                                   │
+│   getEndpointsWithRecentRuns(since) - find active │
+│   endpoints (default: last 5 minutes)             │
+│                                                    │
+│ For each endpoint:                                 │
 │ 1. getEndpoint(id) - current schedule state       │
-│ 2. getHealthSummary(24h) - success rate, latency  │
-│ 3. Build comprehensive prompt:                    │
+│ 2. canProceed(tenantId) - check quota             │
+│    └─> Skip if quota exceeded                     │
+│ 3. getHealthSummary(24h) - success rate, latency  │
+│ 4. getJob(jobId) - fetch job description          │
+│ 5. Build comprehensive prompt:                    │
 │    - Current schedule & constraints               │
 │    - Recent performance (success %, failures)     │
 │    - Active AI hints & their TTLs                 │
+│    - Job context for coordination                 │
 │                                                    │
-│ 4. Invoke AI with 7 tools:                        │
-│    READ:                                           │
+│ 6. Invoke AI with 7 tools:                        │
+│    READ (3 query tools):                          │
 │    - get_latest_response (inspect current state)  │
 │    - get_response_history (identify trends)       │
 │    - get_sibling_latest_responses (coordinate)    │
-│    WRITE:                                          │
+│    WRITE (3 action tools):                        │
 │    - propose_interval (adjust frequency)          │
 │    - propose_next_time (one-shot scheduling)      │
 │    - pause_until (circuit breaker)                │
-│    - submit_analysis (required final reasoning)   │
+│    FINAL (required):                              │
+│    - submit_analysis (reasoning & confidence)     │
 │                                                    │
-│ 5. AI calls tools → writes hints to database      │
+│ 7. AI calls tools → writes hints to database      │
 │    - Sets aiHintIntervalMs / aiHintNextRunAt      │
 │    - Sets aiHintExpiresAt (TTL)                   │
 │    - Calls setNextRunAtIfEarlier() for nudging    │
+│ 8. Extract reasoning from submit_analysis call    │
+│ 9. Persist to ai_analysis_sessions table:         │
+│    - toolCalls, reasoning, tokenUsage, duration   │
 └────────────────────────────────────────────────────┘
 ```
 
-**Key insight**: AI doesn't schedule directly—it writes *hints* with expiration times. The scheduler's governor decides whether to honor them.
+**Key insights**: 
+- AI doesn't schedule directly—it writes *hints* with expiration times. The scheduler's governor decides whether to honor them.
+- Discovery mechanism ensures only recently-active endpoints are analyzed (efficient, focused analysis).
+- Quota enforcement prevents runaway costs (skip analysis if tenant over limit).
+- Session persistence enables debugging, cost tracking, and audit trails.
 
 ---
 
@@ -116,6 +142,21 @@ function planNextRun(now: Date, endpoint: JobEndpoint, cron: Cron) {
     chosen = earliest(aiOneShot, baseline)  // compete with baseline
   } else {
     chosen = baseline
+  }
+  
+  // 2.5 SAFETY: Handle candidates in the past
+  // If execution took longer than interval, chosen candidate may be in the past
+  if (chosen < now) {
+    if (chosen.isBaselineInterval) {
+      // Reschedule from now using intended backoff interval
+      chosen = now + baselineIntervalMs * (2^min(failureCount, 5))
+    } else if (chosen.isAIInterval) {
+      // Reschedule AI interval from now
+      chosen = now + aiHintIntervalMs
+    } else {
+      // For cron and one-shot, floor to now (run immediately)
+      chosen = now
+    }
   }
   
   // 3. APPLY GUARDRAILS
@@ -164,7 +205,8 @@ When AI tools write hints, they don't just set fields—they **nudge** the next 
 // AI calls: propose_interval({ intervalMs: 30000, ttlMinutes: 10 })
 
 async function proposeInterval(args) {
-  const expiresAt = now + (ttlMinutes * 60000);
+  const now = clock.now();
+  const expiresAt = new Date(now.getTime() + (args.ttlMinutes * 60000));
   
   // 1. Write hint to database
   await jobs.writeAIHint(endpointId, {
@@ -174,11 +216,37 @@ async function proposeInterval(args) {
   });
   
   // 2. NUDGE: immediately update nextRunAt if earlier
-  await jobs.setNextRunAtIfEarlier(endpointId, {
-    when: lastRunAt + args.intervalMs,
-    respectPause: true,
-    respectMinMax: true
-  });
+  // Uses NOW (not lastRunAt) because lastRunAt may be in the past during analysis
+  const nextRunAt = new Date(now.getTime() + args.intervalMs);
+  await jobs.setNextRunAtIfEarlier(endpointId, nextRunAt);
+}
+```
+
+**How setNextRunAtIfEarlier works:**
+
+```typescript
+async setNextRunAtIfEarlier(id: string, when: Date) {
+  const ep = await getEndpoint(id);
+  const now = clock.now();
+  
+  // 1. Respect pause (if paused, don't nudge)
+  if (ep.pausedUntil && ep.pausedUntil > now) {
+    return;
+  }
+  
+  // 2. Apply min/max clamps relative to now
+  let candidate = when;
+  if (ep.minIntervalMs && candidate < new Date(now.getTime() + ep.minIntervalMs)) {
+    candidate = new Date(now.getTime() + ep.minIntervalMs);
+  }
+  if (ep.maxIntervalMs && candidate > new Date(now.getTime() + ep.maxIntervalMs)) {
+    candidate = new Date(now.getTime() + ep.maxIntervalMs);
+  }
+  
+  // 3. Only update if candidate is earlier than current nextRunAt
+  if (candidate < ep.nextRunAt) {
+    await update(id, { nextRunAt: candidate });
+  }
 }
 ```
 
@@ -368,6 +436,9 @@ CREATE TABLE endpoints (
   next_run_at TIMESTAMPTZ NOT NULL,  -- ← The scheduler's target
   failure_count INT DEFAULT 0,
   
+  -- Adapter-specific (not in domain entity)
+  _locked_until TIMESTAMPTZ,  -- Pessimistic lock to prevent re-claiming
+  
   INDEX idx_next_run (next_run_at)  -- ← Critical for claimDueEndpoints()
 );
 
@@ -385,11 +456,28 @@ CREATE TABLE runs (
   
   INDEX idx_endpoint_time (endpoint_id, started_at DESC)
 );
+
+-- AI Analysis Sessions (debugging and cost tracking)
+CREATE TABLE ai_analysis_sessions (
+  id UUID PRIMARY KEY,
+  endpoint_id UUID REFERENCES endpoints(id),
+  analyzed_at TIMESTAMPTZ NOT NULL,
+  tool_calls JSONB,  -- Array of { tool, args, result }
+  reasoning TEXT,    -- AI's explanation from submit_analysis
+  token_usage INT,   -- Total tokens consumed
+  duration_ms INT,   -- Analysis duration
+  
+  INDEX idx_endpoint_time (endpoint_id, analyzed_at DESC)
+);
 ```
 
 **Key indexes:**
 - `idx_next_run`: Enables fast `WHERE next_run_at <= now + lockTtl LIMIT N`
-- `idx_endpoint_time`: Enables fast health queries (last 24h of runs)
+- `idx_endpoint_time`: Enables fast health queries (last 24h of runs, analysis sessions)
+
+**Lock management:**
+- `_lockedUntil` is set to `nextRunAt` by `updateAfterRun()` to prevent re-claiming during claim horizon window
+- Critical for distributed workers to avoid duplicate runs
 
 ---
 
@@ -583,7 +671,10 @@ expect(cooldownsRespected("cache_warm_up")).toBe(true);
 3. **Time-Bounded Influence**: AI hints expire, system self-heals to baseline
 4. **Guardrails Always Apply**: Min/max clamps and pause override even AI
 5. **Deterministic Core**: Governor is pure function, fully testable
-6. **Nudging for Immediacy**: AI changes take effect within one scheduler tick
+6. **Nudging for Immediacy**: AI changes take effect within one scheduler tick (5-30s)
 7. **Response Data Drives Decisions**: AI analyzes actual execution outputs, not just metadata
+8. **Safety Mechanisms**: Handle long-running executions, prevent re-claiming, clean up zombies
+9. **Quota Enforcement**: Prevent runaway AI costs via tenant-scoped limits
+10. **Audit Trail**: All AI decisions logged with reasoning for debugging and optimization
 
 This creates a system that's **adaptive** (responds to real conditions), **safe** (guardrails + TTLs), **testable** (deterministic core), and **extensible** (clean ports/adapters).
