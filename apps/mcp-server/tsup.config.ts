@@ -1,3 +1,4 @@
+import { cpSync } from "node:fs";
 import { defineConfig } from "tsup";
 
 export default defineConfig({
@@ -15,5 +16,8 @@ export default defineConfig({
   splitting: false,
   dts: false, // We don't need type declarations for a CLI binary
   minify: false,
-  onSuccess: "echo ✅ MCP Server bundled successfully",
+  onSuccess: async () => {
+    // Copy documentation to dist
+    cpSync("../../docs-v2", "dist/docs", { recursive: true });
+  },
 });

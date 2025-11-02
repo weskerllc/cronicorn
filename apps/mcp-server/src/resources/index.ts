@@ -15,8 +15,8 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Path to documentation directory at root of monorepo
-const DOCS_PATH = path.join(__dirname, "../../../../docs-v2");
+// Path to bundled documentation (copied during build)
+const DOCS_PATH = path.join(__dirname, "docs");
 
 export type DocumentResource = {
     uri: string;
@@ -129,11 +129,14 @@ async function loadDocumentationResources(): Promise<Map<string, DocumentContent
     const resources = new Map<string, DocumentContent>();
 
     try {
+        console.error(`📂 Looking for docs in: ${DOCS_PATH}`);
         const markdownFiles = await findMarkdownFiles(DOCS_PATH);
+        console.error(`📄 Found ${markdownFiles.length} markdown files:`, markdownFiles);
 
         for (const filePath of markdownFiles) {
             const doc = await parseMarkdownFile(filePath);
             if (doc) {
+                console.error(`  ✓ Loaded: ${doc.metadata.title} (${doc.metadata.uri})`);
                 resources.set(doc.metadata.uri, doc);
             }
         }
@@ -141,7 +144,7 @@ async function loadDocumentationResources(): Promise<Map<string, DocumentContent
         console.error(`📚 Loaded ${resources.size} documentation resources`);
     }
     catch (error) {
-        console.error("Failed to load documentation resources:", error);
+        console.error("❌ Failed to load documentation resources:", error);
     }
 
     return resources;
@@ -151,9 +154,11 @@ async function loadDocumentationResources(): Promise<Map<string, DocumentContent
  * Register all documentation resources with the MCP server
  */
 export async function registerResources(server: McpServer): Promise<void> {
+    console.error("🔧 Starting resource registration...");
     const resources = await loadDocumentationResources();
 
     for (const [uri, doc] of resources.entries()) {
+        console.error(`  📝 Registering: ${doc.metadata.name} -> ${uri}`);
         server.registerResource(
             doc.metadata.name,
             uri,

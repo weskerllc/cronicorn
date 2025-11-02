@@ -95,17 +95,30 @@ MCP server uses:
 
 ### MCP Server Resources
 
-The MCP server now:
+The MCP server bundles documentation at build time:
 
-1. Reads markdown files from `docs-v2/` at the root of the repo at startup
-2. Parses frontmatter using `gray-matter`
-3. Registers each file as an MCP resource using `server.registerResource()`
-4. Extracts metadata from both Docusaurus and MCP fields
+1. **Build step** copies `docs-v2/` to `dist/docs/` during tsup build
+2. At runtime, reads markdown files from bundled `dist/docs/`
+3. Parses frontmatter using `gray-matter`
+4. Registers each file as an MCP resource using `server.registerResource()`
+5. Extracts metadata from both Docusaurus and MCP fields
+
+**Why bundle instead of fetching from website?**
+- Works when published to npm (docs included in package)
+- Version-locked (docs match server version)
+- No internet dependency (works offline)
+- Fast access (local files)
+- Reliable (no external service dependency)
 
 **Key code:**
 ```typescript
+// apps/mcp-server/tsup.config.ts
+onSuccess: async () => {
+  cpSync("../../docs-v2", "dist/docs", { recursive: true });
+}
+
 // apps/mcp-server/src/resources/index.ts
-const DOCS_PATH = path.join(__dirname, "../../../../docs-v2");
+const DOCS_PATH = path.join(__dirname, "docs"); // Bundled docs
 
 export async function registerResources(server: McpServer): Promise<void> {
   const resources = await loadDocumentationResources();
