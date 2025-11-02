@@ -1,3 +1,10 @@
+## [1.4.5](https://github.com/weskerllc/cronicorn/compare/v1.4.4...v1.4.5) (2025-11-02)
+
+
+### Bug Fixes
+
+* Redirect on logic ([97830ad](https://github.com/weskerllc/cronicorn/commit/97830adeb75b5df8aae1f4b7387fdbc3b9d34a13))
+
 ## [1.4.4](https://github.com/weskerllc/cronicorn/compare/v1.4.3...v1.4.4) (2025-11-02)
 
 
