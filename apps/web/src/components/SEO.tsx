@@ -181,7 +181,7 @@ export const createSoftwareApplicationSchema = () => ({
         url: siteConfig.url
     },
     downloadUrl: siteConfig.url,
-    installUrl: `${siteConfig.url}/register`,
+    installUrl: `${siteConfig.url}/login`,
     screenshot: `${siteConfig.url}/og-image.png`,
     video: `${siteConfig.url}/demo.mp4`
 });
