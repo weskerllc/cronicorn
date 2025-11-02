@@ -79,7 +79,7 @@ jobs:
             RELEASE_TAG="${{ github.event.release.tag_name }}"
             NEW_VERSION=$(echo "$RELEASE_TAG" | sed -E 's/^(mcp-server-)?v//')
             echo "📦 Using version from release tag: $NEW_VERSION"
-            
+
             # Update package.json to match release version
             npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
           else
@@ -88,7 +88,7 @@ jobs:
             NEW_VERSION=$(node -p "require('./package.json').version")
             echo "📦 Bumped version to: $NEW_VERSION"
           fi
-          
+
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Build MCP server bundle
@@ -130,7 +130,7 @@ jobs:
           else
             NPM_TAG="${{ inputs.npm_tag }}"
           fi
-          
+
           echo "📤 Publishing @cronicorn/mcp-server@${{ steps.version.outputs.new_version }} to npm with tag: $NPM_TAG"
           npm publish --access public --tag "$NPM_TAG" --provenance
           echo "✅ Published successfully!"
@@ -199,7 +199,7 @@ jobs:
             NPM_TAG="${{ inputs.npm_tag }}"
             TRIGGER="Manual workflow_dispatch"
           fi
-          
+
           echo "## 🎉 MCP Server Published!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Trigger:** $TRIGGER" >> $GITHUB_STEP_SUMMARY
