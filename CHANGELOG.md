@@ -1,3 +1,10 @@
+## [1.4.3](https://github.com/weskerllc/cronicorn/compare/v1.4.2...v1.4.3) (2025-11-02)
+
+
+### Bug Fixes
+
+* mcp server bugfix ([80bb357](https://github.com/weskerllc/cronicorn/commit/80bb35787e01061c5e248360f0b81da7553b1c6c))
+
 ## [1.4.2](https://github.com/weskerllc/cronicorn/compare/v1.4.1...v1.4.2) (2025-11-02)
 
 
