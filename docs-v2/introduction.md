@@ -159,3 +159,4 @@ Ready to try Cronicorn? Check out the [Quick Start Guide](./quick-start.md) to g
 
 - **[Core Concepts](./core-concepts.md)** - Understand key terminology
 - **[Quick Start](./quick-start.md)** - Get started in 5 minutes
+- **[Technical Deep Dive](./technical/system-architecture.md)** - Detailed technical documentation for developers and power users

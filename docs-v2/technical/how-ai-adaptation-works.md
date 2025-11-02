@@ -1,9 +1,14 @@
 ---
+id: how-ai-adaptation-works
 title: How AI Adaptation Works
-description: Deep-dive into the AI Planner worker, hint mechanics, and structuring response bodies for intelligent scheduling
-tags: [ai-planner, hints, adaptation, response-bodies, tools]
-prerequisites: [system-architecture]
-related: [how-scheduling-works, coordinating-multiple-endpoints]
+description: AI Planner, hints, tools, response bodies, and adaptation logic
+tags: [assistant, technical, ai-planner]
+sidebar_position: 3
+mcp:
+  uri: file:///docs/technical/how-ai-adaptation-works.md
+  mimeType: text/markdown
+  priority: 0.85
+  lastModified: 2025-11-02T00:00:00Z
 ---
 
 # How AI Adaptation Works
@@ -350,7 +355,7 @@ The AI follows a conservative decision framework:
 
 **Don't intervene when**:
 - Single anomaly (might be transient)
-- Insufficient data (<10 total runs)
+- Insufficient data (&lt;10 total runs)
 - Metrics within normal ranges
 - No clear cause-effect logic
 

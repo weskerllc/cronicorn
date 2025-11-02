@@ -1,9 +1,14 @@
 ---
-title: Configuration and Constraints
-description: Decision guide for configuring endpoints safely and effectively with baseline schedules, constraints, and response bodies
-tags: [configuration, constraints, cron, intervals, timeouts, limits]
-prerequisites: [system-architecture]
-related: [how-scheduling-works, how-ai-adaptation-works]
+id: configuration-constraints
+title: Configuration & Constraints
+description: Decision guide for intervals, cron, timeouts, and AI constraints
+tags: [assistant, technical, configuration]
+sidebar_position: 5
+mcp:
+  uri: file:///docs/technical/configuration-and-constraints.md
+  mimeType: text/markdown
+  priority: 0.80
+  lastModified: 2025-11-02T00:00:00Z
 ---
 
 # Configuration and Constraints
@@ -142,7 +147,7 @@ Constrained to 3-15 minute range, AI operates within that window.
 
 ### Categories:
 
-**Fast endpoints** (< 1 second typical):
+**Fast endpoints** (&lt; 1 second typical):
 - Health checks
 - Simple API calls
 - Cache reads
@@ -160,7 +165,7 @@ Constrained to 3-15 minute range, AI operates within that window.
 - Batch operations
 - **Timeout**: 60-120 seconds
 
-**Very slow endpoints** (> 1 minute typical):
+**Very slow endpoints** (&gt; 1 minute typical):
 - ML model training
 - Large file processing
 - **Timeout**: 300+ seconds (5+ minutes)

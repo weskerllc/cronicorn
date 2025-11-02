@@ -1,9 +1,14 @@
 ---
-title: Reference
-description: Quick lookup for terminology, schema fields, defaults, AI tools, and scheduling sources
-tags: [reference, glossary, schema, defaults, tools, quick-lookup]
-prerequisites: []
-related: [system-architecture, how-scheduling-works, how-ai-adaptation-works]
+id: technical-reference
+title: Technical Reference
+description: Quick lookup for schemas, defaults, tools, and state transitions
+tags: [assistant, technical, reference]
+sidebar_position: 6
+mcp:
+  uri: file:///docs/technical/reference.md
+  mimeType: text/markdown
+  priority: 0.75
+  lastModified: 2025-11-02T00:00:00Z
 ---
 
 # Reference
@@ -284,7 +289,7 @@ How different settings interact:
 | Both AI hints active | Compete (earliest wins) | Compete (earliest wins) | Ignored |
 | Cron baseline | Ignored by AI | Competes with cron | Used when no hints |
 
-**Key insight**: Pause > Constraints > AI hints > Baseline
+**Key insight**: Pause &gt; Constraints &gt; AI hints &gt; Baseline
 
 ## Field Constraints
 
