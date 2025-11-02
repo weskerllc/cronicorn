@@ -1,0 +1,15 @@
+# Source files
+src/
+tsconfig.json
+tsconfig.tsbuildinfo
+tsup.config.ts
+
+# Development files
+*.md
+!README.md
+.gitignore
+
+# Build artifacts
+node_modules/
+coverage/
+*.log

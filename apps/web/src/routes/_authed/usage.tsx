@@ -17,8 +17,8 @@ function RouteComponent() {
 
   const metrics = [
     {
-      title: "API Calls",
-      description: "Your API usage for the current period",
+      title: "AI Usage",
+      description: "Your token usage for the current period",
       used: usage.aiCallsUsed || 0,
       limit: usage.aiCallsLimit || 0,
     },

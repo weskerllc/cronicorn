@@ -18,6 +18,7 @@ export async function listApiKeys() {
 
 // ==================== Mutation Functions ====================
 
+// TODO: Refactor to use api contracts package
 export type CreateApiKeyInput = {
   name: string;
   expiresIn?: number; // in seconds

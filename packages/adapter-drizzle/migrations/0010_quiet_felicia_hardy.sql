@@ -1,0 +1,1 @@
+ALTER TABLE "device_codes" ADD COLUMN "polling_interval" integer;

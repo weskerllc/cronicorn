@@ -21,8 +21,10 @@ import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedApiKeysRouteImport } from './routes/_authed/api-keys'
 import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings.index'
 import { Route as AuthedJobsIndexRouteImport } from './routes/_authed/jobs.index'
+import { Route as AuthedSettingsConnectedDevicesRouteImport } from './routes/_authed/settings.connected-devices'
 import { Route as AuthedRunsIdRouteImport } from './routes/_authed/runs.$id'
 import { Route as AuthedJobsNewRouteImport } from './routes/_authed/jobs.new'
+import { Route as AuthedDeviceApproveRouteImport } from './routes/_authed/device.approve'
 import { Route as AuthedJobsIdIndexRouteImport } from './routes/_authed/jobs.$id.index'
 import { Route as AuthedEndpointsIdIndexRouteImport } from './routes/_authed/endpoints.$id.index'
 import { Route as AuthedJobsIdEditRouteImport } from './routes/_authed/jobs.$id.edit'
@@ -89,6 +91,12 @@ const AuthedJobsIndexRoute = AuthedJobsIndexRouteImport.update({
   path: '/jobs/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedSettingsConnectedDevicesRoute =
+  AuthedSettingsConnectedDevicesRouteImport.update({
+    id: '/settings/connected-devices',
+    path: '/settings/connected-devices',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 const AuthedRunsIdRoute = AuthedRunsIdRouteImport.update({
   id: '/runs/$id',
   path: '/runs/$id',
@@ -97,6 +105,11 @@ const AuthedRunsIdRoute = AuthedRunsIdRouteImport.update({
 const AuthedJobsNewRoute = AuthedJobsNewRouteImport.update({
   id: '/jobs/new',
   path: '/jobs/new',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDeviceApproveRoute = AuthedDeviceApproveRouteImport.update({
+  id: '/device/approve',
+  path: '/device/approve',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedJobsIdIndexRoute = AuthedJobsIdIndexRouteImport.update({
@@ -141,8 +154,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
   '/usage': typeof AuthedUsageRoute
+  '/device/approve': typeof AuthedDeviceApproveRoute
   '/jobs/new': typeof AuthedJobsNewRoute
   '/runs/$id': typeof AuthedRunsIdRoute
+  '/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/jobs': typeof AuthedJobsIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
@@ -162,8 +177,10 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
   '/usage': typeof AuthedUsageRoute
+  '/device/approve': typeof AuthedDeviceApproveRoute
   '/jobs/new': typeof AuthedJobsNewRoute
   '/runs/$id': typeof AuthedRunsIdRoute
+  '/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/jobs': typeof AuthedJobsIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
@@ -185,8 +202,10 @@ export interface FileRoutesById {
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/plan': typeof AuthedPlanRoute
   '/_authed/usage': typeof AuthedUsageRoute
+  '/_authed/device/approve': typeof AuthedDeviceApproveRoute
   '/_authed/jobs/new': typeof AuthedJobsNewRoute
   '/_authed/runs/$id': typeof AuthedRunsIdRoute
+  '/_authed/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/_authed/jobs/': typeof AuthedJobsIndexRoute
   '/_authed/settings/': typeof AuthedSettingsIndexRoute
   '/_authed/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
@@ -208,8 +227,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/plan'
     | '/usage'
+    | '/device/approve'
     | '/jobs/new'
     | '/runs/$id'
+    | '/settings/connected-devices'
     | '/jobs'
     | '/settings'
     | '/endpoints/$id/health'
@@ -229,8 +250,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/plan'
     | '/usage'
+    | '/device/approve'
     | '/jobs/new'
     | '/runs/$id'
+    | '/settings/connected-devices'
     | '/jobs'
     | '/settings'
     | '/endpoints/$id/health'
@@ -251,8 +274,10 @@ export interface FileRouteTypes {
     | '/_authed/dashboard'
     | '/_authed/plan'
     | '/_authed/usage'
+    | '/_authed/device/approve'
     | '/_authed/jobs/new'
     | '/_authed/runs/$id'
+    | '/_authed/settings/connected-devices'
     | '/_authed/jobs/'
     | '/_authed/settings/'
     | '/_authed/endpoints/$id/health'
@@ -358,6 +383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedJobsIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/settings/connected-devices': {
+      id: '/_authed/settings/connected-devices'
+      path: '/settings/connected-devices'
+      fullPath: '/settings/connected-devices'
+      preLoaderRoute: typeof AuthedSettingsConnectedDevicesRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/runs/$id': {
       id: '/_authed/runs/$id'
       path: '/runs/$id'
@@ -370,6 +402,13 @@ declare module '@tanstack/react-router' {
       path: '/jobs/new'
       fullPath: '/jobs/new'
       preLoaderRoute: typeof AuthedJobsNewRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/device/approve': {
+      id: '/_authed/device/approve'
+      path: '/device/approve'
+      fullPath: '/device/approve'
+      preLoaderRoute: typeof AuthedDeviceApproveRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/jobs/$id/': {
@@ -422,8 +461,10 @@ interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedPlanRoute: typeof AuthedPlanRoute
   AuthedUsageRoute: typeof AuthedUsageRoute
+  AuthedDeviceApproveRoute: typeof AuthedDeviceApproveRoute
   AuthedJobsNewRoute: typeof AuthedJobsNewRoute
   AuthedRunsIdRoute: typeof AuthedRunsIdRoute
+  AuthedSettingsConnectedDevicesRoute: typeof AuthedSettingsConnectedDevicesRoute
   AuthedJobsIndexRoute: typeof AuthedJobsIndexRoute
   AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
   AuthedEndpointsIdHealthRoute: typeof AuthedEndpointsIdHealthRoute
@@ -439,8 +480,10 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedPlanRoute: AuthedPlanRoute,
   AuthedUsageRoute: AuthedUsageRoute,
+  AuthedDeviceApproveRoute: AuthedDeviceApproveRoute,
   AuthedJobsNewRoute: AuthedJobsNewRoute,
   AuthedRunsIdRoute: AuthedRunsIdRoute,
+  AuthedSettingsConnectedDevicesRoute: AuthedSettingsConnectedDevicesRoute,
   AuthedJobsIndexRoute: AuthedJobsIndexRoute,
   AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
   AuthedEndpointsIdHealthRoute: AuthedEndpointsIdHealthRoute,
