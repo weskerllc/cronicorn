@@ -125,4 +125,52 @@ Updated `.env.test` to use `postgresql://cronicorn_user:asdfasdfasdf@localhost:5
 **Next Steps:**
 - [ ] Create ADR for test database strategy (separate DB vs same DB with transactions)
 - [ ] Standardize port configuration
-- [ ] Add validation script to check env configuration before tests
+- Add validation script to check env configuration before tests
+
+---
+
+## MCP Server: HTTP Client Not Handling 204 No Content
+
+**Date:** 2025-11-02
+**Status:** ✅ FIXED
+**Severity:** High
+**Area:** MCP Server - HTTP API Client
+
+**Problem:**
+The MCP server's HTTP API client (`apps/mcp-server/src/adapters/http-api-client.ts`) was calling `response.json()` for all successful responses, but several API endpoints correctly return `204 No Content` with no response body:
+
+- `POST /endpoints/:id/hints/interval` (Apply AI interval hint)
+- `POST /endpoints/:id/hints/oneshot` (Schedule one-shot run)
+- `POST /endpoints/:id/pause` (Pause/resume endpoint)
+- `DELETE /endpoints/:id/hints` (Clear AI hints)
+- `POST /endpoints/:id/reset-failures` (Reset failure count)
+- `DELETE /jobs/:jobId/endpoints/:id` (Delete endpoint)
+
+This caused "Unexpected end of JSON input" errors when calling these tools.
+
+**Root Cause:**
+`response.json()` tries to parse an empty response body for 204 status codes, throwing a JSON parse error.
+
+**Solution:**
+Added check for 204 status code before attempting to parse JSON:
+
+```typescript
+// Handle 204 No Content responses (no body to parse)
+if (response.status === 204) {
+  // 204 responses have no content, return empty object
+  return Object.create(null);
+}
+
+return response.json();
+```
+
+**Files Changed:**
+- `apps/mcp-server/src/adapters/http-api-client.ts`
+
+**Testing:**
+All affected endpoints now return proper success messages instead of JSON parse errors.
+
+**Impact:**
+- All adaptive scheduling tools now work correctly
+- Better user experience with proper success messages
+- No breaking changes to API contracts

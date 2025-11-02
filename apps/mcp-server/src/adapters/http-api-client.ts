@@ -57,6 +57,12 @@ export function createHttpApiClient(config: HttpApiClientConfig): ApiClient {
         );
       }
 
+      // Handle 204 No Content responses (no body to parse)
+      if (response.status === 204) {
+        // 204 responses have no content, return empty object
+        return Object.create(null);
+      }
+
       return response.json();
     },
   };
