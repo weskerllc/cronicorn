@@ -137,6 +137,61 @@ export function registerPatchJob(server: McpServer, apiClient: ApiClient) {
 }
 ```
 
+## Complete Example: GET with Query Parameters
+
+```typescript
+const [ListJobsRequestSchema, listJobsInputShape] = createSchemaAndShape({
+    status: z.enum(["active", "paused", "archived"]).optional().describe("Filter by status"),
+    limit: z.number().int().positive().optional().describe("Max results"),
+});
+
+const [ListJobsResponseSchema, listJobsResponseShape] = createSchemaAndShape({
+    jobs: z.array(JobResponseSchema),
+    total: z.number().int(),
+});
+
+export function registerListJobs(server: McpServer, apiClient: ApiClient) {
+    registerApiTool(server, apiClient, {
+        name: "GET_jobs",
+        title: "List Jobs",
+        description: "List all jobs with optional filtering",
+        inputSchema: listJobsInputShape,
+        outputSchema: listJobsResponseShape,
+        inputValidator: ListJobsRequestSchema,
+        outputValidator: ListJobsResponseSchema,
+        method: "GET",
+        path: "/jobs", // Query params automatically added from input
+        successMessage: (result) => `✅ Found ${result.jobs.length} job(s)`,
+    });
+}
+```
+
+## Complete Example: DELETE with 204 No Content
+
+```typescript
+const [DeleteEndpointRequestSchema, deleteEndpointInputShape] = createSchemaAndShape({
+    id: z.string().describe("Endpoint ID to delete"),
+});
+
+// Empty response for 204 No Content
+const [EmptyResponseSchema, emptyResponseShape] = createSchemaAndShape({});
+
+export function registerDeleteEndpoint(server: McpServer, apiClient: ApiClient) {
+    registerApiTool(server, apiClient, {
+        name: "DELETE_endpoints_id",
+        title: "Delete Endpoint",
+        description: "Permanently delete an endpoint",
+        inputSchema: deleteEndpointInputShape,
+        outputSchema: emptyResponseShape,
+        inputValidator: DeleteEndpointRequestSchema,
+        outputValidator: EmptyResponseSchema,
+        method: "DELETE",
+        path: (input) => `/endpoints/${input.id}`,
+        successMessage: () => `✅ Endpoint deleted successfully`,
+    });
+}
+```
+
 ## Checklist for New Tools
 
 - [ ] Import helpers: `import { registerApiTool, createSchemaAndShape } from "../helpers/index.js"`
