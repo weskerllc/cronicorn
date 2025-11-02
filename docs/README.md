@@ -1,74 +1,86 @@
-# Cronicorn Documentation
-
-**Adaptive AI-driven scheduler** with hexagonal architecture and intelligent cadence management.
-
-## Getting Started
-
-- **[Quickstart Guide](./quickstart.md)** - Get running in 5 minutes
-- **[Architecture Guide](./architecture.md)** - System design and principles
-- **[Authentication](./authentication.md)** - OAuth & API key setup
-- **[Use Cases](./use-cases.md)** - Real-world examples and patterns
-- **[Web UI Guide](./web-ui.md)** - Frontend application overview
-- **[Contributing](./contributing.md)** - Development workflow
-
-## For Developers
-
-### Understanding the System
-1. Start with [Quickstart](./quickstart.md) to get running locally
-2. Read [Architecture](./architecture.md) to understand the design
-3. Check [ADRs](../.adr/) for key decisions and rationale
-4. See [Contributing](./contributing.md) for development workflow
-
-### Making Changes
-1. Follow hexagonal architecture patterns
-2. Write tests (unit, contract, integration)
-3. Document decisions in ADRs
-4. Log uncertainty in tech debt
-
-### Key Resources
-- **[Testing Strategy](../.github/instructions/testing-strategy.instructions.md)** - Testing patterns
-- **[Core Principles](../.github/instructions/core-principles.instructions.md)** - Design philosophy
-- **[Tech Debt & Active Work](./TODO.md)** - Current work items and known issues
-- **[ADRs](../.adr/)** - Architectural decisions with context
-
-## For Users
-
-### Authentication
-- **GitHub OAuth** for interactive users
-- **API Keys** for programmatic access
-- See [Authentication Guide](./authentication.md)
-
-### Real-World Examples
-- E-commerce flash sale monitoring
-- DevOps health checks with auto-remediation
-- Content publishing automation
-- Data pipeline coordination
-- SaaS usage monitoring
-- Web scraping with rate limiting
-
-See [Use Cases](./use-cases.md) for detailed scenarios.
-
-## Project Organization
-
-```
-docs/
-├─ README.md              # This file
-├─ quickstart.md          # Quick setup guide
-├─ architecture.md        # System design and patterns
-├─ authentication.md      # Auth setup and configuration
-├─ use-cases.md           # Real-world examples
-├─ web-ui.md              # Web UI guide and architecture
-├─ contributing.md        # Development workflow
-├─ TODO.md                # Active work and tech debt
-└─ archive/               # Historical/reference documentation
-```
-
-## Additional Resources
-
-- **GitHub**: [bcanfield/mvpmvp](https://github.com/bcanfield/mvpmvp)
-- **ADRs**: [.adr/](../.adr/) - Architectural Decision Records
-- **Instructions**: [.github/instructions/](../.github/instructions/) - AI agent guidance
-
+---
+id: docs-readme
+title: Cronicorn Documentation Structure
+description: Overview of the Cronicorn documentation system and resource organization
+tags:
+  - user
+  - assistant
+  - essential
+sidebar_position: 10
+mcp:
+  uri: file:///docs/README.md
+  mimeType: text/markdown
+  priority: 1.0
+  lastModified: 2025-11-02T00:00:00Z
 ---
 
-**Questions?** Check the guides above or open an issue on GitHub.
+# Cronicorn Documentation
+
+This directory contains the canonical documentation for Cronicorn, structured to be consumed by both:
+- **Human users** via the Docusaurus documentation site at `apps/docs`
+- **AI assistants** via the MCP server resources API
+
+## Documentation Structure
+
+### Core Concepts
+- **[Introduction](./introduction.md)** - What is Cronicorn and why use it
+- **[Architecture](./architecture.md)** - System design and components
+- **[Core Concepts](./core-concepts.md)** - Key terminology and mental models
+
+### Getting Started
+- **[Quick Start](./quick-start.md)** - Get up and running in 5 minutes
+- **[Installation](./installation.md)** - Detailed installation guide
+- **[Configuration](./configuration.md)** - Environment variables and settings
+
+### API Reference
+- **[REST API](./api/rest-api.md)** - HTTP API endpoints
+- **[MCP Server](./api/mcp-server.md)** - Model Context Protocol integration
+- **[Authentication](./api/authentication.md)** - OAuth 2.0 device flow
+
+### Guides
+- **[Creating Jobs](./guides/creating-jobs.md)** - How to create and configure jobs
+- **[AI Scheduling](./guides/ai-scheduling.md)** - Understanding AI-powered adaptations
+- **[Monitoring](./guides/monitoring.md)** - Observability and debugging
+
+### Advanced
+- **[Deployment](./advanced/deployment.md)** - Production deployment strategies
+- **[Multi-tenancy](./advanced/multi-tenancy.md)** - Tenant isolation and management
+- **[Custom Adapters](./advanced/custom-adapters.md)** - Extending Cronicorn
+
+## MCP Resource Metadata
+
+Each markdown file in this directory includes frontmatter with MCP resource metadata:
+
+- **uri**: Unique resource identifier (file:// scheme)
+- **name**: Short filename
+- **title**: Human-readable title
+- **description**: Brief description of the content
+- **mimeType**: Always `text/markdown` for markdown files
+- **annotations**: Metadata hints for AI consumption
+  - **audience**: `["user"]`, `["assistant"]`, or `["user", "assistant"]`
+  - **priority**: 0.0 to 1.0 (1.0 = required, 0.0 = optional)
+  - **lastModified**: ISO 8601 timestamp
+
+## Usage in Docusaurus
+
+These markdown files are imported into the Docusaurus site at `apps/docs/docs/` through symbolic links or build-time copying. The frontmatter is compatible with Docusaurus and provides additional metadata for AI consumption.
+
+## Usage in MCP Server
+
+The MCP server exposes these documents as resources through the `resources/list` and `resources/read` endpoints. AI assistants can discover and read documentation to provide accurate, context-aware assistance.
+
+## Contributing
+
+When adding or updating documentation:
+
+1. Include complete MCP frontmatter metadata
+2. Use clear, descriptive titles and descriptions
+3. Set appropriate audience and priority values
+4. Update the lastModified timestamp
+5. Ensure content is valuable for both humans and AI
+
+## Related Documentation
+
+- [MCP Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/resources)
+- [Docusaurus Documentation](https://docusaurus.io/docs)
+- [Markdown Best Practices](https://www.markdownguide.org/basic-syntax/)

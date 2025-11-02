@@ -13,6 +13,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { authenticate } from "./auth/device-flow.js";
 import { getCredentials, isTokenExpired } from "./auth/token-store.js";
 import { loadConfig } from "./env.js";
+import { registerResources } from "./resources/index.js";
 import { registerTools } from "./tools/index.js";
 
 async function main() {
@@ -54,6 +55,9 @@ async function main() {
 
   // Register all tools (create_job, list_jobs, pause_job, get_job_history)
   registerTools(server, env.CRONICORN_API_URL, credentials);
+
+  // Register documentation resources
+  await registerResources(server);
 
   // Connect via stdio transport
   const transport = new StdioServerTransport();
