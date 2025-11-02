@@ -98,7 +98,7 @@ jobs:
         working-directory: apps/mcp-server
         run: |
           echo "🔍 Verifying bundle contents..."
-          
+
           # Check that bundle file exists
           if [ ! -f dist/index.js ]; then
             echo "❌ Bundle file dist/index.js not found"
