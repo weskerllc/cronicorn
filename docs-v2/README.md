@@ -16,36 +16,28 @@ mcp:
 
 # Cronicorn Documentation
 
-This directory contains the canonical documentation for Cronicorn, structured to be consumed by both:
+This directory (`docs-v2/` at the root of the repository) contains the **single source of truth** for Cronicorn documentation, structured to be consumed by both:
 - **Human users** via the Docusaurus documentation site at `apps/docs`
 - **AI assistants** via the MCP server resources API
 
+## Why docs-v2?
+
+This directory is named `docs-v2` to distinguish it from the existing `docs/` directory (which contains ADRs, architecture docs, and other project documentation). The `docs-v2/` directory specifically contains **user-facing** documentation that is rendered by Docusaurus and exposed via the MCP server.
+
 ## Documentation Structure
 
-### Core Concepts
+### Available Documentation
 - **[Introduction](./introduction.md)** - What is Cronicorn and why use it
-- **[Architecture](./architecture.md)** - System design and components
 - **[Core Concepts](./core-concepts.md)** - Key terminology and mental models
-
-### Getting Started
 - **[Quick Start](./quick-start.md)** - Get up and running in 5 minutes
-- **[Installation](./installation.md)** - Detailed installation guide
-- **[Configuration](./configuration.md)** - Environment variables and settings
 
-### API Reference
-- **[REST API](./api/rest-api.md)** - HTTP API endpoints
-- **[MCP Server](./api/mcp-server.md)** - Model Context Protocol integration
-- **[Authentication](./api/authentication.md)** - OAuth 2.0 device flow
-
-### Guides
-- **[Creating Jobs](./guides/creating-jobs.md)** - How to create and configure jobs
-- **[AI Scheduling](./guides/ai-scheduling.md)** - Understanding AI-powered adaptations
-- **[Monitoring](./guides/monitoring.md)** - Observability and debugging
-
-### Advanced
-- **[Deployment](./advanced/deployment.md)** - Production deployment strategies
-- **[Multi-tenancy](./advanced/multi-tenancy.md)** - Tenant isolation and management
-- **[Custom Adapters](./advanced/custom-adapters.md)** - Extending Cronicorn
+### Planned Documentation
+Additional documentation will be added as needed:
+- Architecture guides
+- Detailed installation and configuration
+- API reference (REST and MCP)
+- Usage guides (creating jobs, AI scheduling, monitoring)
+- Advanced topics (deployment, multi-tenancy, custom adapters)
 
 ## MCP Resource Metadata
 
@@ -63,11 +55,30 @@ Each markdown file in this directory includes frontmatter with MCP resource meta
 
 ## Usage in Docusaurus
 
-These markdown files are imported into the Docusaurus site at `apps/docs/docs/` through symbolic links or build-time copying. The frontmatter is compatible with Docusaurus and provides additional metadata for AI consumption.
+Docusaurus is configured to read directly from this directory:
+
+```typescript
+// apps/docs/docusaurus.config.ts
+{
+  docs: {
+    path: '../../docs-v2',  // Points to this directory
+    sidebarPath: './sidebars.ts',
+  }
+}
+```
+
+The frontmatter is fully compatible with Docusaurus and provides additional metadata for AI consumption.
 
 ## Usage in MCP Server
 
-The MCP server exposes these documents as resources through the `resources/list` and `resources/read` endpoints. AI assistants can discover and read documentation to provide accurate, context-aware assistance.
+The MCP server reads markdown files from this directory at startup and exposes them as resources:
+
+```typescript
+// apps/mcp-server/src/resources/index.ts
+const DOCS_PATH = path.join(__dirname, "../../../../docs-v2");
+```
+
+The MCP server exposes these documents through the `resources/list` and `resources/read` endpoints. AI assistants can discover and read documentation to provide accurate, context-aware assistance.
 
 ## Contributing
 

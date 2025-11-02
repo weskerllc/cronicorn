@@ -19,6 +19,7 @@
     "dev:api": "dotenv -e .env -- pnpm --filter @cronicorn/api run dev",
     "dev:web": "dotenv -e .env -- pnpm --filter @cronicorn/web run dev",
     "dev:scheduler": "dotenv -e .env -- pnpm --filter @cronicorn/scheduler-app run dev",
+    "dev:docs": "pnpm --filter @cronicorn/docs run start",
     "watch": "dotenv -e .env -- tsc -b -w",
     "🚀 ---------- QUALITY ----------": "",
     "test": "dotenv -e .env vitest run",
