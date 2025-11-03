@@ -3,9 +3,11 @@
  * Keywords, meta descriptions, and SEO metadata
  */
 
+import { brand } from "./brand.js";
+
 /** Meta descriptions optimized for search engines */
 export const metaDescriptions = {
-  home: "AI-powered job scheduler that adapts to your reality. Reduce alert fatigue 80%, resolve issues 10x faster. Automatic recovery without waking your team at 3 AM. Try free.",
+  home: brand.description,
   pricing: "Flexible pricing for adaptive monitoring. Start with early access. Enterprise features for intelligent HTTP scheduler and workflow orchestration.",
   docs: "Complete documentation for adaptive scheduling with AI hints. Quick start guides, API reference. Get started with intelligent cron alternatives.",
   faq: "Get answers to common questions about Cronicorn's AI-powered job scheduling. Learn about adaptive intervals, workflow orchestration, and intelligent automation.",

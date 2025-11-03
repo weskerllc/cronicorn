@@ -5,7 +5,7 @@ import { Separator } from "@cronicorn/ui-library/components/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@cronicorn/ui-library/components/sheet";
 import { Menu } from "lucide-react";
 import AppLogo from "../../../logo.svg?react";
-import GitHubLogo from "../../../../public/logos/github.svg?react";
+import GitHubLogoUrl from "/logos/github.svg";
 
 const NAV_LINKS = [
     { href: urls.docs.base, label: "Docs" },
@@ -58,7 +58,7 @@ export default function HeaderSection() {
                         className="text-foreground hover:text-foreground/80 transition-colors duration-150 cursor-pointer"
                         aria-label="View Cronicorn on GitHub"
                     >
-                        <GitHubLogo className="size-5 fill-current" />
+                        <img src={GitHubLogoUrl} alt="GitHub" className="size-5" />
                     </a>
 
                 </div>
@@ -96,7 +96,7 @@ export default function HeaderSection() {
                                     className="flex items-center gap-2 text-foreground hover:text-foreground/80 transition-colors duration-150 cursor-pointer py-2"
                                     aria-label="View Cronicorn on GitHub"
                                 >
-                                    <GitHubLogo className="size-5 fill-current" />
+                                    <img src={GitHubLogoUrl} alt="GitHub" className="size-5" />
                                     <span className="text-base font-medium">GitHub</span>
                                 </a>
 
