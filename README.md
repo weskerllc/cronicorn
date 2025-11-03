@@ -1,261 +1,101 @@
 
-# Cronicorn - AI-Powered Job Scheduler
+<div align="center">
 
-An AI-powered HTTP request scheduler that supports dynamic scheduling based on runtime signals, endpoint responses, and manual overrides.
+# Cronicorn
 
-## 🚀 Quick Start
+**AI Job Scheduler that adapts to your system**
 
+Schedules HTTP jobs that adapt to real-time conditions.
 
-```bash
-# Get the code
-git clone https://github.com/weskerllc/cronicorn.git
-cd cronicorn
+[![GitHub stars](https://img.shields.io/github/stars/weskerllc/cronicorn?style=social)](https://github.com/weskerllc/cronicorn)
+[![License](https://img.shields.io/badge/license-Fair_Source-blue.svg)](./LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/weskerllc/cronicorn/ci.yml?branch=main)](https://github.com/weskerllc/cronicorn/actions)
 
-# Install everything
-pnpm install
+[Try Cronicorn](https://app.cronicorn.com) • [Documentation](https://cronicorn.com/docs) • [Self-Host Guide](https://cronicorn.com/docs/technical/system-architecture)
 
-# Start database
-docker-compose up -d
+</div>
 
-# Set up database
-pnpm migrate
+---
 
+## Why Cronicorn?
 
-# Start development
-pnpm dev
+Traditional cron jobs run on fixed schedules—whether your pipeline has a backlog, your API is failing, or traffic is surging.
+
+**Cronicorn adapts to real-time conditions:**
+
+- 📉 **Slows down automatically** - Backs off when rate-limited or during stable periods
+- 📈 **Speeds up when needed** - Increases frequency during backlogs, failures, or high engagement  
+- 🛡️ **Respects your constraints** - Always stays within your configured min/max limits
+- 🧠 **Explains every decision** - See why timing changed: "Backlog detected—increasing to 2 minutes"
+
+<div align="center">
+  <img src=".github/images/dashboard-preview.png" alt="Cronicorn Dashboard showing real-time job scheduling with AI adaptation" width="100%">
+  <p><em>Live dashboard showing adaptive scheduling in action with real-time condition monitoring</em></p>
+</div>
+
+## How It Works
+
+```diff
+Traditional Cron:
+  */5 * * * * → Runs every 5 minutes regardless of conditions
+  
+Cronicorn:
+  Baseline:  Every 5 minutes
+  
+  AI adapts based on real-time conditions:
+- → 30 seconds when failures detected
+  → 5 minutes during normal operation
++ → 15 minutes when stable and healthy
+  
+  "Rate limit hit—slowing to 30 seconds"
+  Always within your configured constraints (30s - 15min)
 ```
 
-API runs at `http://localhost:3333`. Everything uses our single `.env` file via dotenv CLI.
+## Get Started
 
-## 📋 Prerequisites
+### Try Cronicorn
 
-- Node.js >= 24.0.0
-- pnpm >= 10.0.0
-- Docker (for PostgreSQL)
+**[Sign up with GitHub →](https://app.cronicorn.com)**
 
-## 🏗️ What This Is
+Create your first adaptive job in 2 minutes. No credit card required.
 
-A monorepo with clean architecture:
+### Resources
 
-```
-apps/           # API server + background scheduler
-packages/       # Shared code in vertical slices
-├── core-*      # Shared infrastructure
-└── feature-*   # Business logic
-```
+- 📖 **[Documentation](https://cronicorn.com/docs)** - Complete guides and tutorials
+- 🤖 **[MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server)** - AI assistant integration
+- 📚 **[API Reference](https://app.cronicorn.com/docs/api)** - REST API documentation
 
-**Key features:**
+## Key Features
 
-- Schedule HTTP requests with intervals
-- AI-driven schedule adjustments
-- API key & Oauth authentication
+- 🗓️ **Flexible Scheduling** - Cron expressions or simple intervals
+- 🤖 **AI Adaptation** - Automatic optimization based on real-time conditions
+- 📊 **Complete Visibility** - Detailed run history and error tracking
+- 🔒 **Production Ready** - Multi-tenant, distributed locks, reliable execution
+- ⚡ **Constraint Protection** - Min/max intervals prevent runaway schedules
 
-## 🛠️ Development
+## Use Cases
 
-### Setup
+**Data Pipelines** - ETL runs hourly → backlog detected → increases to 15min → clears → back to hourly  
+**Content Publishing** - Posts scheduled for 9am → high engagement → AI suggests immediate follow-up  
+**Web Scraping** - Requests every 5sec → rate limit warning → slows to 30sec → recovers → resumes
 
-1. **Database**: `docker-compose up -d` (runs on port 6666)
-2. **Environment**: Copy `.env.example` to `.env` and configure (see Environment Variables below)
-3. **Migrations**: `pnpm migrate`
+## Support
 
-### Environment Variables
+- 💬 [GitHub Discussions](https://github.com/weskerllc/cronicorn/discussions) - Community support
+- 🐛 [GitHub Issues](https://github.com/weskerllc/cronicorn/issues) - Bug reports
+- 📖 [Documentation](https://cronicorn.com/docs) - Complete guides
 
-**Optional**: All environment variables have working defaults for development. Create a `.env` file only if you want to customize:
+## License
 
-```bash
-# Database (defaults to localhost:6666 - matches docker-compose)
-DATABASE_URL=postgresql://user:password@localhost:6666/cron_mvp
+Fair Source License v0.9 - Free to use and self-host. See [LICENSE](./LICENSE) for details.
 
-# Authentication (defaults work for basic testing)
-GITHUB_CLIENT_ID=your_github_oauth_app_client_id
-GITHUB_CLIENT_SECRET=your_github_oauth_app_client_secret
-AUTH_SECRET=your_32_character_random_string_for_session_signing
+---
 
-# Application (defaults to localhost:3333)
-CRONICORN_API_URL=http://localhost:3333
-NODE_ENV=development
+<div align="center">
 
-# AI Features (leave blank to disable AI scheduling)
-OPENAI_API_KEY=sk-your_openai_api_key_here
-AI_MODEL=gpt-4o-mini
-AI_ENABLED=true
-```
+**[Try Cronicorn](https://app.cronicorn.com)** • **[Documentation](https://cronicorn.com/docs)** • **[API Reference](https://app.cronicorn.com/docs/api)**
 
-**Quick Start**: The app works immediately with `pnpm dev` using defaults.
+Made by developers, for developers
 
-**For Real OAuth** (optional):
-1. Go to GitHub Settings → Developer settings → OAuth Apps
-2. Create a new OAuth App with:
-   - Authorization callback URL: `http://localhost:3333/api/auth/callback/github`
-3. Add `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` to `.env`
+</div>
 
-**For AI Features** (optional):
-- Add `OPENAI_API_KEY=sk-...` and `AI_ENABLED=true` to enable AI scheduling
-- Without this, jobs use simple interval scheduling (still fully functional)
-
-### Running Things
-
-All commands run from the repo root. We use dotenv CLI so everything shares the same `.env` file.
-
-- `pnpm dev` - Start API + scheduler in development
-- `pnpm build` - Build for production
-- `pnpm test` - Run all tests
-- `pnpm studio` - Open database browser
-
-Check `package.json` for all available scripts.
-
-## 🧪 Testing
-
-```bash
-pnpm test              # All tests
-pnpm test:coverage     # With coverage
-```
-
-We use transaction-per-test for clean database state.
-
-## 🚀 Production Deployment
-
-### Environment Configuration
-
-**Required for Production:**
-
-```bash
-# Production Database (required - no default production DB)
-DATABASE_URL=postgresql://username:password@your-db-host:5432/production_db
-
-# Secure Authentication (required - defaults are for dev only)
-AUTH_SECRET=secure_random_32_character_production_secret
-GITHUB_CLIENT_ID=your_production_github_client_id
-GITHUB_CLIENT_SECRET=your_production_github_client_secret
-
-# Production Domain (required if different from localhost)
-CRONICORN_API_URL=https://your-domain.com
-
-# Runtime
-NODE_ENV=production
-```
-
-**Optional for Production:**
-```bash
-# AI Features (leave blank to disable)
-OPENAI_API_KEY=sk-your_production_openai_key
-AI_ENABLED=true
-AI_MODEL=gpt-4o-mini  # or gpt-4o for higher accuracy
-```
-
-### Docker Deployment
-
-```bash
-# Build and start production containers
-docker-compose -f docker-compose-prod.yml up -d
-
-# Run migrations in production
-docker-compose -f docker-compose-prod.yml exec api pnpm migrate
-```
-
-### Health Checks
-
-Verify deployment:
-
-- API Health: `GET /health` should return 200
-- Database: Check migration status
-- Scheduler: Monitor logs for job execution
-- AI Features: Test with an AI-enabled job
-
-## 🔄 CI/CD
-
-The project uses GitHub Actions for automated releases and deployments.
-
-### Automated Release Process
-
-When code is merged to `main`:
-1. CI workflow runs tests and quality checks
-2. Semantic-release automatically versions and creates a GitHub release
-3. Release workflow triggers on the published release and builds Docker images
-4. Docker images are published to GitHub Container Registry with version tags
-5. Release notes are automatically updated with Docker image information
-
-The release workflow automatically triggers when semantic-release publishes a release - no manual setup required!
-
-### Docker Images
-
-All services are automatically built and published as Docker images with each release:
-
-```bash
-# Pull images by version (recommended)
-docker pull ghcr.io/weskerllc/cronicorn/api:v1.2.3
-docker pull ghcr.io/weskerllc/cronicorn/scheduler:v1.2.3
-docker pull ghcr.io/weskerllc/cronicorn/ai-planner:v1.2.3
-docker pull ghcr.io/weskerllc/cronicorn/web:v1.2.3
-```
-
-**Documentation:**
-- 📖 [Quick Reference Guide](./docs/DOCKER_QUICK_REFERENCE.md) - How to use the Docker workflow
-- 🚀 [Optimization Guide](./docs/DOCKER_BUILD_OPTIMIZATION.md) - Technical details on caching & performance
-- 📊 [Before/After Comparison](./docs/DOCKER_WORKFLOW_COMPARISON.md) - What changed and why
-
-**Key Features:**
-- Multi-tier caching (70-80% faster builds)
-- Automatic release notes updates with image details
-- SBOM and provenance attestations for security
-- Multi-platform support (amd64 & arm64)
-
-See [Docker Quick Reference](./docs/DOCKER_QUICK_REFERENCE.md) for complete usage instructions.
-
-## 🤝 Contributing
-
-1. Fork & create a feature branch
-2. Write tests first
-3. Follow our clean architecture patterns
-4. Create ADRs for big decisions
-5. Run tests: `pnpm test`
-
-## 🎯 AI Scheduler Simulator
-
-Explore the AI-driven scheduler's adaptive capabilities with a full e-commerce flash sale simulation:
-
-```bash
-cd packages/feature-endpoints
-pnpm sim
-```
-
-**What you'll see:**
-- **10 endpoints** orchestrating across 4 coordination tiers (Health, Investigation, Recovery, Alert)
-- **40 minutes simulated** showing traffic surge → strain → critical → recovery phases
-- **467 total runs** with adaptive intervals (1m→20s→1m), conditional activation, cooldowns, and alert escalation
-- **18 assertions validating** all coordination patterns
-
-**Learn more:**
-- 📖 [Flash Sale Scenario Guide](./packages/feature-endpoints/flash-sale-scenario.md) - Complete walkthrough with minute-by-minute timeline
-- 🏗️ [Architecture Documentation](./packages/feature-endpoints/ai-scheduler-architecture.md) - Deep dive into scheduler mechanics
-
-## 📄 Documentation
-
-- [Architecture Decisions](./.adr/) - Why we built things this way
-- [Task Lists](./tasks/) - What's next, what's been done
-- [More Context](./docs)
-
-## � Support
-
-Got questions? Open an issue or discussion on GitHub.
-
-## 📄 License
-
-This project is licensed under the Fair Source License, Version 0.9.
-
-**TL;DR:** You can freely use, modify, and self-host this software for any purpose. However, you cannot offer it as a commercial hosted service to compete with the original project.
-
-**Permitted:**
-- ✅ Use for personal, business, or organizational purposes
-- ✅ Self-host for your own infrastructure
-- ✅ Modify and distribute the source code
-- ✅ Include as a component in larger services
-
-**Not Permitted:**
-- ❌ Sell hosted access to this software as a standalone product
-- ❌ Offer "Cronicorn-as-a-Service" commercially
-- ❌ Compete directly by hosting this as a paid service
-
-See the [LICENSE](./LICENSE) file for full details.
-
-For commercial hosting licenses, please contact the repository maintainer.
