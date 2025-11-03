@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { AlertCircle, Github } from "lucide-react";
 
+import { brand, metaDescriptions, pageTitles, structuredData } from "@cronicorn/content";
 import { signIn } from "@/lib/auth-client";
 import { SEO } from "@/components/SEO";
-import siteConfig from "@/site-config";
+import { APP_URL } from "@/config";
 
 type LoginSearch = {
   redirect?: string;
@@ -74,19 +75,19 @@ function RouteComponent() {
   const loginStructuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: "Login - Cronicorn",
-    description: "Sign in to your Cronicorn account to access AI-powered job scheduling tools",
-    url: `${siteConfig.url}/login`,
+    name: structuredData.login.pageName,
+    description: structuredData.login.description,
+    url: `${APP_URL}/login`,
     isPartOf: {
       "@type": "WebSite",
-      name: siteConfig.siteName,
-      url: siteConfig.url
+      name: brand.name,
+      url: APP_URL
     },
     potentialAction: {
       "@type": "LoginAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${siteConfig.url}/login`,
+        urlTemplate: `${APP_URL}/login`,
         actionPlatform: [
           "http://schema.org/DesktopWebPlatform",
           "http://schema.org/MobileWebPlatform"
@@ -95,7 +96,7 @@ function RouteComponent() {
       object: {
         "@type": "DigitalDocument",
         name: "User Account",
-        description: "Access to Cronicorn scheduling platform"
+        description: structuredData.login.accountDescription
       }
     }
   };
@@ -103,8 +104,8 @@ function RouteComponent() {
   return (
     <>
       <SEO
-        title={siteConfig.pageTitles.login}
-        description={siteConfig.metaDescriptions.login}
+        title={pageTitles.login}
+        description={metaDescriptions.login}
         keywords={["login", "sign in", "authentication", "user account", "dashboard access"]}
         url="/login"
         noindex={true}
@@ -114,7 +115,7 @@ function RouteComponent() {
       <main className="flex min-h-screen items-center justify-center p-4" role="main">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Welcome to {siteConfig.siteName}</CardTitle>
+            <CardTitle className="text-2xl text-center">Welcome to {brand.name}</CardTitle>
             <CardDescription className="text-center">
               Sign in with your GitHub account to continue
             </CardDescription>

@@ -1,18 +1,21 @@
-import type { ReactNode } from 'react';
-import clsx from 'clsx';
-import Heading from '@theme/Heading';
-import styles from './styles.module.css';
+import type { ReactNode } from "react";
+
+import Heading from "@theme/Heading";
+import clsx from "clsx";
+
+import styles from "./styles.module.css";
 
 type FeatureItem = {
   title: string;
-  Svg: React.ComponentType<React.ComponentProps<'svg'>>;
+  Svg: React.ComponentType<React.ComponentProps<"svg">>;
   description: ReactNode;
 };
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'AI-Powered Intelligence',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    title: "AI-Powered Intelligence",
+    // eslint-disable-next-line ts/no-require-imports
+    Svg: require("@site/static/img/undraw_docusaurus_mountain.svg").default,
     description: (
       <>
         Cronicorn uses AI to automatically adjust task scheduling based on
@@ -22,8 +25,9 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: 'Real-time Adaptation',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    title: "Real-time Adaptation",
+    // eslint-disable-next-line ts/no-require-imports
+    Svg: require("@site/static/img/undraw_docusaurus_tree.svg").default,
     description: (
       <>
         Dynamic scheduling that responds to your application&apos;s needs in real-time.
@@ -33,8 +37,9 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: 'Built for Production',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    title: "Built for Production",
+    // eslint-disable-next-line ts/no-require-imports
+    Svg: require("@site/static/img/undraw_docusaurus_react.svg").default,
     description: (
       <>
         Multi-tenant support, comprehensive monitoring, fault tolerance, and
@@ -47,7 +52,7 @@ const FeatureList: FeatureItem[] = [
 
 function Feature({ title, Svg, description }: FeatureItem) {
   return (
-    <div className={clsx('col col--4')}>
+    <div className={clsx("col col--4")}>
       <div className="text--center">
         <Svg className={styles.featureSvg} role="img" />
       </div>

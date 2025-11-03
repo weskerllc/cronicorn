@@ -13,7 +13,7 @@ This document provides a complete marketing and content strategy for Cronicorn, 
 
 ## 📁 Documentation Structure
 
-### 1. [Landing Page Content](./landing-page.md)
+### 1. [Landing Page Content](./page-blueprints.md)
 **Purpose:** Complete page-by-page blueprint for the marketing website
 
 **Contents:**
@@ -69,8 +69,8 @@ This document provides a complete marketing and content strategy for Cronicorn, 
 - Embrace: Technical precision, real-world examples, transparency
 - Tagline: "Intelligent job scheduling that adapts to your reality"
 
-### 4. [Blog Post Ideas](./blog-post-ideas.md)
-**Purpose:** Content calendar with 18+ ready-to-write articles
+### 4. Blog Post Ideas
+**Purpose:** Content calendar with ready-to-write articles (coming soon)
 
 **Contents:**
 - 4 content categories (Thought Leadership, Technical Education, Product Stories, Community)
@@ -328,10 +328,10 @@ Current: TanStack Router, React, Tailwind CSS
 - **Cloudflare:** Intelligent, transparent
 
 ### Resources
-- Customer research: [CUSTOMER_OVERVIEW.md](../CUSTOMER_OVERVIEW.md)
-- Core service capabilities: [CORE_SERVICE_RESEARCH.md](../CORE_SERVICE_RESEARCH.md)
-- Architecture details: [docs/architecture.md](./architecture.md)
-- Use cases: [docs/use-cases.md](./use-cases.md)
+- Customer research: See marketing documentation
+- Core service capabilities: See technical documentation
+- Architecture details: See `docs/architecture.md`
+- Use cases: See `docs/use-cases.md`
 
 ---
 

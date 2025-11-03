@@ -9,6 +9,7 @@
     "lint": "eslint 'src/**/*.{ts,tsx}' --fix"
   },
   "dependencies": {
+    "@cronicorn/content": "workspace:*",
     "@cronicorn/ui-library": "workspace:*",
     "@hookform/resolvers": "5.2.2",
     "@tabler/icons-react": "^3.35.0",

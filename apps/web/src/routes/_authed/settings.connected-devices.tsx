@@ -154,7 +154,7 @@ function ConnectedDevices() {
                                 </div>
                             ))}
                         </div>
-                    ) : tokens && tokens.length > 0 ? (
+                    ) : tokens.length ? (
                         <div className="space-y-4">
                             {tokens.map((token) => (
                                 <div

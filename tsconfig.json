@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "./packages/domain" },
+    { "path": "./packages/content" },
     { "path": "./packages/worker-scheduler" },
     { "path": "./packages/worker-ai-planner" },
     { "path": "./packages/services" },
@@ -14,6 +15,7 @@
     { "path": "./apps/scheduler" },
     { "path": "./apps/ai-planner" },
     { "path": "./apps/api" },
+    // apps/docs excluded - uses Docusaurus's own build system
     { "path": "./apps/migrator" },
     { "path": "./apps/test-ai" },
     { "path": "./packages/ui-library" },

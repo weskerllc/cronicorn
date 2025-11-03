@@ -314,6 +314,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@cronicorn/content':
+        specifier: workspace:*
+        version: link:../../packages/content
       '@cronicorn/ui-library':
         specifier: workspace:*
         version: link:../../packages/ui-library
