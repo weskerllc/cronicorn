@@ -1,3 +1,10 @@
+## [1.5.4](https://github.com/weskerllc/cronicorn/compare/v1.5.3...v1.5.4) (2025-11-03)
+
+
+### Bug Fixes
+
+* SEO / Security ([#12](https://github.com/weskerllc/cronicorn/issues/12)) ([be104cd](https://github.com/weskerllc/cronicorn/commit/be104cd1f68b4815aebf81c4fa6961e21e8b4c31))
+
 ## [1.5.3](https://github.com/weskerllc/cronicorn/compare/v1.5.2...v1.5.3) (2025-11-03)
 
 
