@@ -1,14 +1,14 @@
 import type * as Preset from "@docusaurus/preset-classic";
 import type { Config } from "@docusaurus/types";
 
-import { brand, docsTagline, logo, urls } from "@cronicorn/content";
+import { brand, logo, urls } from "@cronicorn/content";
 import { themes as prismThemes } from "prism-react-renderer";
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
   title: brand.name,
-  tagline: docsTagline,
+  tagline: brand.title,
   favicon: "img/favicon.ico",
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future

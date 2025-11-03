@@ -84,8 +84,10 @@ function Index() {
                 links: [
                   { text: "Home", url: urls.product.home },
                   { text: "Pricing", url: urls.product.pricing },
-                  { text: "FAQ", url: urls.product.faq },
+                  { text: "Docs", url: urls.docs.base },
                   { text: "Dashboard", url: urls.product.dashboard },
+                  { text: "API Playground", url: urls.docs.apiReference },
+                  { text: "MCP Server", url: urls.docs.mcpServer },
                 ],
               },
               {

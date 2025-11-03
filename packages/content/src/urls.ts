@@ -24,19 +24,20 @@ export const urls = {
         useCases: "https://docs.cronicorn.com/guides/use-cases",
         architecture: "https://docs.cronicorn.com/technical/architecture",
         apiReference: "https://docs.cronicorn.com/api/reference",
+        mcpServer: "https://docs.cronicorn.com/libraries/mcp-server",
     },
 
     /** GitHub repository links */
     github: {
         org: "weskerllc",
         repo: "https://github.com/weskerllc/cronicorn",
+        discussions: "https://github.com/weskerllc/cronicorn/discussions",
         repoName: "cronicorn",
         readme: "https://github.com/weskerllc/cronicorn#readme",
         issues: "https://github.com/weskerllc/cronicorn/issues/new",
         contributing: "https://github.com/weskerllc/cronicorn/blob/main/docs/contributing.md",
         changelog: "https://github.com/weskerllc/cronicorn/blob/main/CHANGELOG.md",
     },
-
     /** Legal pages */
     legal: {
         privacy: "/privacy",

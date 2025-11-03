@@ -25,7 +25,7 @@ const features: Array<FeatureCard> = [
     },
     {
         icon: <Code className="size-6" />,
-        title: "Your API Controls the Schedule",
+        title: "Your Services control the Schedule",
         description: "Return metrics in your response and AI uses your system's real data to optimize timing.",
     },
 ];
