@@ -72,8 +72,8 @@ const Footer2 = ({
     const { setTheme, theme } = useTheme()
 
     return (
-        <section className="py-16 text-sm">
-            <div className="container">
+        <section className="py-16 max-w-7xl mx-auto text-sm">
+            <div className="">
                 <footer>
                     <div className="grid grid-cols-2 gap-8 lg:grid-cols-6">
                         <div className="col-span-2 mb-8 lg:mb-0">

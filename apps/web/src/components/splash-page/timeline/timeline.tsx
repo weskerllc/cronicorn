@@ -18,23 +18,23 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
     <div className={cn("w-full max-w-5xl mx-auto lg:h-full ")}>
       {/* Main Timeline Component with enhanced styling */}
       <div
-        className="relative bg-gradient-to-b from-muted/5 to-muted/10 lg:h-full rounded border border-border/50 p-3 lg:p-3 overflow-hidden"
+        className="relative lg:h-full p-3 lg:p-3 overflow-hidden"
         role="region"
         aria-label="Dynamic Schedule Timeline"
       >
 
         <div className="relative">
-          <div className="grid grid-cols-1 lg:grid-cols-2 mb-4 gap-4 ">
+          <div className="grid grid-cols-1 lg:grid-cols-2 mb-4 gap-4 lg:items-stretch">
 
             {/* Live Conditions Section */}
-            <section aria-labelledby="conditions-heading">
+            <section aria-labelledby="conditions-heading" className="flex flex-col">
               <div className="mb-3">
                 <h2 id="conditions-heading" className="text-xs font-medium text-muted-foreground">
                   Live conditions
                 </h2>
               </div>
 
-              <div className="grid  grid-cols-1  gap-3" role="group" aria-label="System conditions">
+              <div className="grid  grid-cols-1  gap-3 flex-1" role="group" aria-label="System conditions">
                 {currentData.conditions.map(condition => (
                   <TimelineConditionCard key={condition.id} condition={condition} />
                 ))}
@@ -42,7 +42,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
             </section>
 
             {/* Timeline Section */}
-            <section aria-labelledby="timeline-heading">
+            <section aria-labelledby="timeline-heading" className="flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <h2 id="timeline-heading" className="text-xs font-medium text-muted-foreground">
                   Execution timeline
@@ -65,7 +65,7 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
 
               {/* Enhanced Timeline Container */}
               <div
-                className="relative h-48 bg-background rounded border border-border/50 overflow-visible px-6 py-12"
+                className="relative h-48 lg:flex-1 bg-background rounded border border-border/50 overflow-visible px-6 py-12"
                 role="img"
                 aria-label="Timeline visualization showing execution intervals and current progress"
               >

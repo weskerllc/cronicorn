@@ -1,16 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { brand, faq, keywords, metaDescriptions, urls } from "@cronicorn/content";
-import AppLogo from "../logo.svg?react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Footer2 } from "../components/nav/footer";
 import BackgroundEffects from "../components/splash-page/components/background-effects";
+import HeaderSection from "../components/splash-page/components/header-section";
 import HeroSection from "../components/splash-page/components/hero-section";
 import TimelineSection from "../components/splash-page/components/timeline-section";
-import { monitoringScenarios } from "../components/splash-page/timeline/timeline-scenario-data";
 import DynamicScheduleTimeline from "../components/splash-page/timeline/timeline";
-import HeaderSection from "../components/splash-page/components/header-section";
-import { Footer2 } from "../components/nav/footer";
-import QuickAnswersSection from "@/components/sections/quick-answers-section";
-import CTASection from "@/components/sections/cta-section";
+import { monitoringScenarios } from "../components/splash-page/timeline/timeline-scenario-data";
+import AppLogo from "../logo.svg?react";
+import LogoGrid from "../components/splash-page/components/logo-grid";
 import { SEO, createFAQSchema, createOrganizationSchema, createSoftwareApplicationSchema, createWebsiteSchema } from "@/components/SEO";
+import { FeatureCardsSection } from "@/components/sections/feature-cards-section";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -51,24 +51,29 @@ function Index() {
 
       <main className="bg-background" role="main">
         {/* Hero Section with Particle Animation Background */}
-        <section className="relative min-h-screen bg-background overflow-hidden mb-8 p-2 md:p-4" aria-labelledby="hero-heading">
+        <section className="  relative min-h-screen bg-background overflow-hidden" aria-labelledby="hero-heading">
           <BackgroundEffects />
           <HeaderSection />
 
 
-          <div className="border relative border-muted-foreground/10 w-full max-w-6xl mx-auto mt-28">
-            <HeroSection />
-            <TimelineSection tabData={tabData} />
+          {/* <div className="border relative border-muted-foreground/10 w-full max-w-6xl mx-auto mt-14"> */}
+          <div className="relative w-full max-w-7xl mx-auto mt-14   px-4 md:px-8">
 
-            <QuickAnswersSection />
+            <div className="grid grid-cols-1 items-start lg:grid-cols-2 gap-12 lg:gap-16 py-12 md:py-20 overflow-hidden">
+              <HeroSection />
+              <TimelineSection tabData={tabData} />
+            </div>
 
-            <CTASection />
+            <FeatureCardsSection />
+
+            <LogoGrid />
+
           </div>
         </section>
 
-        <div className="max-w-6xl px-2 md:px-4  mx-auto">
+        <div className="w-full   px-4 md:px-8    border-t border-border/40  ">
           <Footer2
-            tagline={brand.tagline}
+            tagline={brand.title}
             logoSlot={<a href={urls.product.home} className="flex items-center space-x-2">
               <AppLogo className="size-12 fill-muted-foreground" aria-label="Cronicorn intelligent cron job scheduling platform logo" />
               <span className="font-medium text-2xl text-muted-foreground">{brand.name}</span>
