@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@cronicorn/ui-library/lib/utils";
 import { brand, urls } from "@cronicorn/content";
-import AppLogo from "../../../icon.svg?react";
+import AppLogo from "../../../logo.svg?react";
 
 export default function HeaderSection() {
     const [isScrolled, setIsScrolled] = useState(false);
