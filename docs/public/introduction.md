@@ -1,7 +1,10 @@
 ---
 id: introduction
+slug: /
 title: Introduction to Cronicorn
 description: AI-powered adaptive scheduling for modern applications
+sidebar_label: Introduction
+displayed_sidebar: docsSidebar
 tags:
   - user
   - assistant
