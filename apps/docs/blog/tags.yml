@@ -1,19 +1,22 @@
-facebook:
-  label: Facebook
-  permalink: /facebook
-  description: Facebook tag description
+# Blog post tags
+# Add tags here for categorizing blog posts
+# Example:
+# feature-release:
+#   label: Feature Release
+#   permalink: /feature-release
+#   description: New feature announcements and releases
 
-hello:
-  label: Hello
-  permalink: /hello
-  description: Hello tag description
+ai-scheduling:
+  label: AI Scheduling
+  permalink: /ai-scheduling
+  description: AI-powered adaptive scheduling features and insights
 
-docusaurus:
-  label: Docusaurus
-  permalink: /docusaurus
-  description: Docusaurus tag description
+product-updates:
+  label: Product Updates
+  permalink: /product-updates
+  description: Product announcements and updates
 
-hola:
-  label: Hola
-  permalink: /hola
-  description: Hola tag description
+engineering:
+  label: Engineering
+  permalink: /engineering
+  description: Engineering insights and technical deep dives
