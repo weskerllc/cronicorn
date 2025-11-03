@@ -1,7 +1,7 @@
 ---
 id: docs-readme
-title: Cronicorn Documentation Structure
-description: Overview of the Cronicorn documentation system and resource organization
+title: Cronicorn Documentation
+description: Documentation overview and navigation guide
 tags:
   - user
   - assistant
@@ -16,82 +16,118 @@ mcp:
 
 # Cronicorn Documentation
 
-This directory (`docs-v2/` at the root of the repository) contains the **single source of truth** for Cronicorn documentation, structured to be consumed by both:
-- **Human users** via the Docusaurus documentation site at `apps/docs`
-- **AI assistants** via the MCP server resources API
+Welcome to the Cronicorn documentation! This guide will help you find the right documentation for your needs.
 
-## Why docs-v2?
+## Quick Navigation
 
-This directory is named `docs-v2` to distinguish it from the existing `docs/` directory (which contains ADRs, architecture docs, and other project documentation). The `docs-v2/` directory specifically contains **user-facing** documentation that is rendered by Docusaurus and exposed via the MCP server.
+### 🚀 Getting Started (SaaS Users)
 
-## Documentation Structure
+Using Cronicorn as a hosted service? Start here:
 
-### Available Documentation
-- **[Introduction](./introduction.md)** - What is Cronicorn and why use it
-- **[Core Concepts](./core-concepts.md)** - Key terminology and mental models
-- **[Quick Start](./quick-start.md)** - Get up and running in 5 minutes
+1. **[Introduction](./introduction.md)** - What is Cronicorn and why use it
+2. **[Quick Start](./quick-start.md)** - Create your first scheduled job in 5 minutes
+3. **[Core Concepts](./core-concepts.md)** - Understand jobs, endpoints, and AI scheduling
 
-### Planned Documentation
-Additional documentation will be added as needed:
-- Architecture guides
-- Detailed installation and configuration
-- API reference (REST and MCP)
-- Usage guides (creating jobs, AI scheduling, monitoring)
-- Advanced topics (deployment, multi-tenancy, custom adapters)
+**Perfect for:**
+- SaaS developers monitoring APIs
+- Teams running scheduled tasks
+- Anyone using Cronicorn as a service
 
-## MCP Resource Metadata
+### 🔧 Self-Hosting (Developers)
 
-Each markdown file in this directory includes frontmatter with MCP resource metadata:
+Want to deploy Cronicorn yourself? See technical docs:
 
-- **uri**: Unique resource identifier (file:// scheme)
-- **name**: Short filename
-- **title**: Human-readable title
-- **description**: Brief description of the content
-- **mimeType**: Always `text/markdown` for markdown files
-- **annotations**: Metadata hints for AI consumption
-  - **audience**: `["user"]`, `["assistant"]`, or `["user", "assistant"]`
-  - **priority**: 0.0 to 1.0 (1.0 = required, 0.0 = optional)
-  - **lastModified**: ISO 8601 timestamp
+1. **[System Architecture](./technical/system-architecture.md)** - How Cronicorn works internally
+2. **[How Scheduling Works](./technical/how-scheduling-works.md)** - The governor algorithm
+3. **[How AI Adaptation Works](./technical/how-ai-adaptation-works.md)** - Optional AI features
+4. **[Configuration & Constraints](./technical/configuration-and-constraints.md)** - Safety and limits
 
-## Usage in Docusaurus
+**Perfect for:**
+- DevOps engineers deploying Cronicorn
+- Contributors to the open-source project
+- Advanced users customizing the system
 
-Docusaurus is configured to read directly from this directory:
+### 🤖 AI Assistant Integration
 
-```typescript
-// apps/docs/docusaurus.config.ts
-{
-  docs: {
-    path: '../../docs-v2',  // Points to this directory
-    sidebarPath: './sidebars.ts',
-  }
-}
+Using Cronicorn with Claude, Cursor, or other AI assistants?
+
+- **[MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server)** - Model Context Protocol integration
+- Install with: `npm install -g @cronicorn/mcp-server`
+- See [Quick Start MCP Section](./quick-start.md#using-with-ai-assistants) for setup
+
+**Perfect for:**
+- Claude Desktop users
+- VS Code with GitHub Copilot
+- Cursor, Cline, Continue users
+
+## Documentation Tags
+
+Documents are tagged for different audiences:
+
+- **`user`** - End users of the Cronicorn service
+- **`assistant`** - AI assistants accessing via MCP
+- **`essential`** - Core documentation everyone should read
+
+## Available Documentation
+
+### User Documentation
+- ✅ [Introduction](./introduction.md) - Overview and key features
+- ✅ [Core Concepts](./core-concepts.md) - Jobs, endpoints, scheduling, AI hints
+- ✅ [Quick Start](./quick-start.md) - Get started in 5 minutes
+
+### Technical Documentation (Self-Hosting)
+- ✅ [System Architecture](./technical/system-architecture.md) - Hexagonal architecture overview
+- ✅ [How Scheduling Works](./technical/how-scheduling-works.md) - Governor algorithm details
+- ✅ [How AI Adaptation Works](./technical/how-ai-adaptation-works.md) - AI planner internals
+- ✅ [Coordinating Multiple Endpoints](./technical/coordinating-multiple-endpoints.md) - Advanced patterns
+- ✅ [Configuration & Constraints](./technical/configuration-and-constraints.md) - Safety mechanisms
+- ✅ [Technical Reference](./technical/reference.md) - API contracts and database schema
+
+## About This Documentation
+
+This directory (`docs-v2/`) serves as the **single source of truth** for Cronicorn documentation, consumed by:
+
+- **Docusaurus website** - Human-readable documentation site
+- **MCP server** - AI assistants accessing documentation via Model Context Protocol
+
+### Frontmatter Structure
+
+Each document includes metadata for both humans and AI:
+
+```yaml
+---
+id: unique-identifier
+title: Human-Readable Title
+description: Brief description
+tags:
+  - user          # For end users
+  - assistant     # For AI assistants  
+  - essential     # Core documentation
+sidebar_position: 1
+mcp:
+  uri: file:///docs/filename.md
+  mimeType: text/markdown
+  priority: 0.9   # 0.0-1.0, higher = more important
+  lastModified: 2025-11-02T00:00:00Z
+---
 ```
-
-The frontmatter is fully compatible with Docusaurus and provides additional metadata for AI consumption.
-
-## Usage in MCP Server
-
-The MCP server reads markdown files from this directory at startup and exposes them as resources:
-
-```typescript
-// apps/mcp-server/src/resources/index.ts
-const DOCS_PATH = path.join(__dirname, "../../../../docs-v2");
-```
-
-The MCP server exposes these documents through the `resources/list` and `resources/read` endpoints. AI assistants can discover and read documentation to provide accurate, context-aware assistance.
 
 ## Contributing
 
-When adding or updating documentation:
+Found an issue or want to improve the docs?
 
-1. Include complete MCP frontmatter metadata
-2. Use clear, descriptive titles and descriptions
-3. Set appropriate audience and priority values
-4. Update the lastModified timestamp
-5. Ensure content is valuable for both humans and AI
+1. **Report issues**: [GitHub Issues](https://github.com/weskerllc/cronicorn/issues)
+2. **Suggest improvements**: [GitHub Discussions](https://github.com/weskerllc/cronicorn/discussions)
+3. **Submit PRs**: See our contributing guidelines on GitHub
 
-## Related Documentation
+## Getting Help
 
-- [MCP Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/resources)
-- [Docusaurus Documentation](https://docusaurus.io/docs)
-- [Markdown Best Practices](https://www.markdownguide.org/basic-syntax/)
+- 📖 [Documentation Site](https://cronicorn.com/docs)
+- 💬 [Discord Community](https://discord.gg/cronicorn)
+- 📧 [Email Support](mailto:support@cronicorn.com)
+
+## Related Resources
+
+- **[MCP Server Package](https://www.npmjs.com/package/@cronicorn/mcp-server)** - AI assistant integration
+- **[GitHub Repository](https://github.com/weskerllc/cronicorn)** - Source code and issues
+- **[API Documentation](https://app.cronicorn.com/docs/api)** - REST API reference

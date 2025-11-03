@@ -1,7 +1,7 @@
 ---
 id: quick-start
 title: Quick Start Guide
-description: Get up and running with Cronicorn in 5 minutes
+description: Create your first scheduled job in 5 minutes
 tags:
   - user
   - essential
@@ -15,269 +15,218 @@ mcp:
 
 # Quick Start Guide
 
-Get Cronicorn running locally in 5 minutes.
+Create your first scheduled job and start monitoring executions.
 
-## Prerequisites
+> **Note**: This guide is for using Cronicorn as a hosted service. If you're self-hosting, see the [Technical Documentation](./technical/system-architecture.md).
 
-- **Node.js** 24.0 or higher
-- **pnpm** 10.0 or higher
-- **Docker** (for PostgreSQL)
-- **Git**
+## 1. Sign Up
 
-## Installation
+1. Visit [https://app.cronicorn.com](https://app.cronicorn.com)
+2. Click **Sign in with GitHub**
+3. Authorize the application
 
-### 1. Clone the Repository
+## 2. Create Your First Job
+
+Jobs group related endpoints together. Let's create one for API monitoring:
+
+1. Click **Create Job**
+2. Fill in the details:
+   - **Name**: `API Health Checks`
+   - **Description**: `Monitor our API endpoints`
+3. Click **Create**
+
+## 3. Add an Endpoint
+
+Now let's add an HTTP endpoint to monitor:
+
+1. Click on your newly created job
+2. Click **Add Endpoint**
+3. Fill in:
+   - **Name**: `Main API Health`
+   - **URL**: `https://api.yourapp.com/health`
+   - **Method**: `GET`
+   - **Baseline Schedule**: Choose either:
+     - **Cron**: `*/5 * * * *` (every 5 minutes)
+     - **Interval**: `300000` (milliseconds = 5 minutes)
+
+4. **(Optional)** Add safety constraints:
+   - **Min Interval**: `30000` (30 seconds - prevents over-polling)
+   - **Max Interval**: `900000` (15 minutes - ensures regular checks)
+
+5. Click **Add Endpoint**
+
+## 4. View Execution History
+
+Your endpoint will start executing automatically. To monitor it:
+
+1. Click on the endpoint name
+2. View the **Runs** tab to see:
+   - Execution timestamps
+   - Success/failure status
+   - Response time
+   - Error messages (if any)
+
+## 5. Enable AI Adaptation (Optional)
+
+Want AI to optimize your schedule automatically?
+
+1. Navigate to **Settings** in the top navigation
+2. Find the **AI Features** section
+3. Toggle **Enable AI Scheduling**
+4. Your endpoints will now adapt based on performance patterns
+
+**How AI helps:**
+- Increases frequency when errors detected
+- Backs off when everything is stable
+- Always respects your min/max constraints
+- All hints expire automatically (TTL)
+
+## Common Patterns
+
+### API Health Check
+
+Monitor an API endpoint with adaptive frequency:
+
+```
+Name: API Health Check
+URL: https://api.example.com/health
+Method: GET
+Baseline: Every 5 minutes (300000ms)
+Min Interval: 30 seconds (prevents rate limit issues)
+Max Interval: 15 minutes (ensures timely detection)
+```
+
+**With AI enabled:**
+- Normal state: Runs every 5 minutes
+- Errors detected: Increases to every 30 seconds
+- All healthy: Backs off to every 15 minutes
+
+### Data Sync
+
+Synchronize data between systems:
+
+```
+Name: User Sync
+URL: https://api.example.com/sync/users
+Method: POST
+Body: {"lastSyncTime": "{{lastRunAt}}"}
+Baseline: Every hour (3600000ms)
+Max Interval: 2 hours (ensures freshness)
+```
+
+### Daily Cleanup
+
+Run maintenance tasks on a schedule:
+
+```
+Name: Database Cleanup
+URL: https://api.example.com/admin/cleanup
+Method: POST
+Baseline: Daily at 2am (cron: "0 2 * * *")
+Timeout: 300000ms (5 minutes)
+```
+
+## Using API Keys
+
+For programmatic access, create API keys:
+
+1. Go to **Settings** → **API Keys**
+2. Click **Create API Key**
+3. Give it a name and copy the key (shown only once!)
+4. Use in your requests:
 
 ```bash
-git clone https://github.com/weskerllc/cronicorn.git
-cd cronicorn
+curl -X GET https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: cron_abc123..."
 ```
 
-### 2. Install Dependencies
+See the [API Reference](https://app.cronicorn.com/docs/api) for all available endpoints.
+
+## Using with AI Assistants
+
+Cronicorn provides an MCP server for AI assistants like Claude:
+
+### Installation
 
 ```bash
-pnpm install
+npm install -g @cronicorn/mcp-server
 ```
 
-### 3. Start PostgreSQL
+### Configuration
 
-```bash
-pnpm db
-```
-
-This starts a PostgreSQL container using Docker Compose.
-
-### 4. Configure Environment
-
-Create a `.env` file in the root directory:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and set required variables:
-
-```bash
-# Database
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/cronicorn"
-
-# API Server
-API_PORT=3000
-API_HOST=localhost
-
-# JWT Secret (generate a random string)
-JWT_SECRET="your-secret-key-here"
-
-# Web App
-WEB_URL="http://localhost:3001"
-```
-
-### 5. Run Database Migrations
-
-```bash
-pnpm db:migrate
-```
-
-This creates the necessary database tables.
-
-### 6. Start the Development Environment
-
-```bash
-pnpm dev
-```
-
-This starts all services in parallel:
-- API server at `http://localhost:3000`
-- Web dashboard at `http://localhost:3001`
-- Scheduler worker (background)
-
-## Create Your First Job
-
-### Using the API
-
-```bash
-curl -X POST http://localhost:3000/jobs \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "My First Job",
-    "description": "A test job"
-  }'
-```
-
-Response:
-
-```json
-{
-  "id": "job_abc123",
-  "name": "My First Job",
-  "description": "A test job",
-  "status": "active",
-  "createdAt": "2025-11-02T12:00:00Z"
-}
-```
-
-### Add an Endpoint
-
-```bash
-curl -X POST http://localhost:3000/jobs/job_abc123/endpoints \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Health Check",
-    "url": "https://httpbin.org/status/200",
-    "method": "GET",
-    "baselineIntervalMs": 60000,
-    "description": "Check service health every minute"
-  }'
-```
-
-Response:
-
-```json
-{
-  "id": "ep_xyz789",
-  "name": "Health Check",
-  "url": "https://httpbin.org/status/200",
-  "method": "GET",
-  "baselineIntervalMs": 60000,
-  "nextRunAt": "2025-11-02T12:01:00Z",
-  "status": "active"
-}
-```
-
-### Monitor Execution
-
-View run history:
-
-```bash
-curl http://localhost:3000/endpoints/ep_xyz789/runs
-```
-
-Response:
-
-```json
-{
-  "runs": [
-    {
-      "id": "run_123",
-      "status": "success",
-      "startedAt": "2025-11-02T12:01:00Z",
-      "finishedAt": "2025-11-02T12:01:00.234Z",
-      "durationMs": 234,
-      "source": "baseline-interval"
-    }
-  ]
-}
-```
-
-## Using the Web Dashboard
-
-Open `http://localhost:3001` in your browser to:
-
-1. **Create jobs** through a visual interface
-2. **Manage endpoints** with form validation
-3. **View run history** with charts and filters
-4. **Monitor health** with real-time status updates
-
-## Using the MCP Server (AI Assistants)
-
-The MCP server allows AI assistants like Claude to manage your jobs:
-
-### 1. Install the MCP Server
-
-```bash
-# Already installed with pnpm install
-```
-
-### 2. Configure Claude Desktop
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "cronicorn": {
-      "command": "node",
-      "args": ["/path/to/cronicorn/apps/mcp-server/dist/index.js"],
-      "env": {
-        "CRONICORN_API_URL": "http://localhost:3000",
-        "CRONICORN_WEB_URL": "http://localhost:3001"
-      }
+      "command": "cronicorn-mcp"
     }
   }
 }
 ```
 
-### 3. Authenticate
+### First Run
 
-When you first use the MCP server, it will:
+The MCP server will:
+
 1. Display a device code
-2. Prompt you to visit the web URL
-3. Wait for you to approve the connection
+2. Open your browser to approve access
+3. Store credentials securely
 
-### 4. Use in Claude
+Then ask Claude to manage your jobs:
 
-Ask Claude to manage your jobs:
-
-- "Create a job called 'API Monitor' with a health check endpoint"
-- "Show me the run history for the health check endpoint"
-- "Pause the API Monitor job for the next hour"
-
-## Next Steps
-
-### Learn Core Concepts
-
-- [Core Concepts](./core-concepts.md) - Understand jobs, endpoints, and scheduling
-- [Introduction](./introduction.md) - Learn about system design
-
-### Explore Features
-
-Additional documentation coming soon:
-- AI Scheduling - Leverage AI-powered adaptations
-- Monitoring - Set up observability
-- Authentication - Secure your API
-- Deployment - Production setup
-- Multi-tenancy - Tenant isolation
+- "Create a health check endpoint for api.example.com"
+- "Show me the run history for my API health check"
+- "Pause all endpoints for the next hour"
 
 ## Troubleshooting
 
-### Database Connection Issues
+### Endpoint Not Running
 
-```bash
-# Check if PostgreSQL is running
-docker ps | grep postgres
+**Check the endpoint status:**
+1. Open the endpoint details
+2. Look for **Status** field
+3. If "Paused", click **Resume**
 
-# Restart the database
-pnpm db:reset
-```
+**Check execution history:**
+1. View the **Runs** tab
+2. Look for error messages
+3. Check if the URL is accessible
 
-### Port Already in Use
+### Authentication Errors
 
-Edit `.env` to change the port:
+**For HTTPS endpoints with auth:**
+1. Add authentication headers in the endpoint configuration
+2. Common headers:
+   - `Authorization: Bearer <token>`
+   - `x-api-key: <key>`
 
-```bash
-API_PORT=3002
-```
+### Timeout Errors
 
-### Migration Errors
+If requests are timing out:
 
-```bash
-# Reset and re-run migrations
-pnpm db:reset
-pnpm db:migrate
-```
+1. Edit the endpoint
+2. Increase **Timeout** (default is 30 seconds)
+3. Consider if your API needs optimization
+
+### Rate Limit Errors
+
+If you're hitting rate limits:
+
+1. Increase **Min Interval** (e.g., from 30s to 60s)
+2. Adjust **Baseline Schedule** to be less frequent
+3. Let AI adapt (it will back off automatically)
+
+## Next Steps
+
+- **[Core Concepts](./core-concepts.md)** - Understand jobs, endpoints, and AI scheduling
+- **[API Reference](https://app.cronicorn.com/docs/api)** - Full API documentation
+- **[Self-Hosting Guide](./technical/system-architecture.md)** - Deploy Cronicorn yourself
 
 ## Getting Help
 
-- 📖 [Full Documentation](./README.md)
+- 📖 [Documentation](https://cronicorn.com/docs)
+- 💬 [Discord Community](https://discord.gg/cronicorn)
+- 📧 [Email Support](mailto:support@cronicorn.com)
 - 🐛 [Report Issues](https://github.com/weskerllc/cronicorn/issues)
-- 💬 [Discussions](https://github.com/weskerllc/cronicorn/discussions)
-
-## What's Next?
-
-Now that you have Cronicorn running, explore:
-
-1. **Create multiple endpoints** with different schedules
-2. **Test AI hints** by manually adjusting intervals
-3. **Monitor execution** through the dashboard
-4. **Experiment with constraints** (min/max intervals, timeouts)
-5. **Try the MCP server** for AI-powered management
