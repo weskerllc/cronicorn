@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/weskerllc/cronicorn/compare/v1.5.0...v1.5.1) (2025-11-03)
+
+
+### Bug Fixes
+
+* Build docs site during release ([26b6694](https://github.com/weskerllc/cronicorn/commit/26b6694c162a4342c596a524dac0086792b834f9))
+
 # [1.5.0](https://github.com/weskerllc/cronicorn/compare/v1.4.5...v1.5.0) (2025-11-03)
 
 
