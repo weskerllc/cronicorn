@@ -1,16 +1,16 @@
+import { brand, faq, keywords, metaDescriptions, urls } from "@cronicorn/content";
 import { createFileRoute } from "@tanstack/react-router";
-import AppLogo from "../icon.svg?react";
+import { Footer2 } from "../components/nav/footer";
 import BackgroundEffects from "../components/splash-page/components/background-effects";
+import HeaderSection from "../components/splash-page/components/header-section";
 import HeroSection from "../components/splash-page/components/hero-section";
 import TimelineSection from "../components/splash-page/components/timeline-section";
-import { monitoringScenarios } from "../components/splash-page/timeline/timeline-scenario-data";
 import DynamicScheduleTimeline from "../components/splash-page/timeline/timeline";
-import HeaderSection from "../components/splash-page/components/header-section";
-import { Footer2 } from "../components/nav/footer";
-import QuickAnswersSection from "@/components/sections/quick-answers-section";
-import CTASection from "@/components/sections/cta-section";
+import { monitoringScenarios } from "../components/splash-page/timeline/timeline-scenario-data";
+import AppLogo from "../logo.svg?react";
+import LogoGrid from "../components/splash-page/components/logo-grid";
 import { SEO, createFAQSchema, createOrganizationSchema, createSoftwareApplicationSchema, createWebsiteSchema } from "@/components/SEO";
-import siteConfig from "@/site-config";
+import { FeatureCardsSection } from "@/components/sections/feature-cards-section";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -26,7 +26,7 @@ function Index() {
   }));
 
   // FAQ data from site config for both display and structured data
-  const faqData = [...siteConfig.faq.primary];
+  const faqData = [...faq];
 
   // Combined structured data for maximum SEO impact
   const structuredData = {
@@ -42,77 +42,84 @@ function Index() {
   return (
     <>
       <SEO
-        description={siteConfig.metaDescriptions.home}
-        keywords={[...siteConfig.seo.keywords]}
+        description={metaDescriptions.home}
+        keywords={[...keywords.tier1, ...keywords.tier2]}
         url="/"
-        canonical={siteConfig.url}
+        canonical={urls.product.home}
         structuredData={structuredData}
       />
 
       <main className="bg-background" role="main">
         {/* Hero Section with Particle Animation Background */}
-        <section className="relative min-h-screen bg-background overflow-hidden mb-8 p-2 md:p-4" aria-labelledby="hero-heading">
+        <section className="  relative min-h-screen bg-background overflow-hidden" aria-labelledby="hero-heading">
           <BackgroundEffects />
           <HeaderSection />
 
 
-          <div className="border relative border-muted-foreground/10 w-full max-w-6xl mx-auto mt-28">
-            <HeroSection />
-            <TimelineSection tabData={tabData} />
+          {/* <div className="border relative border-muted-foreground/10 w-full max-w-6xl mx-auto mt-14"> */}
+          <div className="relative w-full max-w-7xl mx-auto mt-14   px-4 md:px-8">
 
-            <QuickAnswersSection />
+            <div className="grid grid-cols-1 items-start lg:grid-cols-2 gap-12 lg:gap-16 py-12 md:py-20 overflow-hidden">
+              <HeroSection />
+              <TimelineSection tabData={tabData} />
+            </div>
 
-            <CTASection />
+            <FeatureCardsSection />
+
+            <LogoGrid />
+
           </div>
         </section>
 
-        <div className="max-w-6xl px-2 md:px-4  mx-auto">
+        <div className="w-full   px-4 md:px-8    border-t border-border/40  ">
           <Footer2
-            tagline={siteConfig.tagline}
-            logoSlot={<a href={siteConfig.url} className="flex items-center space-x-2">
+            tagline={brand.title}
+            logoSlot={<a href={urls.product.home} className="flex items-center space-x-2">
               <AppLogo className="size-12 fill-muted-foreground" aria-label="Cronicorn intelligent cron job scheduling platform logo" />
-              <span className="font-medium text-2xl text-muted-foreground">{siteConfig.siteName}</span>
+              <span className="font-medium text-2xl text-muted-foreground">{brand.name}</span>
             </a>}
             menuItems={[
               {
                 title: "Product",
                 links: [
-                  { text: "Home", url: siteConfig.urls.home },
-                  { text: "Pricing", url: siteConfig.urls.pricing },
-                  { text: "FAQ", url: siteConfig.urls.faq },
-                  { text: "Dashboard", url: siteConfig.urls.dashboard },
+                  { text: "Home", url: urls.product.home },
+                  { text: "Pricing", url: urls.product.pricing },
+                  { text: "Docs", url: urls.docs.base },
+                  { text: "Dashboard", url: urls.product.dashboard },
+                  { text: "API Playground", url: urls.docs.apiReference },
+                  { text: "MCP Server", url: urls.docs.mcpServer },
                 ],
               },
               {
                 title: "Resources",
                 links: [
-                  { text: "Documentation", url: siteConfig.urls.documentation },
-                  { text: "Quickstart Guide", url: siteConfig.urls.quickstart },
-                  { text: "Use Cases", url: siteConfig.urls.useCases },
-                  { text: "Architecture", url: siteConfig.urls.architecture },
+                  { text: "Documentation", url: urls.docs.base },
+                  { text: "Quickstart Guide", url: urls.docs.quickstart },
+                  { text: "Use Cases", url: urls.docs.useCases },
+                  { text: "Architecture", url: urls.docs.architecture },
                 ],
               },
               {
                 title: "Community",
                 links: [
-                  { text: "GitHub", url: siteConfig.urls.github },
-                  { text: "Support", url: siteConfig.urls.support },
-                  { text: "Contributing", url: siteConfig.urls.contributing },
-                  { text: "Changelog", url: siteConfig.urls.changelog },
+                  { text: "GitHub", url: urls.github.repo },
+                  { text: "Support", url: urls.github.issues },
+                  { text: "Contributing", url: urls.github.contributing },
+                  { text: "Changelog", url: urls.github.changelog },
                 ],
               },
               {
                 title: "Legal",
                 links: [
-                  { text: "Privacy Policy", url: siteConfig.urls.privacy },
-                  { text: "Terms of Service", url: siteConfig.urls.terms },
-                  { text: "Contact", url: siteConfig.urls.contact },
+                  { text: "Privacy Policy", url: urls.legal.privacy },
+                  { text: "Terms of Service", url: urls.legal.terms },
+                  { text: "Contact", url: urls.legal.contact },
                 ],
               },
             ]}
             bottomLinks={[
-              { text: "Privacy Policy", url: siteConfig.urls.privacy },
-              { text: "Terms of Service", url: siteConfig.urls.terms },
+              { text: "Privacy Policy", url: urls.legal.privacy },
+              { text: "Terms of Service", url: urls.legal.terms },
             ]}
           />
         </div>

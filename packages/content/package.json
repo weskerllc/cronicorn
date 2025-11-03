@@ -1,0 +1,66 @@
+{
+  "name": "@cronicorn/content",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./assets/*": "./assets/*",
+    "./assets": {
+      "types": "./dist/assets.d.ts",
+      "default": "./dist/assets.js"
+    },
+    "./brand": {
+      "types": "./dist/brand.d.ts",
+      "default": "./dist/brand.js"
+    },
+    "./business": {
+      "types": "./dist/business.d.ts",
+      "default": "./dist/business.js"
+    },
+    "./docs": {
+      "types": "./dist/docs.d.ts",
+      "default": "./dist/docs.js"
+    },
+    "./faq": {
+      "types": "./dist/faq.d.ts",
+      "default": "./dist/faq.js"
+    },
+    "./pricing": {
+      "types": "./dist/pricing.d.ts",
+      "default": "./dist/pricing.js"
+    },
+    "./pricing-content": {
+      "types": "./dist/pricing-content.d.ts",
+      "default": "./dist/pricing-content.js"
+    },
+    "./quick-answers": {
+      "types": "./dist/quick-answers.d.ts",
+      "default": "./dist/quick-answers.js"
+    },
+    "./sections": {
+      "types": "./dist/sections.d.ts",
+      "default": "./dist/sections.js"
+    },
+    "./seo": {
+      "types": "./dist/seo.d.ts",
+      "default": "./dist/seo.js"
+    },
+    "./structured-data": {
+      "types": "./dist/structured-data.d.ts",
+      "default": "./dist/structured-data.js"
+    },
+    "./urls": {
+      "types": "./dist/urls.d.ts",
+      "default": "./dist/urls.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

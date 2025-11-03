@@ -7,9 +7,16 @@ import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@cronicorn/ui-library/components/accordion";
 import { AlertCircle, Check, Clock, Shield, Star, Zap } from "lucide-react";
 
+import { business, metaDescriptions, pageTitles, pricing, pricingFAQs, pricingFeatures, pricingText } from "@cronicorn/content";
 import { useSession } from "@/lib/auth-client";
 import { SEO, createFAQSchema, createProductSchema } from "@/components/SEO";
-import siteConfig from "@/site-config";
+
+// Icon map for pricing features
+const featureIconMap: Record<string, React.ReactNode> = {
+  "AI-Powered Intelligence": <Zap className="w-5 h-5 text-primary" />,
+  "Enterprise Security": <Shield className="w-5 h-5 text-primary" />,
+  "99.9% Uptime": <Clock className="w-5 h-5 text-primary" />,
+};
 
 export const Route = createFileRoute("/pricing")({
   component: Pricing,
@@ -56,61 +63,24 @@ function Pricing() {
   };
 
   // FAQ data for structured data
-  const faqs = [
-    {
-      question: "Can I change my plan at any time?",
-      answer: "Yes! You can upgrade or downgrade your plan at any time. Changes will be prorated and reflected in your next billing cycle."
-    },
-    {
-      question: "What happens if I exceed my job limits?",
-      answer: "If you exceed your plan limits, you'll be notified and given the option to upgrade. Your existing jobs will continue to work while you decide."
-    },
-    {
-      question: "Do you offer annual discounts?",
-      answer: "Yes! Annual subscriptions receive a 20% discount. Contact our support team to set up annual billing."
-    },
-    {
-      question: "Is there an SLA for Enterprise customers?",
-      answer: "Yes, Enterprise customers receive a 99.9% uptime SLA with dedicated support and priority issue resolution."
-    },
-    {
-      question: "Can I cancel at any time?",
-      answer: "Absolutely. You can cancel your subscription at any time. You'll retain access to paid features until the end of your current billing period."
-    }
-  ];
+  const faqs = pricingFAQs;
 
   // Structured data for each pricing tier
   const tierStructuredData = {
     "@context": "https://schema.org",
     "@graph": [
-      ...siteConfig.pricing.map((tier) => createProductSchema(tier)),
+      ...pricing.map((tier) => createProductSchema(tier)),
       createFAQSchema(faqs)
     ]
   };
 
-  const features = [
-    {
-      icon: <Zap className="w-5 h-5 text-primary" />,
-      title: "AI-Powered Intelligence",
-      description: "Smart scheduling that learns from your patterns"
-    },
-    {
-      icon: <Shield className="w-5 h-5 text-primary" />,
-      title: "Enterprise Security",
-      description: "Bank-grade encryption and compliance ready"
-    },
-    {
-      icon: <Clock className="w-5 h-5 text-primary" />,
-      title: "99.9% Uptime",
-      description: "Reliable infrastructure you can depend on"
-    }
-  ];
+  const features = pricingFeatures;
 
   return (
     <>
       <SEO
-        title={siteConfig.pageTitles.pricing}
-        description={siteConfig.metaDescriptions.pricing}
+        title={pageTitles.pricing}
+        description={metaDescriptions.pricing}
         keywords={["pricing", "plans", "subscription", "AI scheduling cost", "cron job pricing", "enterprise scheduling"]}
         url="/pricing"
         structuredData={tierStructuredData}
@@ -127,7 +97,7 @@ function Pricing() {
               Choose Your Plan
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Start free and scale with your needs. All plans include our core AI scheduling features.
+              {pricingText.hero.subtitle}
             </p>
           </div>
         </section>
@@ -144,7 +114,7 @@ function Pricing() {
           {features.map((feature, index) => (
             <div key={index} className="text-center space-y-3">
               <div className="flex justify-center">
-                {feature.icon}
+                {featureIconMap[feature.title]}
               </div>
               <h3 className="font-semibold">{feature.title}</h3>
               <p className="text-sm text-muted-foreground">{feature.description}</p>
@@ -154,7 +124,7 @@ function Pricing() {
 
         {/* Pricing Grid */}
         <section className="grid lg:grid-cols-3 gap-8" aria-label="Pricing plans">
-          {siteConfig.pricing.map((tier) => (
+          {pricing.map((tier) => (
             <Card
               key={tier.name}
               className={`relative ${tier.popular ? 'border-primary ring-2 ring-primary/20' : ''}`}
@@ -213,7 +183,7 @@ function Pricing() {
                   <Button
                     onClick={() => {
                       // Handle enterprise contact
-                      window.location.href = `mailto:${siteConfig.business.contactPoint.email}?subject=Enterprise Plan Inquiry&body=Hi, I'm interested in the Enterprise plan for Cronicorn. Please send me more information.`;
+                      window.location.href = `mailto:${business.contactPoint.email}?subject=Enterprise Plan Inquiry&body=Hi, I'm interested in the Enterprise plan for Cronicorn. Please send me more information.`;
                     }}
                     variant="outline"
                     className="w-full"
@@ -241,7 +211,7 @@ function Pricing() {
           <section className="text-center space-y-4 py-8 bg-muted/30 rounded-lg">
             <h2 className="text-2xl font-semibold">Ready to Get Started?</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Sign in with GitHub to start scheduling with AI intelligence
+              {pricingText.cta.subtitle}
             </p>
             <div className="flex justify-center gap-4">
               <Button asChild size="lg">
@@ -279,7 +249,7 @@ function Pricing() {
         {/* Trust Indicators */}
         <section className="text-center space-y-6 py-8">
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Trusted by Developers Worldwide</h2>
+            <h2 className="text-2xl font-bold">{pricingText.testimonials.heading}</h2>
             <div className="flex justify-center gap-8 text-sm text-muted-foreground">
               <div className="flex flex-col items-center">
                 <span className="text-2xl font-bold text-primary">99.9%</span>

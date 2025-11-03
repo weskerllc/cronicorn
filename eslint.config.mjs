@@ -53,5 +53,14 @@ export default antfu({
       jsx: "never",
     }],
   },
-  ignores: ["**/migrations/*", "**/*.md", "**/packages/ui-library/*", "**/routeTree.gen.ts", "**/.tanstack/**", "**/apps/web/**"],
+  ignores: [
+    "**/migrations/*",
+    "**/*.md",
+    "**/packages/ui-library/*",
+    "**/routeTree.gen.ts",
+    "**/.tanstack/**",
+    "**/apps/web/**",
+    "**/apps/docs/.docusaurus/**",
+    "**/apps/docs/build/**",
+  ],
 });
