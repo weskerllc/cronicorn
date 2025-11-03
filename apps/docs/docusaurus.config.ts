@@ -43,8 +43,10 @@ const config: Config = {
         docs: {
           path: "../../docs/public",
           sidebarPath: "./sidebars.ts",
+          routeBasePath: "/", // Serve docs at the root instead of /docs
         },
         blog: false, // Blog disabled - placeholder content removed
+        pages: false, // Custom pages disabled - docs only
         theme: {
           customCss: "./src/css/custom.css",
         },
@@ -93,7 +95,7 @@ const config: Config = {
           items: [
             {
               label: "Introduction",
-              to: "/docs/introduction",
+              to: "/",
             },
           ],
         },
