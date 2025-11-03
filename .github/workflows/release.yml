@@ -131,6 +131,8 @@ jobs:
             target: scheduler
           - name: web
             target: web
+          - name: docs
+            target: docs
 
     outputs:
       api-digest: ${{ steps.push.outputs.digest }}
