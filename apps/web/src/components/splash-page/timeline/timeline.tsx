@@ -29,9 +29,9 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
             {/* Live Conditions Section */}
             <section aria-labelledby="conditions-heading" className="flex flex-col">
               <div className="mb-3">
-                <h2 id="conditions-heading" className="text-xs font-medium text-muted-foreground">
+                <span id="conditions-heading" className="text-xs font-medium text-muted-foreground">
                   Live conditions
-                </h2>
+                </span>
               </div>
 
               <div className="grid  grid-cols-1  gap-3 flex-1" role="group" aria-label="System conditions">

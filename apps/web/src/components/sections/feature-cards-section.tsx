@@ -33,6 +33,14 @@ const features: Array<FeatureCard> = [
 export function FeatureCardsSection() {
     return (
         <section className="w-full py-16 md:py-20 lg:py-24" aria-labelledby="features-heading">
+            <div className="text-center mb-12 md:mb-16">
+                <h2 id="features-heading" className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                    How Intelligent Scheduling Works
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                    AI learns from your system's behavior and adjusts automatically within your safety limits.
+                </p>
+            </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {features.map((feature, index) => (
                     <Card
