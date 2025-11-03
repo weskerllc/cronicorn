@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/weskerllc/cronicorn/compare/v1.5.1...v1.5.2) (2025-11-03)
+
+
+### Bug Fixes
+
+* Fix docs Docker build by including docs folder in sparse checkout ([#10](https://github.com/weskerllc/cronicorn/issues/10)) ([febcbf3](https://github.com/weskerllc/cronicorn/commit/febcbf32ae5c58bf745f3a38cbe664d3264003e1))
+
 ## [1.5.1](https://github.com/weskerllc/cronicorn/compare/v1.5.0...v1.5.1) (2025-11-03)
 
 
