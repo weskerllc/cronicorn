@@ -14,6 +14,7 @@
     "🚀 ---------- MONOREPO ----------": "",
     "build": "tsc -b",
     "build:web": "pnpm --filter @cronicorn/web run build",
+    "build:docs": "pnpm --filter @cronicorn/docs run build",
     "start": "dotenv -e .env -- pnpm run -r --parallel start",
     "dev": "dotenv -e .env -- pnpm run -r --parallel dev",
     "dev:api": "dotenv -e .env -- pnpm --filter @cronicorn/api run dev",

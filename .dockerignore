@@ -29,7 +29,9 @@ docker-compose*
 # Documentation and development
 README.md
 *.md
-docs/
+# Exclude internal docs but keep public docs (needed for Docusaurus build)
+docs/internal/
+!docs/public/
 
 # IDE and OS files
 .vscode
