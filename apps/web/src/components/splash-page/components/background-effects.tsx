@@ -27,6 +27,12 @@ export default function BackgroundEffects() {
                 style={{ animationDuration: "8s", animationDelay: "4s" }}
             />
 
+            {/* Fade mask overlay - creates smooth transition at bottom */}
+            <div
+                className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-transparent via-transparent to-background pointer-events-none"
+
+            />
+
             {/* Decorative dots */}
             <div className="absolute top-16 left-8 w-1 h-1 bg-blue-400/12 rounded-full"></div>
             <div className="absolute top-32 left-24 w-2 h-2 bg-purple-300/10 rounded-full"></div>

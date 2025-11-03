@@ -1,4 +1,4 @@
-import { quickAnswers, sections } from "@cronicorn/content";
+import { quickAnswers } from "@cronicorn/content";
 import { cn } from "@cronicorn/ui-library/lib/utils";
 import { ArrowRight, Code, GitCompare, Layers, Sparkles, Zap } from "lucide-react";
 import SectionContainer from "@/components/ui/section-container";
@@ -104,63 +104,64 @@ export default function QuickAnswersSection() {
     };
 
     return (
-        <SectionContainer
-            maxWidth="7xl"
-            paddingY="lg"
-            ariaLabelledBy="quick-answers-heading"
-        >
-            <SectionHeader
-                id="quick-answers-heading"
-                heading={sections.quickAnswers.heading}
-                description={sections.quickAnswers.description}
-            />
+        <></>
+        // <SectionContainer
+        //     maxWidth="7xl"
+        //     paddingY="lg"
+        //     ariaLabelledBy="quick-answers-heading"
+        // >
+        //     <SectionHeader
+        //         id="quick-answers-heading"
+        //         heading={sections.quickAnswers.heading}
+        //         description={sections.quickAnswers.description}
+        //     />
 
-            <div className="grid lg:grid-cols-2 border-muted-foreground/10 border-t">
-                {quickAnswers.map((qa, index) => (
-                    <article
-                        key={index}
-                        className={cn(
-                            "group relative",
-                            " odd:border-r border-b border-muted-foreground/10",
-                            " p-8 md:p-10",
-                            // "shadow-sm hover:shadow-lg",
-                            // "transform hover:-translate-y-1",
-                            "transition-all duration-300 ease-out"
-                        )}
-                        itemScope
-                        itemType="https://schema.org/Question"
-                    >
+        //     <div className="grid lg:grid-cols-2 border-muted-foreground/10 border-t">
+        //         {quickAnswers.map((qa, index) => (
+        //             <article
+        //                 key={index}
+        //                 className={cn(
+        //                     "group relative",
+        //                     " odd:border-r border-b border-muted-foreground/10",
+        //                     " p-8 md:p-10",
+        //                     // "shadow-sm hover:shadow-lg",
+        //                     // "transform hover:-translate-y-1",
+        //                     "transition-all duration-300 ease-out"
+        //                 )}
+        //                 itemScope
+        //                 itemType="https://schema.org/Question"
+        //             >
 
 
-                        <header className="mb-6 space-y-4">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                {iconMap[qa.format]}
+        //                 <header className="mb-6 space-y-4">
+        //                     <div className="flex items-center gap-2 text-muted-foreground">
+        //                         {iconMap[qa.format]}
 
-                                <h3
-                                    className=" text-sm  tracking-tight transition-colors leading-tight"
-                                    itemProp="name"
-                                >
-                                    {qa.question}
-                                </h3>
-                            </div>
+        //                         <h3
+        //                             className=" text-sm  tracking-tight transition-colors leading-tight"
+        //                             itemProp="name"
+        //                         >
+        //                             {qa.question}
+        //                         </h3>
+        //                     </div>
 
-                            <p className="text-xl font-medium text-foreground/90 leading-tight">
-                                {qa.powerSentence}
-                            </p>
-                        </header>
+        //                     <p className="text-xl font-medium text-foreground/90 leading-tight">
+        //                         {qa.powerSentence}
+        //                     </p>
+        //                 </header>
 
-                        <div itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
-                            {/* Hidden SEO-optimized text content */}
-                            <meta itemProp="text" content={qa.seoText} />
+        //                 <div itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
+        //                     {/* Hidden SEO-optimized text content */}
+        //                     <meta itemProp="text" content={qa.seoText} />
 
-                            {/* Visible rich content */}
-                            <div className="text-muted-foreground text-sm ">
-                                {renderContent(qa.format)}
-                            </div>
-                        </div>
-                    </article>
-                ))}
-            </div>
-        </SectionContainer>
+        //                     {/* Visible rich content */}
+        //                     <div className="text-muted-foreground text-sm ">
+        //                         {renderContent(qa.format)}
+        //                     </div>
+        //                 </div>
+        //             </article>
+        //         ))}
+        //     </div>
+        // </SectionContainer>
     );
 }
