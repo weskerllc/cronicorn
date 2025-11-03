@@ -1,7 +1,6 @@
-import { CheckCircle2 } from "lucide-react"
 import { useState } from "react"
+// import { scenarioBenefits } from "../timeline/timeline-scenario-data"
 import { TimelineTabs } from "../timeline/timeline-tabs"
-import { scenarioBenefits } from "../timeline/timeline-scenario-data"
 
 interface TimelineSectionProps {
     tabData: Array<{
@@ -13,9 +12,9 @@ interface TimelineSectionProps {
 }
 
 export default function TimelineSection({ tabData }: TimelineSectionProps) {
-    const [activeScenario, setActiveScenario] = useState("ecommerce-flash-sale")
+    const [_activeScenario, setActiveScenario] = useState("ecommerce-flash-sale")
 
-    const currentBenefits = scenarioBenefits[activeScenario]
+    // const currentBenefits = scenarioBenefits[activeScenario]
 
     return (
         <div className=" bg-card border rounded-md">
