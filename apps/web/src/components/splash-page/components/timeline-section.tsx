@@ -18,7 +18,7 @@ export default function TimelineSection({ tabData }: TimelineSectionProps) {
     const currentBenefits = scenarioBenefits[activeScenario]
 
     return (
-        <div className=" bg-muted/35 rounded-md">
+        <div className=" bg-card border rounded-md">
             <TimelineTabs
                 tabs={tabData}
                 variant="default"

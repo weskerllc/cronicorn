@@ -33,7 +33,7 @@ const features: Array<FeatureCard> = [
 export function FeatureCardsSection() {
     return (
         <section className="w-full py-16 md:py-20 lg:py-24" aria-labelledby="features-heading">
-            <div className="grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-2 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {features.map((feature, index) => (
                     <Card
                         key={index}
