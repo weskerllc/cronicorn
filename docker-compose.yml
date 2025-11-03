@@ -104,8 +104,8 @@ services:
     container_name: cronicorn-web
     networks:
       - cronicorn
-    ports:
-      - "5173:80"
+    # ports:
+    #   - "5173:80"
     depends_on:
       - api
     restart: unless-stopped
@@ -115,8 +115,8 @@ services:
     container_name: cronicorn-docs
     networks:
       - cronicorn
-    ports:
-      - "3000:80"
+    # ports:
+    #   - "3000:80"
     restart: unless-stopped
 
 networks:
