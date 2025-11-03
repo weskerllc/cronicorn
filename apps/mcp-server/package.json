@@ -41,7 +41,8 @@
     "ai"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.20.2"
+    "@modelcontextprotocol/sdk": "^1.20.2",
+    "gray-matter": "^4.0.3"
   },
   "devDependencies": {
     "@cronicorn/api-contracts": "workspace:*",

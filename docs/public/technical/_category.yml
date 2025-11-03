@@ -1,0 +1,8 @@
+position: 4
+label: Technical Deep Dive
+collapsible: true
+collapsed: false
+link:
+  type: generated-index
+  title: Technical Documentation
+  description: Deep technical documentation for understanding Cronicorn's adaptive scheduling system.

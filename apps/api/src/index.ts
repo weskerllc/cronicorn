@@ -1,4 +1,6 @@
 import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { Hono } from "hono";
 
 import { createApp } from "./app.js";
 import { loadConfig } from "./lib/config.js";
@@ -17,7 +19,16 @@ async function main() {
   // Setup database connection
   const db = createDatabase(config);
 
-  const app = await createApp(db, config);
+  const apiApp = await createApp(db, config);
+
+  // Create root app to handle both static files and API routes
+  const app = new Hono();
+
+  // Serve static files at root level (before API routes)
+  app.use("/img/*", serveStatic({ root: "./public" }));
+
+  // Mount API app at /api
+  app.route("/", apiApp);
 
   serve({
     fetch: app.fetch,

@@ -1,7 +1,7 @@
 import { Button } from "@cronicorn/ui-library/components/button";
 import { ArrowRight, ChevronRight } from "lucide-react";
+import { urls } from "@cronicorn/content";
 import SectionContainer from "@/components/ui/section-container";
-import siteConfig from "@/site-config";
 
 /**
  * Call-to-action section with primary and secondary actions
@@ -16,21 +16,21 @@ export default function CTASection() {
         >
             <div className="text-center max-w-4xl relative z-10 flex flex-col md:items-center md:flex-row md:gap-12 gap-6">
                 <a
-                    href={siteConfig.splash.cta.primary.href}
+                    href={urls.product.signup}
                     className="group px-12 py-6 bg-primary text-primary-foreground rounded-full font-medium text-lg hover:bg-primary/90 transition-all duration-150 shadow-sm hover:shadow-md flex items-center gap-2"
                 >
-                    {siteConfig.splash.cta.primary.text}
+                    Start Free Trial
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
                 </a>
 
                 <div className="flex flex-col">
                     <Button variant={'outline'} size={'lg'} className="rounded-full" asChild>
                         <a
-                            href={siteConfig.splash.cta.github.href}
+                            href={urls.github.repo}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            {siteConfig.splash.cta.github.text}
+                            View on GitHub
                             <ChevronRight className="w-4 h-4 ml-1" />
                         </a>
                     </Button>

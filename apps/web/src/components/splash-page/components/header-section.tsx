@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
 import { cn } from "@cronicorn/ui-library/lib/utils";
-import AppLogo from "../../../icon.svg?react";
-import siteConfig from "../../../site-config";
+import { brand, urls } from "@cronicorn/content";
+import { Separator } from "@cronicorn/ui-library/components/separator";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@cronicorn/ui-library/components/sheet";
+import { Menu } from "lucide-react";
+import AppLogo from "../../../logo.svg?react";
+import GitHubLogo from "../../../../public/logos/github.svg?react";
+
+const NAV_LINKS = [
+    { href: urls.docs.base, label: "Docs" },
+    { href: urls.github.discussions, label: "Discussions" },
+    { href: urls.docs.apiReference, label: "API Playground" },
+    { href: urls.docs.mcpServer, label: "MCP Server" },
+] as const;
 
 export default function HeaderSection() {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -21,38 +32,77 @@ export default function HeaderSection() {
     return (
         <header className={cn("fixed top-0 left-0 w-full z-20 ", isScrolled && "bg-background/80 backdrop-blur-sm border-b border-border/50")}>
 
-            {/* <header className={`fixed top-0 left-0 w-full z-20 bg-transparent backdrop-blur-sm transition-all duration-200 ${isScrolled ? 'border-b border-border/50' : ''}`}> */}
-            <nav className="flex items-center justify-between max-w-7xl mx-auto px-6 py-4">
+            <nav className="flex items-center   px-4 md:px-8 justify-between max-w-7xl mx-auto  py-4">
                 {/* Logo/Brand */}
-                <a href={siteConfig.url} className="flex items-center space-x-2">
-                    <AppLogo className="size-7 fill-foreground" aria-label="Cronicorn intelligent cron job scheduling platform logo" />
-                    <span className="font-medium text-lg text-foreground">{siteConfig.siteName}</span>
+                <a href={urls.product.home} className="flex items-center space-x-2">
+                    <AppLogo className="size-6 fill-foreground" aria-label="Cronicorn intelligent cron job scheduling platform logo" />
+                    <span className="font-semibold text-lg text-foreground">{brand.name}</span>
                 </a>
 
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center gap-6">
-                    <a href='/faq' className="text-foreground/70 hover:text-foreground transition-colors duration-150 text-sm font-medium">
-                        FAQ
-                    </a>
-                    <a href="/api" target="_blank" className="text-foreground/70 hover:text-foreground transition-colors duration-150 text-sm font-medium">
-                        API Playground
-                    </a>
+                    {NAV_LINKS.map((link) => (
+                        <a
+                            key={link.href}
+                            href={link.href}
+                            className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
+                        >
+                            {link.label}
+                        </a>
+                    ))}
+                    <Separator orientation="vertical" className=" h-6 data-[orientation=vertical]:h-6" />
                     <a
-                        href="/login"
-                        className="px-5 py-2 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-all duration-150 shadow-sm hover:shadow-md"
+                        href={urls.github.repo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-foreground hover:text-foreground/80 transition-colors duration-150 cursor-pointer"
+                        aria-label="View Cronicorn on GitHub"
                     >
-                        Get Started
+                        <GitHubLogo className="size-5 fill-current" />
                     </a>
+
                 </div>
 
-                {/* Mobile CTA */}
+                {/* Mobile Menu */}
                 <div className="md:hidden">
-                    <a
-                        href="/login"
-                        className="px-5 py-2 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-all duration-150"
-                    >
-                        Get Started
-                    </a>
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <button
+                                className="text-foreground hover:text-foreground/80 transition-colors duration-150 cursor-pointer"
+                                aria-label="Toggle navigation menu"
+                            >
+                                <Menu className="size-6" />
+                            </button>
+                        </SheetTrigger>
+                        <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                            <SheetHeader>
+                                <SheetTitle className="text-left invisible">{brand.name} Nav Menu</SheetTitle>
+                            </SheetHeader>
+                            <nav className="flex flex-col gap-4 px-4">
+                                {NAV_LINKS.map((link) => (
+                                    <a
+                                        key={link.href}
+                                        href={link.href}
+                                        className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-base font-medium cursor-pointer py-2"
+                                    >
+                                        {link.label}
+                                    </a>
+                                ))}
+                                <Separator className="my-2" />
+                                <a
+                                    href={urls.github.repo}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-foreground hover:text-foreground/80 transition-colors duration-150 cursor-pointer py-2"
+                                    aria-label="View Cronicorn on GitHub"
+                                >
+                                    <GitHubLogo className="size-5 fill-current" />
+                                    <span className="text-base font-medium">GitHub</span>
+                                </a>
+
+                            </nav>
+                        </SheetContent>
+                    </Sheet>
                 </div>
             </nav>
         </header>

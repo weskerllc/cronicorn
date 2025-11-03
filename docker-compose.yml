@@ -110,6 +110,15 @@ services:
       - api
     restart: unless-stopped
 
+  docs:
+    image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/docs:${IMAGE_TAG:-latest}
+    container_name: cronicorn-docs
+    networks:
+      - cronicorn
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
 networks:
   cronicorn:
     driver: bridge
