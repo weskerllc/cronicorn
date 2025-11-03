@@ -4,44 +4,44 @@
  */
 
 export const logo = {
-    /**
-     * Path to the SVG logo (relative to public/static directory in each app)
-     * Used for inline rendering in UI components
-     */
-    svg: "/logo.svg",
+  /**
+   * Path to the SVG logo (relative to public/static directory in each app)
+   * Used for inline rendering in UI components
+   */
+  svg: "/logo.svg",
 
-    /**
-     * Alt text for the logo
-     */
-    alt: "Cronicorn intelligent cron job scheduling platform logo",
+  /**
+   * Alt text for the logo
+   */
+  alt: "Cronicorn intelligent cron job scheduling platform logo",
 
-    /**
-     * Recommended display sizes
-     */
-    sizes: "32x32",
+  /**
+   * Recommended display sizes
+   */
+  sizes: "32x32",
 } as const;
 
 export const favicon = {
-    /**
-     * Path to SVG favicon (modern browsers)
-     * Same as logo.svg, optimized for small sizes
-     */
-    svg: "/logo.svg",
+  /**
+   * Path to SVG favicon (modern browsers)
+   * Same as logo.svg, optimized for small sizes
+   */
+  svg: "/logo.svg",
 
-    /**
-     * Path to ICO favicon (fallback for older browsers)
-     */
-    ico: "/favicon.ico",
+  /**
+   * Path to ICO favicon (fallback for older browsers)
+   */
+  ico: "/favicon.ico",
 
-    /**
-     * Standard favicon sizes
-     */
-    sizes: "32x32",
+  /**
+   * Standard favicon sizes
+   */
+  sizes: "32x32",
 
-    /**
-     * MIME type for SVG favicon
-     */
-    type: "image/svg+xml",
+  /**
+   * MIME type for SVG favicon
+   */
+  type: "image/svg+xml",
 } as const;
 
 /**
@@ -49,6 +49,6 @@ export const favicon = {
  * These are the actual file names in packages/content/assets/
  */
 export const assetFiles = {
-    logo: "logo.svg",
-    favicon: "favicon.ico",
+  logo: "logo.svg",
+  favicon: "favicon.ico",
 } as const;
