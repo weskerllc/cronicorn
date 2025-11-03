@@ -44,17 +44,7 @@ const config: Config = {
           path: "../../docs/public",
           sidebarPath: "./sidebars.ts",
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ["rss", "atom"],
-            xslt: true,
-          },
-          // Useful options to enforce blogging best practices
-          onInlineTags: "warn",
-          onInlineAuthors: "warn",
-          onUntruncatedBlogPosts: "warn",
-        },
+        blog: false, // Blog disabled - placeholder content removed
         theme: {
           customCss: "./src/css/custom.css",
         },
@@ -88,7 +78,6 @@ const config: Config = {
           position: "left",
           label: "Docs",
         },
-        { to: "/blog", label: "Blog", position: "left" },
         {
           href: urls.github.repo,
           label: "GitHub",
@@ -111,10 +100,6 @@ const config: Config = {
         {
           title: "More",
           items: [
-            {
-              label: "Blog",
-              to: "/blog",
-            },
             {
               label: "GitHub",
               href: urls.github.repo,

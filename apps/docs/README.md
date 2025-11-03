@@ -15,13 +15,13 @@ pnpm install
 ## Local Development
 
 ```bash
-pnpm -F @cronicorn/docs dev
+pnpm -F @cronicorn/docs start
 ```
 
 Or from this directory:
 
 ```bash
-pnpm dev
+pnpm start
 ```
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
@@ -44,12 +44,35 @@ Serve the built site locally for testing.
 
 ## Project Structure
 
-- `docs/` - Documentation markdown files
-- `blog/` - Blog posts
-- `src/` - Custom React components and pages
-- `static/` - Static assets (images, etc.)
-- `docusaurus.config.ts` - Main configuration file
-- `sidebars.ts` - Documentation sidebar configuration
+```
+apps/docs/
+├── blog/                       # Blog posts (currently empty - ready for content)
+│   ├── authors.yml            # Blog author definitions
+│   └── tags.yml               # Blog tag definitions
+├── src/                       # Custom React components and pages
+│   ├── components/
+│   │   └── HomepageFeatures/  # Homepage feature cards
+│   ├── css/
+│   │   └── custom.css         # Custom styles
+│   └── pages/
+│       └── index.tsx          # Homepage
+├── static/                    # Static assets (images, etc.)
+├── docusaurus.config.ts       # Main configuration file
+├── sidebars.ts               # Documentation sidebar configuration
+└── package.json              # Dependencies
+```
+
+**Note**: The actual documentation markdown files are located at `../../docs/public/` in the monorepo root. This allows the docs to be consumed by both the Docusaurus site and other consumers like the MCP server.
+
+## Content Sources
+
+This docs site integrates with the `@cronicorn/content` package for:
+- Brand name and tagline
+- Documentation features and descriptions
+- URLs and links
+- SEO metadata
+
+All branding and content should be updated in `packages/content/` to maintain consistency across the web app and docs site.
 
 ## Learn More
 
