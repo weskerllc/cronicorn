@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { brand, faq, keywords, metaDescriptions, urls } from "@cronicorn/content";
-import AppLogo from "../icon.svg?react";
+import AppLogo from "../logo.svg?react";
 import BackgroundEffects from "../components/splash-page/components/background-effects";
 import HeroSection from "../components/splash-page/components/hero-section";
 import TimelineSection from "../components/splash-page/components/timeline-section";

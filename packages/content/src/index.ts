@@ -4,6 +4,7 @@
  * Single source of truth consumed by both web app and docs site
  */
 
+export * from "./assets.js";
 export * from "./brand.js";
 export * from "./business.js";
 export * from "./docs.js";

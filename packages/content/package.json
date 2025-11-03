@@ -7,6 +7,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./assets/*": "./assets/*",
+    "./assets": {
+      "types": "./dist/assets.d.ts",
+      "default": "./dist/assets.js"
+    },
     "./brand": {
       "types": "./dist/brand.d.ts",
       "default": "./dist/brand.js"

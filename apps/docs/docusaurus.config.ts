@@ -1,7 +1,7 @@
 import type * as Preset from "@docusaurus/preset-classic";
 import type { Config } from "@docusaurus/types";
 
-import { brand, docsTagline, urls } from "@cronicorn/content";
+import { brand, docsTagline, logo, urls } from "@cronicorn/content";
 import { themes as prismThemes } from "prism-react-renderer";
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
@@ -71,8 +71,15 @@ const config: Config = {
     navbar: {
       title: brand.name,
       logo: {
-        alt: brand.logoAlt,
+        alt: logo.alt,
         src: "img/logo.svg",
+        // For SVG logos, you can use CSS to invert colors in dark mode
+        // Or provide a separate dark mode logo here:
+        // srcDark: "img/logo-dark.svg",
+        style: {
+          // This CSS will invert the logo colors in dark mode
+          filter: "var(--docusaurus-logo-filter, none)",
+        },
       },
       items: [
         {
