@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/weskerllc/cronicorn/compare/v1.4.5...v1.5.0) (2025-11-03)
+
+
+### Features
+
+* Init docs app ([#9](https://github.com/weskerllc/cronicorn/issues/9)) ([46a2308](https://github.com/weskerllc/cronicorn/commit/46a2308a46a0416de1e51b19af80f85d5d2693e8))
+
 ## [1.4.5](https://github.com/weskerllc/cronicorn/compare/v1.4.4...v1.4.5) (2025-11-02)
 
 
