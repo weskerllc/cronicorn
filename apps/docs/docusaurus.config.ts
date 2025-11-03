@@ -41,7 +41,7 @@ const config: Config = {
       "classic",
       {
         docs: {
-          path: "../../docs-v2",
+          path: "../../docs/public",
           sidebarPath: "./sidebars.ts",
         },
         blog: {
