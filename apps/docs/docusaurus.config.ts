@@ -1,13 +1,14 @@
 import type * as Preset from "@docusaurus/preset-classic";
 import type { Config } from "@docusaurus/types";
 
+import { brand, docsTagline, urls } from "@cronicorn/content";
 import { themes as prismThemes } from "prism-react-renderer";
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: "Cronicorn",
-  tagline: "AI-powered adaptive scheduler for modern applications",
+  title: brand.name,
+  tagline: docsTagline,
   favicon: "img/favicon.ico",
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -82,7 +83,7 @@ const config: Config = {
         },
         { to: "/blog", label: "Blog", position: "left" },
         {
-          href: "https://github.com/weskerllc/cronicorn",
+          href: urls.github.repo,
           label: "GitHub",
           position: "right",
         },
@@ -109,12 +110,12 @@ const config: Config = {
             },
             {
               label: "GitHub",
-              href: "https://github.com/weskerllc/cronicorn",
+              href: urls.github.repo,
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Cronicorn. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} ${brand.name}. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

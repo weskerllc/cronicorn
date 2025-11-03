@@ -7,5 +7,12 @@
     "verbatimModuleSyntax": false,
     "skipLibCheck": true
   },
-  "exclude": [".docusaurus", "build", "node_modules"]
+  "exclude": [".docusaurus", "build", "node_modules"],
+  "references": [
+    {
+      "path": "../../packages/content"
+    }
+
+  ]
+
 }
