@@ -1,5 +1,7 @@
 import { useHead } from '@unhead/react';
-import siteConfig from '../site-config';
+import { brand, business, structuredData as contentStructuredData, keywords, openGraph, seoDefaults, twitter } from '@cronicorn/content';
+import type { PricingTier } from '@cronicorn/content';
+import { APP_URL } from '@/config';
 
 interface SEOProps {
     title?: string;
@@ -15,8 +17,8 @@ interface SEOProps {
 
 export function SEO({
     title,
-    description = siteConfig.description,
-    keywords = [],
+    description = brand.description,
+    keywords: additionalKeywords = [],
     image,
     url,
     type = 'website',
@@ -26,20 +28,20 @@ export function SEO({
 }: SEOProps) {
     // Format title
     const pageTitle = title
-        ? siteConfig.seo.titleTemplate.replace('%s', title)
-        : siteConfig.seo.defaultTitle;
+        ? seoDefaults.titleTemplate.replace('%s', title)
+        : seoDefaults.defaultTitle;
 
-    // Combine keywords
-    const allKeywords = [...siteConfig.seo.keywords, ...keywords];
+    // Combine keywords - use tier1 and tier2 from shared package
+    const allKeywords = [...keywords.tier1, ...keywords.tier2, ...additionalKeywords];
 
     // Default image
-    const ogImage = image || siteConfig.seo.openGraph.images[0].url;
+    const ogImage = image || openGraph.images[0].url;
 
     // Twitter-specific image (separate from OG image)
-    const twitterImage = image || siteConfig.seo.twitter.image;
+    const twitterImage = image || twitter.image;
 
     // Full URL
-    const fullUrl = url ? `${siteConfig.url}${url}` : siteConfig.url;
+    const fullUrl = url ? `${APP_URL}${url}` : APP_URL;
 
     // Canonical URL
     const canonicalUrl = canonical || fullUrl;
@@ -62,13 +64,13 @@ export function SEO({
             { property: 'og:image:width', content: '1200' },
             { property: 'og:image:height', content: '630' },
             { property: 'og:image:alt', content: pageTitle },
-            { property: 'og:site_name', content: siteConfig.seo.openGraph.siteName },
-            { property: 'og:locale', content: siteConfig.seo.openGraph.locale },
+            { property: 'og:site_name', content: openGraph.siteName },
+            { property: 'og:locale', content: openGraph.locale },
 
             // Twitter Card
-            { name: 'twitter:card', content: siteConfig.seo.twitter.cardType },
-            { name: 'twitter:site', content: siteConfig.seo.twitter.site },
-            { name: 'twitter:creator', content: siteConfig.seo.twitter.handle },
+            { name: 'twitter:card', content: twitter.cardType },
+            { name: 'twitter:site', content: twitter.site },
+            { name: 'twitter:creator', content: twitter.handle },
             { name: 'twitter:url', content: fullUrl },
             { name: 'twitter:title', content: pageTitle },
             { name: 'twitter:description', content: description },
@@ -92,68 +94,57 @@ export function SEO({
 export const createWebsiteSchema = () => ({
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: siteConfig.business.name,
-    alternateName: siteConfig.siteName,
-    description: siteConfig.description,
-    url: siteConfig.url,
+    name: business.name,
+    alternateName: brand.name,
+    description: brand.description,
+    url: APP_URL,
     potentialAction: {
         "@type": "SearchAction",
         target: {
             "@type": "EntryPoint",
-            urlTemplate: `${siteConfig.url}/search?q={search_term_string}`
+            urlTemplate: `${APP_URL}/search?q={search_term_string}`
         },
         "query-input": "required name=search_term_string"
     },
     publisher: {
         "@type": "Organization",
-        name: siteConfig.business.name,
-        legalName: siteConfig.business.legalName,
-        url: siteConfig.url,
-        sameAs: siteConfig.business.sameAs
+        name: business.name,
+        legalName: business.legalName,
+        url: APP_URL,
+        sameAs: business.sameAs
     }
 });
 
 export const createOrganizationSchema = () => ({
     "@context": "https://schema.org",
     "@type": "Organization",
-    "@id": `${siteConfig.url}#organization`,
-    name: siteConfig.business.name,
-    legalName: siteConfig.business.legalName,
-    description: siteConfig.business.description,
-    url: siteConfig.url,
-    foundingDate: siteConfig.business.foundingDate,
-    sameAs: siteConfig.business.sameAs,
+    "@id": `${APP_URL}#organization`,
+    name: business.name,
+    legalName: business.legalName,
+    description: business.description,
+    url: APP_URL,
+    foundingDate: business.foundingDate,
+    sameAs: business.sameAs,
     contactPoint: {
         "@type": "ContactPoint",
-        telephone: siteConfig.business.contactPoint.telephone,
-        contactType: siteConfig.business.contactPoint.contactType,
-        email: siteConfig.business.contactPoint.email
+        telephone: business.contactPoint.telephone,
+        contactType: business.contactPoint.contactType,
+        email: business.contactPoint.email
     }
 });
 
 export const createSoftwareApplicationSchema = () => ({
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: siteConfig.siteName,
+    name: brand.name,
     applicationCategory: ["Job Scheduling", "DevOps Automation", "Business Application"],
     applicationSubCategory: "Adaptive Task Scheduler",
     operatingSystem: "Web-based, API",
-    description: siteConfig.description,
-    url: siteConfig.url,
+    description: brand.description,
+    url: APP_URL,
     softwareVersion: "1.0",
-    releaseNotes: "Early access version with adaptive scheduling capabilities",
-    featureList: [
-        "Adaptive Intervals",
-        "Multi-Tier Coordination",
-        "AI Hints System",
-        "Transparent AI Decisions",
-        "Cloud-Native Architecture",
-        "Real-Time Adaptation",
-        "Workflow Orchestration",
-        "Auto-Recovery",
-        "Intelligent Monitoring",
-        "Event-Driven Scheduling"
-    ],
+    releaseNotes: contentStructuredData.software.releaseNotes,
+    featureList: contentStructuredData.software.featureList,
     offers: {
         "@type": "Offer",
         price: "0",
@@ -172,28 +163,28 @@ export const createSoftwareApplicationSchema = () => ({
     },
     provider: {
         "@type": "Organization",
-        name: siteConfig.business.name,
-        url: siteConfig.url
+        name: business.name,
+        url: APP_URL
     },
     creator: {
         "@type": "Organization",
-        name: siteConfig.business.name,
-        url: siteConfig.url
+        name: business.name,
+        url: APP_URL
     },
-    downloadUrl: siteConfig.url,
-    installUrl: `${siteConfig.url}/login`,
-    screenshot: `${siteConfig.url}/og-image.png`,
-    video: `${siteConfig.url}/demo.mp4`
+    downloadUrl: APP_URL,
+    installUrl: `${APP_URL}/login`,
+    screenshot: `${APP_URL}/og-image.png`,
+    video: `${APP_URL}/demo.mp4`
 });
 
-export const createProductSchema = (tier: (typeof siteConfig.pricing)[number]) => ({
+export const createProductSchema = (tier: PricingTier) => ({
     "@context": "https://schema.org",
     "@type": "Product",
-    name: `${siteConfig.siteName} ${tier.name}`,
+    name: `${brand.name} ${tier.name}`,
     description: tier.description,
     brand: {
         "@type": "Brand",
-        name: siteConfig.business.name
+        name: business.name
     },
     offers: {
         "@type": "Offer",
@@ -211,8 +202,8 @@ export const createProductSchema = (tier: (typeof siteConfig.pricing)[number]) =
         },
         seller: {
             "@type": "Organization",
-            name: siteConfig.business.name,
-            url: siteConfig.url
+            name: business.name,
+            url: APP_URL
         }
     }
 });
@@ -224,7 +215,7 @@ export const createBreadcrumbSchema = (items: Array<{ name: string; url: string 
         "@type": "ListItem",
         position: index + 1,
         name: item.name,
-        item: `${siteConfig.url}${item.url}`
+        item: `${APP_URL}${item.url}`
     }))
 });
 

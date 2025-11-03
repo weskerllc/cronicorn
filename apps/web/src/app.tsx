@@ -5,6 +5,7 @@ import React from 'react';
 import { ThemeProvider } from "@cronicorn/ui-library/components/theme-provider"
 import { router } from './router'
 import { AuthProvider, useAuth } from './lib/auth-context'
+import { TailwindIndicator } from './components/tailwind-indicator';
 import type { AuthContextValue } from './lib/auth-context';
 
 let resolveAuthClient: (client: AuthContextValue) => void;
@@ -32,6 +33,7 @@ export default function App() {
     <UnheadProvider head={head}>
       <AuthProvider>
         <ThemeProvider storageKey="cronicorn-ui-theme">
+          <TailwindIndicator />
           <InnerApp />
         </ThemeProvider>
       </AuthProvider>

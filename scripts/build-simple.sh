@@ -27,6 +27,9 @@ docker build --file Dockerfile.monorepo-optimized --target ai-planner --tag $REG
 echo "📦 Building Web..."
 docker build --file Dockerfile.monorepo-optimized --target web --tag $REGISTRY/cronicorn-web:$TAG .
 
+echo "📦 Building Docs..."
+docker build --file Dockerfile.monorepo-optimized --target docs --tag $REGISTRY/cronicorn-docs:$TAG .
+
 # Push if requested
 if [ "$PUSH" = "true" ]; then
     echo "🚀 Pushing images..."
@@ -34,6 +37,7 @@ if [ "$PUSH" = "true" ]; then
     docker push $REGISTRY/cronicorn-scheduler:$TAG
     docker push $REGISTRY/cronicorn-ai-planner:$TAG
     docker push $REGISTRY/cronicorn-web:$TAG
+    docker push $REGISTRY/cronicorn-docs:$TAG
 fi
 
 echo "✅ Build complete!"

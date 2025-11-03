@@ -21,7 +21,7 @@ export default function configureOpenAPI(app: AppOpenAPI, apiURL: string) {
     //   : []
     // ),
   ];
-    // Define OpenAPI document
+  // Define OpenAPI document
   const openApiDocument: OpenAPIObjectConfigure<AppBindings, "/doc"> = {
     openapi: "3.0.0", // Using 3.0.0 for broader compatibility
     info: {
@@ -132,6 +132,7 @@ The AI agent linked to the job:
         targetKey: "js",
         clientKey: "fetch",
       },
+      favicon: "/img/favicon.ico",
       spec: {
         url: `/api/doc`,
       },

@@ -1,0 +1,119 @@
+import type * as Preset from "@docusaurus/preset-classic";
+import type { Config } from "@docusaurus/types";
+
+import { brand, logo, urls } from "@cronicorn/content";
+import { themes as prismThemes } from "prism-react-renderer";
+
+// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+
+const config: Config = {
+  title: brand.name,
+  tagline: brand.title,
+  favicon: "img/favicon.ico",
+
+  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
+  future: {
+    v4: true, // Improve compatibility with the upcoming Docusaurus v4
+  },
+
+  // Set the production url of your site here
+  url: urls.website,
+  // Set the /<baseUrl>/ pathname under which your site is served
+  // For GitHub pages deployment, it is often '/<projectName>/'
+  baseUrl: "/",
+
+  // GitHub pages deployment config.
+  organizationName: urls.github.org,
+  projectName: urls.github.repoName,
+
+  onBrokenLinks: "throw",
+
+  // Even if you don't use internationalization, you can use this field to set
+  // useful metadata like html lang. For example, if your site is Chinese, you
+  // may want to replace "en" with "zh-Hans".
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en"],
+  },
+
+  presets: [
+    [
+      "classic",
+      {
+        docs: {
+          path: "../../docs/public",
+          sidebarPath: "./sidebars.ts",
+        },
+        blog: false, // Blog disabled - placeholder content removed
+        theme: {
+          customCss: "./src/css/custom.css",
+        },
+      } satisfies Preset.Options,
+    ],
+  ],
+
+  themeConfig: {
+    // Replace with your project's social card
+    image: "img/docusaurus-social-card.jpg",
+    colorMode: {
+      respectPrefersColorScheme: true,
+    },
+    navbar: {
+      title: brand.name,
+      logo: {
+        alt: logo.alt,
+        src: "img/logo.svg",
+        // For SVG logos, you can use CSS to invert colors in dark mode
+        // Or provide a separate dark mode logo here:
+        // srcDark: "img/logo-dark.svg",
+        style: {
+          // This CSS will invert the logo colors in dark mode
+          filter: "var(--docusaurus-logo-filter, none)",
+        },
+      },
+      items: [
+        {
+          type: "docSidebar",
+          sidebarId: "docsSidebar",
+          position: "left",
+          label: "Docs",
+        },
+        {
+          href: urls.github.repo,
+          label: "GitHub",
+          position: "right",
+        },
+      ],
+    },
+    footer: {
+      style: "dark",
+      links: [
+        {
+          title: "Docs",
+          items: [
+            {
+              label: "Introduction",
+              to: "/docs/introduction",
+            },
+          ],
+        },
+        {
+          title: "More",
+          items: [
+            {
+              label: "GitHub",
+              href: urls.github.repo,
+            },
+          ],
+        },
+      ],
+      copyright: `Copyright © ${new Date().getFullYear()} ${brand.name}. Built with Docusaurus.`,
+    },
+    prism: {
+      theme: prismThemes.github,
+      darkTheme: prismThemes.dracula,
+    },
+  } satisfies Preset.ThemeConfig,
+};
+
+export default config;
