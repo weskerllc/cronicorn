@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import { docsFeatures } from "@cronicorn/content";
 import Heading from "@theme/Heading";
 import clsx from "clsx";
 
@@ -20,13 +19,38 @@ type FeatureItem = {
   description: ReactNode;
 };
 
-const svgComponents = [MountainSvg, TreeSvg, ReactSvg];
-
-const FeatureList: FeatureItem[] = docsFeatures.map((feature, index) => ({
-  title: feature.title,
-  Svg: svgComponents[index],
-  description: <>{feature.description}</>,
-}));
+const FeatureList: FeatureItem[] = [
+  {
+    title: "Easy to Use",
+    Svg: MountainSvg,
+    description: (
+      <>
+        Cronicorn is designed to be easy to set up and configure. Get your
+        scheduled jobs running in minutes with simple HTTP endpoints.
+      </>
+    ),
+  },
+  {
+    title: "AI-Powered Adaptation",
+    Svg: TreeSvg,
+    description: (
+      <>
+        Intelligent scheduling that adapts to your system's real-time
+        conditions, optimizing job execution based on system load and patterns.
+      </>
+    ),
+  },
+  {
+    title: "Built with TypeScript",
+    Svg: ReactSvg,
+    description: (
+      <>
+        Fully typed with TypeScript for a great developer experience. Modern
+        architecture with clean separation of concerns.
+      </>
+    ),
+  },
+];
 
 function Feature({ title, Svg, description }: FeatureItem) {
   return (
