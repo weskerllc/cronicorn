@@ -7,6 +7,7 @@ export const brand = {
   /** Core site information */
   name: "Cronicorn",
   tagline: "Intelligent job scheduling that adapts to your reality",
+  logoAlt: "Cronicorn Logo",
 
   /** Headlines and messaging used throughout marketing pages */
   headlines: {

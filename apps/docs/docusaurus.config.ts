@@ -17,14 +17,14 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: "https://cronicorn.com",
+  url: urls.website,
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: "/",
 
   // GitHub pages deployment config.
-  organizationName: "weskerllc", // Usually your GitHub org/user name.
-  projectName: "cronicorn", // Usually your repo name.
+  organizationName: urls.github.org,
+  projectName: urls.github.repoName,
 
   onBrokenLinks: "throw",
 
@@ -69,9 +69,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: "Cronicorn",
+      title: brand.name,
       logo: {
-        alt: "Cronicorn Logo",
+        alt: brand.logoAlt,
         src: "img/logo.svg",
       },
       items: [

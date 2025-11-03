@@ -30,18 +30,19 @@ apps/docs/
 
 1. **Package Name**: Changed to `@cronicorn/docs` for monorepo consistency
 2. **TypeScript Config**: Extended from monorepo base config (`tsconfig.base.json`)
-3. **Docusaurus Config**: Customized with:
-   - Title: "Cronicorn"
-   - Tagline: "AI-powered adaptive scheduler for modern applications"
-   - URL: https://cronicorn.com
-   - GitHub org: weskerllc
-   - Updated navbar and footer
+3. **Content Package**: Uses `@cronicorn/content` for shared branding, taglines, and URLs
+4. **Docusaurus Config**: Customized with content from shared package:
+   - Title: Uses `brand.name`
+   - Tagline: Uses `docsTagline`
+   - URL: Uses `urls.website`
+   - GitHub org/repo: Uses `urls.github.*`
+   - Updated navbar and footer with shared content
    - Removed default edit links
 
-4. **Content Updates**:
-   - Homepage features describe Cronicorn's capabilities
-   - Intro doc explains what Cronicorn is
-   - Updated metadata and descriptions
+5. **Content Updates**:
+   - Homepage features use `docsFeatures` from shared package
+   - Homepage metadata uses `docsPageTitle` and `docsMetaDescription`
+   - All branding content centralized in `@cronicorn/content` package
 
 ### Running the Docs
 
