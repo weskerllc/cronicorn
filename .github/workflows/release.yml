@@ -49,6 +49,7 @@ jobs:
             tsconfig*.json
             apps
             packages
+            docs
           sparse-checkout-cone-mode: false
 
       - name: Extract version tag
@@ -151,6 +152,7 @@ jobs:
             tsconfig*.json
             apps
             packages
+            docs
           sparse-checkout-cone-mode: false
 
       - name: Set up Docker Buildx
