@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/weskerllc/cronicorn/compare/v1.5.2...v1.5.3) (2025-11-03)
+
+
+### Bug Fixes
+
+* Docs ([4b139eb](https://github.com/weskerllc/cronicorn/commit/4b139eb76e21b45998ae10cebef8c7a38f4ac983))
+
 ## [1.5.2](https://github.com/weskerllc/cronicorn/compare/v1.5.1...v1.5.2) (2025-11-03)
 
 
