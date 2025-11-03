@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { docsMetaDescription, docsPageTitle } from "@cronicorn/content";
+import { brand } from "@cronicorn/content";
 import Link from "@docusaurus/Link";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import HomepageFeatures from "@site/src/components/HomepageFeatures";
@@ -36,8 +36,8 @@ export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title={`${siteConfig.title} - ${docsPageTitle}`}
-      description={docsMetaDescription}
+      title={`${siteConfig.title} - ${brand.title}`}
+      description={brand.description}
     >
       <HomepageHeader />
       <main>
