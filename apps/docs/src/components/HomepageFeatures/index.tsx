@@ -1,9 +1,18 @@
 import type { ReactNode } from "react";
 
+import { docsFeatures } from "@cronicorn/content";
 import Heading from "@theme/Heading";
 import clsx from "clsx";
 
 import styles from "./styles.module.css";
+
+// Import SVGs statically for SSG compatibility
+// eslint-disable-next-line ts/no-require-imports
+const MountainSvg = require("@site/static/img/undraw_docusaurus_mountain.svg").default;
+// eslint-disable-next-line ts/no-require-imports
+const TreeSvg = require("@site/static/img/undraw_docusaurus_tree.svg").default;
+// eslint-disable-next-line ts/no-require-imports
+const ReactSvg = require("@site/static/img/undraw_docusaurus_react.svg").default;
 
 type FeatureItem = {
   title: string;
@@ -11,44 +20,13 @@ type FeatureItem = {
   description: ReactNode;
 };
 
-const FeatureList: FeatureItem[] = [
-  {
-    title: "AI-Powered Intelligence",
-    // eslint-disable-next-line ts/no-require-imports
-    Svg: require("@site/static/img/undraw_docusaurus_mountain.svg").default,
-    description: (
-      <>
-        Cronicorn uses AI to automatically adjust task scheduling based on
-        performance metrics, failure patterns, and system load. Get smarter
-        scheduling without manual intervention.
-      </>
-    ),
-  },
-  {
-    title: "Real-time Adaptation",
-    // eslint-disable-next-line ts/no-require-imports
-    Svg: require("@site/static/img/undraw_docusaurus_tree.svg").default,
-    description: (
-      <>
-        Dynamic scheduling that responds to your application&apos;s needs in real-time.
-        Automatically scales up during high demand and backs off during failures,
-        respecting your configured constraints.
-      </>
-    ),
-  },
-  {
-    title: "Built for Production",
-    // eslint-disable-next-line ts/no-require-imports
-    Svg: require("@site/static/img/undraw_docusaurus_react.svg").default,
-    description: (
-      <>
-        Multi-tenant support, comprehensive monitoring, fault tolerance, and
-        distributed execution. Cronicorn is designed for production workloads
-        with clean architecture and extensive observability.
-      </>
-    ),
-  },
-];
+const svgComponents = [MountainSvg, TreeSvg, ReactSvg];
+
+const FeatureList: FeatureItem[] = docsFeatures.map((feature, index) => ({
+  title: feature.title,
+  Svg: svgComponents[index],
+  description: <>{feature.description}</>,
+}));
 
 function Feature({ title, Svg, description }: FeatureItem) {
   return (

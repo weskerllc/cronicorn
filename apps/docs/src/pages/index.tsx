@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { docsMetaDescription, docsPageTitle } from "@cronicorn/content";
 import Link from "@docusaurus/Link";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import HomepageFeatures from "@site/src/components/HomepageFeatures";
@@ -35,8 +36,8 @@ export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title={`${siteConfig.title} - AI-Powered Adaptive Scheduler`}
-      description="Cronicorn is an AI-powered adaptive scheduler for modern applications that need intelligent, dynamic task scheduling."
+      title={`${siteConfig.title} - ${docsPageTitle}`}
+      description={docsMetaDescription}
     >
       <HomepageHeader />
       <main>

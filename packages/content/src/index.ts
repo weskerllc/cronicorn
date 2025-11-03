@@ -6,6 +6,7 @@
 
 export * from "./brand.js";
 export * from "./business.js";
+export * from "./docs.js";
 export * from "./faq.js";
 export * from "./pricing-content.js";
 export * from "./pricing.js";
