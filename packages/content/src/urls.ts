@@ -23,7 +23,7 @@ export const urls = {
     quickstart: "https://docs.cronicorn.com/getting-started/quickstart",
     useCases: "https://docs.cronicorn.com/guides/use-cases",
     architecture: "https://docs.cronicorn.com/technical/architecture",
-    apiReference: "https://docs.cronicorn.com/api/reference",
+    apiReference: "https://cronicorn.com/api/reference",
     mcpServer: "https://docs.cronicorn.com/libraries/mcp-server",
   },
 
@@ -46,10 +46,10 @@ export const urls = {
   },
 
   /** Social media */
-  social: {
-    twitter: "https://twitter.com/cronicorn",
-    linkedin: "https://linkedin.com/company/cronicorn",
-  },
+  // social: {
+  //     twitter: "https://twitter.com/cronicorn",
+  //     linkedin: "https://linkedin.com/company/cronicorn",
+  // },
 } as const;
 
 /** Helper to get full docs URL */

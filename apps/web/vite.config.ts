@@ -12,12 +12,34 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
     svgr(),
-
   ],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
     },
+  },
+  build: {
+    // Enable minification
+    minify: "esbuild",
+    // Target modern browsers for smaller bundles
+    target: "es2020",
+    // Enable CSS code splitting
+    cssCodeSplit: true,
+    // Optimize chunk size
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks for better caching
+          "react-vendor": ["react", "react-dom"],
+          "router-vendor": ["@tanstack/react-router"],
+          "ui-vendor": ["lucide-react"],
+        },
+      },
+    },
+    // Increase chunk size warning limit (default is 500kb)
+    chunkSizeWarningLimit: 1000,
+    // Enable source maps for production debugging
+    sourcemap: false,
   },
   server: {
     proxy: {
