@@ -18,6 +18,6 @@ export default defineConfig({
   minify: false,
   onSuccess: async () => {
     // Copy documentation to dist
-    cpSync("../../docs-v2", "dist/docs", { recursive: true });
+    cpSync("../../docs/public", "dist/docs", { recursive: true });
   },
 });

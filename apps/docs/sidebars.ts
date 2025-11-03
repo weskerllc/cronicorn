@@ -13,7 +13,7 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs";
  * Create as many sidebars as you want.
  */
 const sidebars: SidebarsConfig = {
-  // Main documentation sidebar - matches docs-v2 structure
+  // Main documentation sidebar - matches docs/public structure
   docsSidebar: [
     "introduction",
     "quick-start",
