@@ -54,6 +54,9 @@ docker buildx build $BUILD_FLAGS --target ai-planner --tag $REGISTRY/cronicorn-a
 echo "📦 Building Web..."
 docker buildx build $BUILD_FLAGS --target web --tag $REGISTRY/cronicorn-web:$TAG --load .
 
+echo "📦 Building Docs..."
+docker buildx build $BUILD_FLAGS --target docs --tag $REGISTRY/cronicorn-docs:$TAG --load .
+
 # Push if requested
 if [ "$PUSH" = "true" ]; then
     echo "🚀 Pushing images..."
@@ -62,6 +65,7 @@ if [ "$PUSH" = "true" ]; then
     docker push $REGISTRY/cronicorn-scheduler:$TAG
     docker push $REGISTRY/cronicorn-ai-planner:$TAG
     docker push $REGISTRY/cronicorn-web:$TAG
+    docker push $REGISTRY/cronicorn-docs:$TAG
 fi
 
 echo "✅ Build complete!"
