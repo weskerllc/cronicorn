@@ -1,7 +1,7 @@
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { SidebarTrigger } from "@cronicorn/ui-library/components/sidebar";
-import siteConfig from "../../site-config";
+import { urls } from "@cronicorn/content";
 
 export function SiteHeader() {
   return (
@@ -15,7 +15,7 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
             <a
-              href={siteConfig.urls.github}
+              href={urls.github.repo}
               rel="noopener noreferrer"
               target="_blank"
               className="dark:text-foreground"

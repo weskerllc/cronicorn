@@ -20,7 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cronicorn/ui-library/components/sidebar";
-import siteConfig from "../../site-config";
+import { brand, urls } from "@cronicorn/content";
 import { NavMain } from "@/components/nav/nav-main";
 import { NavSecondary } from "@/components/nav/nav-secondary";
 import { NavUser } from "@/components/nav/nav-user";
@@ -61,7 +61,7 @@ const data = {
     },
     {
       title: "Get Help",
-      url: siteConfig.urls.support,
+      url: urls.github.issues,
       icon: IconHelp,
     },
   ],
@@ -83,11 +83,11 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <a href="/dashboard">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">{siteConfig.siteName}</span>
+                <IconInnerShadowTop className="size-5!" />
+                <span className="text-base font-semibold">{brand.name}</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

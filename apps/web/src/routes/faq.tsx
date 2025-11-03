@@ -1,9 +1,9 @@
+import { faq, metaDescriptions, pageTitles } from "@cronicorn/content";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@cronicorn/ui-library/components/accordion";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PageHeader } from "../components/page-header";
 import { SEO, createFAQSchema } from "@/components/SEO";
-import siteConfig from "@/site-config";
 
 export const Route = createFileRoute("/faq")({
     component: Faq,
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/faq")({
 function Faq() {
 
 
-    const faqs = [...siteConfig.faq.primary];
+    const faqs = faq;
 
     // Structured data for FAQ page
     const faqStructuredData = {
@@ -27,8 +27,8 @@ function Faq() {
     return (
         <>
             <SEO
-                title={siteConfig.pageTitles.faq}
-                description={siteConfig.metaDescriptions.faq}
+                title={pageTitles.faq}
+                description={metaDescriptions.faq}
                 keywords={["faq", "questions", "AI scheduling help", "intelligent cron questions", "adaptive monitoring faq"]}
                 url="/faq"
                 structuredData={faqStructuredData}
