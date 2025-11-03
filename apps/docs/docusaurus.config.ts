@@ -65,6 +65,8 @@ const config: Config = {
       logo: {
         alt: logo.alt,
         src: "img/logo.svg",
+        href: urls.website, // Link logo/title back to main website
+        target: "_self",
         // For SVG logos, you can use CSS to invert colors in dark mode
         // Or provide a separate dark mode logo here:
         // srcDark: "img/logo-dark.svg",
