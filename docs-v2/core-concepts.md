@@ -1,7 +1,7 @@
 ---
 id: core-concepts
 title: Core Concepts
-description: Key terminology and mental models for understanding Cronicorn
+description: Key terminology for using Cronicorn
 tags:
   - user
   - assistant
@@ -16,272 +16,218 @@ mcp:
 
 # Core Concepts
 
-Understanding these core concepts will help you work effectively with Cronicorn.
+Understand the key concepts for working with Cronicorn.
 
 ## Jobs and Endpoints
 
 ### Job
 
-A **Job** is a container for organizing related endpoints. It provides:
+A **Job** is a container that groups related endpoints together.
 
-- Logical grouping of endpoints
-- Shared metadata (name, description)
-- Status management (active, paused, archived)
-- Tenant isolation
+**Example**: A "Data Sync" job might contain endpoints for syncing users, products, and orders from different APIs.
 
-**Example**: A "Data Sync" job might contain endpoints for syncing users, products, and orders.
+**Properties:**
+- **Name**: Descriptive label (e.g., "API Health Checks")
+- **Description**: Optional details about what this job does
+- **Status**: Active, paused, or archived
 
 ### Endpoint
 
-An **Endpoint** is the actual schedulable unit that executes work. Each endpoint has:
+An **Endpoint** is the actual work to be executed - an HTTP request that runs on a schedule.
 
+**Example**: `POST https://api.example.com/sync/users` that runs every 5 minutes.
+
+**Required:**
+- **Name**: What this endpoint does (e.g., "Sync Users")
 - **URL**: The HTTP endpoint to call
-- **Method**: HTTP method (GET, POST, etc.)
-- **Schedule**: When and how often to run
-- **Headers/Body**: Optional request configuration
-- **Constraints**: Min/max intervals, timeouts, response size limits
+- **Method**: GET, POST, PUT, PATCH, or DELETE
+- **Schedule**: Either a cron expression OR an interval in milliseconds
 
-**Example**: An endpoint might be `POST https://api.example.com/sync/users` scheduled to run every 5 minutes.
+**Optional:**
+- **Headers**: Custom HTTP headers
+- **Body**: Request body (for POST/PUT/PATCH)
+- **Min/Max Intervals**: Safety constraints (see below)
+- **Timeout**: Maximum execution time
 
-## Scheduling Modes
-
-Cronicorn supports multiple scheduling approaches that work together:
+## Scheduling
 
 ### Baseline Schedule
 
-The **baseline** is your default, static schedule. It can be defined as either:
+Your **baseline schedule** is the default timing for an endpoint. You must choose ONE:
 
-- **Cron Expression**: `"0 */5 * * *"` (every 5 minutes)
-- **Interval**: `300000` milliseconds (5 minutes)
-
-The baseline is always active and provides a fallback when AI hints expire.
-
-### AI Hints
-
-**AI hints** are temporary scheduling adjustments suggested by the AI planner. There are two types:
-
-#### AI Interval Hint
-
-Adjusts the execution interval for a period of time:
-
-```json
-{
-  "intervalMs": 60000,      // Run every 1 minute
-  "ttlMinutes": 30,         // For the next 30 minutes
-  "reason": "High failure rate detected"
-}
+**Option 1: Cron Expression**
+```
+"0 */5 * * *"  // Every 5 minutes
+"0 2 * * *"    // Daily at 2am
+"0 9 * * 1"    // Mondays at 9am
 ```
 
-#### AI One-shot Hint
-
-Schedules a single execution at a specific time:
-
-```json
-{
-  "nextRunAt": "2025-11-02T14:30:00Z",  // Run at 2:30 PM
-  "ttlMinutes": 60,                      // Valid for 1 hour
-  "reason": "Immediate sync required"
-}
+**Option 2: Interval (milliseconds)**
 ```
+60000      // Every 60 seconds
+300000     // Every 5 minutes
+3600000    // Every hour
+```
+
+The baseline schedule is always active and provides a fallback when AI hints expire.
+
+### AI Hints (Optional)
+
+When AI is enabled, it can suggest temporary scheduling adjustments called **hints**:
+
+**AI Interval Hint** - Adjust how often the endpoint runs:
+- "Run every 30 seconds for the next hour" (instead of every 5 minutes)
+- "Run every 15 minutes for the next 4 hours" (instead of every 5 minutes)
+- Hints expire automatically (TTL) and revert to baseline
+
+**AI One-Shot Hint** - Schedule a single immediate or future run:
+- "Run once right now" (for immediate execution)
+- "Run once at 2:30 PM" (for specific time)
+- Happens once, then endpoint returns to baseline schedule
+
+**How AI Decides:**
+- Analyzes recent execution history (last 24 hours)
+- Looks at success rates, failure patterns, response times
+- Suggests adjustments while respecting your min/max constraints
+- All hints have expiration times (TTL) - typically 15-60 minutes
 
 ### Pause State
 
-Endpoints can be temporarily paused until a specific time:
+You can temporarily **pause** an endpoint:
 
-```json
-{
-  "pausedUntil": "2025-11-02T15:00:00Z",
-  "reason": "Maintenance window"
-}
-```
+- Stops all execution until a specified time
+- Useful for maintenance windows or debugging
+- Set to `null` to resume immediately
+- Overrides all other scheduling (baseline and AI hints)
 
-Set `pausedUntil` to `null` to resume immediately.
+## How Scheduling Works
 
-## Governor: Schedule Selection
+The system picks the next run time using this priority order:
 
-The **Governor** is the component that decides when an endpoint should run next. It follows this priority order:
+1. **Paused?** → If yes, return the pause-until time
+2. **AI one-shot hint active?** → If yes, use that time
+3. **AI interval hint active?** → If yes, use last run + AI interval
+4. **Baseline cron configured?** → If yes, calculate next cron time
+5. **Baseline interval configured?** → Use last run + baseline interval
 
-1. **Paused**: If `pausedUntil > now`, return that time
-2. **AI One-shot**: If valid (not expired), use `aiHintNextRunAt`
-3. **AI Interval**: If valid (not expired), use `lastRunAt + aiHintIntervalMs`
-4. **Baseline Cron**: If configured, use `Cron.next()`
-5. **Baseline Interval**: Use `lastRunAt + baselineIntervalMs`
+**Then apply safety constraints:**
+- Clamp to minimum interval (if configured)
+- Clamp to maximum interval (if configured)
 
-The governor also applies **clamping** to respect min/max constraints:
+This ensures AI suggestions always stay within your safety boundaries.
 
-- `nextRunAt` must be ≥ `lastRunAt + minIntervalMs`
-- `nextRunAt` must be ≤ `lastRunAt + maxIntervalMs`
+## Safety Constraints
 
-### Scheduling Sources
+### Minimum Interval
 
-Each run is tagged with its scheduling source:
-
-- `baseline-cron`: From cron expression
-- `baseline-interval`: From interval setting
-- `ai-interval`: From AI interval hint
-- `ai-oneshot`: From AI one-shot hint
-- `clamped-min`: Clamped to minimum interval
-- `clamped-max`: Clamped to maximum interval
-- `paused`: Endpoint is paused
-
-## Execution Lifecycle
-
-### 1. Claiming
-
-The scheduler worker claims due endpoints:
+Prevents over-execution:
 
 ```
-claimDueEndpoints(limit=10, withinMs=5000)
+minIntervalMs: 30000  // At least 30 seconds between runs
 ```
 
-This returns endpoints where `nextRunAt ≤ now + 5s`, using database-level locking to prevent duplicate execution in distributed environments.
+**Use when:**
+- Protecting API rate limits
+- Preventing database overload
+- Avoiding costs from too-frequent polling
 
-### 2. Execution
+**Example**: Health check every 5 minutes, but AI can't go faster than every 30 seconds.
 
-For each claimed endpoint:
+### Maximum Interval
 
-1. Create a run record (status: "running")
-2. Execute via dispatcher (HTTP request)
-3. Record result (status, duration, error)
-4. Update failure count (increment on failure, reset on success)
-5. Calculate next run time via Governor
-6. Update endpoint state
+Ensures timely execution:
 
-### 3. Next Run Calculation
-
-The Governor determines the next run time based on:
-
-- Current time
-- Endpoint configuration
-- Active AI hints
-- Configured constraints
-
-## Failure Handling
-
-### Failure Count
-
-Endpoints track consecutive failures:
-
-- **On failure**: Increment failure count
-- **On success**: Reset to 0
-
-The failure count can be used by:
-
-- AI planner for adaptive backoff
-- Alerting systems for notifications
-- Monitoring dashboards for health status
-
-### Failure Count Policy
-
-Two policies are available:
-
-- **Reset** (default): Set to 0 on success
-- **Increment**: Add 1 on failure
-
-The policy is applied after each execution in `updateAfterRun`.
-
-## Constraints and Quotas
-
-### Interval Constraints
-
-Protect against over/under-scheduling:
-
-- **minIntervalMs**: Minimum time between runs (prevents over-execution)
-- **maxIntervalMs**: Maximum time between runs (ensures timely execution)
-
-Example: For a sync endpoint, you might set:
-- `minIntervalMs`: 60000 (at least 1 minute between syncs)
-- `maxIntervalMs`: 3600000 (at most 1 hour between syncs)
-
-### Execution Constraints
-
-Protect against resource exhaustion:
-
-- **timeoutMs**: Maximum execution time for HTTP request
-- **maxExecutionTimeMs**: Maximum time the worker holds the endpoint lock
-- **maxResponseSizeKb**: Maximum response body size
-
-### Quotas
-
-System-wide rate limiting:
-
-- **Endpoint quota**: Limit total endpoint executions
-- **AI quota**: Limit AI planner invocations
-
-Quotas are checked before expensive operations and can be scoped per tenant.
-
-## Multi-tenancy
-
-Every entity in Cronicorn is scoped to a **tenant**:
-
-- Jobs belong to a tenant
-- Endpoints belong to a job (and transitively, a tenant)
-- Runs belong to an endpoint (and transitively, a tenant)
-
-Tenancy ensures:
-
-- Data isolation between customers
-- Per-tenant quotas and rate limiting
-- Secure access control
-
-## Time and Determinism
-
-### Clock Abstraction
-
-Cronicorn uses a **Clock** port for all time operations:
-
-```typescript
-interface Clock {
-  now(): Date;
-  sleep(ms: number): Promise<void>;
-}
+```
+maxIntervalMs: 3600000  // At most 1 hour between runs
 ```
 
-This enables:
+**Use when:**
+- Data must stay fresh (max 1 hour old)
+- SLAs require regular checks
+- Compliance needs frequent execution
 
-- Deterministic testing with fake clocks
-- Consistent time handling across the system
-- Easy simulation of time-based scenarios
+**Example**: Sync every 5 minutes, but even if AI backs off, run at least every hour.
 
-### Timestamps
+### Execution Timeout
 
-All timestamps are stored as UTC and represented as:
+Maximum time for the HTTP request:
 
-- **ISO 8601 strings** in API responses
-- **Date objects** in domain logic
-- **Unix milliseconds** in calculations
+```
+timeoutMs: 30000  // Request must complete within 30 seconds
+```
 
-## Observability
+If the request takes longer, it's cancelled and marked as timeout.
+
+## Execution Tracking
 
 ### Run History
 
-Every execution is recorded with:
+Every execution creates a **run** record with:
 
-- Start and end timestamps
-- Execution duration
-- Status (success, failure, timeout, cancelled)
-- Error messages
-- HTTP response details
+- **Status**: success, failure, timeout, or cancelled
+- **Duration**: How long the execution took (milliseconds)
+- **Timestamps**: When it started and finished
+- **Error**: Error message (if failed)
+- **Source**: Why it ran (baseline-cron, baseline-interval, ai-interval, ai-oneshot, etc.)
 
-### Metadata Tracking
+### Failure Tracking
 
-Runs include metadata about:
+Endpoints track consecutive failures:
 
-- Scheduling source (why it ran)
-- Failure count at time of execution
-- Active AI hints
-- Constraint violations
+- **Failure count**: Increments on failure, resets to 0 on success
+- **AI uses this**: To decide on backoff strategies
+- **You see this**: In the UI for monitoring health
 
-### Monitoring Endpoints
+## Multi-Tenancy
 
-Query run history to:
+Every job and endpoint belongs to your account (tenant):
 
-- Calculate success rates
-- Identify failure patterns
-- Track performance trends
-- Debug scheduling issues
+- **Complete isolation**: You only see your own jobs and data
+- **Secure execution**: Endpoints run with your credentials
+- **Per-account quotas**: Usage limits apply per account
+
+## Common Patterns
+
+### Health Check with Adaptive Frequency
+
+```
+Baseline: Every 5 minutes (300000ms)
+Min: 30 seconds (30000ms)
+Max: 15 minutes (900000ms)
+
+AI behavior:
+- Normal: Runs every 5 minutes
+- Errors detected: Increases to every 30 seconds
+- All healthy: Backs off to every 15 minutes
+```
+
+### Daily Maintenance with Safety Net
+
+```
+Baseline: "0 2 * * *" (daily at 2am)
+Max: 26 hours
+
+Behavior:
+- Normally runs at 2am daily
+- If it fails, max interval ensures retry within 26 hours
+- Won't accidentally skip days
+```
+
+### API Polling with Rate Limit Protection
+
+```
+Baseline: Every minute (60000ms)
+Min: 30 seconds (30000ms) - protects rate limit
+Max: 5 minutes (300000ms) - keeps data fresh
+
+AI behavior:
+- Adjusts between 30s and 5min based on data changes
+- Never exceeds API rate limits (min)
+- Ensures data freshness (max)
+```
 
 ## Next Steps
 
-- **[Introduction](./introduction.md)** - Overview of Cronicorn
-- **[Quick Start](./quick-start.md)** - Get started in 5 minutes
+- **[Introduction](./introduction.md)** - Why use Cronicorn
+- **[Quick Start](./quick-start.md)** - Create your first job
+- **[Technical Documentation](./technical/system-architecture.md)** - For developers and self-hosters

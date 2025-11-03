@@ -1,7 +1,7 @@
 ---
 id: introduction
 title: Introduction to Cronicorn
-description: Overview of Cronicorn's AI-powered adaptive scheduling system
+description: AI-powered adaptive scheduling for modern applications
 tags:
   - user
   - assistant
@@ -16,147 +16,137 @@ mcp:
 
 # Introduction to Cronicorn
 
-**Cronicorn** is an AI-powered adaptive scheduler designed for modern applications that need intelligent, dynamic task scheduling.
+**Cronicorn** is an intelligent scheduler that automatically adapts to your application's behavior. Set baseline schedules and let AI optimize execution timing based on real-world patterns.
 
 ## What is Cronicorn?
 
-Cronicorn combines traditional cron-like scheduling with AI-driven adaptability. Unlike static schedulers that run tasks at fixed intervals, Cronicorn learns from your application's behavior and dynamically adjusts scheduling patterns to optimize performance, reduce costs, and improve reliability.
+Cronicorn is a scheduling service that combines:
 
-## Why Cronicorn?
+- **Traditional cron scheduling** - Set fixed intervals or cron expressions
+- **AI-powered adaptation** (optional) - Automatically adjust timing based on success rates, failure patterns, and performance
+- **HTTP endpoint execution** - Call any HTTP endpoint on your schedule
+- **Real-time monitoring** - Track execution history, success rates, and performance
 
-### The Problem with Traditional Schedulers
+## Why Use Cronicorn?
 
-Traditional cron schedulers have several limitations:
+### Problems with Static Schedulers
 
-- **Static intervals**: Tasks run at fixed times regardless of system load or success rates
-- **No learning**: Repeated failures don't trigger automatic backoff
-- **Resource waste**: Tasks may run too frequently when system is idle
-- **No adaptability**: Can't respond to changing application needs in real-time
+Traditional cron jobs have limitations:
 
-### The Cronicorn Solution
+- **Fixed timing** - Run every 5 minutes whether needed or not
+- **No learning** - Repeated failures don't trigger automatic backoff
+- **Manual intervention** - You adjust schedules manually based on metrics
+- **Resource waste** - Over-polling wastes API rate limits and costs
 
-Cronicorn addresses these issues through:
+### How Cronicorn Helps
 
-1. **AI-Powered Adaptation**: Automatically adjusts task intervals based on performance metrics and failure patterns
-2. **Dynamic Rate Limiting**: Respects configured min/max intervals while optimizing execution frequency
-3. **Intelligent Backoff**: Increases intervals after failures and returns to normal after success
-4. **Real-time Responsiveness**: Adapts to system load and application behavior instantly
+**For all users:**
+- Set it and forget it - Define baseline schedules that just work
+- Real-time visibility - Track all executions with detailed history
+- Flexible scheduling - Use cron expressions or simple intervals
+- Constraint protection - Set min/max intervals to prevent over/under execution
+
+**With AI enabled (optional):**
+- Automatic adaptation - Schedules adjust based on actual performance
+- Intelligent backoff - Reduces frequency after failures automatically
+- Dynamic optimization - Increases frequency when needed, decreases when idle
+- Always respects your constraints - AI suggestions stay within your min/max limits
 
 ## Key Features
 
-### 🤖 AI-Driven Scheduling
+### 🗓️ Flexible Scheduling
 
-The AI planner analyzes execution patterns, success rates, and system metrics to suggest optimal scheduling intervals. It can:
+- **Cron expressions**: `"0 */5 * * *"` for traditional cron syntax
+- **Simple intervals**: `300000` (milliseconds) for straightforward timing
+- **One-time runs**: Schedule immediate or future single executions
+- **Pause/resume**: Temporarily disable endpoints for maintenance
 
-- Increase frequency during high-demand periods
-- Back off during repeated failures
-- Optimize intervals based on historical performance
-- Respect configured constraints (min/max intervals, quotas)
+### 🤖 AI Adaptation (Optional)
 
-### ⚡ Real-time Adaptation
+When enabled, the AI planner:
 
-Scheduling changes take effect immediately through:
+- Analyzes execution patterns (success rates, failure streaks, response times)
+- Suggests interval adjustments with expiration times (TTL)
+- Respects your configured min/max constraints
+- Gracefully degrades - baseline schedule continues if AI is unavailable
 
-- **AI Hints**: Temporary interval adjustments with configurable TTL
-- **One-shot Scheduling**: Schedule immediate or delayed single runs
-- **Dynamic Pausing**: Temporarily halt endpoints for maintenance
+**Note**: Cronicorn works perfectly without AI. The baseline scheduler is production-ready and reliable.
 
-### 🎯 Smart Rate Limiting
+### 📊 Complete Visibility
 
-Built-in protections ensure safe operation:
+- **Run history**: Every execution with timestamps, duration, status
+- **Error tracking**: Detailed error messages for failures
+- **Success metrics**: Track success rates and identify patterns
+- **Scheduling transparency**: See why each run happened (baseline, AI hint, etc.)
 
-- Minimum interval constraints prevent over-execution
-- Maximum interval constraints ensure timely execution
-- Quota management limits AI and endpoint execution costs
-- Tenant-level isolation for multi-tenant deployments
+### 🛡️ Production Ready
 
-### 📊 Comprehensive Observability
-
-Full visibility into scheduling behavior:
-
-- Detailed run history with execution metrics
-- Success/failure tracking with error messages
-- Scheduling source tracking (baseline, AI interval, AI one-shot, etc.)
-- Performance analytics and trend analysis
-
-### 🛡️ Production-Ready Architecture
-
-Designed for reliability and scale:
-
-- Clean layered architecture (Domain → Ports → Adapters)
-- Request-scoped transactions for data consistency
-- Distributed worker support with lease-based claiming
-- Multi-tenant isolation with proper data boundaries
-- Graceful degradation and fault tolerance
+- **Reliable execution**: Database-backed with distributed locking
+- **Constraint protection**: Min/max intervals prevent runaway schedules
+- **Multi-tenant isolation**: Secure separation between accounts
+- **API & Web UI**: Manage jobs programmatically or visually
 
 ## Use Cases
 
-### API Rate Limit Optimization
+### API Health Monitoring
 
-Automatically adjust polling intervals to stay just under API rate limits while maximizing data freshness.
+Monitor your APIs with adaptive frequency:
 
-### Database Maintenance
-
-Run cleanup tasks more frequently during high-activity periods and less frequently when idle.
-
-### Monitoring & Health Checks
-
-Increase check frequency after failures and return to normal intervals after recovery.
+- Baseline: Check every 5 minutes
+- AI increases to every 30 seconds when errors detected
+- AI backs off to every 15 minutes when stable
+- Stays within your min (30s) and max (15min) constraints
 
 ### Data Synchronization
 
-Adapt sync frequency based on data change rates and system load.
+Sync data between systems efficiently:
 
-### Batch Processing
+- Baseline: Sync every hour
+- AI increases during business hours when changes are frequent
+- AI decreases overnight when activity is low
+- Respects API rate limits with max interval constraints
 
-Optimize batch job execution based on queue depth and processing times.
+### Scheduled Maintenance
 
-## Architecture Overview
+Run cleanup and maintenance tasks:
 
-Cronicorn follows a clean, hexagonal architecture:
+- Baseline: Daily at 2am via cron expression
+- Pause during known maintenance windows
+- Monitor execution duration trends over time
+- Track success/failure for audit compliance
 
-```
-┌─────────────────────────┐
-│   Composition Roots     │  (API, Worker, Sim)
-│  (Wire dependencies)    │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│      Domain Layer       │  (Pure business logic)
-│  Governor, Scheduler,   │
-│  Policies               │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│        Ports            │  (Interfaces)
-│  Clock, Cron, Repos,    │
-│  Dispatcher, Quota      │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│       Adapters          │  (Concrete implementations)
-│  DB, HTTP, AI, Logging  │
-└─────────────────────────┘
-```
+### Webhook Retry Logic
 
-### Key Components
+Retry failed webhooks intelligently:
 
-- **Domain**: Pure scheduling logic and policies
-- **Ports**: Interface contracts for external dependencies
-- **Adapters**: Concrete implementations (PostgreSQL, HTTP, AI SDKs)
-- **API**: RESTful endpoints for job/endpoint management
-- **Worker**: Background scheduler that executes tasks
-- **AI Planner**: Intelligent decision-making service
+- Baseline: Immediate retry, then exponential backoff
+- AI adjusts retry timing based on downstream service patterns
+- Automatic pause after sustained failures
+- Resume when downstream recovers
+
+## How It Works
+
+1. **Create a Job** - Logical container for related endpoints
+2. **Add Endpoints** - HTTP endpoints with baseline schedules
+3. **Set Constraints** (optional) - Min/max intervals for safety
+4. **Enable AI** (optional) - Let AI optimize timing automatically
+5. **Monitor** - Track execution history and performance
+
+## Who Is Cronicorn For?
+
+- **SaaS developers** monitoring API health across services
+- **E-commerce teams** syncing inventory and order data
+- **DevOps engineers** running scheduled maintenance tasks
+- **Integration developers** managing webhook retries and polling
 
 ## Getting Started
 
-Ready to try Cronicorn? Check out the [Quick Start Guide](./quick-start.md) to get up and running in minutes.
+- **Using Cronicorn as a service**: See [Quick Start](./quick-start.md)
+- **Self-hosting Cronicorn**: See [Technical Documentation](./technical/system-architecture.md)
+- **AI assistant integration**: Use our [MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server)
 
 ## Next Steps
 
-- **[Core Concepts](./core-concepts.md)** - Understand key terminology
-- **[Quick Start](./quick-start.md)** - Get started in 5 minutes
-- **[Technical Deep Dive](./technical/system-architecture.md)** - Detailed technical documentation for developers and power users
+- **[Core Concepts](./core-concepts.md)** - Understand jobs, endpoints, and scheduling
+- **[Quick Start](./quick-start.md)** - Create your first scheduled job
+- **[Technical Deep Dive](./technical/system-architecture.md)** - For developers and self-hosters
