@@ -143,6 +143,14 @@ const columns: Array<ColumnDef<EndpointRow>> = [
               to="/endpoints/$id"
               params={{ id: row.original.id }}
             >
+              View Details
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link
+              to="/endpoints/$id/edit"
+              params={{ id: row.original.id }}
+            >
               Edit Endpoint
             </Link>
           </DropdownMenuItem>
