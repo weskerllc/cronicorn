@@ -42,22 +42,19 @@ export async function seedAdminUser(config: Env, db: Database, auth: Auth): Prom
       console.log(JSON.stringify({
         timestamp: new Date().toISOString(),
         level: "info",
-        message: "Admin user created",
-        email: config.ADMIN_USER_EMAIL,
+        message: "Admin user created successfully",
       }));
     }
     else {
-      // User exists - update password if needed
-      // Better Auth doesn't have a direct "update password" API without a session,
-      // so we'll just log that the user exists
-      // In production, use Better Auth's password reset flow if password needs updating
+      // User exists - password is not automatically updated
+      // To change the password, manually delete the user and restart the app,
+      // or use Better Auth's password reset flow
 
       // eslint-disable-next-line no-console
       console.log(JSON.stringify({
         timestamp: new Date().toISOString(),
         level: "info",
         message: "Admin user already exists",
-        email: config.ADMIN_USER_EMAIL,
       }));
     }
   }
