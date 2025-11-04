@@ -34,6 +34,7 @@ describe("aiTools", () => {
       listEndpointsByJob: vi.fn(),
       getEndpoint: vi.fn(),
       deleteEndpoint: vi.fn(),
+      countEndpointsByUser: vi.fn(),
       claimDueEndpoints: vi.fn(),
       setLock: vi.fn(),
       clearLock: vi.fn(),
