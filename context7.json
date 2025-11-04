@@ -1,7 +1,6 @@
 {
   "$schema": "https://context7.com/schema/context7.json",
   "projectTitle": "Cronicorn",
-  "description": "Cronicorn is an AI job scheduler that dynamically adapts HTTP jobs to real-time system conditions, providing intelligent scheduling and optimization beyond traditional cron jobs.",
   "branch": "main",
   "excludeFolders": [
     "internal",
