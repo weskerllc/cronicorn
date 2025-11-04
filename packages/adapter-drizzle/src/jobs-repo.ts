@@ -542,6 +542,15 @@ export class DrizzleJobsRepo implements JobsRepo {
     // getEndpoint will throw if row doesn't exist
   }
 
+  async countEndpointsByUser(userId: string): Promise<number> {
+    const result = await this.tx
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(jobEndpoints)
+      .where(eq(jobEndpoints.tenantId, userId));
+
+    return result[0]?.count ?? 0;
+  }
+
   async getUserTier(userId: string): Promise<"free" | "pro" | "enterprise"> {
     const result = await this.tx
       .select({ tier: user.tier })
