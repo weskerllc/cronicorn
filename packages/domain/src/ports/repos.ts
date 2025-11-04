@@ -86,6 +86,15 @@ export type JobsRepo = {
   deleteEndpoint: (id: string) => Promise<void>;
 
   /**
+   * Count total endpoints for a user across all jobs.
+   * Used for enforcing tier-based endpoint limits.
+   *
+   * @param userId - The user/tenant ID
+   * @returns Total number of endpoints owned by this user
+   */
+  countEndpointsByUser: (userId: string) => Promise<number>;
+
+  /**
    * Get user's tier for quota enforcement.
    * Returns tier level ("free" | "pro" | "enterprise") for the given user ID.
    */

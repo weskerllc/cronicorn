@@ -10,23 +10,23 @@ import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
 
-import { createSchemaAndShape, registerApiTool } from "../helpers/index.js";
+import { registerApiTool, toShape } from "../helpers/index.js";
 
-// Define schemas once, get both validator and MCP shape
-const [DeleteHintsRequestSchema, deleteHintsInputShape] = createSchemaAndShape({
+// Simple DELETE request with just an ID
+const DeleteHintsRequestSchema = z.object({
   id: z.string().describe("Endpoint ID"),
 });
 
-// No response body for 204 No Content
-const [EmptyResponseSchema, emptyResponseShape] = createSchemaAndShape({});
+// Empty response for 204 No Content
+const EmptyResponseSchema = z.object({});
 
 export function registerDeleteHints(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
     name: "DELETE_endpoints_id_hints",
     title: "Clear AI Hints",
     description: "Clear all AI hints (interval and one-shot) for an endpoint. The endpoint will revert to its baseline schedule. Useful for resetting adaptive behavior.",
-    inputSchema: deleteHintsInputShape,
-    outputSchema: emptyResponseShape,
+    inputSchema: toShape(DeleteHintsRequestSchema),
+    outputSchema: toShape(EmptyResponseSchema),
     inputValidator: DeleteHintsRequestSchema,
     outputValidator: EmptyResponseSchema,
     method: "DELETE",

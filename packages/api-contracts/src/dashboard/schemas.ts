@@ -2,6 +2,11 @@ import { z } from "@hono/zod-openapi";
 
 // ==================== Dashboard Stats Response Schema ====================
 
+/**
+ * These schemas extend the base schemas with OpenAPI decorations.
+ * For clients that don't need OpenAPI (MCP, web forms), import from schemas.base.ts
+ */
+
 export const DashboardStatsResponseSchema = z.object({
   jobs: z.object({
     total: z.number().int().nonnegative().openapi({
