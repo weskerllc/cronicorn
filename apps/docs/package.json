@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "copy-assets": "copyfiles -f ../../packages/content/assets/logo.svg ../../packages/content/assets/favicon.ico ./static/img/",
-    "docusaurus": "docusaurus",
-    "start": "pnpm copy-assets && docusaurus start",
+    "dev": "pnpm copy-assets && docusaurus start --port 3000",
+    "start": "docusaurus serve",
     "build": "pnpm copy-assets && docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",

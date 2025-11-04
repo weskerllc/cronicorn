@@ -14,6 +14,7 @@ import { createJobsManager } from "./lib/create-jobs-manager.js";
 import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.js";
 import { errorHandler } from "./lib/error-handler.js";
 import configureOpenAPI from "./lib/openapi.js";
+import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";
 import jobs from "./routes/jobs/jobs.index.js";
@@ -73,6 +74,7 @@ export async function createApp(
     c.set("clock", clock);
     c.set("cron", cron);
     c.set("auth", auth);
+    c.set("config", config);
     c.set("paymentProvider", stripeProvider);
     c.set("webhookSecret", config.STRIPE_WEBHOOK_SECRET);
 
@@ -154,9 +156,13 @@ export async function createApp(
     return c.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  // Mount auth config endpoint FIRST (public - specific route takes precedence)
+  app.route("/", authConfig);
+
   // Mount Better Auth routes
   // Better Auth provides: /api/auth/sign-in/social/github, /api/auth/callback/github, etc.
-  app.on(["GET", "POST"], "/auth/**", (c) => {
+  // This catches all /auth/* routes EXCEPT the specific ones registered above
+  app.all("/auth/*", (c) => {
     return auth.handler(c.req.raw);
   });
 
@@ -188,5 +194,5 @@ export async function createApp(
     env: config.NODE_ENV,
   }));
 
-  return app;
+  return { app, auth };
 }
