@@ -50,6 +50,18 @@ export type RecentRun = {
   source: string | null;
 };
 
+export type RecentAISession = {
+  id: string;
+  endpointId: string;
+  endpointName: string;
+  jobName: string;
+  analyzedAt: Date;
+  reasoning: string;
+  tokenUsage: number | null;
+  durationMs: number | null;
+  toolCallCount: number;
+};
+
 export type DashboardStats = {
   jobs: JobStats;
   endpoints: EndpointStats;
@@ -58,4 +70,5 @@ export type DashboardStats = {
   runTimeSeries: RunTimeSeriesPoint[];
   topEndpoints: TopEndpoint[];
   recentRuns: RecentRun[];
+  recentAISessions: RecentAISession[];
 };

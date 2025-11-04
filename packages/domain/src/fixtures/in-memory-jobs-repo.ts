@@ -279,6 +279,12 @@ export class InMemoryJobsRepo implements JobsRepo {
     this.map.delete(id);
   }
 
+  async countEndpointsByUser(userId: string): Promise<number> {
+    return [...this.map.values()]
+      .filter(ep => ep.tenantId === userId)
+      .length;
+  }
+
   async getUserTier(_userId: string): Promise<"free" | "pro" | "enterprise"> {
     // In-memory fixture: always return "free" as safe default
     // Tests can mock this method if different tier behavior needed
