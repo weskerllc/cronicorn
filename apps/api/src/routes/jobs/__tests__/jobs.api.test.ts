@@ -746,4 +746,91 @@ describe("jobs API", () => {
       expect(data).toHaveProperty("failureCount");
     });
   });
+
+  // ==================== Tier Limit Enforcement ====================
+
+  describe("endpoint tier limits", () => {
+    test("enforces free tier limit (10 endpoints) across multiple jobs", async ({ tx }) => {
+      const mockSession = createMockSession(mockUserId);
+      const mockAuth = createMockAuth(mockSession);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
+
+      // Create two jobs
+      const job1Res = await app.request("/api/jobs", {
+        method: "POST",
+        body: JSON.stringify({ name: "Job 1" }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const job1 = await getJson(job1Res);
+
+      const job2Res = await app.request("/api/jobs", {
+        method: "POST",
+        body: JSON.stringify({ name: "Job 2" }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const job2 = await getJson(job2Res);
+
+      // Add 5 endpoints to job 1
+      for (let i = 1; i <= 5; i++) {
+        const res = await app.request(`/api/jobs/${job1.id}/endpoints`, {
+          method: "POST",
+          body: JSON.stringify({
+            name: `Job1 Endpoint ${i}`,
+            url: `https://example.com/job1/ep${i}`,
+            method: "GET",
+            baselineIntervalMs: 60000, // 60s meets free tier minimum
+          }),
+          headers: { "Content-Type": "application/json" },
+        });
+        expect(res.status).toBe(201);
+      }
+
+      // Add 5 endpoints to job 2 (total: 10)
+      for (let i = 1; i <= 5; i++) {
+        const res = await app.request(`/api/jobs/${job2.id}/endpoints`, {
+          method: "POST",
+          body: JSON.stringify({
+            name: `Job2 Endpoint ${i}`,
+            url: `https://example.com/job2/ep${i}`,
+            method: "GET",
+            baselineIntervalMs: 60000,
+          }),
+          headers: { "Content-Type": "application/json" },
+        });
+        expect(res.status).toBe(201);
+      }
+
+      // Try to add an 11th endpoint - should fail
+      const res11 = await app.request(`/api/jobs/${job1.id}/endpoints`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Endpoint 11 - Should Fail",
+          url: "https://example.com/should-fail",
+          method: "GET",
+          baselineIntervalMs: 60000,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      expect(res11.status).toBe(400); // Bad request due to quota limit
+      const errorData = await getJson(res11);
+      expect(errorData.error.message).toMatch(/Endpoint limit reached.*free tier allows maximum 10 endpoints/i);
+
+      // Also verify trying to add to job2 fails
+      const res11job2 = await app.request(`/api/jobs/${job2.id}/endpoints`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Endpoint 11 Job2 - Should Also Fail",
+          url: "https://example.com/should-also-fail",
+          method: "GET",
+          baselineIntervalMs: 60000,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      expect(res11job2.status).toBe(400);
+      const errorData2 = await getJson(res11job2);
+      expect(errorData2.error.message).toMatch(/Endpoint limit reached.*free tier allows maximum 10 endpoints/i);
+    });
+  });
 });
