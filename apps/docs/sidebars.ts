@@ -30,6 +30,15 @@ const sidebars: SidebarsConfig = {
         "technical/technical-reference",
       ],
     },
+    {
+      type: "category",
+      label: "Developers",
+      items: [
+        "developers/developers-overview",
+        "developers/developer-quick-start",
+        "developers/developer-authentication",
+      ],
+    },
   ],
 };
 

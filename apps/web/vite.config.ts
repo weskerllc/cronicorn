@@ -16,6 +16,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
+      // Alias API client to source file (no build needed in dev)
+      "@cronicorn/api/client": resolve(__dirname, "../api/src/client.ts"),
     },
   },
   build: {

@@ -16,3 +16,5 @@ When adding, editing, or removing API routes in `apps/api/src/routes/`:
 ---
 
 <!-- Add new sync items below as needed -->
+
+- docs, root readme
