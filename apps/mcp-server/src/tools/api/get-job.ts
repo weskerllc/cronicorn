@@ -4,6 +4,7 @@
  * 1:1 mapping to API endpoint - uses helper utilities for concise implementation
  */
 
+import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
 import type { JobResponse } from "@cronicorn/api-contracts/jobs";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
@@ -11,34 +12,22 @@ import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
 
-import { createSchemaAndShape, registerApiTool } from "../helpers/index.js";
+import { registerApiTool, toShape } from "../helpers/index.js";
 
-// Define schemas once, get both validator and MCP shape
-const [GetJobRequestSchema, getJobInputShape] = createSchemaAndShape({
+// Simple GET request with just an ID
+const GetJobRequestSchema = z.object({
   id: z.string().describe("Job ID"),
 });
 
-const [JobResponseSchema, jobResponseShape] = createSchemaAndShape({
-  id: z.string(),
-  userId: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  status: z.enum(["active", "paused", "archived"]),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  archivedAt: z.string().datetime().optional(),
-});
-
-// Type assertions to ensure compatibility with API contracts
-const _outputCheck: z.ZodType<JobResponse> = JobResponseSchema;
+const JobResponseSchema = jobsBase.JobResponseBaseSchema;
 
 export function registerGetJob(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
     name: "GET_jobs_id",
     title: "Get Job",
     description: "Retrieve a single job by ID. Returns full job details including status and timestamps.",
-    inputSchema: getJobInputShape,
-    outputSchema: jobResponseShape,
+    inputSchema: toShape(GetJobRequestSchema),
+    outputSchema: toShape(JobResponseSchema),
     inputValidator: GetJobRequestSchema,
     outputValidator: JobResponseSchema,
     method: "GET",
