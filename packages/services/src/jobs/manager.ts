@@ -295,12 +295,12 @@ export class JobsManager {
       throw new Error("Job not found or unauthorized");
     }
 
-    // Check endpoint count quota against tier limits
+    // Check endpoint count quota against tier limits (across ALL user endpoints, not just this job)
     const userTier = await this.jobsRepo.getUserTier(userId);
     const executionLimits = getExecutionLimits(userTier);
-    const existingEndpoints = await this.jobsRepo.listEndpointsByJob(input.jobId);
+    const existingEndpointCount = await this.jobsRepo.countEndpointsByUser(userId);
 
-    if (existingEndpoints.length >= executionLimits.maxEndpoints) {
+    if (existingEndpointCount >= executionLimits.maxEndpoints) {
       const upgradeMsg = userTier === "free"
         ? " Upgrade to Pro for 100 endpoints or Enterprise for 1,000 endpoints."
         : userTier === "pro"
