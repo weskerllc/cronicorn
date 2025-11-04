@@ -34,10 +34,10 @@ const testConfig: Env = {
   BETTER_AUTH_URL: "http://localhost:3000/api/auth",
   GITHUB_CLIENT_ID: "test_client_id",
   GITHUB_CLIENT_SECRET: "test_client_secret",
+  STRIPE_SECRET_KEY: "sk_test_fake_key_for_testing",
   ADMIN_USER_EMAIL: "admin@example.com",
   ADMIN_USER_PASSWORD: "test-password-123",
-  ADMIN_USER_NAME: "Test Admin",
-  STRIPE_SECRET_KEY: "sk_test_fake_key_for_testing",
+  ADMIN_USER_NAME: "Admin User",
   STRIPE_WEBHOOK_SECRET: "whsec_test_fake_secret",
   STRIPE_PRICE_PRO: "price_test_pro",
   STRIPE_PRICE_ENTERPRISE: "price_test_enterprise",
@@ -306,7 +306,7 @@ describe("jobs API", () => {
     test("saves description and optional fields when creating endpoint", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
+      const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       const jobRes = await app.request("/api/jobs", {
         method: "POST",
@@ -792,7 +792,7 @@ describe("jobs API", () => {
     test("enforces free tier limit (10 endpoints) across multiple jobs", async ({ tx }) => {
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
-      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
+      const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
 
       // Create two jobs
       const job1Res = await app.request("/api/jobs", {
@@ -853,7 +853,7 @@ describe("jobs API", () => {
 
       expect(res11.status).toBe(400); // Bad request due to quota limit
       const errorData = await getJson(res11);
-      expect(errorData.error.message).toMatch(/Endpoint limit reached.*free tier allows maximum 10 endpoints/i);
+      expect(errorData.message).toMatch(/Endpoint limit reached.*free tier allows maximum 10 endpoints/i);
 
       // Also verify trying to add to job2 fails
       const res11job2 = await app.request(`/api/jobs/${job2.id}/endpoints`, {
@@ -869,7 +869,7 @@ describe("jobs API", () => {
 
       expect(res11job2.status).toBe(400);
       const errorData2 = await getJson(res11job2);
-      expect(errorData2.error.message).toMatch(/Endpoint limit reached.*free tier allows maximum 10 endpoints/i);
+      expect(errorData2.message).toMatch(/Endpoint limit reached.*free tier allows maximum 10 endpoints/i);
     });
   });
 });
