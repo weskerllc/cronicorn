@@ -9,6 +9,7 @@
 
 import { hc } from "hono/client";
 
+import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";
 import jobs from "./routes/jobs/jobs.index.js";
@@ -17,6 +18,7 @@ import { type AppOpenAPI, createRouter } from "./types.js";
 
 function registerClientRoutes(app: AppOpenAPI) {
   return app
+    .route("/", authConfig)
     .route("/", jobs)
     .route("/", subscriptions)
     .route("/", dashboard)

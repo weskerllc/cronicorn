@@ -2,19 +2,8 @@
   "$schema": "https://context7.com/schema/context7.json",
   "projectTitle": "Cronicorn",
   "branch": "main",
-  "excludeFolders": [
-    "internal",
-    "archive"
-  ],
-  "excludeFiles": [
-    "CHANGELOG.md",
-    "changelog.md",
-    "CHANGELOG.mdx",
-    "changelog.mdx",
-    "LICENSE.md",
-    "license.md",
-    "CODE_OF_CONDUCT.md",
-    "code_of_conduct.md",
-    "NEWS.md"
+  "folders": [
+    "docs/public/**"
   ]
+
 }
