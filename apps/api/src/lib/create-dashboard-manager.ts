@@ -1,7 +1,7 @@
 import type { Clock } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { DrizzleJobsRepo, DrizzleRunsRepo } from "@cronicorn/adapter-drizzle";
+import { DrizzleJobsRepo, DrizzleRunsRepo, DrizzleSessionsRepo } from "@cronicorn/adapter-drizzle";
 import { DashboardManager } from "@cronicorn/services";
 
 /**
@@ -11,7 +11,7 @@ import { DashboardManager } from "@cronicorn/services";
  * The service layer (DashboardManager) only depends on ports (interfaces).
  *
  * **Architecture**:
- * - Creates transaction-bound repositories (DrizzleJobsRepo, DrizzleRunsRepo)
+ * - Creates transaction-bound repositories (DrizzleJobsRepo, DrizzleRunsRepo, DrizzleSessionsRepo)
  * - Injects stateless Clock singleton
  * - Returns fully-wired DashboardManager instance
  *
@@ -38,7 +38,9 @@ export function createDashboardManager(
   const jobsRepo = new DrizzleJobsRepo(tx);
   // @ts-expect-error - Drizzle type mismatch between pnpm versions
   const runsRepo = new DrizzleRunsRepo(tx);
+  // @ts-expect-error - Drizzle type mismatch between pnpm versions
+  const sessionsRepo = new DrizzleSessionsRepo(tx);
 
   // Wire everything into the manager (pure DI)
-  return new DashboardManager(jobsRepo, runsRepo, clock);
+  return new DashboardManager(jobsRepo, runsRepo, sessionsRepo, clock);
 }

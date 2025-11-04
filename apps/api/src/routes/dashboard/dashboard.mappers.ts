@@ -19,5 +19,9 @@ export function mapDashboardStatsToResponse(stats: DashboardStats): DashboardSta
       ...run,
       startedAt: run.startedAt.toISOString(),
     })),
+    recentAISessions: stats.recentAISessions.map(session => ({
+      ...session,
+      analyzedAt: session.analyzedAt.toISOString(),
+    })),
   };
 }
