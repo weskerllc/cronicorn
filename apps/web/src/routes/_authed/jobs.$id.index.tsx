@@ -46,12 +46,14 @@ export const Route = createFileRoute("/_authed/jobs/$id/")({
 
 type EndpointStatus = "active" | "paused";
 
+/** Row data for the endpoints table */
 type EndpointRow = {
   id: string;
   name: string;
   url: string;
   method: string;
   status: EndpointStatus;
+  /** ISO timestamp until which the endpoint is paused (used to compute status) */
   pausedUntil?: string;
 };
 
@@ -131,8 +133,8 @@ function JobDetailsPage() {
     return "active";
   };
 
-  // Get status badge variant
-  const getStatusVariant = (status: string) => {
+  // Get status badge variant (used for both job and endpoint statuses)
+  const getStatusVariant = (status: "active" | "paused" | "archived") => {
     switch (status) {
       case "active":
         return "default";
