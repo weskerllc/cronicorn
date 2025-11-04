@@ -1,3 +1,10 @@
+## [1.5.5](https://github.com/weskerllc/cronicorn/compare/v1.5.4...v1.5.5) (2025-11-04)
+
+
+### Bug Fixes
+
+* Nginx proxy ([d4186b6](https://github.com/weskerllc/cronicorn/commit/d4186b6a005fbf6f5fab995425b70e72062202f5))
+
 ## [1.5.4](https://github.com/weskerllc/cronicorn/compare/v1.5.3...v1.5.4) (2025-11-03)
 
 
