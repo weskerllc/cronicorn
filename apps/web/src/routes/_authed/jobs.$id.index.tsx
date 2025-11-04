@@ -32,6 +32,7 @@ import {
   pauseJob,
   resumeJob,
 } from "@/lib/api-client/queries/jobs.queries";
+import { getEndpointStatus } from "@/lib/endpoint-utils";
 
 export const Route = createFileRoute("/_authed/jobs/$id/")({
   loader: async ({ params, context }) => {
@@ -44,12 +45,17 @@ export const Route = createFileRoute("/_authed/jobs/$id/")({
   component: JobDetailsPage,
 });
 
+type EndpointStatus = "active" | "paused" | "archived";
+
+/** Row data for the endpoints table */
 type EndpointRow = {
   id: string;
   name: string;
   url: string;
   method: string;
-  status?: string;
+  status: EndpointStatus;
+  /** ISO timestamp until which the endpoint is paused (used to compute status) */
+  pausedUntil?: string;
 };
 
 function JobDetailsPage() {
@@ -120,8 +126,9 @@ function JobDetailsPage() {
     return new Date(dateString).toLocaleString();
   };
 
-  // Get status badge variant
-  const getStatusVariant = (status: string) => {
+  // Get status badge variant (used for both job and endpoint statuses)
+  // Endpoints can be "active" or "paused", jobs can also be "archived"
+  const getStatusVariant = (status: EndpointStatus): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case "active":
         return "default";
@@ -167,7 +174,11 @@ function JobDetailsPage() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: () => <Badge variant="default">Active</Badge>,
+      cell: ({ row }) => (
+        <Badge variant={getStatusVariant(row.original.status)} className="capitalize">
+          {row.original.status}
+        </Badge>
+      ),
     },
     {
       id: "actions",
@@ -342,7 +353,8 @@ function JobDetailsPage() {
             name: ep.name,
             url: ep.url || '',
             method: ep.method || 'GET',
-            status: 'active',
+            status: getEndpointStatus(ep.pausedUntil),
+            pausedUntil: ep.pausedUntil,
           }))}
           searchKey="name"
           searchPlaceholder="Search endpoints..."
