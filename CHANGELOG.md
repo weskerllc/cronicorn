@@ -1,3 +1,10 @@
+## [1.5.9](https://github.com/weskerllc/cronicorn/compare/v1.5.8...v1.5.9) (2025-11-04)
+
+
+### Bug Fixes
+
+* MCP Cleanup ([6bdea7e](https://github.com/weskerllc/cronicorn/commit/6bdea7e4f146b342e551cfb8c252b0f1094eebed))
+
 ## [1.5.8](https://github.com/weskerllc/cronicorn/compare/v1.5.7...v1.5.8) (2025-11-04)
 
 
