@@ -4,7 +4,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    // include: ["**/*.{test,spec}.{ts,tsx}", "**/tests/**/*.{ts,tsx}", "**/__tests__/**/*.{ts,tsx}"],
+    // Exclude e2e tests (use pnpm test:e2e for those)
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/apps/e2e/**",
+      "**/.{idea,git,cache,output,temp}/**",
+    ],
     coverage: {
       enabled: true,
       provider: "v8",

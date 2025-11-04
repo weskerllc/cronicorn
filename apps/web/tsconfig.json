@@ -33,7 +33,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@cronicorn/ui-library/*": ["../../packages/ui-library/src/*"]
+      "@cronicorn/ui-library/*": ["../../packages/ui-library/src/*"],
+      "@cronicorn/api/client": ["../api/src/client.ts"]
     }
 
   },

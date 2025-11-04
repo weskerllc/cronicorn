@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    // Shared packages - built via `tsc -b packages/**`
     { "path": "./packages/domain" },
     { "path": "./packages/content" },
     { "path": "./packages/worker-scheduler" },
@@ -10,15 +11,14 @@
     { "path": "./packages/adapter-cron" },
     { "path": "./packages/adapter-drizzle" },
     { "path": "./packages/adapter-http" },
+    { "path": "./packages/adapter-pino" },
     { "path": "./packages/adapter-stripe" },
     { "path": "./packages/adapter-system-clock" },
-    { "path": "./apps/scheduler" },
-    { "path": "./apps/ai-planner" },
-    { "path": "./apps/api" },
-    // apps/docs excluded - uses Docusaurus's own build system
-    { "path": "./apps/migrator" },
-    { "path": "./apps/test-ai" },
     { "path": "./packages/ui-library" },
-    { "path": "./apps/web" }
+    { "path": "./packages/api-contracts" },
+    { "path": "./packages/config-defaults" }
+
+    // Apps are built individually via pnpm filters (not tsc -b)
+    // Web and docs excluded - use Vite and Docusaurus respectively
   ]
 }

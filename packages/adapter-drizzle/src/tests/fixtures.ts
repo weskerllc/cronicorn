@@ -1,3 +1,5 @@
+// Import shared dev defaults for zero-config testing
+import { DEV_DATABASE } from "@cronicorn/config-defaults";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { test as base } from "vitest";
@@ -11,11 +13,7 @@ type Fixtures = {
 };
 
 // eslint-disable-next-line node/no-process-env
-const DATABASE_URL = process.env.DATABASE_URL;
-
-if (!DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is required for tests");
-}
+const DATABASE_URL = process.env.DATABASE_URL || DEV_DATABASE.URL;
 
 const pool = new Pool({ connectionString: DATABASE_URL });
 
