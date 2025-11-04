@@ -230,4 +230,5 @@ AI behavior:
 
 - **[Introduction](./introduction.md)** - Why use Cronicorn
 - **[Quick Start](./quick-start.md)** - Create your first job
+- **[How Cronicorn Compares](./comparisons.md)** - See how we stack up against other tools
 - **[Technical Documentation](./technical/system-architecture.md)** - For developers and self-hosters

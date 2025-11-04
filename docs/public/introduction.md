@@ -152,4 +152,5 @@ Retry failed webhooks intelligently:
 
 - **[Core Concepts](./core-concepts.md)** - Understand jobs, endpoints, and scheduling
 - **[Quick Start](./quick-start.md)** - Create your first scheduled job
+- **[How Cronicorn Compares](./comparisons.md)** - See how we stack up against other tools
 - **[Technical Deep Dive](./technical/system-architecture.md)** - For developers and self-hosters
