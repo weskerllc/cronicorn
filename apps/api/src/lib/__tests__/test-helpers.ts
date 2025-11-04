@@ -1,4 +1,5 @@
 import { schema } from "@cronicorn/adapter-drizzle";
+import { DEV_DATABASE } from "@cronicorn/config-defaults";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
@@ -36,11 +37,7 @@ export async function createTestDatabase(): Promise<{
   cleanup: () => Promise<void>;
 }> {
   // eslint-disable-next-line node/no-process-env
-  const DATABASE_URL = process.env.DATABASE_URL;
-
-  if (!DATABASE_URL) {
-    throw new Error("DATABASE_URL environment variable is required for tests");
-  }
+  const DATABASE_URL = process.env.DATABASE_URL || DEV_DATABASE.URL;
 
   const pool = new Pool({
     connectionString: DATABASE_URL,

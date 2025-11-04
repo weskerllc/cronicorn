@@ -157,6 +157,8 @@ describe("API routes", () => {
 
 ## Commands
 
+See **[Quality Checks](../../docs/public/developers/quality-checks.md)** for complete workflow and pre-commit/pre-merge requirements.
+
 ```bash
 # All tests
 pnpm test

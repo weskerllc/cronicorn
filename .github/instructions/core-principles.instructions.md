@@ -20,20 +20,13 @@ applyTo: '**'
 
 ## Development Workflow
 
-1. **Plan in ./.tasks/<doc>.md**: Break features into hierarchical TASK-X.Y.Z IDs
-2. **Implement incrementally**: Focus on vertical slices (complete features end-to-end)
-3. **Test continuously**: Unit tests mock ports; integration tests use transaction-per-test
-4. **Document decisions**: Create ADRs for architectural choices with task ID references
+1. **Test continuously**: Unit tests mock ports; integration tests use transaction-per-test
+2. **Document decisions**: Create ADRs for architectural choices with task ID references
 
 ## Quality Standards
 
-- **Before commit**: Run relevant tests, ensure no lint errors
-- **Before merge**: Full test suite passes, ADR created for decisions
-- **After implementation**: Update ./.tasks/<doc>.md status, verify task completion
+See **[Quality Checks](../../docs/public/developers/quality-checks.md)** for complete requirements.
 
 ## Technology Choices
 
-- **Monorepo**: pnpm workspaces with TypeScript project references
-- **API**: Hono framework with zod-openapi for type-safe endpoints
-- **Database**: Drizzle ORM with PostgreSQL, migration-based schema changes
-- **Testing**: Vitest with coverage, transaction-per-test for DB tests</content>
+See **[Workspace Structure](../../docs/public/developers/workspace-structure.md)** for complete requirements.
