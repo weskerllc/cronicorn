@@ -4,9 +4,9 @@
  * 1:1 mapping to API endpoint - uses helper utilities for concise implementation
  */
 
-import { base as dashboardBase } from "@cronicorn/api-contracts/dashboard";
-import type { DashboardStatsResponse } from "@cronicorn/api-contracts/dashboard";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+
+import { base as dashboardBase } from "@cronicorn/api-contracts/dashboard";
 
 import type { ApiClient } from "../../ports/api-client.js";
 

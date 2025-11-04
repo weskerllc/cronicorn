@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { 
-  Activity, 
-  AlertCircle, 
-  CheckCircle2, 
-  Clock, 
-  Edit, 
-  ExternalLink, 
-  Pause, 
-  Play, 
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Edit,
+  ExternalLink,
+  Pause,
+  Play,
   TrendingUp,
   Zap
 } from "lucide-react";
@@ -24,15 +24,15 @@ import {
 } from "@cronicorn/ui-library/components/card";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { toast } from "sonner";
-
 import { PageHeader } from "../../components/page-header";
 import { DataTable } from "../../components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
-import { 
-  endpointByIdQueryOptions, 
-  pauseEndpoint, 
-  resetFailures, 
-  scheduleOneShot 
+import { isEndpointPaused } from "@/lib/endpoint-utils";
+import {
+  endpointByIdQueryOptions,
+  pauseEndpoint,
+  resetFailures,
+  scheduleOneShot
 } from "@/lib/api-client/queries/endpoints.queries";
 import { healthQueryOptions, runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
@@ -104,8 +104,7 @@ function ViewEndpointPage() {
   });
 
   const handlePause = async () => {
-    const isPaused = endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date();
-    const pausedUntil = isPaused ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const isPaused = isEndpointPaused(endpoint.pausedUntil); const pausedUntil = isPaused ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     await pauseMutate(pausedUntil);
   };
 
@@ -117,7 +116,7 @@ function ViewEndpointPage() {
     await runNowMutate();
   };
 
-  const isPaused = !!(endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date());
+  const isPaused = isEndpointPaused(endpoint.pausedUntil);
   const hasAIHints = !!(endpoint.aiHintIntervalMs || endpoint.aiHintNextRunAt || endpoint.aiHintReason);
   const isHintExpired = endpoint.aiHintExpiresAt && new Date(endpoint.aiHintExpiresAt) < new Date();
 
@@ -331,9 +330,9 @@ function ViewEndpointPage() {
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">URL:</span>
-              <a 
-                href={endpoint.url} 
-                target="_blank" 
+              <a
+                href={endpoint.url}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="font-mono text-xs hover:underline flex items-center gap-1 max-w-xs truncate"
               >
@@ -354,9 +353,9 @@ function ViewEndpointPage() {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Schedule:</span>
               <span className="font-mono text-xs">
-                {endpoint.baselineCron || 
-                  (endpoint.baselineIntervalMs ? 
-                    `Every ${Math.round(endpoint.baselineIntervalMs / 60000)}min` : 
+                {endpoint.baselineCron ||
+                  (endpoint.baselineIntervalMs ?
+                    `Every ${Math.round(endpoint.baselineIntervalMs / 60000)}min` :
                     "Not configured")}
               </span>
             </div>
@@ -404,7 +403,7 @@ function ViewEndpointPage() {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Last Run:</span>
               <span className="font-mono text-xs">
-                {endpoint.lastRunAt 
+                {endpoint.lastRunAt
                   ? new Date(endpoint.lastRunAt).toLocaleString()
                   : "Never"}
               </span>
