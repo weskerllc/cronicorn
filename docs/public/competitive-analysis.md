@@ -23,15 +23,15 @@ Cronicorn is purpose-built for **adaptive HTTP job scheduling**—a unique posit
 
 ## Quick Comparison
 
-| Feature | Cronicorn | Trigger.dev | Inngest | Temporal | QStash | Windmill |
-|---------|-----------|-------------|---------|----------|--------|----------|
-| **AI-Adaptive Scheduling** | ✅ Core Feature | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **HTTP Endpoint Execution** | ✅ | ✅ | ✅ | ⚠️ Manual | ✅ | ✅ |
-| **Cron/Interval Scheduling** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Self-Hosted** | ✅ Free | ✅ Complex | ✅ Free | ✅ Complex | ❌ | ✅ Free |
-| **Entry Price** | Free (soon) | $10/mo | Free | $100/mo | Free | Free |
-| **Learning Curve** | Low | Medium | Medium | High | Low | High |
-| **Best For** | HTTP health checks, API polling, adaptive workflows | AI workflows, TypeScript apps | Event-driven serverless | Enterprise orchestration | Simple webhooks | Internal tools |
+| Feature | Cronicorn | Trigger.dev | Inngest | Temporal | QStash | n8n | Windmill |
+|---------|-----------|-------------|---------|----------|--------|-----|----------|
+| **AI-Adaptive Scheduling** | ✅ Core Feature | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **HTTP Endpoint Execution** | ✅ | ✅ | ✅ | ⚠️ Manual | ✅ | ✅ | ✅ |
+| **Cron/Interval Scheduling** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Self-Hosted** | ✅ Free | ✅ Complex | ✅ Free | ✅ Complex | ❌ | ✅ Free | ✅ Free |
+| **Entry Price** | Free (soon) | $10/mo | Free | $100/mo | Free | Free | Free |
+| **Learning Curve** | Low | Medium | Medium | High | Low | Low | High |
+| **Best For** | HTTP health checks, API polling, adaptive workflows | AI workflows, TypeScript apps | Event-driven serverless | Enterprise orchestration | Simple webhooks | Visual workflows, integrations | Internal tools |
 
 ### At a Glance
 
@@ -40,6 +40,7 @@ Cronicorn is purpose-built for **adaptive HTTP job scheduling**—a unique posit
 **Inngest** = Event-driven serverless background jobs  
 **Temporal** = Enterprise workflow engine for distributed systems  
 **QStash** = Serverless HTTP message queue  
+**n8n** = Visual workflow automation with 400+ integrations  
 **Windmill** = Developer platform for internal tools  
 
 ---
@@ -238,6 +239,28 @@ Enable AI when you want optimization. Disable it if you prefer predictable behav
 
 ---
 
+### 🆚 Cronicorn vs. n8n
+
+**n8n** is a popular open-source workflow automation platform with a visual node-based editor and 400+ integrations.
+
+| What n8n Does Better | What Cronicorn Does Better |
+|---------------------|---------------------------|
+| Visual workflow builder (drag-and-drop) | AI-adaptive scheduling |
+| 400+ pre-built integrations | Purpose-built for HTTP endpoints |
+| Multi-app workflow orchestration | Automatic schedule optimization |
+| Low-code/no-code friendly | Explainable scheduling decisions |
+| Custom JavaScript/Python in workflows | Constraint-aware adaptation |
+
+**Pricing**: n8n free (self-hosted); Cloud starts at $20/mo (2,500 executions). Cronicorn plans similar affordability.
+
+**Choose n8n if**: You need to connect multiple apps together in visual workflows, especially for non-developers.
+
+**Choose Cronicorn if**: You need HTTP endpoints with intelligent, adaptive scheduling that learns from performance.
+
+**Use both**: n8n orchestrates multi-step workflows; Cronicorn provides the adaptive scheduling trigger with webhooks. Many teams use Cronicorn to trigger n8n workflows at optimized times based on real conditions.
+
+---
+
 ## What Makes Cronicorn Unique?
 
 ### The "Adaptive Cron" Gap
@@ -269,14 +292,13 @@ We fill the gap between "too simple" and "too complex":
 
 ### When to Consider Alternatives
 
-### When to Consider Alternatives
-
 **Consider these platforms when you need:**
 
 - **Trigger.dev**: Multi-step TypeScript workflows, AI agent orchestration, complex retry logic
 - **Inngest**: Event-driven serverless architectures triggered by user actions or webhooks
 - **Temporal**: Enterprise-grade distributed workflow orchestration with saga patterns
 - **QStash**: Simple serverless message queue without adaptive scheduling needs
+- **n8n**: Visual workflow automation connecting multiple apps with drag-and-drop interface
 - **Windmill**: Full internal tool platform with script-to-UI generation
 
 **Or combine them**: Many teams use Cronicorn for adaptive scheduling alongside these platforms for workflow orchestration.  
@@ -292,6 +314,7 @@ We fill the gap between "too simple" and "too complex":
 | **Inngest** | 50k executions/mo | $75/mo (1M executions) | Custom |
 | **Temporal Cloud** | Self-host only | $100/mo | Custom |
 | **QStash** | 1k messages/day | Pay-as-you-go ($1/100k) | Custom |
+| **n8n** | Self-host free | $20/mo (2,500 executions) | Custom |
 | **Windmill** | Self-host free | $120/mo cloud | $170/mo self-hosted |
 
 **Cronicorn's pricing philosophy**: Simple, affordable, transparent. Coming soon.
