@@ -9,7 +9,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@cronicorn/ui-library/components/dropdown-menu";
 
@@ -72,7 +71,7 @@ const columns: Array<ColumnDef<AISessionRow>> = [
     accessorKey: "reasoning",
     header: "Reasoning",
     cell: ({ row }) => (
-      <div className="max-w-md">
+      <div className="max-w-md" title={row.original.reasoning}>
         <span className="text-sm line-clamp-2">{row.original.reasoning}</span>
       </div>
     ),
@@ -140,8 +139,6 @@ const columns: Array<ColumnDef<AISessionRow>> = [
               View Endpoint
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>View Details</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),
