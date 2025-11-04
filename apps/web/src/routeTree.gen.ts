@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -31,6 +33,16 @@ import { Route as AuthedEndpointsIdRunsRouteImport } from './routes/_authed/endp
 import { Route as AuthedEndpointsIdHealthRouteImport } from './routes/_authed/endpoints.$id.health'
 import { Route as AuthedJobsJobIdEndpointsNewRouteImport } from './routes/_authed/jobs.$jobId.endpoints.new'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -143,6 +155,8 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
@@ -165,6 +179,8 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
@@ -189,6 +205,8 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_authed/api-keys': typeof AuthedApiKeysRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/plan': typeof AuthedPlanRoute
@@ -213,6 +231,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/api-keys'
     | '/dashboard'
     | '/plan'
@@ -235,6 +255,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/api-keys'
     | '/dashboard'
     | '/plan'
@@ -258,6 +280,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/_authed/api-keys'
     | '/_authed/dashboard'
     | '/_authed/plan'
@@ -282,10 +306,26 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -483,6 +523,8 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
