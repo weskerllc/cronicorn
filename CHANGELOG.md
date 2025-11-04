@@ -1,3 +1,10 @@
+## [1.5.8](https://github.com/weskerllc/cronicorn/compare/v1.5.7...v1.5.8) (2025-11-04)
+
+
+### Bug Fixes
+
+* Web - not found ([bf248f4](https://github.com/weskerllc/cronicorn/commit/bf248f450193c1e4b778ef08d5c8d1f1c5bfc690))
+
 ## [1.5.7](https://github.com/weskerllc/cronicorn/compare/v1.5.6...v1.5.7) (2025-11-04)
 
 
