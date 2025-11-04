@@ -86,6 +86,15 @@ export type JobsRepo = {
   deleteEndpoint: (id: string) => Promise<void>;
 
   /**
+   * Count total endpoints for a user across all jobs.
+   * Used for enforcing tier-based endpoint limits.
+   *
+   * @param userId - The user/tenant ID
+   * @returns Total number of endpoints owned by this user
+   */
+  countEndpointsByUser: (userId: string) => Promise<number>;
+
+  /**
    * Get user's tier for quota enforcement.
    * Returns tier level ("free" | "pro" | "enterprise") for the given user ID.
    */
@@ -318,4 +327,22 @@ export type SessionsRepo = {
    * @returns Total tokens consumed
    */
   getTotalTokenUsage: (endpointId: string, since: Date) => Promise<number>;
+
+  /**
+   * Get recent analysis sessions across all endpoints for a user.
+   * Used by dashboard to display recent AI activity.
+   *
+   * @param userId - The user ID
+   * @param limit - Maximum number of sessions to return (default: 50)
+   * @returns Array of sessions with endpoint context, ordered newest to oldest
+   */
+  getRecentSessionsGlobal: (userId: string, limit?: number) => Promise<Array<{
+    id: string;
+    endpointId: string;
+    analyzedAt: Date;
+    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+    reasoning: string;
+    tokenUsage: number | null;
+    durationMs: number | null;
+  }>>;
 };

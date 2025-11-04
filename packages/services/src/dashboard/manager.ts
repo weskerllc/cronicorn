@@ -1,10 +1,11 @@
-import type { Clock, JobsRepo, RunsRepo } from "@cronicorn/domain";
+import type { Clock, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import type {
   DashboardStats,
   EndpointStats,
   JobStats,
   RecentActivityStats,
+  RecentAISession,
   RecentRun,
   RunTimeSeriesPoint,
   SuccessRateStats,
@@ -16,7 +17,7 @@ import type {
  * high-level statistics and metrics for the user dashboard.
  *
  * **Architecture**:
- * - Depends ONLY on domain ports (JobsRepo, RunsRepo, Clock)
+ * - Depends ONLY on domain ports (JobsRepo, RunsRepo, SessionsRepo, Clock)
  * - Zero knowledge of adapters or HTTP layer
  * - Transaction management happens in composition root (API)
  * - Receives repos already bound to transaction context
@@ -37,8 +38,9 @@ import type {
  * await db.transaction(async (tx) => {
  *   const jobsRepo = new DrizzleJobsRepo(tx);
  *   const runsRepo = new DrizzleRunsRepo(tx);
+ *   const sessionsRepo = new DrizzleSessionsRepo(tx);
  *   const clock = new SystemClock();
- *   const manager = new DashboardManager(jobsRepo, runsRepo, clock);
+ *   const manager = new DashboardManager(jobsRepo, runsRepo, sessionsRepo, clock);
  *
  *   const stats = await manager.getDashboardStats(userId, { days: 7 });
  * });
@@ -48,6 +50,7 @@ export class DashboardManager {
   constructor(
     private readonly jobsRepo: JobsRepo,
     private readonly runsRepo: RunsRepo,
+    private readonly sessionsRepo: SessionsRepo,
     private readonly clock: Clock,
   ) { }
 
@@ -75,6 +78,7 @@ export class DashboardManager {
       runTimeSeries,
       topEndpoints,
       recentRuns,
+      recentAISessions,
     ] = await Promise.all([
       this.getJobsStats(userId),
       this.getEndpointsStats(userId),
@@ -83,6 +87,7 @@ export class DashboardManager {
       this.getRunTimeSeries(userId, days, now),
       this.getTopEndpoints(userId, 5),
       this.getRecentRunsGlobal(userId, 50),
+      this.getRecentAISessionsGlobal(userId, 50),
     ]);
 
     return {
@@ -93,6 +98,7 @@ export class DashboardManager {
       runTimeSeries,
       topEndpoints,
       recentRuns,
+      recentAISessions,
     };
   }
 
@@ -418,6 +424,69 @@ export class DashboardManager {
         startedAt: run.startedAt,
         durationMs: run.durationMs ?? null,
         source: run.source ?? null,
+      };
+    });
+  }
+
+  /**
+   * Get most recent AI sessions across all endpoints.
+   *
+   * @param userId - The user ID
+   * @param limit - Maximum number of sessions to return
+   * @returns Recent AI sessions with endpoint/job context
+   */
+  private async getRecentAISessionsGlobal(
+    userId: string,
+    limit: number,
+  ): Promise<RecentAISession[]> {
+    // Fetch recent sessions
+    const sessions = await this.sessionsRepo.getRecentSessionsGlobal(userId, limit);
+
+    // Get unique endpoint IDs
+    const endpointIds = [...new Set(sessions.map(session => session.endpointId))];
+
+    // Fetch endpoint details in parallel
+    const endpoints = await Promise.all(
+      endpointIds.map(id => this.jobsRepo.getEndpoint(id)),
+    );
+
+    // Create lookup maps
+    const endpointMap = new Map(
+      endpoints
+        .filter((ep): ep is NonNullable<typeof ep> => ep !== null && ep !== undefined)
+        .map(ep => [ep.id, ep]),
+    );
+
+    const jobIds = [...new Set(
+      endpoints
+        .filter((ep): ep is NonNullable<typeof ep> => ep !== null && ep !== undefined)
+        .map(ep => ep.jobId)
+        .filter((id): id is string => id !== null && id !== undefined),
+    )];
+    const jobs = await Promise.all(
+      jobIds.map(id => this.jobsRepo.getJob(id)),
+    );
+    const jobMap = new Map(
+      jobs
+        .filter((job): job is NonNullable<typeof job> => job !== null && job !== undefined)
+        .map(job => [job.id, job.name]),
+    );
+
+    // Enrich sessions with endpoint/job names
+    return sessions.map((session) => {
+      const endpoint = endpointMap.get(session.endpointId);
+      const jobName = endpoint?.jobId ? jobMap.get(endpoint.jobId) || "Unknown Job" : "Unknown Job";
+
+      return {
+        id: session.id,
+        endpointId: session.endpointId,
+        endpointName: endpoint?.name || "Unknown Endpoint",
+        jobName,
+        analyzedAt: session.analyzedAt,
+        reasoning: session.reasoning,
+        tokenUsage: session.tokenUsage,
+        durationMs: session.durationMs,
+        toolCallCount: session.toolCalls.length,
       };
     });
   }

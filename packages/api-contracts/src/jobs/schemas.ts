@@ -1,7 +1,15 @@
 import { z } from "@hono/zod-openapi";
 import cronParser from "cron-parser";
 
+// ==================== Endpoint Orchestration Schemas ====================
+import * as base from "./schemas.base.js";
+
 // ==================== Job Lifecycle Schemas ====================
+
+/**
+ * These schemas extend the base schemas with OpenAPI decorations.
+ * For clients that don't need OpenAPI (MCP, web forms), import from schemas.base.ts
+ */
 
 export const CreateJobRequestSchema = z.object({
   name: z.string().min(1).max(255).openapi({
@@ -33,8 +41,6 @@ export const JobResponseSchema = z.object({
 export const JobWithCountResponseSchema = JobResponseSchema.extend({
   endpointCount: z.number().int(),
 });
-
-// ==================== Endpoint Orchestration Schemas ====================
 
 // Helper function to validate cron expressions
 function validateCronExpression(expr: string): boolean {
@@ -138,49 +144,19 @@ export const EndpointResponseSchema = z.object({
 
 // ==================== Adaptive Scheduling Schemas ====================
 
-export const ApplyIntervalHintRequestSchema = z.object({
-  intervalMs: z.number().int().positive(),
-  ttlMinutes: z.number().int().positive().optional(),
-  reason: z.string().optional(),
-});
+export const ApplyIntervalHintRequestSchema = base.ApplyIntervalHintRequestBaseSchema;
 
-export const ScheduleOneShotRequestSchema = z.object({
-  nextRunAt: z.string().datetime().optional(),
-  nextRunInMs: z.number().int().positive().optional(),
-  ttlMinutes: z.number().int().positive().optional(),
-  reason: z.string().optional(),
-}).refine(
-  data => data.nextRunAt || data.nextRunInMs !== undefined,
-  { message: "Must provide either nextRunAt or nextRunInMs", path: ["nextRunAt"] },
-);
+export const ScheduleOneShotRequestSchema = base.ScheduleOneShotRequestBaseSchema;
 
-export const PauseResumeRequestSchema = z.object({
-  pausedUntil: z.string().datetime().nullable(),
-  reason: z.string().optional(),
-});
+export const PauseResumeRequestSchema = base.PauseResumeRequestBaseSchema;
 
 // ==================== Execution Visibility Schemas ====================
 
-export const ListRunsQuerySchema = z.object({
-  endpointId: z.string().optional(),
-  status: z.enum(["success", "failed"]).optional(),
-  limit: z.coerce.number().int().positive().optional(),
-  offset: z.coerce.number().int().nonnegative().optional(),
-});
+export const ListRunsQuerySchema = base.ListRunsQueryBaseSchema;
 
-export const RunSummaryResponseSchema = z.object({
-  runId: z.string(),
-  endpointId: z.string(),
-  startedAt: z.string().datetime(),
-  status: z.string(),
-  durationMs: z.number().optional(),
-  source: z.string().optional(),
-});
+export const RunSummaryResponseSchema = base.RunSummaryResponseBaseSchema;
 
-export const ListRunsResponseSchema = z.object({
-  runs: z.array(RunSummaryResponseSchema),
-  total: z.number().int(),
-});
+export const ListRunsResponseSchema = base.ListRunsResponseBaseSchema;
 
 export const RunDetailsResponseSchema = z.object({
   id: z.string(),
@@ -208,17 +184,6 @@ export const RunDetailsResponseSchema = z.object({
   }),
 });
 
-export const HealthSummaryQuerySchema = z.object({
-  sinceHours: z.coerce.number().int().positive().optional(),
-});
+export const HealthSummaryQuerySchema = base.HealthSummaryQueryBaseSchema;
 
-export const HealthSummaryResponseSchema = z.object({
-  successCount: z.number().int(),
-  failureCount: z.number().int(),
-  avgDurationMs: z.number().nullable(),
-  lastRun: z.object({
-    status: z.string(),
-    at: z.string().datetime(),
-  }).nullable(),
-  failureStreak: z.number().int(),
-});
+export const HealthSummaryResponseSchema = base.HealthSummaryResponseBaseSchema;

@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -29,8 +31,19 @@ import { Route as AuthedEndpointsIdIndexRouteImport } from './routes/_authed/end
 import { Route as AuthedJobsIdEditRouteImport } from './routes/_authed/jobs.$id.edit'
 import { Route as AuthedEndpointsIdRunsRouteImport } from './routes/_authed/endpoints.$id.runs'
 import { Route as AuthedEndpointsIdHealthRouteImport } from './routes/_authed/endpoints.$id.health'
+import { Route as AuthedEndpointsIdEditRouteImport } from './routes/_authed/endpoints.$id.edit'
 import { Route as AuthedJobsJobIdEndpointsNewRouteImport } from './routes/_authed/jobs.$jobId.endpoints.new'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -131,6 +144,11 @@ const AuthedEndpointsIdHealthRoute = AuthedEndpointsIdHealthRouteImport.update({
   path: '/endpoints/$id/health',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedEndpointsIdEditRoute = AuthedEndpointsIdEditRouteImport.update({
+  id: '/endpoints/$id/edit',
+  path: '/endpoints/$id/edit',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedJobsJobIdEndpointsNewRoute =
   AuthedJobsJobIdEndpointsNewRouteImport.update({
     id: '/jobs/$jobId/endpoints/new',
@@ -143,6 +161,8 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
@@ -153,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/jobs': typeof AuthedJobsIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
+  '/endpoints/$id/edit': typeof AuthedEndpointsIdEditRoute
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/jobs/$id/edit': typeof AuthedJobsIdEditRoute
@@ -165,6 +186,8 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
@@ -175,6 +198,7 @@ export interface FileRoutesByTo {
   '/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/jobs': typeof AuthedJobsIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
+  '/endpoints/$id/edit': typeof AuthedEndpointsIdEditRoute
   '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/jobs/$id/edit': typeof AuthedJobsIdEditRoute
@@ -189,6 +213,8 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_authed/api-keys': typeof AuthedApiKeysRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/plan': typeof AuthedPlanRoute
@@ -199,6 +225,7 @@ export interface FileRoutesById {
   '/_authed/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/_authed/jobs/': typeof AuthedJobsIndexRoute
   '/_authed/settings/': typeof AuthedSettingsIndexRoute
+  '/_authed/endpoints/$id/edit': typeof AuthedEndpointsIdEditRoute
   '/_authed/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/_authed/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/_authed/jobs/$id/edit': typeof AuthedJobsIdEditRoute
@@ -213,6 +240,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/api-keys'
     | '/dashboard'
     | '/plan'
@@ -223,6 +252,7 @@ export interface FileRouteTypes {
     | '/settings/connected-devices'
     | '/jobs'
     | '/settings'
+    | '/endpoints/$id/edit'
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
     | '/jobs/$id/edit'
@@ -235,6 +265,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/api-keys'
     | '/dashboard'
     | '/plan'
@@ -245,6 +277,7 @@ export interface FileRouteTypes {
     | '/settings/connected-devices'
     | '/jobs'
     | '/settings'
+    | '/endpoints/$id/edit'
     | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
     | '/jobs/$id/edit'
@@ -258,6 +291,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/_authed/api-keys'
     | '/_authed/dashboard'
     | '/_authed/plan'
@@ -268,6 +303,7 @@ export interface FileRouteTypes {
     | '/_authed/settings/connected-devices'
     | '/_authed/jobs/'
     | '/_authed/settings/'
+    | '/_authed/endpoints/$id/edit'
     | '/_authed/endpoints/$id/health'
     | '/_authed/endpoints/$id/runs'
     | '/_authed/jobs/$id/edit'
@@ -282,10 +318,26 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -426,6 +478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedEndpointsIdHealthRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/endpoints/$id/edit': {
+      id: '/_authed/endpoints/$id/edit'
+      path: '/endpoints/$id/edit'
+      fullPath: '/endpoints/$id/edit'
+      preLoaderRoute: typeof AuthedEndpointsIdEditRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/jobs/$jobId/endpoints/new': {
       id: '/_authed/jobs/$jobId/endpoints/new'
       path: '/jobs/$jobId/endpoints/new'
@@ -447,6 +506,7 @@ interface AuthedRouteChildren {
   AuthedSettingsConnectedDevicesRoute: typeof AuthedSettingsConnectedDevicesRoute
   AuthedJobsIndexRoute: typeof AuthedJobsIndexRoute
   AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
+  AuthedEndpointsIdEditRoute: typeof AuthedEndpointsIdEditRoute
   AuthedEndpointsIdHealthRoute: typeof AuthedEndpointsIdHealthRoute
   AuthedEndpointsIdRunsRoute: typeof AuthedEndpointsIdRunsRoute
   AuthedJobsIdEditRoute: typeof AuthedJobsIdEditRoute
@@ -466,6 +526,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedSettingsConnectedDevicesRoute: AuthedSettingsConnectedDevicesRoute,
   AuthedJobsIndexRoute: AuthedJobsIndexRoute,
   AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
+  AuthedEndpointsIdEditRoute: AuthedEndpointsIdEditRoute,
   AuthedEndpointsIdHealthRoute: AuthedEndpointsIdHealthRoute,
   AuthedEndpointsIdRunsRoute: AuthedEndpointsIdRunsRoute,
   AuthedJobsIdEditRoute: AuthedJobsIdEditRoute,
@@ -483,6 +544,8 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

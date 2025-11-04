@@ -10,23 +10,23 @@ import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
 
-import { createSchemaAndShape, registerApiTool } from "../helpers/index.js";
+import { registerApiTool, toShape } from "../helpers/index.js";
 
-// Define schemas once, get both validator and MCP shape
-const [ResetFailuresRequestSchema, resetFailuresInputShape] = createSchemaAndShape({
+// Simple POST request with just an ID
+const ResetFailuresRequestSchema = z.object({
   id: z.string().describe("Endpoint ID"),
 });
 
-// No response body for 204 No Content
-const [EmptyResponseSchema, emptyResponseShape] = createSchemaAndShape({});
+// Empty response for 204 No Content
+const EmptyResponseSchema = z.object({});
 
 export function registerPostResetFailures(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
     name: "POST_endpoints_id_reset_failures",
     title: "Reset Failure Count",
     description: "Reset the failure count for an endpoint to zero. Useful after fixing an issue or to clear accumulated failures that may trigger alerts or backoff behavior.",
-    inputSchema: resetFailuresInputShape,
-    outputSchema: emptyResponseShape,
+    inputSchema: toShape(ResetFailuresRequestSchema),
+    outputSchema: toShape(EmptyResponseSchema),
     inputValidator: ResetFailuresRequestSchema,
     outputValidator: EmptyResponseSchema,
     method: "POST",

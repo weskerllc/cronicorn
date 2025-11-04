@@ -2,6 +2,11 @@ import { z } from "@hono/zod-openapi";
 
 // ==================== Dashboard Stats Response Schema ====================
 
+/**
+ * These schemas extend the base schemas with OpenAPI decorations.
+ * For clients that don't need OpenAPI (MCP, web forms), import from schemas.base.ts
+ */
+
 export const DashboardStatsResponseSchema = z.object({
   jobs: z.object({
     total: z.number().int().nonnegative().openapi({
@@ -133,6 +138,39 @@ export const DashboardStatsResponseSchema = z.object({
     }),
   ).openapi({
     description: "Most recent 50 runs across all endpoints",
+  }),
+
+  recentAISessions: z.array(
+    z.object({
+      id: z.string(),
+      endpointId: z.string(),
+      endpointName: z.string().openapi({
+        description: "Name of the endpoint that was analyzed",
+      }),
+      jobName: z.string().openapi({
+        description: "Name of the parent job",
+      }),
+      analyzedAt: z.string().datetime().openapi({
+        description: "When the AI analysis occurred",
+      }),
+      reasoning: z.string().openapi({
+        description: "AI's reasoning/explanation for its decisions",
+      }),
+      tokenUsage: z.number().int().nonnegative().nullable().openapi({
+        description: "Number of tokens consumed",
+        example: 1523,
+      }),
+      durationMs: z.number().int().nonnegative().nullable().openapi({
+        description: "Analysis duration in milliseconds",
+        example: 3421,
+      }),
+      toolCallCount: z.number().int().nonnegative().openapi({
+        description: "Number of tools called during analysis",
+        example: 3,
+      }),
+    }),
+  ).openapi({
+    description: "Most recent 50 AI analysis sessions across all endpoints",
   }),
 }).openapi({
   description: "Aggregated dashboard statistics for the authenticated user",
