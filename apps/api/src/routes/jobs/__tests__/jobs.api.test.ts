@@ -299,6 +299,42 @@ describe("jobs API", () => {
       expect(data.minIntervalMs).toBe(60000);
       expect(data.maxIntervalMs).toBe(600000);
     });
+
+    test("saves description and optional fields when creating endpoint", async ({ tx }) => {
+      const mockSession = createMockSession(mockUserId);
+      const mockAuth = createMockAuth(mockSession);
+      const app = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
+
+      const jobRes = await app.request("/api/jobs", {
+        method: "POST",
+        body: JSON.stringify({ name: "Job with Detailed Endpoint" }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const job = await getJson(jobRes);
+
+      const res = await app.request(`/api/jobs/${job.id}/endpoints`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Health Check",
+          description: "Monitors API health and returns status metrics",
+          url: "https://example.com/health",
+          method: "GET",
+          baselineIntervalMs: 60000,
+          maxExecutionTimeMs: 30000,
+          maxResponseSizeKb: 100,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      expect(res.status).toBe(201);
+      const data = await getJson(res);
+      expect(data).toMatchObject({
+        name: "Health Check",
+        description: "Monitors API health and returns status metrics",
+        maxExecutionTimeMs: 30000,
+        maxResponseSizeKb: 100,
+      });
+    });
   });
 
   describe("get /api/jobs/:jobId/endpoints", () => {

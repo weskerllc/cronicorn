@@ -17,6 +17,7 @@ export type CreateJobInput = {
 export type AddEndpointInput = {
   name: string;
   jobId: string; // Required: must belong to a job
+  description?: string;
   baselineCron?: string;
   baselineIntervalMs?: number;
   minIntervalMs?: number;
@@ -26,6 +27,8 @@ export type AddEndpointInput = {
   headersJson?: Record<string, string>;
   bodyJson?: import("@cronicorn/domain").JsonValue;
   timeoutMs?: number;
+  maxExecutionTimeMs?: number;
+  maxResponseSizeKb?: number;
 };
 
 /**
@@ -64,6 +67,9 @@ function validateAddEndpointInput(input: AddEndpointInput): void {
   }
   if (input.name.length > 255) {
     throw new ValidationError("Endpoint name must be 255 characters or less");
+  }
+  if (input.description && input.description.length > 2000) {
+    throw new ValidationError("Endpoint description must be 2000 characters or less");
   }
 
   // Must have exactly one baseline schedule
@@ -107,6 +113,16 @@ function validateAddEndpointInput(input: AddEndpointInput): void {
   // Validate timeout
   if (input.timeoutMs && input.timeoutMs < 0) {
     throw new ValidationError("Timeout must be a positive number");
+  }
+
+  // Validate maxExecutionTimeMs
+  if (input.maxExecutionTimeMs && (input.maxExecutionTimeMs < 0 || input.maxExecutionTimeMs > 1800000)) {
+    throw new ValidationError("Max execution time must be between 0 and 1800000ms (30 minutes)");
+  }
+
+  // Validate maxResponseSizeKb
+  if (input.maxResponseSizeKb && input.maxResponseSizeKb < 0) {
+    throw new ValidationError("Max response size must be a positive number");
   }
 }
 
@@ -331,6 +347,7 @@ export class JobsManager {
       jobId: input.jobId,
       tenantId: userId,
       name: input.name,
+      description: input.description,
       baselineCron: input.baselineCron,
       baselineIntervalMs: input.baselineIntervalMs,
       minIntervalMs: input.minIntervalMs,
@@ -342,6 +359,8 @@ export class JobsManager {
       headersJson: input.headersJson,
       bodyJson: input.bodyJson,
       timeoutMs: input.timeoutMs,
+      maxExecutionTimeMs: input.maxExecutionTimeMs,
+      maxResponseSizeKb: input.maxResponseSizeKb,
     };
 
     // Calculate initial nextRunAt based on baseline schedule
