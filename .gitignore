@@ -11,6 +11,9 @@ lerna-debug.log*
 test-results/
 playwright-report/
 test-results.json
+playwright/.cache/
+apps/e2e/test-results/
+apps/e2e/playwright-report/
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
