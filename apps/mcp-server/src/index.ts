@@ -11,7 +11,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { authenticate } from "./auth/device-flow.js";
-import { getCredentials, isTokenExpired } from "./auth/token-store.js";
+import { deleteCredentials, getCredentials, isTokenExpired } from "./auth/token-store.js";
 import { loadConfig } from "./env.js";
 import { registerResources } from "./resources/index.js";
 import { registerTools } from "./tools/index.js";
@@ -33,7 +33,8 @@ async function main() {
     if (credentials && isTokenExpired(credentials)) {
       const expiresAtDate = new Date(credentials.expires_at);
       console.error(`⚠️  Token expired at ${expiresAtDate.toISOString()}`);
-      console.error("Starting re-authentication...");
+      console.error("Clearing expired credentials and starting re-authentication...");
+      await deleteCredentials();
     }
     else {
       console.error("No credentials found. Starting OAuth device authorization...");
