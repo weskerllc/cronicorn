@@ -10,6 +10,7 @@ import { DrizzleJobsRepo, DrizzleRunsRepo, schema } from "@cronicorn/adapter-dri
 import { HttpDispatcher } from "@cronicorn/adapter-http";
 import { PinoLoggerAdapter } from "@cronicorn/adapter-pino";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
+import { DEV_DATABASE, DEV_ENV } from "@cronicorn/config-defaults";
 import { Scheduler } from "@cronicorn/worker-scheduler";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -20,15 +21,15 @@ import { z } from "zod";
  * Configuration schema with sensible defaults
  */
 const configSchema = z.object({
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().url().default(DEV_DATABASE.URL),
   BATCH_SIZE: z.coerce.number().int().positive().default(10),
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
   CLAIM_HORIZON_MS: z.coerce.number().int().positive().default(10000),
   CLEANUP_INTERVAL_MS: z.coerce.number().int().positive().default(300000), // 5 minutes
   ZOMBIE_RUN_THRESHOLD_MS: z.coerce.number().int().positive().default(3600000), // 1 hour
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default(DEV_ENV.LOG_LEVEL),
   // eslint-disable-next-line node/no-process-env
-  NODE_ENV: z.enum(["development", "production", "test"]).default(process.env.NODE_ENV === "production" ? "production" : "development"),
+  NODE_ENV: z.enum(["development", "production", "test"]).default(process.env.NODE_ENV === "production" ? "production" : DEV_ENV.NODE_ENV),
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -57,15 +58,15 @@ async function main() {
     level: config.LOG_LEVEL,
     ...(config.NODE_ENV === "development"
       ? {
-          transport: {
-            target: "pino-pretty",
-            options: {
-              colorize: true,
-              translateTime: "SYS:standard",
-              ignore: "pid,hostname",
-            },
+        transport: {
+          target: "pino-pretty",
+          options: {
+            colorize: true,
+            translateTime: "SYS:standard",
+            ignore: "pid,hostname",
           },
-        }
+        },
+      }
       : {}),
   });
   const logger = new PinoLoggerAdapter(pinoLogger);

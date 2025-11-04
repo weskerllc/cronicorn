@@ -27,13 +27,8 @@ applyTo: '**'
 
 ## Quality Standards
 
-- **Before commit**: Run relevant tests, ensure no lint errors
-- **Before merge**: Full test suite passes, ADR created for decisions
-- **After implementation**: Update ./.tasks/<doc>.md status, verify task completion
+See **[Quality Checks](../../docs/public/developers/quality-checks.md)** for complete requirements.
 
 ## Technology Choices
 
-- **Monorepo**: pnpm workspaces with TypeScript project references
-- **API**: Hono framework with zod-openapi for type-safe endpoints
-- **Database**: Drizzle ORM with PostgreSQL, migration-based schema changes
-- **Testing**: Vitest with coverage, transaction-per-test for DB tests</content>
+See **[Workspace Structure](../../docs/public/developers/workspace-structure.md)** for complete requirements.

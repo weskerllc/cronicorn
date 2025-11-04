@@ -51,7 +51,7 @@
     "db": "docker compose -f docker-compose.dev.yml up -d",
     "db:reset": "docker compose down -v && pnpm db",
     "db:migrate": "dotenv -e .env -- pnpm run -r --parallel migrate",
-    "generate": "dotenv -e .env -- pnpm run -r --parallel generate",
+    "db:generate": "dotenv -e .env -- pnpm run -r --parallel generate",
     "studio": "dotenv -e .env -- pnpm run -r --parallel studio",
     "🚀 ---------- SCENARIOS ----------": "",
     "scenarios": "dotenv -e .env -- pnpm --filter @cronicorn/scenarios scenarios",

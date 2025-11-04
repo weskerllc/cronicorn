@@ -18,6 +18,7 @@ Documentation for developers contributing to Cronicorn's codebase or building AI
 - **[Quick Start](./quick-start.md)** - Set up your development environment in 4 steps
 - **[Authentication](./authentication.md)** - Configure admin user or GitHub OAuth
 - **[Workspace Structure](./workspace-structure.md)** - Monorepo organization (apps and packages)
+- **[Quality Checks](./quality-checks.md)** - Required checks before committing and merging
 
 ## Architecture & Design
 

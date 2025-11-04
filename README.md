@@ -61,35 +61,44 @@ Create your first adaptive job in 2 minutes. No credit card required.
 
 ### Self-Hosting & Local Development
 
-Cronicorn can be run locally or self-hosted without requiring GitHub OAuth:
+**Zero-configuration local development** - No .env file needed to get started!
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/weskerllc/cronicorn.git
 cd cronicorn
 
-# 2. Copy environment template
-cp .env.example .env
-
-# 3. Configure admin user (no GitHub OAuth needed)
-# Edit .env and set:
-ADMIN_USER_EMAIL=admin@example.com
-ADMIN_USER_PASSWORD=your-secure-password
-ADMIN_USER_NAME=Admin User
-
-# 4. Start database and services
+# 2. Start database and services (that's it!)
 pnpm install
 pnpm db
 pnpm db:migrate
 pnpm dev
 
-# 5. Access the app at http://localhost:5173
-# Login with the admin credentials you configured
+# 3. Access the app at http://localhost:5173
+# Login with default admin credentials:
+#   Email: admin@example.com
+#   Password: devpassword
 ```
 
+**All environment variables have sensible defaults for local development!**
+
+The app works out of the box with:
+- ✅ Local admin authentication (no OAuth setup required)
+- ✅ PostgreSQL via Docker
+- ✅ Dummy Stripe keys (payments disabled but app runs)
+- ✅ All ports pre-configured
+
+**For production deployment**, customize these variables in `.env`:
+- `BETTER_AUTH_SECRET` - Generate with: `openssl rand -base64 32`
+- `ADMIN_USER_PASSWORD` or GitHub OAuth credentials
+- Real Stripe API keys (if using payments)
+- Production URLs
+
+See `.env.example` for all available options or `.env.minimal` for the simplest setup.
+
 **Authentication Options:**
-- **Admin User** (recommended for self-hosting/CI): Set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` 
-- **GitHub OAuth** (for production): Set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
+- **Admin User** (default for local dev): Works immediately with pre-set credentials
+- **GitHub OAuth** (production): Set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
 - You can enable both methods simultaneously
 
 ### Resources

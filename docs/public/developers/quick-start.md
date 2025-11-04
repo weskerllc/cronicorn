@@ -62,6 +62,9 @@ pnpm dev
 | `pnpm dev:web` | Web app only |
 | `pnpm db` | Start PostgreSQL |
 | `pnpm db:migrate` | Run migrations |
+| `pnpm db:reset` | Reset db |
+| `pnpm db:generate` | Generate migrations when you make schema changes |
+| `pnpm studio` | Database Browser |
 | `pnpm build` | Production build |
 
 ## Troubleshooting
