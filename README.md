@@ -59,6 +59,39 @@ Cronicorn:
 
 Create your first adaptive job in 2 minutes. No credit card required.
 
+### Self-Hosting & Local Development
+
+Cronicorn can be run locally or self-hosted without requiring GitHub OAuth:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/weskerllc/cronicorn.git
+cd cronicorn
+
+# 2. Copy environment template
+cp .env.example .env
+
+# 3. Configure admin user (no GitHub OAuth needed)
+# Edit .env and set:
+ADMIN_USER_EMAIL=admin@example.com
+ADMIN_USER_PASSWORD=your-secure-password
+ADMIN_USER_NAME=Admin User
+
+# 4. Start database and services
+pnpm install
+pnpm db
+pnpm db:migrate
+pnpm dev
+
+# 5. Access the app at http://localhost:5173
+# Login with the admin credentials you configured
+```
+
+**Authentication Options:**
+- **Admin User** (recommended for self-hosting/CI): Set `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` 
+- **GitHub OAuth** (for production): Set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
+- You can enable both methods simultaneously
+
 ### Resources
 
 - 📖 **[Documentation](https://cronicorn.com/docs)** - Complete guides and tutorials
