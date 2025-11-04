@@ -25,7 +25,7 @@ const testConfig: Env = {
   BETTER_AUTH_URL: "http://localhost:3000/api/auth",
   ADMIN_USER_EMAIL: "admin@example.com",
   ADMIN_USER_PASSWORD: "test-password-123",
-  ADMIN_USER_NAME: "Test Admin",
+  ADMIN_USER_NAME: "Admin User", // Must match the default from config-defaults
   STRIPE_SECRET_KEY: "sk_test_fake_key_for_testing",
   STRIPE_WEBHOOK_SECRET: "whsec_test_fake_secret",
   STRIPE_PRICE_PRO: "price_test_pro",
@@ -38,7 +38,9 @@ describe("seedAdminUser", () => {
     await closeTestPool();
   });
 
-  test("creates admin user when configured", async ({ tx }) => {
+  // Run these tests sequentially to avoid transaction conflicts
+  // when creating the same admin user email across parallel tests
+  test.sequential("creates admin user when configured", async ({ tx }) => {
     const auth = createAuth(testConfig, tx);
 
     // Seed the admin user
