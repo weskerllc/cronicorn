@@ -58,6 +58,8 @@ export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
     headersJson: endpoint.headersJson,
     bodyJson: endpoint.bodyJson,
     timeoutMs: endpoint.timeoutMs,
+    maxExecutionTimeMs: endpoint.maxExecutionTimeMs,
+    maxResponseSizeKb: endpoint.maxResponseSizeKb,
     aiHintIntervalMs: endpoint.aiHintIntervalMs,
     aiHintNextRunAt: endpoint.aiHintNextRunAt?.toISOString(),
     aiHintExpiresAt: endpoint.aiHintExpiresAt?.toISOString(),
