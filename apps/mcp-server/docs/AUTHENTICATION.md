@@ -201,13 +201,19 @@ CRONICORN_WEB_URL=https://cronicorn.com
 ## Troubleshooting
 
 ### 401 Unauthorized
-- Check that API server has `bearer()` plugin enabled
-- Verify credentials file exists: `~/.cronicorn-mcp-credentials.json`
-- Check token hasn't expired (compare `expires_at` to current timestamp)
+- **Automatic handling**: The MCP server automatically detects invalid tokens and clears credentials
+- After seeing this error, simply **restart your editor/IDE** to trigger re-authentication
+- No need to manually delete the credentials file
+- Verify API server has `bearer()` plugin enabled (for development)
+
+### Token Expired
+- Automatically detected on startup
+- Credentials are cleared and device flow restarts
+- Complete approval within 30 minutes
 
 ### Device Code Expired
 - Complete approval within 30 minutes
-- Delete credentials file and restart to retry
+- Restart the MCP server to get a new code
 
 ### Browser Doesn't Open
 - Manually navigate to verification URL shown in terminal

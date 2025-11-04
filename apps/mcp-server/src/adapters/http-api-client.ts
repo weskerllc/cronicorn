@@ -7,6 +7,7 @@
 
 import type { ApiClient } from "../ports/api-client.js";
 
+import { deleteCredentials } from "../auth/token-store.js";
 import { ApiError } from "../ports/api-client.js";
 
 /**
@@ -51,6 +52,18 @@ export function createHttpApiClient(config: HttpApiClientConfig): ApiClient {
 
       if (!response.ok) {
         const errorText = await response.text();
+        
+        // If we get a 401 Unauthorized, the token is invalid
+        // Automatically clear credentials and provide helpful error message
+        if (response.status === 401) {
+          console.error("⚠️  Token is invalid (401 Unauthorized). Clearing credentials...");
+          await deleteCredentials();
+          throw new ApiError(
+            401,
+            `Authentication failed. Invalid or expired token. Please restart the MCP server to re-authenticate.`,
+          );
+        }
+
         throw new ApiError(
           response.status,
           `API Error (${response.status}): ${errorText}`,
