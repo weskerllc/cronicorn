@@ -17,6 +17,8 @@ mcp:
 
 # How Cronicorn Compares to Other Job Schedulers
 
+**TL;DR**: Cronicorn is the only platform that automatically adapts job schedules based on real-time performance. While others offer static cron or complex workflow orchestration, Cronicorn learns from your endpoints and optimizes timing automatically—all while staying within your safety constraints.
+
 Cronicorn is purpose-built for **adaptive HTTP job scheduling**—a unique position in the workflow automation landscape. Here's how we compare to popular alternatives.
 
 ## Quick Comparison
@@ -30,6 +32,15 @@ Cronicorn is purpose-built for **adaptive HTTP job scheduling**—a unique posit
 | **Entry Price** | Free (soon) | $10/mo | Free | $100/mo | Free | Free |
 | **Learning Curve** | Low | Medium | Medium | High | Low | High |
 | **Best For** | HTTP health checks, API polling, adaptive workflows | AI workflows, TypeScript apps | Event-driven serverless | Enterprise orchestration | Simple webhooks | Internal tools |
+
+### At a Glance
+
+**Cronicorn** = Cron that learns and adapts automatically  
+**Trigger.dev** = Code-first workflow orchestration for TypeScript  
+**Inngest** = Event-driven serverless background jobs  
+**Temporal** = Enterprise workflow engine for distributed systems  
+**QStash** = Serverless HTTP message queue  
+**Windmill** = Developer platform for internal tools  
 
 ---
 
@@ -231,30 +242,44 @@ Enable AI when you want optimization. Disable it if you prefer predictable behav
 
 ### The "Adaptive Cron" Gap
 
-Traditional cron tools schedule jobs at fixed intervals. Workflow orchestration tools handle complex multi-step processes. **But no one else offers AI-powered adaptation for simple HTTP job scheduling.**
+Every existing tool falls into one of two categories:
 
-Cronicorn fills this gap:
+1. **Static cron schedulers** - Run jobs at fixed intervals, regardless of conditions
+2. **Complex workflow engines** - Powerful orchestration, but require significant setup
 
-1. **Simpler than workflow engines** - No code, no complex orchestration
-2. **Smarter than static cron** - Learns and adapts automatically
-3. **Safer than manual tuning** - Respects constraints, prevents runaway schedules
-4. **More transparent than black boxes** - Every decision is explained
+**Cronicorn is the first to offer adaptive, intelligent scheduling for HTTP endpoints without the complexity.**
+
+We fill the gap between "too simple" and "too complex":
+
+1. **Simpler than workflow engines** - No code deployment, no learning DSLs, just configure a URL
+2. **Smarter than static cron** - Learns and adapts automatically based on actual performance
+3. **Safer than manual tuning** - Built-in constraints prevent runaway schedules and rate limit violations
+4. **More transparent than black boxes** - Every decision is explained in plain English
 
 ### When Cronicorn Shines
 
-✅ **API health monitoring** - Adapt frequency based on error rates  
-✅ **Data synchronization** - Speed up during busy hours, slow down overnight  
-✅ **Web scraping** - Back off when rate-limited, resume when available  
-✅ **Webhook retries** - Intelligent exponential backoff based on patterns  
-✅ **Scheduled maintenance** - Run within windows while adapting to load  
+**Perfect for these use cases:**
 
-### When to Use Alternatives
+✅ **API Health Monitoring** - Automatically increase check frequency when errors occur, back off when stable  
+✅ **Data Synchronization** - Speed up during business hours when changes are frequent, slow down overnight  
+✅ **Web Scraping** - Intelligently back off when rate-limited, resume optimal frequency when quota resets  
+✅ **Webhook Retries** - Adaptive exponential backoff based on downstream service patterns  
+✅ **Scheduled Maintenance** - Run within maintenance windows while adapting to system load  
+✅ **External API Polling** - Optimize request frequency based on data freshness and change patterns  
 
-Use **Trigger.dev** for: Multi-step TypeScript workflows, AI agent orchestration  
-Use **Inngest** for: Event-driven serverless architectures  
-Use **Temporal** for: Enterprise distributed workflow orchestration  
-Use **QStash** for: Simple serverless message queues  
-Use **Windmill** for: Internal tool building and script automation  
+### When to Consider Alternatives
+
+### When to Consider Alternatives
+
+**Consider these platforms when you need:**
+
+- **Trigger.dev**: Multi-step TypeScript workflows, AI agent orchestration, complex retry logic
+- **Inngest**: Event-driven serverless architectures triggered by user actions or webhooks
+- **Temporal**: Enterprise-grade distributed workflow orchestration with saga patterns
+- **QStash**: Simple serverless message queue without adaptive scheduling needs
+- **Windmill**: Full internal tool platform with script-to-UI generation
+
+**Or combine them**: Many teams use Cronicorn for adaptive scheduling alongside these platforms for workflow orchestration.  
 
 ---
 
@@ -273,13 +298,25 @@ Use **Windmill** for: Internal tool building and script automation
 
 ---
 
-## Try Cronicorn
+## Try Cronicorn Today
 
-Ready to give your HTTP jobs intelligent, adaptive scheduling?
+**Ready to give your HTTP jobs intelligent, adaptive scheduling?**
 
-**[Get Started →](./quick-start.md)**
+👉 **[Get Started with Quick Start Guide →](./quick-start.md)**
 
-Questions? Check out our [Core Concepts](./core-concepts.md) or join our [GitHub Discussions](https://github.com/weskerllc/cronicorn/discussions).
+### Learn More
+
+- 📖 **[Core Concepts](./core-concepts.md)** - Understand jobs, endpoints, and AI adaptation
+- 💬 **[GitHub Discussions](https://github.com/weskerllc/cronicorn/discussions)** - Ask questions and share feedback
+- 🌟 **[Star us on GitHub](https://github.com/weskerllc/cronicorn)** - Follow development and contribute
+
+### Coming Soon
+
+- **Free tier** for developers and small teams
+- **Managed cloud** with automatic scaling
+- **Self-hosting guide** for complete control
+
+Want early access? Join our waitlist or self-host today using our [Technical Documentation](./technical/system-architecture.md).
 
 ---
 
