@@ -5,7 +5,7 @@
 
 ## Executive Summary
 
-After extensive research into the job scheduling and workflow automation space, we identified **5 primary competitors** that represent the current market landscape. Importantly, **no competitor offers AI-adaptive scheduling** in the way Cronicorn does, creating a unique market position.
+After extensive research into the job scheduling and workflow automation space, we identified **6 primary competitors** that represent the current market landscape. Importantly, **no competitor offers AI-adaptive scheduling** in the way Cronicorn does, creating a unique market position.
 
 ## Market Segmentation
 
@@ -23,9 +23,9 @@ The job scheduling/workflow automation market breaks into several distinct segme
 - **Pricing**: Enterprise-focused ($100-1000s/month)
 
 ### 3. **Developer Workflow Platforms**
-- Trigger.dev, Inngest, Windmill, Pipedream
-- Focus: Code-based workflows, background jobs, event processing
-- **Complexity**: Medium - require coding and deployment
+- Trigger.dev, Inngest, Windmill, Pipedream, n8n
+- Focus: Code-based workflows, background jobs, event processing, visual automation
+- **Complexity**: Low to Medium - n8n offers visual interface, others require coding
 - **Pricing**: Developer-friendly ($0-$100/month entry)
 
 ### 4. **Serverless Job Queues**
@@ -40,7 +40,7 @@ The job scheduling/workflow automation market breaks into several distinct segme
 - **Complexity**: Low - traditional cron with UI
 - **Pricing**: Free to $20/month
 
-## Top 5 Competitors (Deep Analysis)
+## Top 6 Competitors (Deep Analysis)
 
 ### 1. Trigger.dev
 **Category**: Developer Workflow Platform  
@@ -205,6 +205,41 @@ The job scheduling/workflow automation market breaks into several distinct segme
 
 ---
 
+### 6. n8n
+**Category**: Visual Workflow Automation Platform  
+**Positioning**: Open-source workflow automation with visual node-based editor
+
+**Key Features:**
+- Visual drag-and-drop workflow builder
+- 400+ pre-built integrations
+- Cron scheduling with Schedule node
+- HTTP webhooks for event-driven workflows
+- Custom JavaScript/Python code execution
+- Self-hosted or cloud deployment
+
+**Pricing:**
+- Self-hosted: Free (open source)
+- Cloud Starter: ~$20/month (2,500 executions)
+- Cloud Pro: ~$50/month (10,000 executions)
+- Enterprise: Custom
+
+**Strengths:**
+- Very accessible for non-developers
+- Rich integration ecosystem
+- Visual workflow design
+- Strong community
+- Affordable self-hosting
+
+**Weaknesses vs Cronicorn:**
+- Static scheduling only
+- No learning/adaptation
+- Visual editor can be complex for simple jobs
+- Execution-based pricing can scale expensively
+
+**Market Position**: Teams needing visual workflow automation across multiple apps, especially when non-technical users need to build automations
+
+---
+
 ## Cronicorn's Unique Value Propositions
 
 ### 1. **AI-Adaptive Scheduling** (Primary Differentiator)
@@ -214,6 +249,7 @@ The job scheduling/workflow automation market breaks into several distinct segme
 - Inngest: Static schedules (event-driven focus)
 - Temporal: Static schedules
 - QStash: Static schedules
+- n8n: Static schedules (cron-based)
 - Windmill: Static schedules
 
 **Cronicorn**: Only platform that learns from endpoint behavior and adapts timing automatically.
@@ -346,7 +382,13 @@ This creates partnership opportunities rather than zero-sum competition.
 1. ✅ Launch with strong differentiation messaging
 2. ✅ Build case studies showing adaptation in action
 3. ✅ Engage developer community (open source, docs)
-4. ✅ Consider partnerships with complementary platforms
+4. ✅ Consider partnerships with complementary platforms (especially n8n, Trigger.dev, Inngest)
+5. ✅ Position Cronicorn as the "adaptive trigger" for workflow platforms
+
+**Partnership Opportunities**:
+- **n8n**: Provide adaptive webhook triggers for n8n workflows
+- **Trigger.dev/Inngest**: Schedule workflow executions with intelligent timing
+- **Windmill**: Adaptive scheduling for internal tool scripts
 
 ---
 
