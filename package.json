@@ -36,7 +36,7 @@
     "🚀 ---------- SERVER ----------": "",
     "start": "dotenv -e .env -- pnpm run -r --parallel start",
     "🚀 ---------- QUALITY ----------": "",
-    "test": "dotenv -e .env vitest run",
+    "test": "vitest run",
     "test:coverage": "dotenv -e .env vitest run --coverage",
     "test:e2e": "pnpm --filter @cronicorn/e2e test",
     "lint": "eslint . --cache",
