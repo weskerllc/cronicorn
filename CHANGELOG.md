@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/weskerllc/cronicorn/compare/v1.5.9...v1.6.0) (2025-11-04)
+
+
+### Features
+
+* No-config login and build / dev improvements ([#24](https://github.com/weskerllc/cronicorn/issues/24)) ([7ad99cd](https://github.com/weskerllc/cronicorn/commit/7ad99cd8cf38fb0bdd7e305d0661c9c29d305cd2))
+
 ## [1.5.9](https://github.com/weskerllc/cronicorn/compare/v1.5.8...v1.5.9) (2025-11-04)
 
 
