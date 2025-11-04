@@ -53,7 +53,7 @@ if (warnings.length > 0 && config.NODE_ENV === "production") {
 
 ### Constants
 
-- `DEV_PORTS` - Standard development ports (API: 3333, Web: 5173, DB: 6666, Docs: 3000)
+- `DEV_PORTS` - Standard development ports (API: 3333, Web: 5173, DB: 5432, Docs: 3000)
 - `DEV_DATABASE` - Database configuration matching docker-compose.dev.yml
 - `DEV_URLS` - Application URLs derived from ports
 - `DEV_AUTH` - Authentication defaults (admin user + secret)

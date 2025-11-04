@@ -6,6 +6,7 @@
     "copy-assets": "copyfiles -f ../../packages/content/assets/* ./public/ && cp ../../packages/content/assets/logo.svg ./src/logo.svg",
     "dev": "pnpm copy-assets && vite",
     "build": "pnpm copy-assets && tsc --noEmit && vite build",
+    "start": "vite preview --port 5173 --strictPort",
     "serve": "vite preview",
     "lint": "eslint 'src/**/*.{ts,tsx}' --fix"
   },

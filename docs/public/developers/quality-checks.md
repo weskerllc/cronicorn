@@ -65,5 +65,4 @@ pnpm test:e2e          # E2E tests (separate command)
 
 ## Related
 
-- **[Testing Strategy](./.github/instructions/testing-strategy.instructions.md)** - Detailed patterns
 - **[Quick Start](./quick-start.md)** - Dev environment setup
