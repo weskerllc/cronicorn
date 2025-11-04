@@ -34,7 +34,7 @@ test.describe("Web App - Home Page", () => {
 
     // Filter out expected API connection errors (API server not running in E2E tests)
     const unexpectedErrors = consoleErrors.filter(
-      (error) => !error.includes("Failed to load resource") && !error.includes("500"),
+      error => !error.includes("Failed to load resource") && !error.includes("500"),
     );
 
     // Verify no unexpected console errors occurred

@@ -1,3 +1,5 @@
+// Import shared dev defaults for zero-config testing
+import { DEV_DATABASE } from "@cronicorn/config-defaults";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { test as base } from "vitest";
@@ -9,9 +11,6 @@ export type Tx = NodePgDatabase<typeof schema>;
 type Fixtures = {
   tx: Tx;
 };
-
-// Import shared dev defaults for zero-config testing
-import { DEV_DATABASE } from "@cronicorn/config-defaults";
 
 // eslint-disable-next-line node/no-process-env
 const DATABASE_URL = process.env.DATABASE_URL || DEV_DATABASE.URL;
