@@ -44,12 +44,15 @@ export const Route = createFileRoute("/_authed/jobs/$id/")({
   component: JobDetailsPage,
 });
 
+type EndpointStatus = "active" | "paused";
+
 type EndpointRow = {
   id: string;
   name: string;
   url: string;
   method: string;
-  status?: string;
+  status: EndpointStatus;
+  pausedUntil?: string;
 };
 
 function JobDetailsPage() {
@@ -120,6 +123,14 @@ function JobDetailsPage() {
     return new Date(dateString).toLocaleString();
   };
 
+  // Compute endpoint status based on pausedUntil field
+  const getEndpointStatus = (pausedUntil?: string): EndpointStatus => {
+    if (pausedUntil && new Date(pausedUntil) > new Date()) {
+      return "paused";
+    }
+    return "active";
+  };
+
   // Get status badge variant
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -167,7 +178,11 @@ function JobDetailsPage() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: () => <Badge variant="default">Active</Badge>,
+      cell: ({ row }) => (
+        <Badge variant={getStatusVariant(row.original.status)} className="capitalize">
+          {row.original.status}
+        </Badge>
+      ),
     },
     {
       id: "actions",
@@ -334,7 +349,8 @@ function JobDetailsPage() {
             name: ep.name,
             url: ep.url || '',
             method: ep.method || 'GET',
-            status: 'active',
+            status: getEndpointStatus(ep.pausedUntil),
+            pausedUntil: ep.pausedUntil,
           }))}
           searchKey="name"
           searchPlaceholder="Search endpoints..."
