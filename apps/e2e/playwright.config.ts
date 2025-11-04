@@ -29,6 +29,7 @@ export default defineConfig({
 
     // Retry on CI only
     retries: isCI ? 2 : 0,
+    timeout: 30 * 1000, // 30 seconds per test
 
     // Opt out of parallel tests on CI
     workers: isCI ? 1 : undefined,

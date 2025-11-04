@@ -18,7 +18,7 @@ export const DEV_PORTS = {
     /** Web UI port (Vite dev server) */
     WEB: 5173,
     /** PostgreSQL database port (Docker) */
-    DB: 6666,
+    DB: 5432,
     /** Documentation site port */
     DOCS: 3000,
 } as const;
