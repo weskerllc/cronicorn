@@ -10,24 +10,24 @@ import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
 
-import { createSchemaAndShape, registerApiTool } from "../helpers/index.js";
+import { registerApiTool, toShape } from "../helpers/index.js";
 
-// Define schemas once, get both validator and MCP shape
-const [DeleteEndpointRequestSchema, deleteEndpointInputShape] = createSchemaAndShape({
+// Simple DELETE request with jobId and id
+const DeleteEndpointRequestSchema = z.object({
   jobId: z.string().describe("Parent job ID"),
   id: z.string().describe("Endpoint ID to delete"),
 });
 
-// No response body for 204 No Content
-const [EmptyResponseSchema, emptyResponseShape] = createSchemaAndShape({});
+// Empty response for 204 No Content
+const EmptyResponseSchema = z.object({});
 
 export function registerDeleteEndpoint(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
     name: "DELETE_jobs_jobId_endpoints_id",
     title: "Delete Endpoint",
     description: "Permanently delete an endpoint. This action cannot be undone. All associated run history will be deleted.",
-    inputSchema: deleteEndpointInputShape,
-    outputSchema: emptyResponseShape,
+    inputSchema: toShape(DeleteEndpointRequestSchema),
+    outputSchema: toShape(EmptyResponseSchema),
     inputValidator: DeleteEndpointRequestSchema,
     outputValidator: EmptyResponseSchema,
     method: "DELETE",

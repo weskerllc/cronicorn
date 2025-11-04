@@ -10,3 +10,6 @@
 
 export * from "./schemas.js";
 export * from "./types.js";
+
+// Export base schemas for clients that don't need OpenAPI decorations
+export * as base from "./schemas.base.js";
