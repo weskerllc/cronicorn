@@ -62,6 +62,7 @@ Create your first adaptive job in 2 minutes. No credit card required.
 ### Resources
 
 - 📖 **[Documentation](https://cronicorn.com/docs)** - Complete guides and tutorials
+- 🆚 **[How We Compare](https://cronicorn.com/docs/comparisons)** - See how Cronicorn stacks up
 - 🤖 **[MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server)** - AI assistant integration
 - 📚 **[API Reference](https://cronicorn.com/docs/api)** - REST API documentation
 
