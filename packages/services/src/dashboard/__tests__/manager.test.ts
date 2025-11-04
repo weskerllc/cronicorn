@@ -1,4 +1,4 @@
-import type { Clock, Job, JobEndpoint, JobsRepo, RunsRepo } from "@cronicorn/domain";
+import type { Clock, Job, JobEndpoint, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -14,6 +14,7 @@ describe("dashboardManager", () => {
   let manager: DashboardManager;
   let mockJobsRepo: JobsRepo;
   let mockRunsRepo: RunsRepo;
+  let mockSessionsRepo: SessionsRepo;
   let fakeClock: Clock;
   let baseDate: Date;
 
@@ -66,13 +67,21 @@ describe("dashboardManager", () => {
       cleanupZombieRuns: vi.fn(),
     };
 
+    // Mock SessionsRepo with all required methods
+    mockSessionsRepo = {
+      create: vi.fn(),
+      getRecentSessions: vi.fn(),
+      getTotalTokenUsage: vi.fn(),
+      getRecentSessionsGlobal: vi.fn().mockResolvedValue([]),
+    };
+
     // Fake clock for deterministic time-based tests
     fakeClock = {
       now: () => baseDate,
       sleep: async () => { },
     };
 
-    manager = new DashboardManager(mockJobsRepo, mockRunsRepo, fakeClock);
+    manager = new DashboardManager(mockJobsRepo, mockRunsRepo, mockSessionsRepo, fakeClock);
   });
 
   // ==================== getDashboardStats Tests ====================
