@@ -134,7 +134,8 @@ function JobDetailsPage() {
   };
 
   // Get status badge variant (used for both job and endpoint statuses)
-  const getStatusVariant = (status: "active" | "paused" | "archived") => {
+  // Endpoints can be "active" or "paused", jobs can also be "archived"
+  const getStatusVariant = (status: EndpointStatus | "archived"): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case "active":
         return "default";
