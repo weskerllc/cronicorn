@@ -20,10 +20,8 @@ applyTo: '**'
 
 ## Development Workflow
 
-1. **Plan in ./.tasks/<doc>.md**: Break features into hierarchical TASK-X.Y.Z IDs
-2. **Implement incrementally**: Focus on vertical slices (complete features end-to-end)
-3. **Test continuously**: Unit tests mock ports; integration tests use transaction-per-test
-4. **Document decisions**: Create ADRs for architectural choices with task ID references
+1. **Test continuously**: Unit tests mock ports; integration tests use transaction-per-test
+2. **Document decisions**: Create ADRs for architectural choices with task ID references
 
 ## Quality Standards
 
