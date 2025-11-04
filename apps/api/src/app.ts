@@ -188,5 +188,5 @@ export async function createApp(
     env: config.NODE_ENV,
   }));
 
-  return app;
+  return { app, auth };
 }

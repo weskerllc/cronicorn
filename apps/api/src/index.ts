@@ -3,6 +3,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 
 import { createApp } from "./app.js";
+import { seedAdminUser } from "./auth/seed-admin.js";
 import { loadConfig } from "./lib/config.js";
 import { createDatabase } from "./lib/db.js";
 /**
@@ -19,7 +20,10 @@ async function main() {
   // Setup database connection
   const db = createDatabase(config);
 
-  const apiApp = await createApp(db, config);
+  const { app: apiApp, auth } = await createApp(db, config);
+
+  // Seed admin user if configured (for CI/testing environments)
+  await seedAdminUser(config, db, auth);
 
   // Create root app to handle both static files and API routes
   const app = new Hono();

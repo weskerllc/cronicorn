@@ -7,15 +7,20 @@ import type { Env } from "../lib/config";
 import type { Database } from "../lib/db";
 
 /**
- * Creates Better Auth instance with three authentication methods:
- * 1. GitHub OAuth for web UI users (session cookies)
- * 2. Device Authorization for AI agents/CLI tools (Bearer tokens)
- * 3. API keys for service-to-service authentication
+ * Creates Better Auth instance with multiple authentication methods:
+ * 1. GitHub OAuth for web UI users (session cookies) - optional
+ * 2. Email/Password for admin users (session cookies) - optional
+ * 3. Device Authorization for AI agents/CLI tools (Bearer tokens)
+ * 4. API keys for service-to-service authentication
  *
  * Better Auth manages all authentication and session storage/validation.
  * Our middleware handles checking each authentication method in order.
  */
 export function createAuth(config: Env, db: Database) {
+  // Determine which authentication methods are enabled
+  const hasGitHubOAuth = !!(config.GITHUB_CLIENT_ID && config.GITHUB_CLIENT_SECRET);
+  const hasAdminUser = !!(config.ADMIN_USER_EMAIL && config.ADMIN_USER_PASSWORD);
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -40,13 +45,23 @@ export function createAuth(config: Env, db: Database) {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
       updateAge: 60 * 60 * 24 * 7, // Refresh session weekly
     },
-    socialProviders: {
-      github: {
-        clientId: config.GITHUB_CLIENT_ID,
-        clientSecret: config.GITHUB_CLIENT_SECRET,
-        redirectURI: `${config.BETTER_AUTH_URL}/api/auth/callback/github`,
-      },
-    },
+    // Email/Password auth enabled if admin user is configured
+    emailAndPassword: hasAdminUser
+      ? {
+          enabled: true,
+          requireEmailVerification: false, // Skip verification for admin users
+        }
+      : undefined,
+    // GitHub OAuth enabled only if credentials are provided
+    socialProviders: hasGitHubOAuth
+      ? {
+          github: {
+            clientId: config.GITHUB_CLIENT_ID!,
+            clientSecret: config.GITHUB_CLIENT_SECRET!,
+            redirectURI: `${config.BETTER_AUTH_URL}/api/auth/callback/github`,
+          },
+        }
+      : undefined,
     plugins: [
       bearer({
         // Bearer tokens inherit session expiresIn (30 days from session config above)
