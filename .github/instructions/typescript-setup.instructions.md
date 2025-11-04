@@ -1,5 +1,16 @@
 # TypeScript Project References Setup
 
+## Quick Reference
+
+**→ For common build/dev commands, see `docs/public/developers/quick-start.md`**
+
+This document explains the technical details of our TypeScript project references setup.
+
+## Dev vs Production Modes
+
+- **Dev mode** (`pnpm dev`): Apps use `tsx watch` - no build required, packages are auto-built on install
+- **Production** (`pnpm build`): Full compilation with `tsc -b` - builds all packages and apps to `dist/`
+
 ## Overview
 
 This monorepo now uses **TypeScript Project References** for faster, incremental builds. This eliminates the need to manually build dependent packages before importing them.
