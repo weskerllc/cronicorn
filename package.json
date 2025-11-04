@@ -12,9 +12,16 @@
   "version": "1.5.9",
   "scripts": {
     "🚀 ---------- MONOREPO ----------": "",
-    "build": "tsc -b",
+    "build": "pnpm build:packages && pnpm build:api && pnpm build:web",
+    "build:packages": "tsc -b packages/**",
+    "build:api": "pnpm --filter @cronicorn/api run build",
+    "build:scheduler": "pnpm --filter @cronicorn/scheduler-app run build",
     "build:web": "pnpm --filter @cronicorn/web run build",
     "build:docs": "pnpm --filter @cronicorn/docs run build",
+    "build:ai-planner": "pnpm --filter @cronicorn/ai-planner run build",
+    "build:mcp-server": "pnpm --filter @cronicorn/mcp-server run build",
+    "build:all": "pnpm build:packages && pnpm build:api && pnpm build:scheduler && pnpm build:ai-planner && pnpm build:mcp-server && pnpm build:web && pnpm build:docs",
+
     "start": "dotenv -e .env -- pnpm run -r --parallel start",
     "dev": "dotenv -e .env -- pnpm run -r --parallel dev",
     "dev:api": "dotenv -e .env -- pnpm --filter @cronicorn/api run dev",

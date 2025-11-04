@@ -10,6 +10,7 @@
     }
   },
   "scripts": {
+    "build": "tsc",
     "copy-assets": "copyfiles -f ../../packages/content/assets/favicon.ico ./public/img/",
     "start": "node dist/index.js",
     "dev": "pnpm copy-assets && tsx watch src/index.ts",
