@@ -15,7 +15,7 @@ export default function HeroSection() {
                 {/* CTA Section */}
                 <div className="flex gap-4 justify-center lg:justify-start w-full items-center pt-2">
                     <a
-                        href={urls.product.signup}
+                        href={urls.product.login}
                         className="group px-5 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-base hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
                     >
                         Get Started

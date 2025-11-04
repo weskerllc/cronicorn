@@ -14,7 +14,6 @@ export const urls = {
     faq: "/faq",
     dashboard: "/dashboard",
     login: "/login",
-    signup: "/signup",
   },
 
   /** Documentation (on docs subdomain) */

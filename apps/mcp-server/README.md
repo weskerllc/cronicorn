@@ -139,7 +139,7 @@ Popular VS Code extensions with MCP support:
 On first run, the server will:
 
 1. Display a device code and user code
-2. Open your browser to https://app.cronicorn.com/device/approve
+2. Open your browser to https://cronicorn.com/device/approve
 3. Enter the user code and approve access
 4. Store credentials securely in `~/.cronicorn/credentials.json`
 
@@ -293,7 +293,7 @@ Credentials are stored in `~/.cronicorn/credentials.json` with permissions `0600
 ### Environment Variables
 
 - `CRONICORN_API_URL`: Override API base URL (default: `https://api.cronicorn.com`)
-- `CRONICORN_WEB_URL`: Override web UI URL (default: `https://app.cronicorn.com`)
+- `CRONICORN_WEB_URL`: Override web UI URL (default: `https://cronicorn.com`)
 
 ## Development
 

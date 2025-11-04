@@ -11,7 +11,7 @@ Schedules HTTP jobs that adapt to real-time conditions.
 [![License](https://img.shields.io/badge/license-Fair_Source-blue.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/weskerllc/cronicorn/ci.yml?branch=main)](https://github.com/weskerllc/cronicorn/actions)
 
-[Try Cronicorn](https://app.cronicorn.com) • [Documentation](https://cronicorn.com/docs) • [Self-Host Guide](https://cronicorn.com/docs/technical/system-architecture)
+[Try Cronicorn](https://cronicorn.com) • [Documentation](https://cronicorn.com/docs) • [Self-Host Guide](https://cronicorn.com/docs/technical/system-architecture)
 
 </div>
 
@@ -55,7 +55,7 @@ Cronicorn:
 
 ### Try Cronicorn
 
-**[Sign up with GitHub →](https://app.cronicorn.com)**
+**[Sign up with GitHub →](https://cronicorn.com)**
 
 Create your first adaptive job in 2 minutes. No credit card required.
 
@@ -63,7 +63,7 @@ Create your first adaptive job in 2 minutes. No credit card required.
 
 - 📖 **[Documentation](https://cronicorn.com/docs)** - Complete guides and tutorials
 - 🤖 **[MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server)** - AI assistant integration
-- 📚 **[API Reference](https://app.cronicorn.com/docs/api)** - REST API documentation
+- 📚 **[API Reference](https://cronicorn.com/docs/api)** - REST API documentation
 
 ## Key Features
 
@@ -93,7 +93,7 @@ Fair Source License v0.9 - Free to use and self-host. See [LICENSE](./LICENSE) f
 
 <div align="center">
 
-**[Try Cronicorn](https://app.cronicorn.com)** • **[Documentation](https://cronicorn.com/docs)** • **[API Reference](https://app.cronicorn.com/docs/api)**
+**[Try Cronicorn](https://cronicorn.com)** • **[Documentation](https://cronicorn.com/docs)** • **[API Reference](https://cronicorn.com/docs/api)**
 
 Made by developers, for developers
 

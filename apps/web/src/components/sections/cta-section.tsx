@@ -16,7 +16,7 @@ export default function CTASection() {
         >
             <div className="text-center max-w-4xl relative z-10 flex flex-col md:items-center md:flex-row md:gap-12 gap-6">
                 <a
-                    href={urls.product.signup}
+                    href={urls.product.login}
                     className="group px-12 py-6 bg-primary text-primary-foreground rounded-full font-medium text-lg hover:bg-primary/90 transition-all duration-150 shadow-sm hover:shadow-md flex items-center gap-2"
                 >
                     Start Free Trial
