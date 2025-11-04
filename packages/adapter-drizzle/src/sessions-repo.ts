@@ -3,7 +3,7 @@ import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgre
 
 import { desc, eq, sql, sum } from "drizzle-orm";
 
-import { aiAnalysisSessions } from "./schema.js";
+import { aiAnalysisSessions, jobEndpoints, jobs } from "./schema.js";
 
 /**
  * PostgreSQL implementation of SessionsRepo using Drizzle ORM.
@@ -91,5 +91,45 @@ export class DrizzleSessionsRepo implements SessionsRepo {
 
     // sum() returns string | null, convert to number
     return total ? Number(total) : 0;
+  }
+
+  async getRecentSessionsGlobal(
+    userId: string,
+    limit = 50,
+  ): Promise<Array<{
+      id: string;
+      endpointId: string;
+      analyzedAt: Date;
+      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+      reasoning: string;
+      tokenUsage: number | null;
+      durationMs: number | null;
+    }>> {
+    const results = await this.tx
+      .select({
+        id: aiAnalysisSessions.id,
+        endpointId: aiAnalysisSessions.endpointId,
+        analyzedAt: aiAnalysisSessions.analyzedAt,
+        toolCalls: aiAnalysisSessions.toolCalls,
+        reasoning: aiAnalysisSessions.reasoning,
+        tokenUsage: aiAnalysisSessions.tokenUsage,
+        durationMs: aiAnalysisSessions.durationMs,
+      })
+      .from(aiAnalysisSessions)
+      .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(eq(jobs.userId, userId))
+      .orderBy(desc(aiAnalysisSessions.analyzedAt))
+      .limit(Math.min(limit, 100)); // Cap at 100 for safety
+
+    return results.map(r => ({
+      id: r.id,
+      endpointId: r.endpointId,
+      analyzedAt: r.analyzedAt,
+      toolCalls: r.toolCalls ?? [],
+      reasoning: r.reasoning ?? "",
+      tokenUsage: r.tokenUsage,
+      durationMs: r.durationMs,
+    }));
   }
 }

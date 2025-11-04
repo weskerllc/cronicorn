@@ -11,6 +11,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@cronicorn/ui-library/components/tabs";
+import { RecentAISessionsTable } from "./recent-ai-sessions-table";
 import { RecentRunsTable } from "./recent-runs-table";
 import { TopEndpointsTable } from "./top-endpoints-table";
 import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
@@ -59,11 +60,17 @@ export function DashboardTables() {
     source: run.source || "unknown",
   }));
 
+  // Recent AI sessions data
+  const aiSessionsData = data.recentAISessions.map((session) => ({
+    ...session,
+  }));
+
   return (
     <Tabs defaultValue="recent" className="w-full flex flex-col justify-start gap-4">
       <div className="flex items-center justify-between">
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1">
           <TabsTrigger value="recent">Recent Runs</TabsTrigger>
+          <TabsTrigger value="ai-sessions">Recent AI Sessions</TabsTrigger>
           <TabsTrigger value="endpoints">Top Endpoints</TabsTrigger>
         </TabsList>
       </div>
@@ -73,6 +80,14 @@ export function DashboardTables() {
       <TabsContent value="recent" className="flex flex-col">
         <RecentRunsTable
           data={runsData}
+          onRefresh={() => refetch()}
+          isRefreshing={isFetching}
+        />
+      </TabsContent>
+
+      <TabsContent value="ai-sessions" className="flex flex-col">
+        <RecentAISessionsTable
+          data={aiSessionsData}
           onRefresh={() => refetch()}
           isRefreshing={isFetching}
         />
