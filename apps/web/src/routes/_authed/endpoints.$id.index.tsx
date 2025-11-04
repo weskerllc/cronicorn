@@ -45,6 +45,7 @@ import {
     transformUpdatePayload,
     updateEndpointSchema
 } from "@/lib/endpoint-forms";
+import { isEndpointPaused } from "@/lib/endpoint-utils";
 
 export const Route = createFileRoute("/_authed/endpoints/$id/")({
     loader: async ({ params, context }) => {
@@ -190,7 +191,7 @@ function EditEndpointPage() {
     };
 
     const handlePause = async () => {
-        const isPaused = endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date();
+        const isPaused = isEndpointPaused(endpoint.pausedUntil);
         const pausedUntil = isPaused ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
         await pauseMutate(pausedUntil);
     };
@@ -215,7 +216,7 @@ function EditEndpointPage() {
         router.history.back();
     };
 
-    const isPaused = !!(endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date());
+    const isPaused = isEndpointPaused(endpoint.pausedUntil);
     const hasAIHints = !!(endpoint.aiHintIntervalMs || endpoint.aiHintNextRunAt || endpoint.aiHintReason);
     const isHintExpired = endpoint.aiHintExpiresAt && new Date(endpoint.aiHintExpiresAt) < new Date();
 

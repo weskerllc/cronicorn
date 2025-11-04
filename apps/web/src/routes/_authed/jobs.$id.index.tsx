@@ -32,6 +32,7 @@ import {
   pauseJob,
   resumeJob,
 } from "@/lib/api-client/queries/jobs.queries";
+import { getEndpointStatus } from "@/lib/endpoint-utils";
 
 export const Route = createFileRoute("/_authed/jobs/$id/")({
   loader: async ({ params, context }) => {
@@ -123,14 +124,6 @@ function JobDetailsPage() {
   // Format dates
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
-  };
-
-  // Compute endpoint status based on pausedUntil field
-  const getEndpointStatus = (pausedUntil?: string): EndpointStatus => {
-    if (pausedUntil && new Date(pausedUntil) > new Date()) {
-      return "paused";
-    }
-    return "active";
   };
 
   // Get status badge variant (used for both job and endpoint statuses)
