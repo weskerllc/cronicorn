@@ -218,6 +218,44 @@ describe("jobsManager", () => {
       expect(mockJobsRepo.addEndpoint).toHaveBeenCalled();
     });
 
+    it("saves description and other optional fields when creating endpoint", async () => {
+      const mockJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const input: AddEndpointInput = {
+        name: "Health Check",
+        jobId: "job-1",
+        description: "Monitors API health and returns status metrics",
+        baselineIntervalMs: 60_000,
+        url: "https://api.example.com/health",
+        method: "GET",
+        maxExecutionTimeMs: 30_000,
+        maxResponseSizeKb: 100,
+      };
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
+      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.addEndpoint).mockResolvedValue(undefined);
+
+      await manager.addEndpointToJob("user-1", input);
+
+      // Verify that addEndpoint was called with an object containing all the fields
+      expect(mockJobsRepo.addEndpoint).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Health Check",
+          description: "Monitors API health and returns status metrics",
+          maxExecutionTimeMs: 30_000,
+          maxResponseSizeKb: 100,
+        }),
+      );
+    });
+
     it("rejects endpoint creation when free tier limit (10) exceeded", async () => {
       const mockJob: Job = {
         id: "job-1",
