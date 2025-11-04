@@ -114,8 +114,13 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  // Scroll to table when pagination changes
+  // Scroll to table when pagination changes (but not on initial mount)
+  const isInitialMount = React.useRef(true);
   React.useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     if (tableRef.current && enablePagination) {
       tableRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
