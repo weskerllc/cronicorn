@@ -14,6 +14,7 @@
     "@cronicorn/adapter-http": "workspace:*",
     "@cronicorn/adapter-pino": "workspace:*",
     "@cronicorn/adapter-system-clock": "workspace:*",
+    "@cronicorn/config-defaults": "workspace:*",
     "@cronicorn/worker-scheduler": "workspace:*",
     "drizzle-orm": "catalog:",
     "pg": "^8.13.1",

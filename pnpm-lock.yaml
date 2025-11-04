@@ -98,6 +98,9 @@ importers:
       '@cronicorn/adapter-system-clock':
         specifier: workspace:*
         version: link:../../packages/adapter-system-clock
+      '@cronicorn/config-defaults':
+        specifier: workspace:*
+        version: link:../../packages/config-defaults
       '@cronicorn/worker-ai-planner':
         specifier: workspace:*
         version: link:../../packages/worker-ai-planner
@@ -132,6 +135,9 @@ importers:
       '@cronicorn/api-contracts':
         specifier: workspace:*
         version: link:../../packages/api-contracts
+      '@cronicorn/config-defaults':
+        specifier: workspace:*
+        version: link:../../packages/config-defaults
       '@cronicorn/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -261,6 +267,9 @@ importers:
       '@cronicorn/adapter-drizzle':
         specifier: workspace:*
         version: link:../../packages/adapter-drizzle
+      '@cronicorn/config-defaults':
+        specifier: workspace:*
+        version: link:../../packages/config-defaults
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.38.4(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.15.6)(@types/react@19.2.2)(better-sqlite3@12.4.1)(kysely@0.28.8)(pg@8.16.3)(prisma@5.22.0)(react@19.2.0)
@@ -289,6 +298,9 @@ importers:
       '@cronicorn/adapter-system-clock':
         specifier: workspace:*
         version: link:../../packages/adapter-system-clock
+      '@cronicorn/config-defaults':
+        specifier: workspace:*
+        version: link:../../packages/config-defaults
       '@cronicorn/worker-scheduler':
         specifier: workspace:*
         version: link:../../packages/worker-scheduler
@@ -468,6 +480,9 @@ importers:
 
   packages/adapter-drizzle:
     dependencies:
+      '@cronicorn/config-defaults':
+        specifier: workspace:*
+        version: link:../config-defaults
       '@cronicorn/domain':
         specifier: workspace:*
         version: link:../domain
@@ -533,6 +548,12 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 3.25.76
+
+  packages/config-defaults:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.7.3
 
   packages/content:
     devDependencies:

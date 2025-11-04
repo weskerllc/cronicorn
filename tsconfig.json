@@ -15,7 +15,9 @@
     { "path": "./packages/adapter-stripe" },
     { "path": "./packages/adapter-system-clock" },
     { "path": "./packages/ui-library" },
-    { "path": "./packages/api-contracts" }
+    { "path": "./packages/api-contracts" },
+    { "path": "./packages/config-defaults" }
+
     // Apps are built individually via pnpm filters (not tsc -b)
     // Web and docs excluded - use Vite and Docusaurus respectively
   ]

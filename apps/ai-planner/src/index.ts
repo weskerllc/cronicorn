@@ -9,6 +9,7 @@ import { openai } from "@ai-sdk/openai";
 import { createVercelAiClient } from "@cronicorn/adapter-ai";
 import { DrizzleJobsRepo, DrizzleQuotaGuard, DrizzleRunsRepo, DrizzleSessionsRepo, schema } from "@cronicorn/adapter-drizzle";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
+import { DEV_DATABASE } from "@cronicorn/config-defaults";
 import { AIPlanner } from "@cronicorn/worker-ai-planner";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -31,7 +32,7 @@ function logger(level: "info" | "warn" | "error" | "fatal", message: string, met
  * Configuration schema with sensible defaults
  */
 const configSchema = z.object({
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().url().default(DEV_DATABASE.URL),
   OPENAI_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default("gpt-4o-mini"), // Cost-effective for MVP
   AI_ANALYSIS_INTERVAL_MS: z.coerce.number().int().positive().default(5 * 60 * 1000), // 5 minutes

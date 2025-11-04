@@ -1,12 +1,12 @@
+import { schema } from "@cronicorn/adapter-drizzle";
+import { sql } from "drizzle-orm";
 import { afterAll, describe } from "vitest";
 
 import type { Env } from "../../lib/config.js";
 
+import { closeTestPool, expect, test } from "../../lib/__tests__/fixtures.js";
 import { createAuth } from "../config.js";
 import { seedAdminUser } from "../seed-admin.js";
-import { closeTestPool, expect, test } from "../../lib/__tests__/fixtures.js";
-import { sql } from "drizzle-orm";
-import { schema } from "@cronicorn/adapter-drizzle";
 
 /**
  * Integration tests for admin user seeding functionality.
@@ -46,7 +46,7 @@ describe("seedAdminUser", () => {
 
     // Verify user was created
     const result = await tx.execute(
-      sql`SELECT email, name FROM ${schema.user} WHERE email = ${testConfig.ADMIN_USER_EMAIL}`
+      sql`SELECT email, name FROM ${schema.user} WHERE email = ${testConfig.ADMIN_USER_EMAIL}`,
     );
 
     expect(result.rows.length).toBe(1);
@@ -65,17 +65,19 @@ describe("seedAdminUser", () => {
 
     // Verify only one user exists
     const result = await tx.execute(
-      sql`SELECT COUNT(*) as count FROM ${schema.user} WHERE email = ${testConfig.ADMIN_USER_EMAIL}`
+      sql`SELECT COUNT(*) as count FROM ${schema.user} WHERE email = ${testConfig.ADMIN_USER_EMAIL}`,
     );
 
     expect(result.rows[0].count).toBe("1");
   });
 
   test("skips seeding when admin credentials not configured", async ({ tx }) => {
+    // Create a config that explicitly has empty admin fields (not using defaults)
+    // This simulates a production environment where only OAuth is configured
     const noAdminConfig: Env = {
       ...testConfig,
-      ADMIN_USER_EMAIL: undefined,
-      ADMIN_USER_PASSWORD: undefined,
+      ADMIN_USER_EMAIL: "", // Empty string to bypass defaults
+      ADMIN_USER_PASSWORD: "", // Empty string to bypass defaults
       GITHUB_CLIENT_ID: "test_client_id",
       GITHUB_CLIENT_SECRET: "test_client_secret",
     };
@@ -85,9 +87,10 @@ describe("seedAdminUser", () => {
     // Should not throw and should skip seeding
     await expect(seedAdminUser(noAdminConfig, tx, auth)).resolves.toBeUndefined();
 
-    // Verify no user was created
+    // Verify no user was created by this call
+    // Note: Can't check total count since other tests may have run in same pool
     const result = await tx.execute(
-      sql`SELECT COUNT(*) as count FROM ${schema.user}`
+      sql`SELECT COUNT(*) as count FROM ${schema.user} WHERE email = ''`,
     );
 
     expect(result.rows[0].count).toBe("0");
