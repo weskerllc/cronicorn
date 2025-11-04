@@ -1,3 +1,10 @@
+## [1.5.6](https://github.com/weskerllc/cronicorn/compare/v1.5.5...v1.5.6) (2025-11-04)
+
+
+### Bug Fixes
+
+* Nginx web ([4513380](https://github.com/weskerllc/cronicorn/commit/4513380606691a01e3815f81cf6e654c337f7ad0))
+
 ## [1.5.5](https://github.com/weskerllc/cronicorn/compare/v1.5.4...v1.5.5) (2025-11-04)
 
 
