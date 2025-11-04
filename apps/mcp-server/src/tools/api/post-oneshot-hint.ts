@@ -4,6 +4,7 @@
  * 1:1 mapping to API endpoint - uses helper utilities for concise implementation
  */
 
+import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
 import type { ScheduleOneShotRequest } from "@cronicorn/api-contracts/jobs";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
@@ -11,30 +12,23 @@ import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
 
-import { createSchemaAndShape, registerApiTool } from "../helpers/index.js";
+import { registerApiTool, toShape } from "../helpers/index.js";
 
-// Define schemas once, get both validator and MCP shape
-const [ScheduleOneShotRequestSchema, scheduleOneShotInputShape] = createSchemaAndShape({
+// Extend base schema to include id for MCP tool input
+const ScheduleOneShotRequestSchema = jobsBase.ScheduleOneShotRequestBaseSchema.and(z.object({
   id: z.string().describe("Endpoint ID"),
-  nextRunAt: z.string().datetime().optional().describe("ISO 8601 datetime for next run"),
-  nextRunInMs: z.number().int().positive().optional().describe("Milliseconds from now for next run"),
-  ttlMinutes: z.number().int().positive().optional().describe("Time-to-live for hint in minutes"),
-  reason: z.string().optional().describe("Explanation for the one-shot schedule"),
-});
+}));
 
-// No response body for 204 No Content
-const [EmptyResponseSchema, emptyResponseShape] = createSchemaAndShape({});
-
-// Type assertions to ensure compatibility with API contracts
-const _inputCheck: z.ZodType<ScheduleOneShotRequest & { id: string }> = ScheduleOneShotRequestSchema;
+// Empty response for 204 No Content
+const EmptyResponseSchema = z.object({});
 
 export function registerPostOneShotHint(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
     name: "POST_endpoints_id_hints_oneshot",
     title: "Schedule One-Shot Run",
     description: "Schedule a one-time run at a specific time or after a delay. Provide either nextRunAt (ISO datetime) or nextRunInMs (delay in ms). Useful for immediate checks or scheduled interventions.",
-    inputSchema: scheduleOneShotInputShape,
-    outputSchema: emptyResponseShape,
+    inputSchema: toShape(ScheduleOneShotRequestSchema),
+    outputSchema: toShape(EmptyResponseSchema),
     inputValidator: ScheduleOneShotRequestSchema,
     outputValidator: EmptyResponseSchema,
     method: "POST",
