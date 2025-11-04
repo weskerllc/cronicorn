@@ -79,6 +79,7 @@ export function DataTable<TData, TValue>({
   isRefreshing = false,
   getRowId,
 }: DataTableProps<TData, TValue>) {
+  const tableRef = React.useRef<HTMLDivElement>(null);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -113,8 +114,15 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
+  // Scroll to table when pagination changes
+  React.useEffect(() => {
+    if (tableRef.current && enablePagination) {
+      tableRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [pagination.pageIndex, enablePagination]);
+
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={tableRef} className="flex flex-col gap-4">
       {tableTitle && (<p className="text-lg font-medium">{tableTitle}</p>
       )}
       {(searchKey || onRefresh) && (
