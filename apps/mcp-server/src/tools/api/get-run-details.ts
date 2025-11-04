@@ -32,6 +32,6 @@ export function registerGetRunDetails(server: McpServer, apiClient: ApiClient) {
     outputValidator: RunDetailsResponseSchema,
     method: "GET",
     path: input => `/runs/${input.id}`,
-    successMessage: run => \`✅ Retrieved run \${run.id} (status: \${run.status})\`,
+    successMessage: run => `✅ Retrieved run ${run.id} (status: ${run.status})`,
   });
 }

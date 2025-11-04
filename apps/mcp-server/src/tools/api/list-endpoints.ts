@@ -35,7 +35,7 @@ export function registerListEndpoints(server: McpServer, apiClient: ApiClient) {
     inputValidator: ListEndpointsRequestSchema,
     outputValidator: ListEndpointsResponseSchema,
     method: "GET",
-    path: input => \`/jobs/\${input.jobId}/endpoints\`,
-    successMessage: result => \`✅ Found \${result.endpoints.length} endpoint(s)\`,
+    path: input => `/jobs/${input.jobId}/endpoints`,
+    successMessage: result => `✅ Found ${result.endpoints.length} endpoint(s)`,
   });
 }
