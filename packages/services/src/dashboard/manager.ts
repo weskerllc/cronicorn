@@ -455,9 +455,14 @@ export class DashboardManager {
       endpoints.filter(Boolean).map(ep => [ep!.id, ep!]),
     );
 
-    const jobIds = [...new Set(endpoints.filter(Boolean).map(ep => ep!.jobId!))];
+    const jobIds = [...new Set(
+      endpoints
+        .filter(Boolean)
+        .map(ep => ep!.jobId)
+        .filter((id): id is string => id !== null && id !== undefined),
+    )];
     const jobs = await Promise.all(
-      jobIds.map(id => this.jobsRepo.getJob(id!)),
+      jobIds.map(id => this.jobsRepo.getJob(id)),
     );
     const jobMap = new Map(
       jobs.filter(Boolean).map(job => [job!.id, job!.name]),
@@ -466,7 +471,7 @@ export class DashboardManager {
     // Enrich sessions with endpoint/job names
     return sessions.map((session) => {
       const endpoint = endpointMap.get(session.endpointId);
-      const jobName = endpoint ? jobMap.get(endpoint.jobId!) || "Unknown Job" : "Unknown Job";
+      const jobName = endpoint?.jobId ? jobMap.get(endpoint.jobId) || "Unknown Job" : "Unknown Job";
 
       return {
         id: session.id,
