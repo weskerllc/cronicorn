@@ -4,9 +4,9 @@
  * 1:1 mapping to API endpoint - uses helper utilities for concise implementation
  */
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
-import type { CreateJobRequest, JobResponse } from "@cronicorn/api-contracts/jobs";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+
+import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
 
 import type { ApiClient } from "../../ports/api-client.js";
 

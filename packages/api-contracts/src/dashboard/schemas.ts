@@ -1,5 +1,4 @@
 import { z } from "@hono/zod-openapi";
-import * as base from "./schemas.base.js";
 
 // ==================== Dashboard Stats Response Schema ====================
 
