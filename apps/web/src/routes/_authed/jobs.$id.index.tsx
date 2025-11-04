@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_authed/jobs/$id/")({
   component: JobDetailsPage,
 });
 
-type EndpointStatus = "active" | "paused";
+type EndpointStatus = "active" | "paused" | "archived";
 
 /** Row data for the endpoints table */
 type EndpointRow = {
@@ -128,7 +128,7 @@ function JobDetailsPage() {
 
   // Get status badge variant (used for both job and endpoint statuses)
   // Endpoints can be "active" or "paused", jobs can also be "archived"
-  const getStatusVariant = (status: EndpointStatus | "archived"): "default" | "secondary" | "destructive" | "outline" => {
+  const getStatusVariant = (status: EndpointStatus): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case "active":
         return "default";
@@ -194,6 +194,14 @@ function JobDetailsPage() {
             <DropdownMenuItem asChild>
               <Link
                 to="/endpoints/$id"
+                params={{ id: row.original.id }}
+              >
+                View Details
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                to="/endpoints/$id/edit"
                 params={{ id: row.original.id }}
               >
                 Edit
