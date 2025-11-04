@@ -122,9 +122,14 @@ export function DataTable<TData, TValue>({
       return;
     }
     if (tableRef.current && enablePagination) {
-      tableRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Respect user's motion preferences
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      tableRef.current.scrollIntoView({ 
+        behavior: prefersReducedMotion ? 'auto' : 'smooth', 
+        block: 'start' 
+      });
     }
-  }, [pagination.pageIndex, enablePagination]);
+  }, [pagination.pageIndex]);
 
   return (
     <div ref={tableRef} className="flex flex-col gap-4">
