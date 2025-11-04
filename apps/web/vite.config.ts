@@ -52,4 +52,8 @@ export default defineConfig({
       ignored: ["**/.tanstack/**", "**/node_modules/**", "**/dist/**"],
     },
   },
+  preview: {
+    port: 5173,
+    strictPort: true,
+  },
 });
