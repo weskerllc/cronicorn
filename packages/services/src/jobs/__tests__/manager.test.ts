@@ -41,6 +41,7 @@ describe("jobsManager", () => {
       updateAfterRun: vi.fn(),
       listEndpointsByJob: vi.fn(),
       deleteEndpoint: vi.fn(),
+      countEndpointsByUser: vi.fn(),
       getUserById: vi.fn(),
       getUserByStripeCustomerId: vi.fn(),
       updateUserSubscription: vi.fn(),
@@ -209,7 +210,7 @@ describe("jobsManager", () => {
 
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
       vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(0);
       vi.mocked(mockJobsRepo.addEndpoint).mockResolvedValue(undefined);
 
       await manager.addEndpointToJob("user-1", input);
@@ -234,19 +235,10 @@ describe("jobsManager", () => {
         method: "GET",
       };
 
-      // Mock 10 existing endpoints (free tier max)
-      const existingEndpoints: JobEndpoint[] = Array.from({ length: 10 }, (_, i) => ({
-        id: `ep-${i}`,
-        jobId: "job-1",
-        tenantId: "user-1",
-        name: `Endpoint ${i}`,
-        nextRunAt: new Date(),
-        failureCount: 0,
-      }));
-
+      // Mock 10 existing endpoints (free tier max) - across all jobs for this user
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
       vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue(existingEndpoints);
+      vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(10);
 
       await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
         /Endpoint limit reached.*free tier allows maximum 10 endpoints.*Upgrade to Pro/i,
@@ -270,19 +262,10 @@ describe("jobsManager", () => {
         method: "GET",
       };
 
-      // Mock 50 existing endpoints (under pro limit of 100)
-      const existingEndpoints: JobEndpoint[] = Array.from({ length: 50 }, (_, i) => ({
-        id: `ep-${i}`,
-        jobId: "job-1",
-        tenantId: "user-1",
-        name: `Endpoint ${i}`,
-        nextRunAt: new Date(),
-        failureCount: 0,
-      }));
-
+      // Mock 50 existing endpoints (under pro limit of 100) - across all jobs
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
       vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("pro");
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue(existingEndpoints);
+      vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(50);
       vi.mocked(mockJobsRepo.addEndpoint).mockResolvedValue(undefined);
 
       await manager.addEndpointToJob("user-1", input);
@@ -307,19 +290,10 @@ describe("jobsManager", () => {
         method: "GET",
       };
 
-      // Mock 1000 existing endpoints (enterprise tier max)
-      const existingEndpoints: JobEndpoint[] = Array.from({ length: 1000 }, (_, i) => ({
-        id: `ep-${i}`,
-        jobId: "job-1",
-        tenantId: "user-1",
-        name: `Endpoint ${i}`,
-        nextRunAt: new Date(),
-        failureCount: 0,
-      }));
-
+      // Mock 1000 existing endpoints (enterprise tier max) - across all jobs
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
       vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("enterprise");
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue(existingEndpoints);
+      vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(1000);
 
       await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
         /Endpoint limit reached.*enterprise tier allows maximum 1000 endpoints/i,
@@ -345,7 +319,7 @@ describe("jobsManager", () => {
 
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
       vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(0);
 
       await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
         /Interval too short.*free tier requires minimum 60000ms.*60s.*Upgrade to Pro/i,
@@ -371,7 +345,7 @@ describe("jobsManager", () => {
 
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
       vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("pro");
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(0);
       vi.mocked(mockJobsRepo.addEndpoint).mockResolvedValue(undefined);
 
       await manager.addEndpointToJob("user-1", input);
@@ -398,10 +372,39 @@ describe("jobsManager", () => {
 
       vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
       vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("pro");
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(0);
 
       await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
         /Interval too short.*pro tier requires minimum 10000ms.*10s.*Upgrade to Enterprise/i,
+      );
+    });
+
+    it("rejects endpoint creation when free tier limit (10) exceeded across multiple jobs", async () => {
+      // This test verifies the fix: user has 5 endpoints in job-1 and 5 in job-2 (10 total)
+      // Attempting to add an 11th endpoint should fail regardless of which job
+      const mockJob: Job = {
+        id: "job-1",
+        userId: "user-1",
+        name: "My Job",
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const input: AddEndpointInput = {
+        name: "Endpoint 11",
+        jobId: "job-1",
+        baselineIntervalMs: 60_000,
+        url: "https://api.example.com/test",
+        method: "GET",
+      };
+
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
+      vi.mocked(mockJobsRepo.getUserTier).mockResolvedValue("free");
+      // User has 10 endpoints across all jobs (e.g., 5 in job-1, 5 in job-2)
+      vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(10);
+
+      await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
+        /Endpoint limit reached.*free tier allows maximum 10 endpoints.*Upgrade to Pro/i,
       );
     });
   });

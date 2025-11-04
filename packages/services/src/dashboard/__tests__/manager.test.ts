@@ -45,6 +45,7 @@ describe("dashboardManager", () => {
       updateAfterRun: vi.fn(),
       listEndpointsByJob: vi.fn(),
       deleteEndpoint: vi.fn(),
+      countEndpointsByUser: vi.fn(),
       getUserById: vi.fn(),
       getUserByStripeCustomerId: vi.fn(),
       updateUserSubscription: vi.fn(),
