@@ -452,20 +452,24 @@ export class DashboardManager {
 
     // Create lookup maps
     const endpointMap = new Map(
-      endpoints.filter(Boolean).map(ep => [ep!.id, ep!]),
+      endpoints
+        .filter((ep): ep is NonNullable<typeof ep> => ep !== null && ep !== undefined)
+        .map(ep => [ep.id, ep]),
     );
 
     const jobIds = [...new Set(
       endpoints
-        .filter(Boolean)
-        .map(ep => ep!.jobId)
+        .filter((ep): ep is NonNullable<typeof ep> => ep !== null && ep !== undefined)
+        .map(ep => ep.jobId)
         .filter((id): id is string => id !== null && id !== undefined),
     )];
     const jobs = await Promise.all(
       jobIds.map(id => this.jobsRepo.getJob(id)),
     );
     const jobMap = new Map(
-      jobs.filter(Boolean).map(job => [job!.id, job!.name]),
+      jobs
+        .filter((job): job is NonNullable<typeof job> => job !== null && job !== undefined)
+        .map(job => [job.id, job.name]),
     );
 
     // Enrich sessions with endpoint/job names
