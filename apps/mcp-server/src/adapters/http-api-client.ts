@@ -52,7 +52,7 @@ export function createHttpApiClient(config: HttpApiClientConfig): ApiClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        
+
         // If we get a 401 Unauthorized, the token is invalid
         // Automatically clear credentials and provide helpful error message
         if (response.status === 401) {
