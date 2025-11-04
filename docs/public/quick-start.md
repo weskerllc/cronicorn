@@ -21,7 +21,7 @@ Create your first scheduled job and start monitoring executions.
 
 ## 1. Sign Up
 
-1. Visit [https://app.cronicorn.com](https://app.cronicorn.com)
+1. Visit [https://cronicorn.com](https://cronicorn.com)
 2. Click **Sign in with GitHub**
 3. Authorize the application
 
@@ -140,7 +140,7 @@ curl -X GET https://api.cronicorn.com/api/jobs \
   -H "x-api-key: cron_abc123..."
 ```
 
-See the [API Reference](https://app.cronicorn.com/docs/api) for all available endpoints.
+See the [API Reference](https://cronicorn.com/docs/api) for all available endpoints.
 
 ## Using with AI Assistants
 
@@ -221,7 +221,7 @@ If you're hitting rate limits:
 ## Next Steps
 
 - **[Core Concepts](./core-concepts.md)** - Understand jobs, endpoints, and AI scheduling
-- **[API Reference](https://app.cronicorn.com/docs/api)** - Full API documentation
+- **[API Reference](https://cronicorn.com/docs/api)** - Full API documentation
 - **[Self-Hosting Guide](./technical/system-architecture.md)** - Deploy Cronicorn yourself
 
 ## Getting Help
