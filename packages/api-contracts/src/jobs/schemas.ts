@@ -1,4 +1,7 @@
 import { z } from "@hono/zod-openapi";
+import cronParser from "cron-parser";
+
+// ==================== Endpoint Orchestration Schemas ====================
 import * as base from "./schemas.base.js";
 
 // ==================== Job Lifecycle Schemas ====================
@@ -38,10 +41,6 @@ export const JobResponseSchema = z.object({
 export const JobWithCountResponseSchema = JobResponseSchema.extend({
   endpointCount: z.number().int(),
 });
-
-// ==================== Endpoint Orchestration Schemas ====================
-
-import cronParser from "cron-parser";
 
 // Helper function to validate cron expressions
 function validateCronExpression(expr: string): boolean {
