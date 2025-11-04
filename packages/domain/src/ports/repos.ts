@@ -318,4 +318,22 @@ export type SessionsRepo = {
    * @returns Total tokens consumed
    */
   getTotalTokenUsage: (endpointId: string, since: Date) => Promise<number>;
+
+  /**
+   * Get recent analysis sessions across all endpoints for a user.
+   * Used by dashboard to display recent AI activity.
+   *
+   * @param userId - The user ID
+   * @param limit - Maximum number of sessions to return (default: 50)
+   * @returns Array of sessions with endpoint context, ordered newest to oldest
+   */
+  getRecentSessionsGlobal: (userId: string, limit?: number) => Promise<Array<{
+    id: string;
+    endpointId: string;
+    analyzedAt: Date;
+    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+    reasoning: string;
+    tokenUsage: number | null;
+    durationMs: number | null;
+  }>>;
 };
