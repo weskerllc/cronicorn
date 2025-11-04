@@ -97,14 +97,14 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     userId: string,
     limit = 50,
   ): Promise<Array<{
-    id: string;
-    endpointId: string;
-    analyzedAt: Date;
-    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
-    reasoning: string;
-    tokenUsage: number | null;
-    durationMs: number | null;
-  }>> {
+      id: string;
+      endpointId: string;
+      analyzedAt: Date;
+      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+      reasoning: string;
+      tokenUsage: number | null;
+      durationMs: number | null;
+    }>> {
     const results = await this.tx
       .select({
         id: aiAnalysisSessions.id,
