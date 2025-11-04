@@ -13,6 +13,7 @@
     "@cronicorn/adapter-ai": "workspace:*",
     "@cronicorn/adapter-drizzle": "workspace:*",
     "@cronicorn/adapter-system-clock": "workspace:*",
+    "@cronicorn/config-defaults": "workspace:*",
     "@cronicorn/worker-ai-planner": "workspace:*",
     "drizzle-orm": "catalog:",
     "pg": "^8.13.1",

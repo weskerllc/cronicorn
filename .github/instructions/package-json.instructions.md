@@ -1,5 +1,11 @@
 # Package.json Best Practices for TypeScript + ESM + Project References
 
+## Quick Reference
+
+**→ For build/run commands, see `docs/public/developers/quick-start.md`**
+
+This document explains the technical details of package.json structure in this monorepo.
+
 ## Summary of Changes
 
 All packages have been standardized to follow TypeScript's recommended package.json format for ESM packages with project references.

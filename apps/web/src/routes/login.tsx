@@ -1,14 +1,19 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
+import { Input } from "@cronicorn/ui-library/components/input";
+import { Label } from "@cronicorn/ui-library/components/label";
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
-import { AlertCircle, Github } from "lucide-react";
+import { Separator } from "@cronicorn/ui-library/components/separator";
+import { AlertCircle, Github, Mail } from "lucide-react";
 
 import { brand, metaDescriptions, pageTitles, structuredData } from "@cronicorn/content";
 import { signIn } from "@/lib/auth-client";
 import { SEO } from "@/components/SEO";
 import { APP_URL } from "@/config";
+import { authConfigQueryOptions } from "@/lib/api-client/queries/auth-config.queries";
 
 type LoginSearch = {
   redirect?: string;
@@ -20,14 +25,23 @@ export const Route = createFileRoute("/login")({
       redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
     };
   },
+  loader: async ({ context }) => {
+    // Load auth configuration to know which methods are available
+    await context.queryClient.ensureQueryData(authConfigQueryOptions());
+  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
+
+  // Get available authentication methods
+  const { data: authConfig } = useSuspenseQuery(authConfigQueryOptions());
 
   // Determine where to redirect after login
   const getRedirectPath = () => {
@@ -44,6 +58,36 @@ function RouteComponent() {
       }
     }
     return "/dashboard";
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const redirectPath = getRedirectPath();
+
+      await signIn.email(
+        {
+          email,
+          password,
+          callbackURL: redirectPath,
+        },
+        {
+          onSuccess: () => {
+            navigate({ to: redirectPath as any });
+          },
+          onError: (ctx) => {
+            setError(ctx.error.message || "Failed to sign in. Please check your credentials.");
+            setIsLoading(false);
+          },
+        },
+      );
+    } catch (err) {
+      setError("Failed to sign in. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   const handleGithubLogin = async (e: React.MouseEvent) => {
@@ -117,7 +161,7 @@ function RouteComponent() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Welcome to {brand.name}</CardTitle>
             <CardDescription className="text-center">
-              Sign in with your GitHub account to continue
+              Sign in to continue
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -128,16 +172,76 @@ function RouteComponent() {
               </Alert>
             )}
 
-            <Button
-              onClick={handleGithubLogin}
-              disabled={isLoading}
-              className="w-full"
-              size="lg"
-              aria-label="Sign in with GitHub"
-            >
-              <Github className="mr-2 size-5" aria-hidden="true" />
-              {isLoading ? "Signing in..." : "Sign in with GitHub"}
-            </Button>
+            {/* Email/Password Login Form - only show if enabled */}
+            {authConfig.hasEmailPassword && (
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your-email@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    aria-label="Email address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    aria-label="Password"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full"
+                  size="lg"
+                  aria-label="Sign in with email"
+                >
+                  <Mail className="mr-2 size-5" aria-hidden="true" />
+                  {isLoading ? "Signing in..." : "Sign in with Email"}
+                </Button>
+              </form>
+            )}
+
+            {/* Show separator only if both methods are enabled */}
+            {authConfig.hasEmailPassword && authConfig.hasGitHubOAuth && (
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* GitHub OAuth Login - only show if enabled */}
+            {authConfig.hasGitHubOAuth && (
+              <Button
+                onClick={handleGithubLogin}
+                disabled={isLoading}
+                className="w-full"
+                size="lg"
+                variant="outline"
+                aria-label="Sign in with GitHub"
+              >
+                <Github className="mr-2 size-5" aria-hidden="true" />
+                {isLoading ? "Signing in..." : "Sign in with GitHub"}
+              </Button>
+            )}
 
             <p className="text-xs text-center text-muted-foreground">
               By signing in, you agree to our terms of service and privacy policy

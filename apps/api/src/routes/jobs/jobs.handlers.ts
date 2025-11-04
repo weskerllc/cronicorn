@@ -138,7 +138,7 @@ export const addEndpoint: AppRouteHandler<routes.AddEndpointRoute> = async (c) =
       if (message.includes("not found") || message.includes("unauthorized")) {
         return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
       }
-      if (message.includes("ValidationError")) {
+      if (message.includes("ValidationError") || message.includes("Endpoint limit reached") || message.includes("Interval too short")) {
         return c.json({ message }, HTTPStatusCodes.BAD_REQUEST);
       }
       throw error;

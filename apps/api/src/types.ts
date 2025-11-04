@@ -8,6 +8,7 @@ import { defaultHook } from "stoker/openapi";
 
 import type { Auth } from "./auth/config.js";
 import type { AuthContext } from "./auth/types.js";
+import type { Env } from "./lib/config.js";
 import type { Database } from "./lib/db.js";
 
 export type AppBindings = {
@@ -16,6 +17,7 @@ export type AppBindings = {
     clock: Clock;
     cron: Cron;
     auth: Auth;
+    config: Env;
     withJobsManager: <T extends Response>(fn: (manager: JobsManager) => Promise<T>) => Promise<T>;
     withDashboardManager: <T extends Response>(fn: (manager: DashboardManager) => Promise<T>) => Promise<T>;
     // Stripe services
