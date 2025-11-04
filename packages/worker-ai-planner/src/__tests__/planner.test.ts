@@ -36,6 +36,7 @@ describe("aiPlanner", () => {
       updateEndpoint: vi.fn(),
       listEndpointsByJob: vi.fn(),
       deleteEndpoint: vi.fn(),
+      countEndpointsByUser: vi.fn(),
       claimDueEndpoints: vi.fn(),
       setLock: vi.fn(),
       clearLock: vi.fn(),
