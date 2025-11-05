@@ -27,7 +27,7 @@ else
 fi
 
 # Common build flags
-BUILD_FLAGS="--file Dockerfile.monorepo-optimized --builder $BUILDER_NAME"
+BUILD_FLAGS="--file Dockerfile --builder $BUILDER_NAME"
 
 # Add cache flags if provided
 if [ -n "$CACHE_FROM" ]; then
