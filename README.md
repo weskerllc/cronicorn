@@ -39,6 +39,8 @@ npx @cronicorn/mcp-server
 
 [View on npm →](https://www.npmjs.com/package/@cronicorn/mcp-server)
 
+**Alternative:** If you have [Context7 MCP](https://context7.com) installed, access Cronicorn docs via `@context7 /weskerllc/cronicorn`
+
 ---
 
 ## Get Started

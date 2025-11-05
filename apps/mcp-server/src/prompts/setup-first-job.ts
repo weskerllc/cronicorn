@@ -173,20 +173,6 @@ ${!hasUrl ? `${!hasTask ? "2" : "1"}. Provide your HTTP endpoint URL` : ""}
 ${!hasSchedule ? `${!hasTask && !hasUrl ? "3" : !hasTask || !hasUrl ? "2" : "1"}. Choose interval or cron scheduling` : ""}
 
 Then I'll help you create the job and endpoint using the available tools!
-
----
-
-📚 **Resources:**
-- Quick Start Guide: https://docs.cronicorn.com/quick-start
-- Core Concepts: https://docs.cronicorn.com/core-concepts
-- Bundled Docs: file:///docs/quick-start.md
-
-💡 **Available Tools:**
-- create_job - Create a job container
-- add_endpoint - Add an endpoint to a job
-- get_endpoint_health_summary - Check execution health
-- list_jobs - See all your jobs
-- list_endpoints - See endpoints in a job
 `,
                         },
                     },

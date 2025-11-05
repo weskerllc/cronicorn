@@ -153,7 +153,7 @@ Prompts are interactive conversation starters that guide you through common Cron
 
 #### `/setup-first-job` - Get Started with Cronicorn
 
-Interactive guide for creating your first scheduled job.
+Interactive guide for creating your first scheduled job. Works for all scenarios including new users and migrations from other cron systems.
 
 **Optional Arguments:**
 - `task_description`: What the job should do
@@ -186,40 +186,6 @@ The prompt will guide you through:
 - AI hints for dynamic scheduling
 - Safety constraints (min/max intervals)
 - Response body instrumentation
-
----
-
-#### `/migrate-from-cron` - Migrate Existing Cron Jobs
-
-Help migrate from traditional cron, Vercel Cron, GitHub Actions, or other systems.
-
-**Optional Arguments:**
-- `current_system`: "traditional-cron", "vercel-cron", "github-actions", "aws-eventbridge", or "other"
-- `cron_expressions`: Your existing cron schedules (one per line)
-- `job_count`: Number of jobs to migrate
-
-**Example Usage (GitHub Copilot):**
-
-```
-@cronicorn /migrate-from-cron current_system="traditional-cron" cron_expressions="0 */5 * * *
-0 2 * * *
-0 9 * * 1-5"
-```
-
-The prompt will guide you through:
-1. Understanding HTTP-first vs file-based cron
-2. Creating HTTP wrappers for existing scripts
-3. Converting cron expressions
-4. Batch migration strategies
-5. Parallel testing (run both systems)
-6. Gradual cutover
-
-**What You'll Learn:**
-- Key differences: traditional cron vs Cronicorn
-- HTTP endpoint wrappers
-- Migration patterns (wrapper vs native)
-- Handling dependencies and file system access
-- Multi-endpoint coordination
 
 ---
 
@@ -507,6 +473,21 @@ git push --follow-tags
 - `README.md`
 
 **Note**: Only production dependency is `@modelcontextprotocol/sdk` - everything else is bundled.
+
+## Alternative: Context7 Documentation Access
+
+If you have the [Context7 MCP server](https://context7.com) installed alongside Cronicorn MCP, you can access Cronicorn documentation directly in your AI assistant:
+
+```
+@context7 /weskerllc/cronicorn
+```
+
+This provides an alternative way to access up-to-date Cronicorn documentation without leaving your conversation. Context7 complements the Cronicorn MCP server's prompts and bundled resources.
+
+**Use cases:**
+- Quick doc lookups while working with Cronicorn MCP tools
+- Access to the latest documentation updates
+- Cross-reference between different sections of the docs
 
 ## Security
 
