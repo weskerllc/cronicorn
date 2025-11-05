@@ -1,3 +1,12 @@
+## [1.7.1](https://github.com/weskerllc/cronicorn/compare/v1.7.0...v1.7.1) (2025-11-05)
+
+
+### Bug Fixes
+
+* Dockerfile ([c29d9b8](https://github.com/weskerllc/cronicorn/commit/c29d9b84bc7e4ff14042978461b9613457134761))
+* docs llms.txt ([f5475aa](https://github.com/weskerllc/cronicorn/commit/f5475aaeab15265873d26deab50eac628520eb84))
+* Homepage ([97ff64f](https://github.com/weskerllc/cronicorn/commit/97ff64f41fe8366ad02e7297e52bf494117c399d))
+
 # [1.7.0](https://github.com/weskerllc/cronicorn/compare/v1.6.1...v1.7.0) (2025-11-05)
 
 
