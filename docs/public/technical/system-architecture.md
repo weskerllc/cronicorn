@@ -292,14 +292,6 @@ To use Cronicorn effectively, you need to understand:
 
 5. **The system is eventually consistent**: Don't expect instant reactions to every change. The AI analyzes every 5 minutes, and hints apply on the next execution. Plan for minutes, not seconds.
 
-## Next Steps
-
-Now that you understand the architecture, you can dive deeper:
-
-- **[How Scheduling Works](./how-scheduling-works.md)** - Deep-dive into the Scheduler worker and Governor logic
-- **[How AI Adaptation Works](./how-ai-adaptation-works.md)** - Deep-dive into the AI Planner and hint system
-- **[Coordinating Multiple Endpoints](./coordinating-multiple-endpoints.md)** - Patterns for building workflows
-- **[Configuration and Constraints](./configuration-and-constraints.md)** - How to configure endpoints effectively
 
 ---
 

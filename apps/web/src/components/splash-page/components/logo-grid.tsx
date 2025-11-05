@@ -12,7 +12,7 @@ export default function LogoGrid() {
 
             {/* <!-- Logo Cloud --> */}
             <div className="mt-12">
-                <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-10 md:gap-x-16 md:gap-y-12 max-sm:flex-col [&_img]:grayscale [&_img]:opacity-50 dark:[&_img]:invert">
+                <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-10 md:gap-x-16 md:gap-y-12 [&_img]:grayscale [&_img]:opacity-50 dark:[&_img]:invert">
                     <img
                         src="/logos/slack-wordmark.svg"
                         alt="Slack - Team messaging & notifications"

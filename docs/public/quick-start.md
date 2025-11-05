@@ -217,16 +217,3 @@ If you're hitting rate limits:
 1. Increase **Min Interval** (e.g., from 30s to 60s)
 2. Adjust **Baseline Schedule** to be less frequent
 3. Let AI adapt (it will back off automatically)
-
-## Next Steps
-
-- **[Core Concepts](./core-concepts.md)** - Understand jobs, endpoints, and AI scheduling
-- **[API Reference](https://cronicorn.com/docs/api)** - Full API documentation
-- **[Self-Hosting Guide](./technical/system-architecture.md)** - Deploy Cronicorn yourself
-
-## Getting Help
-
-- 📖 [Documentation](https://cronicorn.com/docs)
-- 💬 [Discord Community](https://discord.gg/cronicorn)
-- 📧 [Email Support](mailto:support@cronicorn.com)
-- 🐛 [Report Issues](https://github.com/weskerllc/cronicorn/issues)
