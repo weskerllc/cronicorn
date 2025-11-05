@@ -29,20 +29,6 @@ Traditional cron jobs run on fixed schedules—and so do modern workflow platfor
 
 ---
 
-## 🤖 Built for AI Agents
-
-Cronicorn's [MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server) enables AI assistants to help you set up and manage your cron jobs—from initial configuration with your existing services to ongoing adjustments and monitoring.
-
-```bash
-npx @cronicorn/mcp-server
-```
-
-[View on npm →](https://www.npmjs.com/package/@cronicorn/mcp-server)
-
-**Alternative:** If you have [Context7 MCP](https://context7.com) installed, access Cronicorn docs via `@context7 /weskerllc/cronicorn`
-
----
-
 ## Get Started
 
 ### Hosted Platform
@@ -54,6 +40,13 @@ npx @cronicorn/mcp-server
 Run Cronicorn with Docker or Node.js on your own infrastructure.
 
 **[→ Self-hosting guide](https://cronicorn.com/docs/developers/quick-start)**
+
+
+<p align="left">
+  <a href="https://cronicorn.com/docs/mcp-server">
+    <img src=".github/images/get-started-button.svg" alt="Get started with your AI Assistant" width="400">
+  </a>
+</p>
 
 ---
 
