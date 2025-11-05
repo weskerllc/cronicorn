@@ -16,19 +16,19 @@ echo "🚀 Building Docker images with BuildKit cache mounts..."
 
 # Build individual services using default docker build
 echo "📦 Building API..."
-docker build --file Dockerfile.monorepo-optimized --target api --tag $REGISTRY/cronicorn-api:$TAG .
+docker build --file Dockerfile --target api --tag $REGISTRY/cronicorn-api:$TAG .
 
 echo "📦 Building Scheduler..."
-docker build --file Dockerfile.monorepo-optimized --target scheduler --tag $REGISTRY/cronicorn-scheduler:$TAG .
+docker build --file Dockerfile --target scheduler --tag $REGISTRY/cronicorn-scheduler:$TAG .
 
 echo "📦 Building AI Planner..."
-docker build --file Dockerfile.monorepo-optimized --target ai-planner --tag $REGISTRY/cronicorn-ai-planner:$TAG .
+docker build --file Dockerfile --target ai-planner --tag $REGISTRY/cronicorn-ai-planner:$TAG .
 
 echo "📦 Building Web..."
-docker build --file Dockerfile.monorepo-optimized --target web --tag $REGISTRY/cronicorn-web:$TAG .
+docker build --file Dockerfile --target web --tag $REGISTRY/cronicorn-web:$TAG .
 
 echo "📦 Building Docs..."
-docker build --file Dockerfile.monorepo-optimized --target docs --tag $REGISTRY/cronicorn-docs:$TAG .
+docker build --file Dockerfile --target docs --tag $REGISTRY/cronicorn-docs:$TAG .
 
 # Push if requested
 if [ "$PUSH" = "true" ]; then
