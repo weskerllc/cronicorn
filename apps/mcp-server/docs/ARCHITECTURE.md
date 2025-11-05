@@ -86,7 +86,7 @@ import type { ApiClient } from "../../ports/api-client.js";
 import { JobResponseSchema } from "@cronicorn/api-contracts/jobs";
 
 export function registerGetJobs(server: McpServer, apiClient: ApiClient) {
-    server.registerTool("GET_jobs", {
+    server.registerTool("listJobs", {
         description: "List all jobs",
         inputSchema: {},
         outputSchema: z.array(JobResponseSchema).shape,

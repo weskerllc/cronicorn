@@ -10,26 +10,25 @@ interface FeatureCard {
 const features: Array<FeatureCard> = [
     {
         icon: <Activity className="size-6" />,
-        title: "Adapts to Your System's Actual Needs",
-        description: "AI analyzes response patterns and metrics to automatically adjust job frequency based on what's actually happening in your system.",
+        title: "Adapts to Your System",
+        description: "AI tunes job frequency automatically based on real system behavior and metrics.",
     },
     {
         icon: <Shield className="size-6" />,
-        title: "Safe Automation You Can Trust",
-        description: "Define your limits and AI works within them. Set schedules, boundaries, and pause anytime—hints expire automatically so nothing runs wild.",
+        title: "Automation with Boundaries",
+        description: "You set the limits. AI stays within them—pause anytime, with safe auto-expiring hints.",
     },
     {
         icon: <Eye className="size-6" />,
-        title: "See Exactly Why Jobs Run (or Don't)",
-        description: "Complete run history with AI reasoning. Debug scheduling decisions with full audit trails.",
+        title: "Transparent Decisions",
+        description: "See why every job ran—or didn’t—with full history and AI reasoning trails.",
     },
     {
         icon: <Code className="size-6" />,
-        title: "Your Services control the Schedule",
-        description: "Return metrics in your response and AI uses your system's real data to optimize timing.",
+        title: "Driven by Your Data",
+        description: "AI schedules jobs using the metrics your services return—no guesswork.",
     },
 ];
-
 export function FeatureCardsSection() {
     return (
         <section className="w-full py-16 md:py-20 lg:py-24" aria-labelledby="features-heading">

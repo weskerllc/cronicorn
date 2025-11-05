@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { AddEndpointDescription, AddEndpointSummary, base as jobsBase } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -22,9 +22,9 @@ const EndpointResponseSchema = jobsBase.EndpointResponseBaseSchema;
 
 export function registerPostEndpoint(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "POST_jobs_jobId_endpoints",
-    title: "Add Endpoint",
-    description: "Add an endpoint to a job. Must provide either baselineCron OR baselineIntervalMs (not both). The endpoint will execute according to the baseline schedule and can be dynamically adjusted with AI hints.",
+    name: "addEndpoint",
+    title: AddEndpointSummary,
+    description: AddEndpointDescription,
     inputSchema: toShape(AddEndpointRequestSchema),
     outputSchema: toShape(EndpointResponseSchema),
     inputValidator: AddEndpointRequestSchema,

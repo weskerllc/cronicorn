@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { ArchiveJobDescription, ArchiveJobSummary, base as jobsBase } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -22,9 +22,9 @@ const JobResponseSchema = jobsBase.JobResponseBaseSchema;
 
 export function registerDeleteJob(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "DELETE_jobs_id",
-    title: "Archive Job",
-    description: "Archive a job (soft delete). The job status will be set to 'archived' and an archivedAt timestamp will be recorded. Archived jobs can be recovered if needed.",
+    name: "archiveJob",
+    title: ArchiveJobSummary,
+    description: ArchiveJobDescription,
     inputSchema: toShape(DeleteJobRequestSchema),
     outputSchema: toShape(JobResponseSchema),
     inputValidator: DeleteJobRequestSchema,

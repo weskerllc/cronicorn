@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as dashboardBase } from "@cronicorn/api-contracts/dashboard";
+import { base as dashboardBase, GetDashboardStatsDescription, GetDashboardStatsSummary } from "@cronicorn/api-contracts/dashboard";
 
 import type { ApiClient } from "../../ports/api-client.js";
 
@@ -18,9 +18,9 @@ const DashboardStatsResponseSchema = dashboardBase.DashboardStatsResponseBaseSch
 
 export function registerGetDashboardStats(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "GET_dashboard_stats",
-    title: "Get Dashboard Statistics",
-    description: "Get comprehensive dashboard statistics including job counts, endpoint stats, success rates, recent activity, time-series data, top endpoints, and recent runs. Useful for overview and monitoring.",
+    name: "getDashboardStats",
+    title: GetDashboardStatsSummary,
+    description: GetDashboardStatsDescription,
     inputSchema: toShape(DashboardStatsRequestSchema),
     outputSchema: toShape(DashboardStatsResponseSchema),
     inputValidator: DashboardStatsRequestSchema,

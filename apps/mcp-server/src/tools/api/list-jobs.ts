@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { base as jobsBase, ListJobsDescription, ListJobsSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -26,9 +26,9 @@ const ListJobsResponseSchema = z.object({
 
 export function registerListJobs(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "GET_jobs",
-    title: "List Jobs",
-    description: "List all jobs for the authenticated user. Optionally filter by status (active, paused, archived). Returns jobs with endpoint counts.",
+    name: "listJobs",
+    title: ListJobsSummary,
+    description: ListJobsDescription,
     inputSchema: toShape(ListJobsRequestSchema),
     outputSchema: toShape(ListJobsResponseSchema),
     inputValidator: ListJobsRequestSchema,

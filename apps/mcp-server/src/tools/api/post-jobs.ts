@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { CreateJobDescription, CreateJobSummary, base as jobsBase } from "@cronicorn/api-contracts/jobs";
 
 import type { ApiClient } from "../../ports/api-client.js";
 
@@ -18,9 +18,9 @@ const JobResponseSchema = jobsBase.JobResponseBaseSchema;
 
 export function registerPostJobs(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "POST_jobs",
-    title: "Create Job",
-    description: "Create a new job. Jobs are containers for endpoints that execute on schedules. After creating a job, use POST_jobs_jobId_endpoints to add executable endpoints.",
+    name: "createJob",
+    title: CreateJobSummary,
+    description: CreateJobDescription,
     inputSchema: toShape(CreateJobRequestSchema),
     outputSchema: toShape(JobResponseSchema),
     inputValidator: CreateJobRequestSchema,
