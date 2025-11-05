@@ -2,20 +2,26 @@ import { useEffect, useState } from "react";
 import { cn } from "@cronicorn/ui-library/lib/utils";
 import { brand, urls } from "@cronicorn/content";
 import { Separator } from "@cronicorn/ui-library/components/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@cronicorn/ui-library/components/sheet";
-import { Menu } from "lucide-react";
 import AppLogo from "../../../logo.svg?react";
-import GitHubLogoUrl from "/logos/github.svg";
+import GitHubLogo from "../../../../public/logos/github.svg?react";
+import { AnimatedHamburger } from "./animated-hamburger";
+import { MobileMenu } from "./mobile-menu";
 
-const NAV_LINKS = [
+// Primary links - visible on all screen sizes
+const PRIMARY_NAV_LINKS = [
     { href: urls.docs.base, label: "Docs" },
-    { href: urls.github.discussions, label: "Discussions" },
-    { href: urls.docs.apiReference, label: "API Playground" },
     { href: urls.docs.mcpServer, label: "MCP Server" },
+] as const;
+
+// Secondary links - desktop only, moved to mobile menu
+const SECONDARY_NAV_LINKS = [
+    { href: urls.docs.apiReference, label: "API Playground" },
+    { href: urls.github.discussions, label: "Discussions" },
 ] as const;
 
 export default function HeaderSection() {
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -41,10 +47,23 @@ export default function HeaderSection() {
 
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center gap-6">
-                    {NAV_LINKS.map((link) => (
+                    {PRIMARY_NAV_LINKS.map((link) => (
                         <a
                             key={link.href}
                             href={link.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
+                        >
+                            {link.label}
+                        </a>
+                    ))}
+                    {SECONDARY_NAV_LINKS.map((link) => (
+                        <a
+                            key={link.href}
+                            href={link.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
                         >
                             {link.label}
@@ -58,53 +77,41 @@ export default function HeaderSection() {
                         className="text-foreground hover:text-foreground/80 transition-colors duration-150 cursor-pointer"
                         aria-label="View Cronicorn on GitHub"
                     >
-                        <img src={GitHubLogoUrl} alt="GitHub" className="size-5" />
+                        <GitHubLogo className="size-5 fill-current" aria-hidden="true" />
                     </a>
 
                 </div>
 
                 {/* Mobile Menu */}
-                <div className="md:hidden">
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <button
-                                className="text-foreground hover:text-foreground/80 transition-colors duration-150 cursor-pointer"
-                                aria-label="Toggle navigation menu"
-                            >
-                                <Menu className="size-6" />
-                            </button>
-                        </SheetTrigger>
-                        <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                            <SheetHeader>
-                                <SheetTitle className="text-left invisible">{brand.name} Nav Menu</SheetTitle>
-                            </SheetHeader>
-                            <nav className="flex flex-col gap-4 px-4">
-                                {NAV_LINKS.map((link) => (
-                                    <a
-                                        key={link.href}
-                                        href={link.href}
-                                        className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-base font-medium cursor-pointer py-2"
-                                    >
-                                        {link.label}
-                                    </a>
-                                ))}
-                                <Separator className="my-2" />
-                                <a
-                                    href={urls.github.repo}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-foreground hover:text-foreground/80 transition-colors duration-150 cursor-pointer py-2"
-                                    aria-label="View Cronicorn on GitHub"
-                                >
-                                    <img src={GitHubLogoUrl} alt="GitHub" className="size-5" />
-                                    <span className="text-base font-medium">GitHub</span>
-                                </a>
+                <div className="md:hidden flex items-center gap-3">
+                    {/* Primary links visible on mobile */}
+                    {PRIMARY_NAV_LINKS.map((link) => (
+                        <a
+                            key={link.href}
+                            href={link.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
+                        >
+                            {link.label}
+                        </a>
+                    ))}
 
-                            </nav>
-                        </SheetContent>
-                    </Sheet>
+                    <Separator orientation="vertical" className=" h-6 data-[orientation=vertical]:h-6" />
+
+                    {/* Hamburger menu button */}
+                    <button
+                        className="group text-foreground hover:text-foreground/80 transition-colors duration-150 cursor-pointer"
+                        aria-label="Toggle navigation menu"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    >
+                        <AnimatedHamburger isOpen={isMenuOpen} />
+                    </button>
                 </div>
             </nav>
+
+            {/* Mobile Menu Panel */}
+            <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
         </header>
     )
 }

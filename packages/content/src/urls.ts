@@ -19,11 +19,11 @@ export const urls = {
   /** Documentation (on docs subdomain) */
   docs: {
     base: "https://docs.cronicorn.com",
-    quickstart: "https://docs.cronicorn.com/getting-started/quickstart",
-    useCases: "https://docs.cronicorn.com/guides/use-cases",
-    architecture: "https://docs.cronicorn.com/technical/architecture",
+    quickstart: "https://docs.cronicorn.com/quick-start",
+    useCases: "https://docs.cronicorn.com/use-cases",
+    architecture: "https://docs.cronicorn.com/technical/system-architecture",
     apiReference: "https://cronicorn.com/api/reference",
-    mcpServer: "https://docs.cronicorn.com/libraries/mcp-server",
+    mcpServer: "https://docs.cronicorn.com/mcp-server",
   },
 
   /** GitHub repository links */

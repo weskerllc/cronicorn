@@ -172,8 +172,3 @@ Central docs folder that is used by the docs app and mcp-server
 | AI prompts | `packages/worker-ai-planner/src/` |
 | HTTP dispatcher | `packages/adapter-http/` |
 | Business logic | `packages/services/` |
-
-## Next Steps
-
-- **[System Architecture](../technical/system-architecture.md)** - How components interact at runtime
-- **[Quick Start](./quick-start.md)** - Set up your dev environment

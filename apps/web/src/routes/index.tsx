@@ -84,10 +84,7 @@ function Index() {
                 links: [
                   { text: "Home", url: urls.product.home },
                   { text: "Pricing", url: urls.product.pricing },
-                  { text: "Docs", url: urls.docs.base },
-                  { text: "Dashboard", url: urls.product.dashboard },
-                  { text: "API Playground", url: urls.docs.apiReference },
-                  { text: "MCP Server", url: urls.docs.mcpServer },
+                  { text: "Get Started", url: urls.product.dashboard },
                 ],
               },
               {
@@ -95,6 +92,8 @@ function Index() {
                 links: [
                   { text: "Documentation", url: urls.docs.base },
                   { text: "Quickstart Guide", url: urls.docs.quickstart },
+                  { text: "API Playground", url: urls.docs.apiReference },
+                  { text: "MCP Server", url: urls.docs.mcpServer },
                   { text: "Use Cases", url: urls.docs.useCases },
                   { text: "Architecture", url: urls.docs.architecture },
                 ],
@@ -103,9 +102,8 @@ function Index() {
                 title: "Community",
                 links: [
                   { text: "GitHub", url: urls.github.repo },
+                  { text: "Discussions", url: urls.github.discussions },
                   { text: "Support", url: urls.github.issues },
-                  { text: "Contributing", url: urls.github.contributing },
-                  { text: "Changelog", url: urls.github.changelog },
                 ],
               },
               {
@@ -113,7 +111,6 @@ function Index() {
                 links: [
                   { text: "Privacy Policy", url: urls.legal.privacy },
                   { text: "Terms of Service", url: urls.legal.terms },
-                  { text: "Contact", url: urls.legal.contact },
                 ],
               },
             ]}
