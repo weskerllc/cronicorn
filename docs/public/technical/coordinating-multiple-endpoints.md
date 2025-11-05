@@ -449,9 +449,3 @@ When coordination isn't working:
 7. **Cross-job coordination**: Embed external status checks in responses
 
 These patterns give you the building blocks for complex workflows. Mix and match based on your needs.
-
-## Next Steps
-
-- **[Configuration and Constraints](./configuration-and-constraints.md)** - Set up endpoints for optimal coordination
-- **[How AI Adaptation Works](./how-ai-adaptation-works.md)** - Understand how AI reads and acts on signals
-- **[Reference](./reference.md)** - Quick lookup for tools and response body patterns

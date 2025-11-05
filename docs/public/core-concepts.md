@@ -225,9 +225,3 @@ AI behavior:
 - Never exceeds API rate limits (min)
 - Ensures data freshness (max)
 ```
-
-## Next Steps
-
-- **[Introduction](./introduction.md)** - Why use Cronicorn
-- **[Quick Start](./quick-start.md)** - Create your first job
-- **[Technical Documentation](./technical/system-architecture.md)** - For developers and self-hosters

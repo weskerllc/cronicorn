@@ -77,8 +77,3 @@ pnpm dev
 
 **Database errors?**  
 → Ensure Docker is running, then `pnpm db`
-
-## Next Steps
-
--  [Authentication](./authentication.md) - Configure authentication methods
--  [Architecture](../technical/system-architecture.md) - System design

@@ -407,9 +407,3 @@ Expensive operation runs every 10 minutes normally, AI can relax to hourly or ti
 7. **Min/max apply relative to `now`, not `lastRunAt`**
 
 Configure conservatively. The system is designed to be safe by default. Add constraints when you encounter real problems, not anticipated ones.
-
-## Next Steps
-
-- **[How Scheduling Works](./how-scheduling-works.md)** - Understand how Governor applies constraints
-- **[How AI Adaptation Works](./how-ai-adaptation-works.md)** - Learn how AI proposes intervals
-- **[Reference](./reference.md)** - Quick lookup for defaults and field ranges

@@ -46,14 +46,27 @@ const Footer2 = ({
                             <div key={sectionIdx}>
                                 <h3 className="mb-4">{section.title}</h3>
                                 <ul className="text-muted-foreground space-y-4 font-light">
-                                    {section.links.map((link, linkIdx) => (
-                                        <li
-                                            key={linkIdx}
-                                            className="hover:text-primary font-light"
-                                        >
-                                            <a href={link.url}>{link.text}</a>
-                                        </li>
-                                    ))}
+                                    {section.links.map((link, linkIdx) => {
+                                        // Determine if link is external (starts with http or https)
+                                        const isExternal = link.url.startsWith('http://') || link.url.startsWith('https://');
+
+                                        return (
+                                            <li
+                                                key={linkIdx}
+                                                className="hover:text-primary font-light"
+                                            >
+                                                <a
+                                                    href={link.url}
+                                                    {...(isExternal ? {
+                                                        target: "_blank",
+                                                        rel: "noopener noreferrer"
+                                                    } : {})}
+                                                >
+                                                    {link.text}
+                                                </a>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                         ))}

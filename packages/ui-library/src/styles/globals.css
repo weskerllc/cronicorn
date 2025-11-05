@@ -7,6 +7,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 :root {
   --background: oklch(1.00 0 0);
   --foreground: oklch(0.14 0 0);
@@ -149,6 +155,15 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  /* Border rotation animation */
+  --animate-border: border 4s linear infinite;
+
+  @keyframes border {
+    to {
+      --border-angle: 360deg;
+    }
+  }
 }
 
 @layer base {

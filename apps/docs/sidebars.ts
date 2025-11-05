@@ -18,6 +18,8 @@ const sidebars: SidebarsConfig = {
     "introduction",
     "quick-start",
     "core-concepts",
+    "use-cases",
+    "mcp-server",
     "competitive-analysis",
     {
       type: "category",
