@@ -13,13 +13,16 @@ The deployment system provides:
 
 **Staging (Automatic):**
 ```
-Release Published → Workflow Triggers → Calls Dokploy Webhook → Redeploys with latest tag
+Release Published → Workflow Triggers → Calls Dokploy Webhook → Redeploys (pulls latest images)
 ```
+*Note: IMAGE_TAG must be set to `latest` in Dokploy environment variables (one-time setup)*
 
 **Production (Manual):**
 ```
-GitHub Actions UI → Select Version → Calls Dokploy Webhook → Redeploys with selected version
+1. Update IMAGE_TAG in Dokploy UI to desired version (e.g., v1.6.1)
+2. GitHub Actions UI → Run Deploy Workflow → Calls Dokploy Webhook → Redeploys
 ```
+*Note: The workflow triggers the redeploy but does NOT update the IMAGE_TAG variable in Dokploy*
 
 ## Setup
 
@@ -34,10 +37,14 @@ The following secrets are already configured in your repository:
 In your Dokploy project:
 
 1. Use your existing `docker-compose.yml` file
-2. Set environment variables for your environment (staging or production)
-3. Configure the `IMAGE_TAG` environment variable:
-   - **Staging**: Set `IMAGE_TAG=latest`
-   - **Production**: Set `IMAGE_TAG=v1.6.1` (or your desired version)
+2. Set the `IMAGE_TAG` environment variable:
+   - **Staging**: Set `IMAGE_TAG=latest` (one-time, leave it)
+   - **Production**: Set `IMAGE_TAG=v1.6.1` (update manually when you want to deploy a new version)
+3. The workflow will trigger redeployment via webhook (but won't change IMAGE_TAG)
+
+**Important:** The workflow does NOT automatically update the `IMAGE_TAG` variable in Dokploy. For production deployments, you'll need to:
+1. Update `IMAGE_TAG` in Dokploy UI to your desired version
+2. Run the workflow to trigger the actual redeploy
 
 ## Environment Variables
 
@@ -67,24 +74,28 @@ Staging deploys automatically when a new release is published:
 
 ### Manual Production Deployment
 
-1. Go to GitHub Actions → "Deploy to Dokploy" workflow
-2. Click "Run workflow"
-3. Select:
+1. In Dokploy UI: Update `IMAGE_TAG` environment variable to desired version (e.g., `v1.6.1`)
+2. Go to GitHub Actions → "Deploy to Dokploy" workflow
+3. Click "Run workflow"
+4. Select:
    - **Environment**: `production`
-   - **Version**: Specific version tag (e.g., `v1.6.1`) or `latest`
-4. Click "Run workflow"
-5. Workflow calls Dokploy production webhook
-6. Dokploy redeploys with selected version
+   - **Version**: Same version you set in Dokploy (e.g., `v1.6.1`)
+5. Click "Run workflow"
+6. Workflow calls Dokploy production webhook
+7. Dokploy redeploys with the IMAGE_TAG you set in step 1
+
+**Note:** The "Version" input in the workflow is informational only - it doesn't update Dokploy's IMAGE_TAG variable.
 
 ## Rollback
 
 To roll back production to a previous version:
 
-1. Go to GitHub Actions → "Deploy to Dokploy"
-2. Run workflow with:
+1. In Dokploy UI: Update `IMAGE_TAG` to previous version (e.g., `v1.5.0`)
+2. Go to GitHub Actions → "Deploy to Dokploy"
+3. Run workflow with:
    - Environment: `production`
-   - Version: Previous version tag (e.g., `v1.5.0`)
-3. Production redeploys with the older version
+   - Version: `v1.5.0` (informational)
+4. Dokploy redeploys with the IMAGE_TAG from step 1
 
 ## Troubleshooting
 
