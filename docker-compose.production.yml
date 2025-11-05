@@ -1,0 +1,126 @@
+# Production Environment Docker Compose
+# This configuration is designed for production deployments with explicit version pinning
+
+services:
+  db:
+    image: postgres:17
+    container_name: cronicorn-production-db
+    restart: unless-stopped
+    networks:
+      - cronicorn-production
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-db}
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U ${POSTGRES_USER:-user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - cronicorn-production-db:/var/lib/postgresql/data
+
+  migrator:
+    image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/migrator:${IMAGE_TAG}
+    container_name: cronicorn-production-migrator
+    restart: no
+    networks:
+      - cronicorn-production
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-production-db:5432/${POSTGRES_DB:-db}
+
+  api:
+    image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/api:${IMAGE_TAG}
+    container_name: cronicorn-production-api
+    restart: unless-stopped
+    networks:
+      - cronicorn-production
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-production-db:5432/${POSTGRES_DB:-db}
+      PORT: ${PORT:-3333}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      WEB_URL: ${WEB_URL}
+      API_URL: ${API_URL}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      NODE_ENV: production
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_PRICE_PRO: ${STRIPE_PRICE_PRO}
+      STRIPE_PRICE_ENTERPRISE: ${STRIPE_PRICE_ENTERPRISE}
+      BASE_URL: ${BASE_URL}
+    ports:
+      - "${PORT:-3333}:3333"
+
+  scheduler:
+    image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/scheduler:${IMAGE_TAG}
+    container_name: cronicorn-production-scheduler
+    restart: unless-stopped
+    networks:
+      - cronicorn-production
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-production-db:5432/${POSTGRES_DB:-db}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_MODEL: ${AI_MODEL}
+      NODE_ENV: production
+
+  ai-planner:
+    image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/ai-planner:${IMAGE_TAG}
+    container_name: cronicorn-production-ai-planner
+    restart: unless-stopped
+    networks:
+      - cronicorn-production
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-production-db:5432/${POSTGRES_DB:-db}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      AI_ANALYSIS_INTERVAL_MS: ${AI_ANALYSIS_INTERVAL_MS:-300000}
+      AI_LOOKBACK_MINUTES: ${AI_LOOKBACK_MINUTES:-5}
+      AI_MAX_TOKENS: ${AI_MAX_TOKENS:-500}
+      AI_TEMPERATURE: ${AI_TEMPERATURE:-0.7}
+      NODE_ENV: production
+
+  web:
+    image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/web:${IMAGE_TAG}
+    container_name: cronicorn-production-web
+    networks:
+      - cronicorn-production
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  docs:
+    image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/docs:${IMAGE_TAG}
+    container_name: cronicorn-production-docs
+    networks:
+      - cronicorn-production
+    restart: unless-stopped
+
+networks:
+  cronicorn-production:
+    driver: bridge
+
+volumes:
+  cronicorn-production-db:
+    driver: local

@@ -1,0 +1,93 @@
+name: Deploy to Dokploy
+
+on:
+  # Automatic deployment to staging on new releases
+  release:
+    types: [published]
+
+  # Manual deployment to production or staging
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      version:
+        description: 'Version to deploy (e.g., v1.6.1 or latest)'
+        required: true
+        type: string
+        default: 'latest'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'release' && 'staging' || github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Determine deployment version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            # Auto-deploy to staging with latest tag
+            echo "version=latest" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            # Manual deployment
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Dokploy via Webhook
+        env:
+          DOKPLOY_WEBHOOK_URL: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_WEBHOOK_URL || secrets.DOKPLOY_PRODUCTION_WEBHOOK_URL }}
+          DEPLOY_VERSION: ${{ steps.version.outputs.version }}
+          DEPLOY_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          echo "🚀 Deploying to ${{ steps.version.outputs.environment }}"
+          echo "📦 Version: $DEPLOY_VERSION (tag: $DEPLOY_TAG)"
+
+          # Call Dokploy webhook if configured
+          if [ -n "$DOKPLOY_WEBHOOK_URL" ]; then
+            echo "Triggering Dokploy deployment..."
+
+            curl -X POST "$DOKPLOY_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d "{\"version\": \"$DEPLOY_VERSION\", \"tag\": \"$DEPLOY_TAG\", \"environment\": \"${{ steps.version.outputs.environment }}\"}" \
+              --fail-with-body
+
+            echo "✅ Deployment triggered successfully!"
+          else
+            echo "⚠️  No webhook URL configured for ${{ steps.version.outputs.environment }}"
+            echo "Please set DOKPLOY_STAGING_WEBHOOK_URL or DOKPLOY_PRODUCTION_WEBHOOK_URL secret"
+            exit 1
+          fi
+
+      - name: Create deployment summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🚀 Deployment Summary
+
+          **Environment:** \`${{ steps.version.outputs.environment }}\`
+          **Version:** \`${{ steps.version.outputs.version }}\`
+          **Tag:** \`${{ steps.version.outputs.tag }}\`
+          **Registry:** \`ghcr.io/weskerllc/cronicorn\`
+          **Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+
+          ### 📦 Deployed Images
+          - \`ghcr.io/weskerllc/cronicorn/api:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/scheduler:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/ai-planner:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/web:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/docs:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/migrator:${{ steps.version.outputs.version }}\`
+
+          EOF
