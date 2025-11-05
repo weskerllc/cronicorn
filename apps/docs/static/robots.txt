@@ -1,0 +1,42 @@
+# Robots.txt for Cronicorn Documentation
+# Optimized for both traditional search engines and AI crawlers
+
+# Allow all search engines and AI crawlers
+User-agent: *
+Allow: /
+
+# Specific rules for AI/LLM crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+# Common AI crawlers
+User-agent: CCBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# Sitemap location
+Sitemap: https://docs.cronicorn.com/sitemap.xml
+
+# Crawl-delay: Not needed for AI crawlers, but good practice for heavy crawlers
+# User-agent: *
+# Crawl-delay: 1
