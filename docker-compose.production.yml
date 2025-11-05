@@ -22,6 +22,9 @@ services:
     volumes:
       - cronicorn-production-db:/var/lib/postgresql/data
 
+  # IMPORTANT: Production requires explicit IMAGE_TAG - no default provided
+  # This is intentional to prevent accidental deployments without version pinning
+  # Set IMAGE_TAG to a specific version (e.g., v1.6.1) in your environment variables
   migrator:
     image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/migrator:${IMAGE_TAG}
     container_name: cronicorn-production-migrator

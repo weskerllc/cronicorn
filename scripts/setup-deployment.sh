@@ -13,8 +13,18 @@ echo ""
 if ! command -v gh &> /dev/null; then
     echo "❌ GitHub CLI (gh) is not installed."
     echo "   Install it from: https://cli.github.com/"
+    echo ""
     echo "   Or manually add secrets via GitHub web interface:"
-    echo "   https://github.com/$(git config --get remote.origin.url | sed 's/.*://;s/.git$//')/settings/secrets/actions"
+    
+    # Try to get repository URL
+    REPO_URL=$(git config --get remote.origin.url 2>/dev/null || echo "")
+    if [ -n "$REPO_URL" ]; then
+        # Extract owner/repo from various URL formats
+        REPO_PATH=$(echo "$REPO_URL" | sed -e 's/.*github.com[:/]//' -e 's/\.git$//')
+        echo "   https://github.com/$REPO_PATH/settings/secrets/actions"
+    else
+        echo "   https://github.com/YOUR_OWNER/YOUR_REPO/settings/secrets/actions"
+    fi
     exit 1
 fi
 
