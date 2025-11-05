@@ -51,8 +51,7 @@ npx @cronicorn/mcp-server
 
 Run Cronicorn with Docker or Node.js on your own infrastructure.
 
-**[→ Quick Start Guide](https://cronicorn.com/docs/developers/quick-start)**  
-**[→ Deployment Guide](docs/DEPLOYMENT.md)** - Automated staging/production deployments with GitHub Actions and Dokploy
+**[→ Self-hosting guide](https://cronicorn.com/docs/developers/quick-start)**
 
 ---
 

@@ -91,8 +91,6 @@ web_modules/
 .env.production.local
 .env.local
 .env.production
-.env.staging
-# Note: .env.*.example files are tracked for documentation
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
