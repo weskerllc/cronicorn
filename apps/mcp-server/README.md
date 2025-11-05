@@ -145,6 +145,135 @@ On first run, the server will:
 
 Subsequent runs will use the stored access token automatically.
 
+## Prompts (Slash Commands)
+
+Prompts are interactive conversation starters that guide you through common Cronicorn workflows. They're triggered using slash commands in your AI assistant.
+
+### Available Prompts
+
+#### `/setup-first-job` - Get Started with Cronicorn
+
+Interactive guide for creating your first scheduled job. Works for all scenarios including new users and migrations from other cron systems.
+
+**Optional Arguments:**
+- `task_description`: What the job should do
+- `endpoint_url`: HTTP endpoint to call
+- `schedule_type`: "interval" or "cron"
+
+**Example Usage (GitHub Copilot):**
+
+In GitHub Copilot Chat, type:
+```
+@cronicorn /setup-first-job
+```
+
+Or with arguments:
+```
+@cronicorn /setup-first-job task_description="check API health every 5 minutes" endpoint_url="https://api.myapp.com/health"
+```
+
+The prompt will guide you through:
+1. Understanding jobs vs endpoints
+2. Creating a job container
+3. Adding your HTTP endpoint
+4. Configuring baseline schedules
+5. Setting safety constraints
+6. Enabling AI adaptation
+
+**What You'll Learn:**
+- Jobs vs endpoints (containers vs execution units)
+- Baseline schedules (cron vs interval)
+- AI hints for dynamic scheduling
+- Safety constraints (min/max intervals)
+- Response body instrumentation
+
+---
+
+#### `/troubleshoot-failures` - Debug Failing Endpoints
+
+Debug failing job executions and identify solutions.
+
+**Optional Arguments:**
+- `job_or_endpoint_name`: Name/ID of failing endpoint
+- `error_description`: Error symptoms
+- `when_started`: "just-now", "today", "this-week", or "longer"
+
+**Example Usage (GitHub Copilot):**
+
+```
+@cronicorn /troubleshoot-failures job_or_endpoint_name="payment-processor" error_description="timeout errors" when_started="today"
+```
+
+The prompt will guide you through:
+1. Identifying the failing endpoint
+2. Reviewing run history for patterns
+3. Analyzing error details (status codes, messages)
+4. Checking AI hints and scheduling state
+5. Inspecting response bodies
+6. Applying fixes (constraints, pausing, configuration)
+
+**Common Issues Covered:**
+- Timeout errors (increase timeout/execution time)
+- Rate limiting (429 errors, adjust min interval)
+- Service unavailable (500/503, pause endpoint)
+- Authentication failures (401/403, fix headers)
+- Network issues (connection refused, DNS)
+- Response body problems (size limits, structure)
+
+---
+
+### Using Prompts in GitHub Copilot
+
+**In VS Code with GitHub Copilot Chat:**
+
+1. Open GitHub Copilot Chat (Click the chat icon or `Ctrl+Shift+I` / `Cmd+Shift+I`)
+
+2. Use the `@cronicorn` agent with a slash command:
+   ```
+   @cronicorn /setup-first-job
+   ```
+
+3. Copilot will run the prompt and guide you through the workflow
+
+4. Provide arguments inline:
+   ```
+   @cronicorn /migrate-from-cron current_system="vercel-cron" job_count="10"
+   ```
+
+5. Follow the interactive guidance to complete your task
+
+**Tips for Best Results:**
+
+- **Start broad**: Use prompts without arguments to get full guidance
+- **Provide context**: Include arguments when you have specific info
+- **Follow suggestions**: Prompts reference specific tools to use next
+- **Check resources**: Prompts include doc links for deeper learning
+
+**Note:** GitHub Copilot doesn't automatically load bundled resources like Claude Desktop does, but prompts include embedded summaries and hosted doc URLs for universal access.
+
+---
+
+### Using Prompts in Claude Desktop
+
+**In Claude Desktop:**
+
+1. Type a slash command in the chat:
+   ```
+   /setup-first-job
+   ```
+
+2. Claude will execute the prompt and start guiding you
+
+3. Prompts can reference bundled documentation resources:
+   ```
+   file:///docs/quick-start.md
+   file:///docs/core-concepts.md
+   ```
+
+4. Claude automatically loads these resources for additional context
+
+---
+
 ## Keeping Updated
 
 The MCP server does not automatically update. When using `npx` or global installation, you'll continue using the cached version until you manually update.
@@ -344,6 +473,21 @@ git push --follow-tags
 - `README.md`
 
 **Note**: Only production dependency is `@modelcontextprotocol/sdk` - everything else is bundled.
+
+## Alternative: Context7 Documentation Access
+
+If you have the [Context7 MCP server](https://context7.com) installed alongside Cronicorn MCP, you can access Cronicorn documentation directly in your AI assistant:
+
+```
+@context7 /weskerllc/cronicorn
+```
+
+This provides an alternative way to access up-to-date Cronicorn documentation without leaving your conversation. Context7 complements the Cronicorn MCP server's prompts and bundled resources.
+
+**Use cases:**
+- Quick doc lookups while working with Cronicorn MCP tools
+- Access to the latest documentation updates
+- Cross-reference between different sections of the docs
 
 ## Security
 
