@@ -3,39 +3,39 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 export function registerSetupFirstJobPrompt(server: McpServer) {
-    server.registerPrompt(
-        "setup-first-job",
-        {
-            title: "Set Up Your First Job",
-            description: "Interactive guide to create your first scheduled job in Cronicorn",
-            argsSchema: {
-                task_description: z
-                    .string()
-                    .optional()
-                    .describe("What should this job do? (e.g., \"check API health every 5 minutes\")"),
-                endpoint_url: z
-                    .string()
-                    .url()
-                    .optional()
-                    .describe("The HTTP endpoint URL to call"),
-                schedule_type: z
-                    .enum(["interval", "cron"])
-                    .optional()
-                    .describe("Preferred schedule type: interval (fixed delay) or cron (time-based)"),
-            },
-        },
-        ({ task_description, endpoint_url, schedule_type }) => {
-            const hasTask = !!task_description;
-            const hasUrl = !!endpoint_url;
-            const hasSchedule = !!schedule_type;
+  server.registerPrompt(
+    "setup-first-job",
+    {
+      title: "Set Up Your First Job",
+      description: "Interactive guide to create your first scheduled job in Cronicorn",
+      argsSchema: {
+        task_description: z
+          .string()
+          .optional()
+          .describe("What should this job do? (e.g., \"check API health every 5 minutes\")"),
+        endpoint_url: z
+          .string()
+          .url()
+          .optional()
+          .describe("The HTTP endpoint URL to call"),
+        schedule_type: z
+          .enum(["interval", "cron"])
+          .optional()
+          .describe("Preferred schedule type: interval (fixed delay) or cron (time-based)"),
+      },
+    },
+    ({ task_description, endpoint_url, schedule_type }) => {
+      const hasTask = !!task_description;
+      const hasUrl = !!endpoint_url;
+      const hasSchedule = !!schedule_type;
 
-            return {
-                messages: [
-                    {
-                        role: "assistant",
-                        content: {
-                            type: "text",
-                            text: `# Welcome to Cronicorn! 🦄
+      return {
+        messages: [
+          {
+            role: "assistant",
+            content: {
+              type: "text",
+              text: `# Welcome to Cronicorn! 🦄
 
 I'll help you set up your first scheduled job. Cronicorn is an HTTP-first cron scheduler with AI-powered adaptive scheduling.
 
@@ -174,10 +174,10 @@ ${!hasSchedule ? `${!hasTask && !hasUrl ? "3" : !hasTask || !hasUrl ? "2" : "1"}
 
 Then I'll help you create the job and endpoint using the available tools!
 `,
-                        },
-                    },
-                ],
-            };
-        },
-    );
+            },
+          },
+        ],
+      };
+    },
+  );
 }

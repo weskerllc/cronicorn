@@ -9,6 +9,6 @@ import { registerTroubleshootFailuresPrompt } from "./troubleshoot-failures.js";
  * that guide AI assistants through specific workflows.
  */
 export function registerPrompts(server: McpServer): void {
-    registerSetupFirstJobPrompt(server);
-    registerTroubleshootFailuresPrompt(server);
+  registerSetupFirstJobPrompt(server);
+  registerTroubleshootFailuresPrompt(server);
 }
