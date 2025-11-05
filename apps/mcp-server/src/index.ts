@@ -13,6 +13,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { authenticate } from "./auth/device-flow.js";
 import { deleteCredentials, getCredentials, isTokenExpired } from "./auth/token-store.js";
 import { loadConfig } from "./env.js";
+import { registerPrompts } from "./prompts/index.js";
 import { registerResources } from "./resources/index.js";
 import { registerTools } from "./tools/index.js";
 
@@ -59,6 +60,9 @@ async function main() {
 
   // Register documentation resources
   await registerResources(server);
+
+  // Register prompts (interactive conversation starters)
+  registerPrompts(server);
 
   // Connect via stdio transport
   const transport = new StdioServerTransport();

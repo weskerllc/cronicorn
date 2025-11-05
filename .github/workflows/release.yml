@@ -42,7 +42,7 @@ jobs:
           # Sparse checkout to speed up clone (only needed files)
           sparse-checkout: |
             .github
-            Dockerfile.monorepo-optimized
+            Dockerfile
             pnpm-lock.yaml
             pnpm-workspace.yaml
             package.json
@@ -88,7 +88,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.monorepo-optimized
+          file: Dockerfile
           target: build-deps
           platforms: ${{ env.PLATFORMS }}
           # Hybrid caching: GHA for speed + registry for sharing
@@ -145,7 +145,7 @@ jobs:
         with:
           sparse-checkout: |
             .github
-            Dockerfile.monorepo-optimized
+            Dockerfile
             pnpm-lock.yaml
             pnpm-workspace.yaml
             package.json
@@ -195,7 +195,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.monorepo-optimized
+          file: Dockerfile
           target: ${{ matrix.service.target }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
