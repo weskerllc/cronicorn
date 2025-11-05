@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/weskerllc/cronicorn/compare/v1.7.1...v1.8.0) (2025-11-05)
+
+
+### Features
+
+* Add automated deployment pipeline with staging auto-deploy and production push-button deploys ([#25](https://github.com/weskerllc/cronicorn/issues/25)) ([ce24d50](https://github.com/weskerllc/cronicorn/commit/ce24d502d8a87c776fca01907b35234779bf214d))
+
 ## [1.7.1](https://github.com/weskerllc/cronicorn/compare/v1.7.0...v1.7.1) (2025-11-05)
 
 
