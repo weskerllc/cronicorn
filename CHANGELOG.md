@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/weskerllc/cronicorn/compare/v1.6.1...v1.7.0) (2025-11-05)
+
+
+### Features
+
+* MCP Prompts ([#26](https://github.com/weskerllc/cronicorn/issues/26)) ([6bd3d77](https://github.com/weskerllc/cronicorn/commit/6bd3d773c2cb8ed7b3e5ce9baf222b9f98f2f0c3))
+
 ## [1.6.1](https://github.com/weskerllc/cronicorn/compare/v1.6.0...v1.6.1) (2025-11-05)
 
 
