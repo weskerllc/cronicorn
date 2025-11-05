@@ -12,7 +12,6 @@
   "version": "1.6.0",
   "scripts": {
     "🚀 ---------- SETUP ----------": "",
-    "setup": "pnpm install && pnpm build:deps",
     "postinstall": "pnpm build:packages",
     "🚀 ---------- DEVELOPMENT ----------": "",
     "build:deps": "pnpm build:packages",
