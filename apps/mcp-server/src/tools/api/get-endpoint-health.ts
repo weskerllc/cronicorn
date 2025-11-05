@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { GetHealthSummaryDescription, GetHealthSummarySummary, base as jobsBase } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -22,9 +22,9 @@ const HealthSummaryResponseSchema = jobsBase.HealthSummaryResponseBaseSchema;
 
 export function registerGetEndpointHealth(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "GET_endpoints_id_health",
-    title: "Get Endpoint Health",
-    description: "Get health summary for an endpoint. Returns success/failure counts, average duration, last run info, and current failure streak. Useful for monitoring and alerting.",
+    name: "getEndpointHealth",
+    title: GetHealthSummarySummary,
+    description: GetHealthSummaryDescription,
     inputSchema: toShape(HealthSummaryRequestSchema),
     outputSchema: toShape(HealthSummaryResponseSchema),
     inputValidator: HealthSummaryRequestSchema,

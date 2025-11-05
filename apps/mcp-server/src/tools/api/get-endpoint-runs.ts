@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { base as jobsBase, ListRunsDescription, ListRunsSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -27,9 +27,9 @@ const ListRunsResponseSchema = z.object({
 
 export function registerGetEndpointRuns(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "GET_endpoints_id_runs",
-    title: "List Endpoint Runs",
-    description: "List run history for an endpoint. Supports filtering by status and pagination with limit/offset. Returns run summaries with execution details.",
+    name: "listEndpointRuns",
+    title: ListRunsSummary,
+    description: ListRunsDescription,
     inputSchema: toShape(ListRunsRequestSchema),
     outputSchema: toShape(ListRunsResponseSchema),
     inputValidator: ListRunsRequestSchema,

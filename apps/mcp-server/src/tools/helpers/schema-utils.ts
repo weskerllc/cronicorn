@@ -15,6 +15,9 @@ import { z } from "zod";
  * This allows you to define schemas once and use them for both
  * MCP registration and runtime validation.
  *
+ * Handles both ZodObject and ZodIntersection types (from .and()).
+ * For intersection types, it merges the shapes from both sides.
+ *
  * @example
  * ```typescript
  * const schema = z.object({
@@ -29,8 +32,28 @@ import { z } from "zod";
  * });
  * ```
  */
-export function toShape<T extends z.ZodObject<ZodRawShape>>(schema: T): T["shape"] {
-  return schema.shape;
+export function toShape<T extends z.ZodTypeAny>(
+  schema: T,
+): ZodRawShape {
+  // Handle ZodIntersection (from .and())
+  if (schema instanceof z.ZodIntersection) {
+    const left = toShape(schema._def.left);
+    const right = toShape(schema._def.right);
+    return { ...left, ...right };
+  }
+
+  // Handle ZodEffects (from .refine(), .transform(), etc.)
+  if (schema instanceof z.ZodEffects) {
+    return toShape(schema._def.schema);
+  }
+
+  // Handle ZodObject (base case)
+  if (schema instanceof z.ZodObject) {
+    return schema.shape;
+  }
+
+  // Fallback for other types - return empty shape
+  return {};
 }
 
 /**

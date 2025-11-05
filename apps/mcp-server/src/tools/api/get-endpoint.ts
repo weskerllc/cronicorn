@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { GetEndpointDescription, GetEndpointSummary, base as jobsBase } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -23,9 +23,9 @@ const EndpointResponseSchema = jobsBase.EndpointResponseBaseSchema;
 
 export function registerGetEndpoint(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "GET_jobs_jobId_endpoints_id",
-    title: "Get Endpoint",
-    description: "Retrieve a single endpoint by ID. Returns full configuration including baseline schedule, AI hints, execution settings, and current state.",
+    name: "getEndpoint",
+    title: GetEndpointSummary,
+    description: GetEndpointDescription,
     inputSchema: toShape(GetEndpointRequestSchema),
     outputSchema: toShape(EndpointResponseSchema),
     inputValidator: GetEndpointRequestSchema,

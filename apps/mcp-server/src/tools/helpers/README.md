@@ -24,7 +24,7 @@ Handles the entire lifecycle of an API tool with automatic error handling.
 import { registerApiTool } from "../helpers/api-tool.js";
 
 registerApiTool(server, apiClient, {
-  name: "POST_jobs",
+  name: "createJob",
   title: "Create Job",
   description: "Create a new job...",
   
@@ -112,7 +112,7 @@ registerApiTool(server, apiClient, {
 // See post-jobs.ts for full manual implementation
 export function registerPostJobs(server: McpServer, apiClient: ApiClient) {
   server.registerTool(
-    "POST_jobs",
+    "createJob",
     {
       title: "Create Job",
       description: "...",
@@ -165,7 +165,7 @@ const [JobResponseSchema, jobResponseShape] = createSchemaAndShape({
 
 export function registerPostJobs(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "POST_jobs",
+    name: "createJob",
     title: "Create Job",
     description: "Create a new job...",
     inputSchema: createJobInputShape,
@@ -277,7 +277,7 @@ The helpers are tested through the tools that use them. When testing a tool:
 import { test, expect } from "vitest";
 import { createMockApiClient } from "../__tests__/mocks.js";
 
-test("POST_jobs creates job successfully", async () => {
+test("createJob creates job successfully", async () => {
   const mockClient = createMockApiClient({
     "/jobs": { method: "POST", response: { id: "123", name: "Test" } }
   });

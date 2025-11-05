@@ -38,10 +38,10 @@ type JobResponse = z.infer<typeof JobResponseSchema>;
 
 export function registerPostJobs(server: McpServer, apiClient: ApiClient) {
     server.registerTool(
-        "POST_jobs",
+        "createJob",
         {
             title: "Create Job",
-            description: "Create a new job. Jobs are containers for endpoints that execute on schedules. After creating a job, use POST_jobs_jobId_endpoints to add executable endpoints.",
+            description: "Create a new job. Jobs are containers for endpoints that execute on schedules. After creating a job, use the addEndpoint tool to add executable endpoints.",
             // MCP requires plain object with Zod schemas as values (not .shape directly)
             inputSchema: { ...CreateJobRequestSchema.shape },
             outputSchema: { ...JobResponseSchema.shape },
@@ -107,7 +107,7 @@ export function registerPostJobs(server: McpServer, apiClient: ApiClient) {
 
 ```typescript
 server.registerTool(
-    "POST_jobs",  // Tool name: HTTP_METHOD + path_segments
+    "createJob",  // Tool name: camelCase format
     {
         title: "Create Job",  // Human-readable action (verb-based)
         description: "...",   // What it does + next steps
@@ -185,24 +185,24 @@ return {
 ## Naming Conventions
 
 ### Tool Names
-- Format: `{HTTP_METHOD}_{path_segments}`
+- Format: `camelCase` following JavaScript conventions
 - Examples:
-  - `POST_jobs` → POST /jobs
-  - `GET_jobs_jobId` → GET /jobs/:jobId
-  - `POST_jobs_jobId_endpoints` → POST /jobs/:jobId/endpoints
-  - `PATCH_jobs_jobId_endpoints_endpointId` → PATCH /jobs/:jobId/endpoints/:endpointId
+  - `createJob` → POST /jobs
+  - `getJob` → GET /jobs/:jobId
+  - `addEndpoint` → POST /jobs/:jobId/endpoints
+  - `updateEndpoint` → PATCH /jobs/:jobId/endpoints/:endpointId
 
-**Rationale:** Explicit mapping makes debugging and tracing easier.
+**Rationale:** CamelCase names are more AI-friendly and follow JavaScript conventions.
 
-**Alternative:** Verb-based names (`create-job`) are more AI-friendly but less traceable. Can add as aliases later.
+**Previous Format:** Used `{HTTP_METHOD}_{path_segments}` (e.g., `POST_jobs`), but this was less intuitive for both humans and AI agents.
 
 ### File Structure
 ```
 src/tools/api/
-  post-jobs.ts              # POST /jobs
-  get-jobs.ts               # GET /jobs
-  get-jobs-id.ts            # GET /jobs/:jobId
-  post-jobs-id-endpoints.ts # POST /jobs/:jobId/endpoints
+  post-jobs.ts              # createJob - POST /jobs
+  get-jobs.ts               # listJobs - GET /jobs
+  get-job.ts                # getJob - GET /jobs/:jobId
+  post-endpoint.ts          # addEndpoint - POST /jobs/:jobId/endpoints
   ...
 ```
 
@@ -237,7 +237,7 @@ import { describe, expect, it, vi } from "vitest";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerPostJobs } from "./post-jobs.js";
 
-describe("POST_jobs tool", () => {
+describe("createJob tool", () => {
     it("creates job successfully", async () => {
         const mockApiClient = {
             fetch: vi.fn().mockResolvedValue({ id: "job-1", name: "Test" }),
@@ -304,20 +304,20 @@ When converting existing custom tools to 1:1 pattern:
 - [ ] Type-safe API call with generic
 - [ ] Imports follow ESLint sorting
 - [ ] File named after endpoint (e.g., `post-jobs.ts`)
-- [ ] Tool name follows convention (e.g., `POST_jobs`)
+- [ ] Tool name follows camelCase convention (e.g., `createJob`)
 - [ ] Added unit tests with error cases
 
 ## Future Improvements
 
 1. **Error Handler Wrapper:** Extract common error handling to reduce duplication
 2. **Schema Generator:** Auto-generate tools from OpenAPI spec
-3. **Tool Aliases:** Add verb-based aliases (`create-job` → `POST_jobs`)
+3. **Tool Metadata:** Add more structured metadata for better AI understanding
 4. **Batch Operations:** Support multiple API calls in single tool
 5. **Streaming Responses:** Support SSE for long-running operations
 
 ## References
 
 - [MCP TypeScript SDK Documentation](https://github.com/modelcontextprotocol/typescript-sdk)
-- [POST_jobs implementation](../src/tools/api/post-jobs.ts)
+- [createJob implementation](../src/tools/api/post-jobs.ts)
 - [ApiClient port definition](../src/ports/api-client.ts)
 - [HTTP ApiClient adapter](../src/adapters/http-api-client.ts)

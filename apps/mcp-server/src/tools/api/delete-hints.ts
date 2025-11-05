@@ -6,6 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+import { ClearHintsDescription, ClearHintsSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -22,9 +23,9 @@ const EmptyResponseSchema = z.object({});
 
 export function registerDeleteHints(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "DELETE_endpoints_id_hints",
-    title: "Clear AI Hints",
-    description: "Clear all AI hints (interval and one-shot) for an endpoint. The endpoint will revert to its baseline schedule. Useful for resetting adaptive behavior.",
+    name: "clearHints",
+    title: ClearHintsSummary,
+    description: ClearHintsDescription,
     inputSchema: toShape(DeleteHintsRequestSchema),
     outputSchema: toShape(EmptyResponseSchema),
     inputValidator: DeleteHintsRequestSchema,

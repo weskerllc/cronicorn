@@ -31,7 +31,7 @@ const _outputCheck: z.ZodType<YourResponse> = YourResponseSchema;
 // 3. Register tool
 export function registerYourTool(server: McpServer, apiClient: ApiClient) {
     registerApiTool(server, apiClient, {
-        name: "VERB_resource",              // e.g., "POST_jobs", "GET_jobs_jobId"
+        name: "toolName",              // e.g., "createJob", "getJob"
         title: "Human Readable Title",
         description: "What this tool does and when to use it",
         inputSchema: requestShape,
@@ -152,7 +152,7 @@ const [ListJobsResponseSchema, listJobsResponseShape] = createSchemaAndShape({
 
 export function registerListJobs(server: McpServer, apiClient: ApiClient) {
     registerApiTool(server, apiClient, {
-        name: "GET_jobs",
+        name: "listJobs",
         title: "List Jobs",
         description: "List all jobs with optional filtering",
         inputSchema: listJobsInputShape,

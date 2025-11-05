@@ -181,7 +181,7 @@ export function createHttpApiClient(config: HttpApiClientConfig): ApiClient {
 
 4. **Test API call**:
    - Use MCP Inspector Tools tab
-   - Call `POST_jobs` with test data
+   - Call `createJob` with test data
    - Should succeed with 200 response
 
 ## Environment Configuration

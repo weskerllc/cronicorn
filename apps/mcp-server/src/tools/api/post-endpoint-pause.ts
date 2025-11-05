@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { base as jobsBase, PauseResumeDescription, PauseResumeSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -23,9 +23,9 @@ const EmptyResponseSchema = z.object({});
 
 export function registerPostEndpointPause(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "POST_endpoints_id_pause",
-    title: "Pause/Resume Endpoint",
-    description: "Pause an endpoint until a specific time or resume it immediately. Set pausedUntil to an ISO datetime to pause, or null to resume. Useful for maintenance windows or temporary disabling.",
+    name: "pauseResumeEndpoint",
+    title: PauseResumeSummary,
+    description: PauseResumeDescription,
     inputSchema: toShape(PauseResumeRequestSchema),
     outputSchema: toShape(EmptyResponseSchema),
     inputValidator: PauseResumeRequestSchema,

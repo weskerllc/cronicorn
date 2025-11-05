@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
     "introduction",
     "quick-start",
     "core-concepts",
+    "competitive-analysis",
     {
       type: "category",
       label: "Technical",
