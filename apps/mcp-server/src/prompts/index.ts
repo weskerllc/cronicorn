@@ -1,6 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { registerMigrateFromCronPrompt } from "./migrate-from-cron.js";
 import { registerSetupFirstJobPrompt } from "./setup-first-job.js";
 import { registerTroubleshootFailuresPrompt } from "./troubleshoot-failures.js";
 
@@ -11,6 +10,5 @@ import { registerTroubleshootFailuresPrompt } from "./troubleshoot-failures.js";
  */
 export function registerPrompts(server: McpServer): void {
     registerSetupFirstJobPrompt(server);
-    registerMigrateFromCronPrompt(server);
     registerTroubleshootFailuresPrompt(server);
 }

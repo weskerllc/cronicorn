@@ -5,7 +5,7 @@ Quick reference card for Cronicorn MCP Server prompts.
 ## Available Prompts
 
 ### `/setup-first-job`
-**Get started with your first scheduled job**
+**Get started with Cronicorn (works for all scenarios)**
 
 ```
 @cronicorn /setup-first-job
@@ -16,28 +16,12 @@ With arguments:
 @cronicorn /setup-first-job task_description="check API health" endpoint_url="https://api.example.com/health" schedule_type="interval"
 ```
 
-**Use when:** You're new to Cronicorn and want to create your first job
+**Use when:** 
+- You're new to Cronicorn
+- Creating any scheduled job
+- Migrating from other cron systems
 
 **You'll learn:** Jobs vs endpoints, baseline schedules, AI hints, safety constraints
-
----
-
-### `/migrate-from-cron`
-**Migrate from existing cron systems**
-
-```
-@cronicorn /migrate-from-cron
-```
-
-With arguments:
-```
-@cronicorn /migrate-from-cron current_system="traditional-cron" cron_expressions="0 */5 * * *
-0 2 * * *" job_count="10"
-```
-
-**Use when:** You're migrating from traditional cron, Vercel Cron, GitHub Actions, etc.
-
-**You'll learn:** HTTP-first approach, endpoint wrappers, migration strategies
 
 ---
 
