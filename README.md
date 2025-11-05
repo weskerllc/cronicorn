@@ -43,7 +43,7 @@ Run Cronicorn with Docker or Node.js on your own infrastructure.
 
 
 <p align="left">
-  <a href="https://cronicorn.com/docs/mcp-server">
+  <a href="https://docs.cronicorn.com/mcp-server">
     <img src=".github/images/get-started-button.svg" alt="Get started with your AI Assistant" width="400">
   </a>
 </p>
