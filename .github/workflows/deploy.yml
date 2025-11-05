@@ -60,19 +60,17 @@ jobs:
           if [ -n "$DOKPLOY_WEBHOOK_URL" ]; then
             echo "Triggering Dokploy deployment..."
 
-            # Construct JSON payload with proper escaping
-            cat > /tmp/payload.json <<EOF
-{
-  "version": "$DEPLOY_VERSION",
-  "tag": "$DEPLOY_TAG",
-  "environment": "$DEPLOY_ENVIRONMENT"
-}
-EOF
+            # Construct JSON payload with proper escaping using jq
+            PAYLOAD=$(jq -n \
+              --arg version "$DEPLOY_VERSION" \
+              --arg tag "$DEPLOY_TAG" \
+              --arg environment "$DEPLOY_ENVIRONMENT" \
+              '{version: $version, tag: $tag, environment: $environment}')
 
             # Send webhook request
             curl -X POST "$DOKPLOY_WEBHOOK_URL" \
               -H "Content-Type: application/json" \
-              -d @/tmp/payload.json \
+              -d "$PAYLOAD" \
               --fail-with-body
 
             echo "✅ Deployment triggered successfully!"
