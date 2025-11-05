@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/weskerllc/cronicorn/compare/v1.6.0...v1.6.1) (2025-11-05)
+
+
+### Bug Fixes
+
+* Centralize api contracts for api and mcp ([abc11c1](https://github.com/weskerllc/cronicorn/commit/abc11c10b7c1feff4dff6a8dcb54e42ac93278af))
+
 # [1.6.0](https://github.com/weskerllc/cronicorn/compare/v1.5.9...v1.6.0) (2025-11-04)
 
 
