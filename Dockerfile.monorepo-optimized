@@ -25,7 +25,7 @@ RUN pnpm fetch
 FROM build-deps AS build
 # Copy source code after dependencies are cached
 COPY . .
-RUN pnpm install --frozen-lockfile --offline
+RUN pnpm install --frozen-lockfile --offline --ignore-scripts
 # Build all packages (TypeScript project references)
 RUN pnpm run build
 
