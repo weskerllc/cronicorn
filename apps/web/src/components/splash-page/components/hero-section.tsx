@@ -1,4 +1,4 @@
-import { ArrowRight, Sparkle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { brand, urls } from "@cronicorn/content";
 import { IconSparkles } from "@tabler/icons-react";
 
