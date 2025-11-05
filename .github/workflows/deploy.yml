@@ -51,22 +51,33 @@ jobs:
           DOKPLOY_WEBHOOK_URL: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_WEBHOOK_URL || secrets.DOKPLOY_PRODUCTION_WEBHOOK_URL }}
           DEPLOY_VERSION: ${{ steps.version.outputs.version }}
           DEPLOY_TAG: ${{ steps.version.outputs.tag }}
+          DEPLOY_ENVIRONMENT: ${{ steps.version.outputs.environment }}
         run: |
-          echo "🚀 Deploying to ${{ steps.version.outputs.environment }}"
+          echo "🚀 Deploying to $DEPLOY_ENVIRONMENT"
           echo "📦 Version: $DEPLOY_VERSION (tag: $DEPLOY_TAG)"
 
           # Call Dokploy webhook if configured
           if [ -n "$DOKPLOY_WEBHOOK_URL" ]; then
             echo "Triggering Dokploy deployment..."
 
+            # Construct JSON payload with proper escaping
+            cat > /tmp/payload.json <<EOF
+{
+  "version": "$DEPLOY_VERSION",
+  "tag": "$DEPLOY_TAG",
+  "environment": "$DEPLOY_ENVIRONMENT"
+}
+EOF
+
+            # Send webhook request
             curl -X POST "$DOKPLOY_WEBHOOK_URL" \
               -H "Content-Type: application/json" \
-              -d "{\"version\": \"$DEPLOY_VERSION\", \"tag\": \"$DEPLOY_TAG\", \"environment\": \"${{ steps.version.outputs.environment }}\"}" \
+              -d @/tmp/payload.json \
               --fail-with-body
 
             echo "✅ Deployment triggered successfully!"
           else
-            echo "⚠️  No webhook URL configured for ${{ steps.version.outputs.environment }}"
+            echo "⚠️  No webhook URL configured for $DEPLOY_ENVIRONMENT"
             echo "Please set DOKPLOY_STAGING_WEBHOOK_URL or DOKPLOY_PRODUCTION_WEBHOOK_URL secret"
             exit 1
           fi
