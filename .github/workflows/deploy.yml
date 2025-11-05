@@ -46,6 +46,52 @@ jobs:
             echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Update IMAGE_TAG in Dokploy
+        env:
+          DOKPLOY_API_URL: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_API_URL || secrets.DOKPLOY_PRODUCTION_API_URL }}
+          DOKPLOY_API_TOKEN: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_API_TOKEN || secrets.DOKPLOY_PRODUCTION_API_TOKEN }}
+          DOKPLOY_PROJECT_ID: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_PROJECT_ID || secrets.DOKPLOY_PRODUCTION_PROJECT_ID }}
+          DEPLOY_VERSION: ${{ steps.version.outputs.version }}
+          DEPLOY_ENVIRONMENT: ${{ steps.version.outputs.environment }}
+        run: |
+          echo "🔧 Updating IMAGE_TAG to $DEPLOY_VERSION in Dokploy $DEPLOY_ENVIRONMENT"
+          
+          # Check if API credentials are configured
+          if [ -z "$DOKPLOY_API_URL" ] || [ -z "$DOKPLOY_API_TOKEN" ] || [ -z "$DOKPLOY_PROJECT_ID" ]; then
+            echo "⚠️  Dokploy API not configured for $DEPLOY_ENVIRONMENT - skipping IMAGE_TAG update"
+            echo "To enable automatic IMAGE_TAG updates, configure:"
+            echo "  - DOKPLOY_${DEPLOY_ENVIRONMENT^^}_API_URL"
+            echo "  - DOKPLOY_${DEPLOY_ENVIRONMENT^^}_API_TOKEN"
+            echo "  - DOKPLOY_${DEPLOY_ENVIRONMENT^^}_PROJECT_ID"
+          else
+            # Update IMAGE_TAG environment variable via Dokploy API
+            echo "Updating IMAGE_TAG environment variable..."
+            
+            # Get current environment variables
+            CURRENT_ENV=$(curl -s -X GET "$DOKPLOY_API_URL/api/project/$DOKPLOY_PROJECT_ID/env" \
+              -H "Authorization: Bearer $DOKPLOY_API_TOKEN" \
+              -H "Content-Type: application/json")
+            
+            # Update IMAGE_TAG value
+            UPDATED_ENV=$(echo "$CURRENT_ENV" | jq --arg tag "$DEPLOY_VERSION" \
+              'if type == "array" then
+                map(if .key == "IMAGE_TAG" then .value = $tag else . end)
+              elif type == "object" and has("IMAGE_TAG") then
+                .IMAGE_TAG = $tag
+              else
+                . + {"IMAGE_TAG": $tag}
+              end')
+            
+            # Send updated environment variables back
+            curl -X PUT "$DOKPLOY_API_URL/api/project/$DOKPLOY_PROJECT_ID/env" \
+              -H "Authorization: Bearer $DOKPLOY_API_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$UPDATED_ENV" \
+              --fail-with-body
+            
+            echo "✅ IMAGE_TAG updated to $DEPLOY_VERSION"
+          fi
+
       - name: Deploy to Dokploy via Webhook
         env:
           DOKPLOY_WEBHOOK_URL: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_WEBHOOK_URL || secrets.DOKPLOY_PRODUCTION_WEBHOOK_URL }}
