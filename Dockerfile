@@ -27,21 +27,25 @@ FROM build-deps AS build
 COPY . .
 RUN pnpm install --frozen-lockfile --offline --ignore-scripts
 # Build all packages (TypeScript project references)
-RUN pnpm run build
+RUN pnpm run build:packages
 
 # -------- Deploy Individual Apps --------
 FROM build AS deploy-migrator
+RUN pnpm --filter @cronicorn/migrator run build
 RUN pnpm deploy --filter=@cronicorn/migrator --prod --legacy /prod/migrator
 # Copy migrations folder to deployment directory
 RUN cp -r /app/packages/adapter-drizzle/migrations /prod/migrator/node_modules/@cronicorn/adapter-drizzle/
 
 FROM build AS deploy-api
+RUN pnpm --filter @cronicorn/api run build
 RUN pnpm deploy --filter=@cronicorn/api --prod --legacy /prod/api
 
 FROM build AS deploy-scheduler
+RUN pnpm --filter @cronicorn/scheduler-app run build
 RUN pnpm deploy --filter=@cronicorn/scheduler-app --prod --legacy /prod/scheduler
 
 FROM build AS deploy-ai-planner
+RUN pnpm --filter @cronicorn/ai-planner-app run build
 RUN pnpm deploy --filter=@cronicorn/ai-planner-app --prod --legacy /prod/ai-planner
 
 FROM build AS deploy-web
@@ -50,6 +54,9 @@ ARG VITE_SITE_URL
 ARG NODE_ENV=production
 ENV VITE_SITE_URL=$VITE_SITE_URL
 ENV NODE_ENV=$NODE_ENV
+# Build API first (web depends on @cronicorn/api/client)
+RUN pnpm --filter @cronicorn/api run build
+# Now build web
 RUN pnpm --filter @cronicorn/web run build
 RUN pnpm deploy --filter=@cronicorn/web --prod --legacy /prod/web
 # Copy built web assets
