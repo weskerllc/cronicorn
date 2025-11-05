@@ -1,0 +1,148 @@
+name: Deploy to Dokploy
+
+on:
+  # Automatic deployment to staging on new releases
+  release:
+    types: [published]
+
+  # Manual deployment to production or staging
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      version:
+        description: 'Version to deploy (e.g., v1.6.1 or latest)'
+        required: true
+        type: string
+        default: 'latest'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'release' && 'staging' || github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Determine deployment version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            # Auto-deploy to staging with latest tag
+            echo "version=latest" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            # Manual deployment
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update IMAGE_TAG in Dokploy
+        env:
+          DOKPLOY_API_URL: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_API_URL || secrets.DOKPLOY_PRODUCTION_API_URL }}
+          DOKPLOY_API_TOKEN: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_API_TOKEN || secrets.DOKPLOY_PRODUCTION_API_TOKEN }}
+          DOKPLOY_PROJECT_ID: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_PROJECT_ID || secrets.DOKPLOY_PRODUCTION_PROJECT_ID }}
+          DEPLOY_VERSION: ${{ steps.version.outputs.version }}
+          DEPLOY_ENVIRONMENT: ${{ steps.version.outputs.environment }}
+        run: |
+          echo "🔧 Updating IMAGE_TAG to $DEPLOY_VERSION in Dokploy $DEPLOY_ENVIRONMENT"
+          
+          # Check if API credentials are configured
+          if [ -z "$DOKPLOY_API_URL" ] || [ -z "$DOKPLOY_API_TOKEN" ] || [ -z "$DOKPLOY_PROJECT_ID" ]; then
+            echo "⚠️  Dokploy API not configured for $DEPLOY_ENVIRONMENT - skipping IMAGE_TAG update"
+            echo "To enable automatic IMAGE_TAG updates, configure:"
+            echo "  - DOKPLOY_${DEPLOY_ENVIRONMENT^^}_API_URL"
+            echo "  - DOKPLOY_${DEPLOY_ENVIRONMENT^^}_API_TOKEN"
+            echo "  - DOKPLOY_${DEPLOY_ENVIRONMENT^^}_PROJECT_ID"
+          else
+            # Update IMAGE_TAG environment variable via Dokploy API
+            echo "Updating IMAGE_TAG environment variable..."
+            
+            # Get current environment variables
+            CURRENT_ENV=$(curl -s -X GET "$DOKPLOY_API_URL/api/project/$DOKPLOY_PROJECT_ID/env" \
+              -H "Authorization: Bearer $DOKPLOY_API_TOKEN" \
+              -H "Content-Type: application/json")
+            
+            # Update IMAGE_TAG value
+            UPDATED_ENV=$(echo "$CURRENT_ENV" | jq --arg tag "$DEPLOY_VERSION" \
+              'if type == "array" then
+                map(if .key == "IMAGE_TAG" then .value = $tag else . end)
+              elif type == "object" and has("IMAGE_TAG") then
+                .IMAGE_TAG = $tag
+              else
+                . + {"IMAGE_TAG": $tag}
+              end')
+            
+            # Send updated environment variables back
+            curl -X PUT "$DOKPLOY_API_URL/api/project/$DOKPLOY_PROJECT_ID/env" \
+              -H "Authorization: Bearer $DOKPLOY_API_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$UPDATED_ENV" \
+              --fail-with-body
+            
+            echo "✅ IMAGE_TAG updated to $DEPLOY_VERSION"
+          fi
+
+      - name: Deploy to Dokploy via Webhook
+        env:
+          DOKPLOY_WEBHOOK_URL: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_WEBHOOK_URL || secrets.DOKPLOY_PRODUCTION_WEBHOOK_URL }}
+          DEPLOY_VERSION: ${{ steps.version.outputs.version }}
+          DEPLOY_TAG: ${{ steps.version.outputs.tag }}
+          DEPLOY_ENVIRONMENT: ${{ steps.version.outputs.environment }}
+        run: |
+          echo "🚀 Deploying to $DEPLOY_ENVIRONMENT"
+          echo "📦 Version: $DEPLOY_VERSION (tag: $DEPLOY_TAG)"
+
+          # Call Dokploy webhook if configured
+          if [ -n "$DOKPLOY_WEBHOOK_URL" ]; then
+            echo "Triggering Dokploy deployment..."
+
+            # Construct JSON payload with proper escaping using jq
+            PAYLOAD=$(jq -n \
+              --arg version "$DEPLOY_VERSION" \
+              --arg tag "$DEPLOY_TAG" \
+              --arg environment "$DEPLOY_ENVIRONMENT" \
+              '{version: $version, tag: $tag, environment: $environment}')
+
+            # Send webhook request
+            curl -X POST "$DOKPLOY_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              --fail-with-body
+
+            echo "✅ Deployment triggered successfully!"
+          else
+            echo "⚠️  No webhook URL configured for $DEPLOY_ENVIRONMENT"
+            echo "Please set DOKPLOY_STAGING_WEBHOOK_URL or DOKPLOY_PRODUCTION_WEBHOOK_URL secret"
+            exit 1
+          fi
+
+      - name: Create deployment summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🚀 Deployment Summary
+
+          **Environment:** \`${{ steps.version.outputs.environment }}\`
+          **Version:** \`${{ steps.version.outputs.version }}\`
+          **Tag:** \`${{ steps.version.outputs.tag }}\`
+          **Registry:** \`ghcr.io/weskerllc/cronicorn\`
+          **Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+
+          ### 📦 Deployed Images
+          - \`ghcr.io/weskerllc/cronicorn/api:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/scheduler:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/ai-planner:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/web:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/docs:${{ steps.version.outputs.version }}\`
+          - \`ghcr.io/weskerllc/cronicorn/migrator:${{ steps.version.outputs.version }}\`
+
+          EOF
