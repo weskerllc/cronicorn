@@ -9,17 +9,17 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: Environment to deploy to
         required: true
         type: choice
         options:
           - staging
           - production
       version:
-        description: 'Version to deploy (e.g., v1.6.1 or latest)'
+        description: "Version to deploy (e.g., v1.6.1 or latest)"
         required: true
         type: string
-        default: 'latest'
+        default: latest
 
 jobs:
   deploy:
@@ -55,7 +55,7 @@ jobs:
           DEPLOY_ENVIRONMENT: ${{ steps.version.outputs.environment }}
         run: |
           echo "🔧 Updating IMAGE_TAG to $DEPLOY_VERSION in Dokploy $DEPLOY_ENVIRONMENT"
-          
+
           # Check if API credentials are configured
           if [ -z "$DOKPLOY_API_URL" ] || [ -z "$DOKPLOY_API_TOKEN" ] || [ -z "$DOKPLOY_PROJECT_ID" ]; then
             echo "⚠️  Dokploy API not configured for $DEPLOY_ENVIRONMENT - skipping IMAGE_TAG update"
@@ -66,12 +66,12 @@ jobs:
           else
             # Update IMAGE_TAG environment variable via Dokploy API
             echo "Updating IMAGE_TAG environment variable..."
-            
+
             # Get current environment variables
             CURRENT_ENV=$(curl -s -X GET "$DOKPLOY_API_URL/api/project/$DOKPLOY_PROJECT_ID/env" \
               -H "Authorization: Bearer $DOKPLOY_API_TOKEN" \
               -H "Content-Type: application/json")
-            
+
             # Update IMAGE_TAG value
             UPDATED_ENV=$(echo "$CURRENT_ENV" | jq --arg tag "$DEPLOY_VERSION" \
               'if type == "array" then
@@ -81,14 +81,14 @@ jobs:
               else
                 . + {"IMAGE_TAG": $tag}
               end')
-            
+
             # Send updated environment variables back
             curl -X PUT "$DOKPLOY_API_URL/api/project/$DOKPLOY_PROJECT_ID/env" \
               -H "Authorization: Bearer $DOKPLOY_API_TOKEN" \
               -H "Content-Type: application/json" \
               -d "$UPDATED_ENV" \
               --fail-with-body
-            
+
             echo "✅ IMAGE_TAG updated to $DEPLOY_VERSION"
           fi
 
