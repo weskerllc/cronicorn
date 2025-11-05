@@ -445,9 +445,3 @@ This ensures that even if AI becomes unavailable or too expensive, your jobs kee
 9. **Quota controls costs**: AI unavailable ≠ jobs stop running
 
 Understanding how AI adaptation works helps you design endpoints that benefit from intelligent scheduling, structure response bodies effectively, and debug unexpected schedule changes.
-
-## Next Steps
-
-- **[Coordinating Multiple Endpoints](./coordinating-multiple-endpoints.md)** - Use AI to orchestrate workflows
-- **[Configuration and Constraints](./configuration-and-constraints.md)** - Set up endpoints for optimal AI behavior
-- **[Reference](./reference.md)** - Quick lookup for tools, fields, and defaults

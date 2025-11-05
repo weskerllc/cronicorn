@@ -394,11 +394,3 @@ Calculate current backoff multiplier:
 ```
 failureCount > 0 ? 2^min(failureCount, 5) : 1
 ```
-
-## Next Steps
-
-For detailed explanations, see:
-- **[System Architecture](./system-architecture.md)** - Understand the big picture
-- **[How Scheduling Works](./how-scheduling-works.md)** - Deep-dive into Governor and Scheduler
-- **[How AI Adaptation Works](./how-ai-adaptation-works.md)** - Learn about hints and tools
-- **[Configuration Guide](./configuration-and-constraints.md)** - Set up endpoints correctly

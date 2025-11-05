@@ -21,6 +21,40 @@ mcp:
 
 **Cronicorn** is an intelligent scheduler that automatically adapts to your application's behavior. Set baseline schedules and let AI optimize execution timing based on real-world patterns.
 
+---
+
+## 🤖 Recommended: Use the MCP Server
+
+**The easiest way to use Cronicorn is through your AI assistant.** Just chat to create jobs, monitor executions, and debug issues—no forms, no clicking.
+
+[![npm version](https://badge.fury.io/js/@cronicorn%2Fmcp-server.svg)](https://www.npmjs.com/package/@cronicorn/mcp-server)
+
+```bash
+npm install -g @cronicorn/mcp-server
+```
+
+Configure it with GitHub Copilot, Claude Desktop, or any MCP-compatible AI assistant. Then just talk:
+
+- *"Set up a job that checks my API health every 5 minutes"*
+- *"Show me why that endpoint is failing"*
+- *"Migrate my 10 Vercel cron jobs to Cronicorn"*
+
+**[→ Learn more about the MCP Server](./mcp-server.md)**
+
+---
+
+## Quick Navigation
+
+**Getting Started**
+- [Quick Start](./quick-start.md) - Create your first scheduled job in 5 minutes
+- [Core Concepts](./core-concepts.md) - Understand jobs, endpoints, and scheduling
+
+**Learn More**
+- [Use Cases & Examples](./use-cases.md) - Real-world scenarios across industries
+- [Technical Architecture](./technical/system-architecture.md) - Deep dive - How Cronicorn works behind the scenes
+
+---
+
 ## What is Cronicorn?
 
 Cronicorn is a scheduling service that combines:
@@ -89,44 +123,6 @@ When enabled, the AI planner:
 - **Multi-tenant isolation**: Secure separation between accounts
 - **API & Web UI**: Manage jobs programmatically or visually
 
-## Use Cases
-
-### API Health Monitoring
-
-Monitor your APIs with adaptive frequency:
-
-- Baseline: Check every 5 minutes
-- AI increases to every 30 seconds when errors detected
-- AI backs off to every 15 minutes when stable
-- Stays within your min (30s) and max (15min) constraints
-
-### Data Synchronization
-
-Sync data between systems efficiently:
-
-- Baseline: Sync every hour
-- AI increases during business hours when changes are frequent
-- AI decreases overnight when activity is low
-- Respects API rate limits with max interval constraints
-
-### Scheduled Maintenance
-
-Run cleanup and maintenance tasks:
-
-- Baseline: Daily at 2am via cron expression
-- Pause during known maintenance windows
-- Monitor execution duration trends over time
-- Track success/failure for audit compliance
-
-### Webhook Retry Logic
-
-Retry failed webhooks intelligently:
-
-- Baseline: Immediate retry, then exponential backoff
-- AI adjusts retry timing based on downstream service patterns
-- Automatic pause after sustained failures
-- Resume when downstream recovers
-
 ## How It Works
 
 1. **Create a Job** - Logical container for related endpoints
@@ -141,15 +137,3 @@ Retry failed webhooks intelligently:
 - **E-commerce teams** syncing inventory and order data
 - **DevOps engineers** running scheduled maintenance tasks
 - **Integration developers** managing webhook retries and polling
-
-## Getting Started
-
-- **Using Cronicorn as a service**: See [Quick Start](./quick-start.md)
-- **Self-hosting Cronicorn**: See [Technical Documentation](./technical/system-architecture.md)
-- **AI assistant integration**: Use our [MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server)
-
-## Next Steps
-
-- **[Core Concepts](./core-concepts.md)** - Understand jobs, endpoints, and scheduling
-- **[Quick Start](./quick-start.md)** - Create your first scheduled job
-- **[Technical Deep Dive](./technical/system-architecture.md)** - For developers and self-hosters

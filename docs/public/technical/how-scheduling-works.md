@@ -260,9 +260,3 @@ This is the power of database-mediated communication: the Scheduler and AI Plann
 6. **Sources provide auditability**: Every decision is traceable
 
 Understanding how scheduling works gives you the foundation to configure endpoints effectively, debug unexpected behavior, and reason about how AI adaptation affects execution timing.
-
-## Next Steps
-
-- **[How AI Adaptation Works](./how-ai-adaptation-works.md)** - Learn how the AI Planner writes hints
-- **[Configuration and Constraints](./configuration-and-constraints.md)** - Guide to setting up endpoints safely
-- **[Reference](./reference.md)** - Quick lookup for fields, defaults, and sources
