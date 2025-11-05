@@ -1,5 +1,10 @@
 import { z } from "@hono/zod-openapi";
 
+// ==================== Dashboard Descriptions ====================
+
+export const GetDashboardStatsSummary = "Get dashboard statistics";
+export const GetDashboardStatsDescription = "Get comprehensive dashboard statistics including job counts, endpoint stats, success rates, recent activity, time-series data, top endpoints, and recent runs. Useful for overview and monitoring.";
+
 // ==================== Dashboard Stats Response Schema ====================
 
 /**

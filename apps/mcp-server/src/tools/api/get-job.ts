@@ -6,25 +6,20 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
-import { z } from "zod";
+import { GetJobDescription, GetJobRequestSchema, GetJobSummary, base as jobsBase } from "@cronicorn/api-contracts/jobs";
+// import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
 
 import { registerApiTool, toShape } from "../helpers/index.js";
 
-// Simple GET request with just an ID
-const GetJobRequestSchema = z.object({
-  id: z.string().describe("Job ID"),
-});
-
 const JobResponseSchema = jobsBase.JobResponseBaseSchema;
 
 export function registerGetJob(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "GET_jobs_id",
-    title: "Get Job",
-    description: "Retrieve a single job by ID. Returns full job details including status and timestamps.",
+    name: "getJob",
+    title: GetJobSummary,
+    description: GetJobDescription,
     inputSchema: toShape(GetJobRequestSchema),
     outputSchema: toShape(JobResponseSchema),
     inputValidator: GetJobRequestSchema,

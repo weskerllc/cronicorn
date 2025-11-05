@@ -6,6 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+import { DeleteEndpointDescription, DeleteEndpointSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -23,9 +24,9 @@ const EmptyResponseSchema = z.object({});
 
 export function registerDeleteEndpoint(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "DELETE_jobs_jobId_endpoints_id",
-    title: "Delete Endpoint",
-    description: "Permanently delete an endpoint. This action cannot be undone. All associated run history will be deleted.",
+    name: "deleteEndpoint",
+    title: DeleteEndpointSummary,
+    description: DeleteEndpointDescription,
     inputSchema: toShape(DeleteEndpointRequestSchema),
     outputSchema: toShape(EmptyResponseSchema),
     inputValidator: DeleteEndpointRequestSchema,

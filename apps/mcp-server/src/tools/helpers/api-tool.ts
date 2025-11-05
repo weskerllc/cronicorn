@@ -25,7 +25,7 @@ type ToolResponse = {
  * Configuration for an API tool
  */
 export type ApiToolConfig<TInput, TOutput extends { [x: string]: unknown }> = {
-  /** Tool name (e.g., "POST_jobs") */
+  /** Tool name (e.g., "createJob") */
   name: string;
   /** Human-readable title */
   title: string;
@@ -101,7 +101,7 @@ function createSuccessResponse<T extends { [x: string]: unknown }>(
  * @example
  * ```typescript
  * registerApiTool(server, apiClient, {
- *   name: "POST_jobs",
+ *   name: "createJob",
  *   title: "Create Job",
  *   description: "Create a new job",
  *   inputSchema: CreateJobRequestSchema,

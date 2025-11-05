@@ -5,121 +5,65 @@
 
 **AI Job Scheduler that adapts to your system**
 
-Schedules HTTP jobs that adapt to real-time conditions.
-
-[![GitHub stars](https://img.shields.io/github/stars/weskerllc/cronicorn?style=social)](https://github.com/weskerllc/cronicorn)
 [![License](https://img.shields.io/badge/license-Fair_Source-blue.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/weskerllc/cronicorn/ci.yml?branch=main)](https://github.com/weskerllc/cronicorn/actions)
 
-[Try Cronicorn](https://cronicorn.com) • [Documentation](https://cronicorn.com/docs) • [Self-Host Guide](https://cronicorn.com/docs/technical/system-architecture)
+[🚀 Try Cronicorn](https://cronicorn.com) • [📖 Documentation](https://cronicorn.com/docs) • [🎮 API Playground](https://cronicorn.com/docs/api) • [🤖 MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server)
 
 </div>
 
 ---
 
-## Why Cronicorn?
+## What Makes It Different?
 
-Traditional cron jobs run on fixed schedules—whether your pipeline has a backlog, your API is failing, or traffic is surging.
+Traditional cron jobs run on fixed schedules—and so do modern workflow platforms like n8n, Trigger.dev, and Temporal. Cronicorn's AI adapts to real-time conditions, automatically adjusting job frequency based on your system's actual behavior.
 
-**Cronicorn adapts to real-time conditions:**
+**[→ See detailed comparison](https://cronicorn.com/docs/competitive-analysis)**
 
-- 📉 **Slows down automatically** - Backs off when rate-limited or during stable periods
-- 📈 **Speeds up when needed** - Increases frequency during backlogs, failures, or high engagement  
-- 🛡️ **Respects your constraints** - Always stays within your configured min/max limits
-- 🧠 **Explains every decision** - See why timing changed: "Backlog detected—increasing to 2 minutes"
+### Key Features
 
-<div align="center">
-  <img src=".github/images/dashboard-preview.png" alt="Cronicorn Dashboard showing real-time job scheduling with AI adaptation" width="100%">
-  <p><em>Live dashboard showing adaptive scheduling in action with real-time condition monitoring</em></p>
-</div>
+- ⚡ **Adapts to Your System** - AI tunes job frequency automatically based on real system behavior and metrics
+- 🛡️ **Automation with Boundaries** - You set the limits. AI stays within them—pause anytime, with safe auto-expiring hints
+- 👁️ **Transparent Decisions** - See why every job ran—or didn't—with full history and AI reasoning trails
+- 📊 **Driven by Your Data** - AI schedules jobs using the metrics your services return—no guesswork
 
-## How It Works
+---
 
-```diff
-Traditional Cron:
-  */5 * * * * → Runs every 5 minutes regardless of conditions
-  
-Cronicorn:
-  Baseline:  Every 5 minutes
-  
-  AI adapts based on real-time conditions:
-- → 30 seconds when failures detected
-  → 5 minutes during normal operation
-+ → 15 minutes when stable and healthy
-  
-  "Rate limit hit—slowing to 30 seconds"
-  Always within your configured constraints (30s - 15min)
+## 🤖 Built for AI Agents
+
+Cronicorn's [MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server) enables AI assistants to help you set up and manage your cron jobs—from initial configuration with your existing services to ongoing adjustments and monitoring.
+
+```bash
+npx @cronicorn/mcp-server
 ```
+
+[View on npm →](https://www.npmjs.com/package/@cronicorn/mcp-server)
+
+---
 
 ## Get Started
 
-### Try Cronicorn
+### Hosted Platform
 
-**[Sign up with GitHub →](https://cronicorn.com)**
+**[Sign up with GitHub →](https://cronicorn.com)** - Create your first adaptive job in 2 minutes. No credit card required.
 
-Create your first adaptive job in 2 minutes. No credit card required.
+### Self-Host
 
-### Self-Hosting & Local Development
+Run Cronicorn with Docker or Node.js on your own infrastructure.
 
-**Zero-configuration local development** - No .env file needed to get started!
+**[→ Self-hosting guide](https://cronicorn.com/docs/developers/quick-start)**
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/weskerllc/cronicorn.git
-cd cronicorn
-
-# 2. Start database and services (that's it!)
-pnpm install
-pnpm db
-pnpm db:migrate
-pnpm dev
-
-# 3. Access the app at http://localhost:5173
-# Login with default admin credentials:
-#   Email: admin@example.com
-#   Password: devpassword
-```
-
-**All environment variables have sensible defaults for local development!**
-
-The app works out of the box with:
-- ✅ Local admin authentication (no OAuth setup required)
-- ✅ PostgreSQL via Docker
-- ✅ Dummy Stripe keys (payments disabled but app runs)
-- ✅ All ports pre-configured
-
-**For production deployment**, customize these variables in `.env`:
-- `BETTER_AUTH_SECRET` - Generate with: `openssl rand -base64 32`
-- `ADMIN_USER_PASSWORD` or GitHub OAuth credentials
-- Real Stripe API keys (if using payments)
-- Production URLs
-
-See `.env.example` for all available options or `.env.minimal` for the simplest setup.
-
-**Authentication Options:**
-- **Admin User** (default for local dev): Works immediately with pre-set credentials
-- **GitHub OAuth** (production): Set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
-- You can enable both methods simultaneously
-
-### Resources
-
-- 📖 **[Documentation](https://cronicorn.com/docs)** - Complete guides and tutorials
-- 🤖 **[MCP Server](https://www.npmjs.com/package/@cronicorn/mcp-server)** - AI assistant integration
-- 📚 **[API Reference](https://cronicorn.com/docs/api)** - REST API documentation
-
-## Key Features
-
-- 🗓️ **Flexible Scheduling** - Cron expressions or simple intervals
-- 🤖 **AI Adaptation** - Automatic optimization based on real-time conditions
-- 📊 **Complete Visibility** - Detailed run history and error tracking
-- 🔒 **Production Ready** - Multi-tenant, distributed locks, reliable execution
-- ⚡ **Constraint Protection** - Min/max intervals prevent runaway schedules
+---
 
 ## Use Cases
 
 **Data Pipelines** - ETL runs hourly → backlog detected → increases to 15min → clears → back to hourly  
 **Content Publishing** - Posts scheduled for 9am → high engagement → AI suggests immediate follow-up  
 **Web Scraping** - Requests every 5sec → rate limit warning → slows to 30sec → recovers → resumes
+
+**[→ View all use cases](https://cronicorn.com/docs)**
+
+---
 
 ## Support
 

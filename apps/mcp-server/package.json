@@ -24,7 +24,7 @@
     "cronicorn-mcp": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsc --noEmit && tsup",
     "watch": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "inspect": "NODE_ENV=development pnpx @modelcontextprotocol/inspector ./dist/index.js",

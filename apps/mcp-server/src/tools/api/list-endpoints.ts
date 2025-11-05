@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { base as jobsBase, ListEndpointsDescription, ListEndpointsSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -26,9 +26,9 @@ const ListEndpointsResponseSchema = z.object({
 
 export function registerListEndpoints(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "GET_jobs_jobId_endpoints",
-    title: "List Endpoints",
-    description: "List all endpoints for a job. Returns complete endpoint configurations including schedules, AI hints, and execution settings.",
+    name: "listEndpoints",
+    title: ListEndpointsSummary,
+    description: ListEndpointsDescription,
     inputSchema: toShape(ListEndpointsRequestSchema),
     outputSchema: toShape(ListEndpointsResponseSchema),
     inputValidator: ListEndpointsRequestSchema,
