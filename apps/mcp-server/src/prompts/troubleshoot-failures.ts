@@ -3,38 +3,38 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 export function registerTroubleshootFailuresPrompt(server: McpServer) {
-    server.registerPrompt(
-        "troubleshoot-failures",
-        {
-            title: "Troubleshoot Endpoint Failures",
-            description: "Debug failing job executions and identify solutions",
-            argsSchema: {
-                job_or_endpoint_name: z
-                    .string()
-                    .optional()
-                    .describe("Name or ID of the failing job or endpoint"),
-                error_description: z
-                    .string()
-                    .optional()
-                    .describe("What error are you seeing? (e.g., timeout, 500 status, connection refused)"),
-                when_started: z
-                    .enum(["just-now", "today", "this-week", "longer"])
-                    .optional()
-                    .describe("When did the failures start?"),
-            },
-        },
-        ({ job_or_endpoint_name, error_description, when_started }) => {
-            const hasIdentifier = !!job_or_endpoint_name;
-            const hasError = !!error_description;
-            const hasTimeline = !!when_started;
+  server.registerPrompt(
+    "troubleshoot-failures",
+    {
+      title: "Troubleshoot Endpoint Failures",
+      description: "Debug failing job executions and identify solutions",
+      argsSchema: {
+        job_or_endpoint_name: z
+          .string()
+          .optional()
+          .describe("Name or ID of the failing job or endpoint"),
+        error_description: z
+          .string()
+          .optional()
+          .describe("What error are you seeing? (e.g., timeout, 500 status, connection refused)"),
+        when_started: z
+          .enum(["just-now", "today", "this-week", "longer"])
+          .optional()
+          .describe("When did the failures start?"),
+      },
+    },
+    ({ job_or_endpoint_name, error_description, when_started }) => {
+      const hasIdentifier = !!job_or_endpoint_name;
+      const hasError = !!error_description;
+      const hasTimeline = !!when_started;
 
-            return {
-                messages: [
-                    {
-                        role: "assistant",
-                        content: {
-                            type: "text",
-                            text: `# Troubleshooting Endpoint Failures 🔍
+      return {
+        messages: [
+          {
+            role: "assistant",
+            content: {
+              type: "text",
+              text: `# Troubleshooting Endpoint Failures 🔍
 
 I'll help you debug and fix failing job executions.
 
@@ -451,10 +451,10 @@ Then I'll help you run the diagnostic tools and apply the appropriate fixes!
 - reset_failure_count - Clear backoff
 - delete_endpoint - Remove endpoint (permanent)
 `,
-                        },
-                    },
-                ],
-            };
-        },
-    );
+            },
+          },
+        ],
+      };
+    },
+  );
 }
