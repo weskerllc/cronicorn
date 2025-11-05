@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { base as jobsBase, ScheduleOneShotDescription, ScheduleOneShotSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -23,9 +23,9 @@ const EmptyResponseSchema = z.object({});
 
 export function registerPostOneShotHint(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "POST_endpoints_id_hints_oneshot",
-    title: "Schedule One-Shot Run",
-    description: "Schedule a one-time run at a specific time or after a delay. Provide either nextRunAt (ISO datetime) or nextRunInMs (delay in ms). Useful for immediate checks or scheduled interventions.",
+    name: "scheduleOneShot",
+    title: ScheduleOneShotSummary,
+    description: ScheduleOneShotDescription,
     inputSchema: toShape(ScheduleOneShotRequestSchema),
     outputSchema: toShape(EmptyResponseSchema),
     inputValidator: ScheduleOneShotRequestSchema,

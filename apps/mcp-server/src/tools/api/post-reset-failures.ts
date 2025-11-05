@@ -6,6 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+import { ResetFailuresDescription, ResetFailuresSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -22,9 +23,9 @@ const EmptyResponseSchema = z.object({});
 
 export function registerPostResetFailures(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "POST_endpoints_id_reset_failures",
-    title: "Reset Failure Count",
-    description: "Reset the failure count for an endpoint to zero. Useful after fixing an issue or to clear accumulated failures that may trigger alerts or backoff behavior.",
+    name: "resetFailures",
+    title: ResetFailuresSummary,
+    description: ResetFailuresDescription,
     inputSchema: toShape(ResetFailuresRequestSchema),
     outputSchema: toShape(EmptyResponseSchema),
     inputValidator: ResetFailuresRequestSchema,

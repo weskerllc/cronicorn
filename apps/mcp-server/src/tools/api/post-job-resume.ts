@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { base as jobsBase, ResumeJobDescription, ResumeJobSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -22,9 +22,9 @@ const JobResponseSchema = jobsBase.JobResponseBaseSchema;
 
 export function registerResumeJob(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "POST_jobs_id_resume",
-    title: "Resume Job",
-    description: "Resume a paused job. The job status will be set to 'active' and all associated endpoints will resume executing on their schedules.",
+    name: "resumeJob",
+    title: ResumeJobSummary,
+    description: ResumeJobDescription,
     inputSchema: toShape(ResumeJobRequestSchema),
     outputSchema: toShape(JobResponseSchema),
     inputValidator: ResumeJobRequestSchema,

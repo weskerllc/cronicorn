@@ -30,7 +30,8 @@ export const createJob = createRoute({
   path: "/jobs",
   method: "post",
   tags,
-  summary: "Create a new job",
+  summary: schemas.CreateJobSummary,
+  description: schemas.CreateJobDescription,
   request: {
     body: jsonContentRequired(schemas.CreateJobRequestSchema, "Job data"),
   },
@@ -44,9 +45,10 @@ export const getJob = createRoute({
   path: "/jobs/:id",
   method: "get",
   tags,
-  summary: "Get a job by ID",
+  summary: schemas.GetJobSummary,
+  description: schemas.GetJobDescription,
   request: {
-    params: z.object({ id: z.string() }),
+    params: schemas.GetJobRequestSchema,
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(schemas.JobResponseSchema, "Job details"),
@@ -58,7 +60,8 @@ export const listJobs = createRoute({
   path: "/jobs",
   method: "get",
   tags,
-  summary: "List all jobs for the authenticated user",
+  summary: schemas.ListJobsSummary,
+  description: schemas.ListJobsDescription,
   request: {
     query: z.object({
       status: z.enum(["active", "paused", "archived"]).optional(),
@@ -77,7 +80,8 @@ export const updateJob = createRoute({
   path: "/jobs/:id",
   method: "patch",
   tags,
-  summary: "Update a job",
+  summary: schemas.UpdateJobSummary,
+  description: schemas.UpdateJobDescription,
   request: {
     params: z.object({ id: z.string() }),
     body: jsonContentRequired(schemas.UpdateJobRequestSchema, "Job updates"),
@@ -92,7 +96,8 @@ export const archiveJob = createRoute({
   path: "/jobs/:id",
   method: "delete",
   tags,
-  summary: "Archive a job (soft delete)",
+  summary: schemas.ArchiveJobSummary,
+  description: schemas.ArchiveJobDescription,
   request: {
     params: z.object({ id: z.string() }),
   },
@@ -106,7 +111,8 @@ export const pauseJob = createRoute({
   path: "/jobs/:id/pause",
   method: "post",
   tags,
-  summary: "Pause a job",
+  summary: schemas.PauseJobSummary,
+  description: schemas.PauseJobDescription,
   request: {
     params: z.object({ id: z.string() }),
   },
@@ -120,7 +126,8 @@ export const resumeJob = createRoute({
   path: "/jobs/:id/resume",
   method: "post",
   tags,
-  summary: "Resume a paused job",
+  summary: schemas.ResumeJobSummary,
+  description: schemas.ResumeJobDescription,
   request: {
     params: z.object({ id: z.string() }),
   },
@@ -136,7 +143,8 @@ export const addEndpoint = createRoute({
   path: "/jobs/:jobId/endpoints",
   method: "post",
   tags: ["Endpoints"],
-  summary: "Add an endpoint to a job",
+  summary: schemas.AddEndpointSummary,
+  description: schemas.AddEndpointDescription,
   request: {
     params: z.object({ jobId: z.string() }),
     body: jsonContentRequired(schemas.AddEndpointRequestSchema, "Endpoint data"),
@@ -151,7 +159,8 @@ export const updateEndpoint = createRoute({
   path: "/jobs/:jobId/endpoints/:id",
   method: "patch",
   tags: ["Endpoints"],
-  summary: "Update an endpoint configuration",
+  summary: schemas.UpdateEndpointSummary,
+  description: schemas.UpdateEndpointDescription,
   request: {
     params: z.object({ jobId: z.string(), id: z.string() }),
     body: jsonContentRequired(schemas.UpdateEndpointRequestSchema, "Endpoint updates"),
@@ -166,7 +175,8 @@ export const deleteEndpoint = createRoute({
   path: "/jobs/:jobId/endpoints/:id",
   method: "delete",
   tags: ["Endpoints"],
-  summary: "Delete an endpoint",
+  summary: schemas.DeleteEndpointSummary,
+  description: schemas.DeleteEndpointDescription,
   request: {
     params: z.object({ jobId: z.string(), id: z.string() }),
   },
@@ -180,7 +190,8 @@ export const getEndpoint = createRoute({
   path: "/jobs/:jobId/endpoints/:id",
   method: "get",
   tags: ["Endpoints"],
-  summary: "Get a single endpoint by ID",
+  summary: schemas.GetEndpointSummary,
+  description: schemas.GetEndpointDescription,
   request: {
     params: z.object({ jobId: z.string(), id: z.string() }),
   },
@@ -194,7 +205,8 @@ export const listEndpoints = createRoute({
   path: "/jobs/:jobId/endpoints",
   method: "get",
   tags: ["Endpoints"],
-  summary: "List all endpoints for a job",
+  summary: schemas.ListEndpointsSummary,
+  description: schemas.ListEndpointsDescription,
   request: {
     params: z.object({ jobId: z.string() }),
   },
@@ -213,7 +225,8 @@ export const applyIntervalHint = createRoute({
   path: "/endpoints/:id/hints/interval",
   method: "post",
   tags: ["Adaptive Scheduling"],
-  summary: "Apply an interval hint to an endpoint",
+  summary: schemas.ApplyIntervalHintSummary,
+  description: schemas.ApplyIntervalHintDescription,
   request: {
     params: z.object({ id: z.string() }),
     body: jsonContentRequired(schemas.ApplyIntervalHintRequestSchema, "Interval hint"),
@@ -228,7 +241,8 @@ export const scheduleOneShot = createRoute({
   path: "/endpoints/:id/hints/oneshot",
   method: "post",
   tags: ["Adaptive Scheduling"],
-  summary: "Schedule a one-shot run for an endpoint",
+  summary: schemas.ScheduleOneShotSummary,
+  description: schemas.ScheduleOneShotDescription,
   request: {
     params: z.object({ id: z.string() }),
     body: jsonContentRequired(schemas.ScheduleOneShotRequestSchema, "One-shot schedule"),
@@ -243,7 +257,8 @@ export const pauseEndpoint = createRoute({
   path: "/endpoints/:id/pause",
   method: "post",
   tags: ["Adaptive Scheduling"],
-  summary: "Pause or resume an endpoint",
+  summary: schemas.PauseResumeSummary,
+  description: schemas.PauseResumeDescription,
   request: {
     params: z.object({ id: z.string() }),
     body: jsonContentRequired(schemas.PauseResumeRequestSchema, "Pause configuration"),
@@ -258,7 +273,8 @@ export const clearHints = createRoute({
   path: "/endpoints/:id/hints",
   method: "delete",
   tags: ["Adaptive Scheduling"],
-  summary: "Clear all AI hints for an endpoint",
+  summary: schemas.ClearHintsSummary,
+  description: schemas.ClearHintsDescription,
   request: {
     params: z.object({ id: z.string() }),
   },
@@ -272,7 +288,8 @@ export const resetFailures = createRoute({
   path: "/endpoints/:id/reset-failures",
   method: "post",
   tags: ["Adaptive Scheduling"],
-  summary: "Reset failure count for an endpoint",
+  summary: schemas.ResetFailuresSummary,
+  description: schemas.ResetFailuresDescription,
   request: {
     params: z.object({ id: z.string() }),
   },
@@ -288,7 +305,8 @@ export const listRuns = createRoute({
   path: "/endpoints/:id/runs",
   method: "get",
   tags: ["Execution"],
-  summary: "List run history for an endpoint",
+  summary: schemas.ListRunsSummary,
+  description: schemas.ListRunsDescription,
   request: {
     params: z.object({ id: z.string() }),
     query: schemas.ListRunsQuerySchema,
@@ -303,7 +321,8 @@ export const getRunDetails = createRoute({
   path: "/runs/:id",
   method: "get",
   tags: ["Execution"],
-  summary: "Get detailed information about a specific run",
+  summary: schemas.GetRunDetailsSummary,
+  description: schemas.GetRunDetailsDescription,
   request: {
     params: z.object({ id: z.string() }),
   },
@@ -317,7 +336,8 @@ export const getHealthSummary = createRoute({
   path: "/endpoints/:id/health",
   method: "get",
   tags: ["Execution"],
-  summary: "Get health summary for an endpoint",
+  summary: schemas.GetHealthSummarySummary,
+  description: schemas.GetHealthSummaryDescription,
   request: {
     params: z.object({ id: z.string() }),
     query: schemas.HealthSummaryQuerySchema,

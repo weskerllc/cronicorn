@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { base as jobsBase, UpdateJobDescription, UpdateJobSummary } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -22,9 +22,9 @@ const JobResponseSchema = jobsBase.JobResponseBaseSchema;
 
 export function registerPatchJob(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "PATCH_jobs_id",
-    title: "Update Job",
-    description: "Update job name or description. All fields are optional - only provided fields will be updated.",
+    name: "updateJob",
+    title: UpdateJobSummary,
+    description: UpdateJobDescription,
     inputSchema: toShape(PatchJobRequestSchema),
     outputSchema: toShape(JobResponseSchema),
     inputValidator: PatchJobRequestSchema,

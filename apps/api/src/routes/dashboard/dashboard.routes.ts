@@ -1,4 +1,4 @@
-import { DashboardStatsQuerySchema, DashboardStatsResponseSchema } from "@cronicorn/api-contracts/dashboard";
+import { DashboardStatsQuerySchema, DashboardStatsResponseSchema, GetDashboardStatsDescription, GetDashboardStatsSummary } from "@cronicorn/api-contracts/dashboard";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -21,8 +21,8 @@ export const getDashboardStats = createRoute({
   path: "/dashboard/stats",
   method: "get",
   tags,
-  summary: "Get aggregated dashboard statistics",
-  description: "Returns comprehensive dashboard metrics including job counts, endpoint stats, success rates, recent activity, time-series data, top endpoints, and recent runs.",
+  summary: GetDashboardStatsSummary,
+  description: GetDashboardStatsDescription,
   request: {
     query: DashboardStatsQuerySchema,
   },

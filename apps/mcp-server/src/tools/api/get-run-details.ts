@@ -6,7 +6,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { base as jobsBase } from "@cronicorn/api-contracts/jobs";
+import { GetRunDetailsDescription, GetRunDetailsSummary, base as jobsBase } from "@cronicorn/api-contracts/jobs";
 import { z } from "zod";
 
 import type { ApiClient } from "../../ports/api-client.js";
@@ -22,9 +22,9 @@ const RunDetailsResponseSchema = jobsBase.RunDetailsResponseBaseSchema;
 
 export function registerGetRunDetails(server: McpServer, apiClient: ApiClient) {
   registerApiTool(server, apiClient, {
-    name: "GET_runs_id",
-    title: "Get Run Details",
-    description: "Get detailed information about a specific run. Includes full execution details, error messages, response body (if available), status code, and endpoint context.",
+    name: "getRunDetails",
+    title: GetRunDetailsSummary,
+    description: GetRunDetailsDescription,
     inputSchema: toShape(GetRunDetailsRequestSchema),
     outputSchema: toShape(RunDetailsResponseSchema),
     inputValidator: GetRunDetailsRequestSchema,
