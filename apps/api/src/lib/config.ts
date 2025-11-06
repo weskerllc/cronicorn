@@ -14,9 +14,9 @@ const envSchema = z.object({
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   // Admin user (optional - for CI/testing environments without OAuth)
-  ADMIN_USER_EMAIL: z.string().email().default(DEV_AUTH.ADMIN_EMAIL),
-  ADMIN_USER_PASSWORD: z.string().min(8).default(DEV_AUTH.ADMIN_PASSWORD),
-  ADMIN_USER_NAME: z.string().default(DEV_AUTH.ADMIN_NAME),
+  ADMIN_USER_EMAIL: z.string().email().or(z.literal("")),
+  ADMIN_USER_PASSWORD: z.string().min(8).or(z.literal("")),
+  ADMIN_USER_NAME: z.string().or(z.literal("")),
   NODE_ENV: z.enum(["development", "production", "test"]).default(DEV_ENV.NODE_ENV),
   API_URL: z.string().url("API_URL must be a valid URL").default(DEV_URLS.API),
   // Stripe configuration (dummy defaults for local dev - payment features won't work without real keys)
@@ -41,7 +41,22 @@ export type Env = z.infer<typeof envSchema>;
 
 export function loadConfig(): Env {
   // eslint-disable-next-line node/no-process-env
-  const result = envSchema.safeParse(process.env);
+  const env = process.env;
+
+  // Apply dev defaults for admin user only in development when not using GitHub OAuth
+  const isProduction = env.NODE_ENV === "production";
+  const hasGitHubOAuth = !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
+  const shouldUseAdminDefaults = !isProduction && !hasGitHubOAuth;
+
+  const envToValidate = {
+    ...env,
+    // Apply dev defaults conditionally (if not set and should use defaults)
+    ADMIN_USER_EMAIL: env.ADMIN_USER_EMAIL ?? (shouldUseAdminDefaults ? DEV_AUTH.ADMIN_EMAIL : ""),
+    ADMIN_USER_PASSWORD: env.ADMIN_USER_PASSWORD ?? (shouldUseAdminDefaults ? DEV_AUTH.ADMIN_PASSWORD : ""),
+    ADMIN_USER_NAME: env.ADMIN_USER_NAME ?? (shouldUseAdminDefaults ? DEV_AUTH.ADMIN_NAME : ""),
+  };
+
+  const result = envSchema.safeParse(envToValidate);
 
   if (!result.success) {
     console.error("❌ Invalid environment variables:");
@@ -51,9 +66,13 @@ export function loadConfig(): Env {
 
   // Validate production safety
   const config = result.data;
+
+  // Only validate ADMIN_USER_PASSWORD if it's actually being used (not empty)
   const warnings = [
     validateNotDevDefaultInProduction(config.NODE_ENV, config.BETTER_AUTH_SECRET, "BETTER_AUTH_SECRET"),
-    validateNotDevDefaultInProduction(config.NODE_ENV, config.ADMIN_USER_PASSWORD, "ADMIN_USER_PASSWORD"),
+    config.ADMIN_USER_PASSWORD && config.ADMIN_USER_PASSWORD.length > 0
+      ? validateNotDevDefaultInProduction(config.NODE_ENV, config.ADMIN_USER_PASSWORD, "ADMIN_USER_PASSWORD")
+      : null,
     validateNotDevDefaultInProduction(config.NODE_ENV, config.STRIPE_SECRET_KEY, "STRIPE_SECRET_KEY"),
   ].filter(Boolean);
 
