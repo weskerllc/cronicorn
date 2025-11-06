@@ -38,8 +38,12 @@ GitHub repo → Settings → Secrets and variables → Actions
 **Required:**
 - `DOKPLOY_URL` = `http://146.190.43.32:3000`
 - `DOKPLOY_TOKEN` = (token from step 1)
-- `DOKPLOY_PRODUCTION_COMPOSE_ID` = (ID from step 2)
-- `DOKPLOY_STAGING_COMPOSE_ID` = (optional, for staging)
+
+**Environment-Specific (add as needed):**
+- `DOKPLOY_STAGING_COMPOSE_ID` = (ID from step 2 for staging)
+- `DOKPLOY_PRODUCTION_COMPOSE_ID` = (ID from step 2 for production)
+
+**Note:** If an environment's compose ID is not set, deployments to that environment will be skipped gracefully.
 
 ---
 
