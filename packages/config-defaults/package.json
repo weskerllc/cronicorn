@@ -2,10 +2,12 @@
   "name": "@cronicorn/config-defaults",
   "version": "0.1.0",
   "type": "module",
+  "main": "./dist/index.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
     }
   },
   "scripts": {
