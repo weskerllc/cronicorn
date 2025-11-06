@@ -152,12 +152,26 @@ export class InMemoryJobsRepo implements JobsRepo {
     const horizonMs = nowMs + withinMs;
 
     // Claim endpoints that are due now or will be due within the horizon
+    // Exclude endpoints from paused or archived jobs
     const due = [...this.map.values()]
-      .filter(e =>
-        e.nextRunAt.getTime() <= horizonMs
-        && (!e.pausedUntil || e.pausedUntil.getTime() <= nowMs)
-        && (!e._lockedUntil || e._lockedUntil.getTime() <= nowMs),
-      )
+      .filter((e) => {
+        // Check basic conditions
+        if (e.nextRunAt.getTime() > horizonMs)
+          return false;
+        if (e.pausedUntil && e.pausedUntil.getTime() > nowMs)
+          return false;
+        if (e._lockedUntil && e._lockedUntil.getTime() > nowMs)
+          return false;
+
+        // Check parent job status if jobId exists
+        if (e.jobId) {
+          const job = this.jobs.get(e.jobId);
+          if (job && (job.status === "paused" || job.status === "archived"))
+            return false;
+        }
+
+        return true;
+      })
       .sort((a, b) => a.nextRunAt.getTime() - b.nextRunAt.getTime())
       .slice(0, limit);
 
