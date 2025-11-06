@@ -167,29 +167,4 @@ jobs:
 
           **Environment:** `${{ steps.version.outputs.environment }}`
           **Version:** `${{ steps.version.outputs.version }}`
-          **Deployment Method:** Dokploy API
-          **Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
-
-          ### 📦 Deployed Images
-          All services will pull: `ghcr.io/weskerllc/cronicorn/*:${{ steps.version.outputs.version }}`
-
-          - api
-          - scheduler
-          - ai-planner
-          - web
-          - docs
-          - migrator
-
-          ### 🔄 How It Works
-          1. **Fetch** current Dokploy compose configuration via API
-          2. **Update** `IMAGE_TAG` environment variable to `${{ github.event.inputs.version }}`
-          3. **Push** updated environment back to Dokploy
-          4. **Trigger** deployment via API
-
-          ### 📝 To Rollback
-          Simply trigger a new deployment with the previous version tag.
-
-          ### 🔗 Links
-          - [Dokploy Dashboard](http://146.190.43.32:3000/dashboard)
-          - [Production Site](https://cronicorn.com)
           EOF
