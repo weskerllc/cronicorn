@@ -16,8 +16,12 @@ import type { Auth } from "./config.js";
  * Used for CI/testing environments where GitHub OAuth is not available.
  */
 export async function seedAdminUser(config: Env, db: Database, auth: Auth): Promise<void> {
+  const adminUserEmail = config.ADMIN_USER_EMAIL;
+  const adminUserPassword = config.ADMIN_USER_PASSWORD;
+  const adminUserName = config.ADMIN_USER_NAME;
+
   // Skip if admin user credentials are not configured
-  if (!config.ADMIN_USER_EMAIL || !config.ADMIN_USER_PASSWORD) {
+  if (!adminUserEmail || !adminUserPassword) {
     return;
   }
 
@@ -32,9 +36,9 @@ export async function seedAdminUser(config: Env, db: Database, auth: Auth): Prom
       // Better Auth will hash the password and handle all the security
       await auth.api.signUpEmail({
         body: {
-          email: config.ADMIN_USER_EMAIL,
-          password: config.ADMIN_USER_PASSWORD,
-          name: config.ADMIN_USER_NAME,
+          email: adminUserEmail,
+          password: adminUserPassword,
+          name: adminUserName,
         },
       });
 
