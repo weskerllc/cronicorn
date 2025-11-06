@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/weskerllc/cronicorn/compare/v1.8.0...v1.8.1) (2025-11-06)
+
+
+### Bug Fixes
+
+* admin user config in prod ([93ffa36](https://github.com/weskerllc/cronicorn/commit/93ffa36721c8be2dae5b9aa30b936daae8253bc5))
+
 # [1.8.0](https://github.com/weskerllc/cronicorn/compare/v1.7.1...v1.8.0) (2025-11-05)
 
 
