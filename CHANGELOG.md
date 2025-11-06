@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/weskerllc/cronicorn/compare/v1.8.1...v1.8.2) (2025-11-06)
+
+
+### Bug Fixes
+
+* Readme / Self host docs ([9f392ae](https://github.com/weskerllc/cronicorn/commit/9f392ae768c6273ca47b31015489b99bccddf247))
+
 ## [1.8.1](https://github.com/weskerllc/cronicorn/compare/v1.8.0...v1.8.1) (2025-11-06)
 
 
