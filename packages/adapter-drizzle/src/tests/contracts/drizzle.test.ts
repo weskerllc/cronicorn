@@ -757,6 +757,63 @@ describe("drizzle Repos (PostgreSQL)", () => {
       expect(endpoints.length).toBe(1);
     });
 
+    test("should not return endpoints from archived jobs in getEndpointsWithRecentRuns", async ({ tx }) => {
+      const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
+
+      // Create an active job
+      const activeJob = await jobsRepo.createJob({
+        userId: "user1",
+        name: "Active Job",
+        status: "active",
+      });
+
+      // Create an archived job
+      const archivedJob = await jobsRepo.createJob({
+        userId: "user1",
+        name: "Archived Job",
+        status: "active", // Will be archived below
+      });
+      await jobsRepo.archiveJob(archivedJob.id);
+
+      // Add endpoint to active job
+      await jobsRepo.addEndpoint({
+        id: "ep-active",
+        tenantId: "user1",
+        jobId: activeJob.id,
+        name: "Active Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
+
+      // Add endpoint to archived job
+      await jobsRepo.addEndpoint({
+        id: "ep-archived",
+        tenantId: "user1",
+        jobId: archivedJob.id,
+        name: "Archived Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
+
+      const runsRepo = new DrizzleRunsRepo(tx);
+
+      // Create runs for both endpoints
+      const run1 = await runsRepo.create({ endpointId: "ep-active", status: "running", attempt: 1 });
+      await runsRepo.finish(run1, { status: "success", durationMs: 100 });
+
+      const run2 = await runsRepo.create({ endpointId: "ep-archived", status: "running", attempt: 1 });
+      await runsRepo.finish(run2, { status: "success", durationMs: 100 });
+
+      // Query for endpoints with recent runs (last 10 minutes)
+      const since = new Date(Date.now() - 10 * 60 * 1000);
+      const endpoints = await runsRepo.getEndpointsWithRecentRuns(since);
+
+      // Should only return endpoint from active job
+      expect(endpoints).toContain("ep-active");
+      expect(endpoints).not.toContain("ep-archived");
+      expect(endpoints.length).toBe(1);
+    });
+
     test("should return endpoints without jobs in getEndpointsWithRecentRuns (backward compat)", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
@@ -887,6 +944,53 @@ describe("drizzle Repos (PostgreSQL)", () => {
       // Should only claim endpoint from active job
       expect(claimed).toContain("ep-active");
       expect(claimed).not.toContain("ep-paused");
+      expect(claimed.length).toBe(1);
+    });
+
+    test("should not claim endpoints from archived jobs", async ({ tx }) => {
+      const repo = new DrizzleJobsRepo(tx, () => new Date("2025-01-01T12:00:00.000Z"));
+
+      // Create an active job
+      const activeJob = await repo.createJob({
+        userId: "user1",
+        name: "Active Job",
+        status: "active",
+      });
+
+      // Create an archived job
+      const archivedJob = await repo.createJob({
+        userId: "user1",
+        name: "Archived Job",
+        status: "active", // Will be archived below
+      });
+      await repo.archiveJob(archivedJob.id);
+
+      // Add endpoint to active job (should be claimed)
+      await repo.addEndpoint({
+        id: "ep-active",
+        tenantId: "user1",
+        jobId: activeJob.id,
+        name: "Active Endpoint",
+        nextRunAt: new Date("2025-01-01T11:59:00.000Z"), // Due
+        failureCount: 0,
+      });
+
+      // Add endpoint to archived job (should NOT be claimed)
+      await repo.addEndpoint({
+        id: "ep-archived",
+        tenantId: "user1",
+        jobId: archivedJob.id,
+        name: "Archived Endpoint",
+        nextRunAt: new Date("2025-01-01T11:59:00.000Z"), // Due
+        failureCount: 0,
+      });
+
+      // Claim due endpoints
+      const claimed = await repo.claimDueEndpoints(10, 10000);
+
+      // Should only claim endpoint from active job
+      expect(claimed).toContain("ep-active");
+      expect(claimed).not.toContain("ep-archived");
       expect(claimed.length).toBe(1);
     });
 

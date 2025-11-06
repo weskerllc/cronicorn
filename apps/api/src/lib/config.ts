@@ -16,7 +16,7 @@ const envSchema = z.object({
   // Admin user (optional - defaults applied only when no auth method is configured)
   ADMIN_USER_EMAIL: z.string().email().optional(),
   ADMIN_USER_PASSWORD: z.string().min(8).optional(),
-  ADMIN_USER_NAME: z.string().optional(),
+  ADMIN_USER_NAME: z.string().optional().default(DEV_AUTH.ADMIN_NAME),
   NODE_ENV: z.enum(["development", "production", "test"]).default(DEV_ENV.NODE_ENV),
   API_URL: z.string().url("API_URL must be a valid URL").default(DEV_URLS.API),
   // Stripe configuration (dummy defaults for local dev - payment features won't work without real keys)
