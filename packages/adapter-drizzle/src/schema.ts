@@ -6,12 +6,34 @@ import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp } from "drizz
 export const jobStatusEnum = pgEnum("job_status", ["active", "paused", "archived"]);
 
 /**
+ * Auth table.
+ */
+
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  isAnonymous: boolean("is_anonymous").default(false),
+  tier: text("tier").notNull().default("free"), // "free" | "pro" | "enterprise"
+
+  // Stripe subscription fields
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  subscriptionStatus: text("subscription_status"), // 'active' | 'trialing' | 'canceled' | 'past_due' | 'incomplete'
+  subscriptionEndsAt: timestamp("subscription_ends_at", { mode: "date" }),
+});
+
+/**
  * Jobs table (Phase 3).
  * Organizational container for related endpoints.
  */
 export const jobs = pgTable("jobs", {
   id: text("id").primaryKey(),
-  userId: text("user_id").notNull(), // Single-user ownership (MVP simplification)
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }), // Single-user ownership (MVP simplification)
   name: text("name").notNull(),
   description: text("description"),
   status: jobStatusEnum("status").notNull().default("active"),
@@ -75,7 +97,7 @@ export const jobEndpoints = pgTable("job_endpoints", {
  */
 export const runs = pgTable("runs", {
   id: text("id").primaryKey(),
-  endpointId: text("endpoint_id").notNull().references(() => jobEndpoints.id),
+  endpointId: text("endpoint_id").notNull().references(() => jobEndpoints.id, { onDelete: "cascade" }),
   status: text("status").notNull(), // "running" | "success" | "failed" | "canceled"
   attempt: integer("attempt").notNull(),
   source: text("source"), // Phase 3: What triggered this run (baseline, AI hint, manual, etc.)
@@ -94,28 +116,6 @@ export type JobEndpointRow = typeof jobEndpoints.$inferSelect;
 export type JobEndpointInsert = typeof jobEndpoints.$inferInsert;
 export type RunRow = typeof runs.$inferSelect;
 export type RunInsert = typeof runs.$inferInsert;
-
-/**
- * Auth table.
- */
-
-export const user = pgTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").notNull(),
-  image: text("image"),
-  createdAt: timestamp("created_at").notNull(),
-  updatedAt: timestamp("updated_at").notNull(),
-  isAnonymous: boolean("is_anonymous").default(false),
-  tier: text("tier").notNull().default("free"), // "free" | "pro" | "enterprise"
-
-  // Stripe subscription fields
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
-  subscriptionStatus: text("subscription_status"), // 'active' | 'trialing' | 'canceled' | 'past_due' | 'incomplete'
-  subscriptionEndsAt: timestamp("subscription_ends_at", { mode: "date" }),
-});
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
