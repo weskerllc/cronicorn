@@ -10,13 +10,13 @@ const envSchema = z.object({
     .default(DEV_AUTH.SECRET),
   BETTER_AUTH_URL: z.string().url("BETTER_AUTH_URL must be a valid URL").default(DEV_URLS.API),
   WEB_URL: z.string().url("WEB_URL must be a valid URL").default(DEV_URLS.WEB),
-  // GitHub OAuth (optional - required only if admin user is not configured)
+  // GitHub OAuth (optional)
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
-  // Admin user (optional - for CI/testing environments without OAuth)
-  ADMIN_USER_EMAIL: z.string().email().or(z.literal("")),
-  ADMIN_USER_PASSWORD: z.string().min(8).or(z.literal("")),
-  ADMIN_USER_NAME: z.string().or(z.literal("")),
+  // Admin user (optional - defaults applied only when no auth method is configured)
+  ADMIN_USER_EMAIL: z.string().email().optional(),
+  ADMIN_USER_PASSWORD: z.string().min(8).optional(),
+  ADMIN_USER_NAME: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default(DEV_ENV.NODE_ENV),
   API_URL: z.string().url("API_URL must be a valid URL").default(DEV_URLS.API),
   // Stripe configuration (dummy defaults for local dev - payment features won't work without real keys)
@@ -27,13 +27,13 @@ const envSchema = z.object({
   BASE_URL: z.string().url("BASE_URL must be a valid URL").default(DEV_URLS.WEB),
 }).refine(
   (data) => {
-    // Either GitHub OAuth or Admin user must be configured
+    // At least one auth method must be configured
     const hasGitHub = !!(data.GITHUB_CLIENT_ID && data.GITHUB_CLIENT_SECRET);
     const hasAdmin = !!(data.ADMIN_USER_EMAIL && data.ADMIN_USER_PASSWORD);
     return hasGitHub || hasAdmin;
   },
   {
-    message: "Either GitHub OAuth (GITHUB_CLIENT_ID + GITHUB_CLIENT_SECRET) or Admin User (ADMIN_USER_EMAIL + ADMIN_USER_PASSWORD) must be configured",
+    message: "At least one auth method must be configured: GitHub OAuth (GITHUB_CLIENT_ID + GITHUB_CLIENT_SECRET) or Admin User (ADMIN_USER_EMAIL + ADMIN_USER_PASSWORD)",
   },
 );
 
@@ -43,17 +43,20 @@ export function loadConfig(): Env {
   // eslint-disable-next-line node/no-process-env
   const env = process.env;
 
-  // Apply dev defaults for admin user only in development when not using GitHub OAuth
-  const isProduction = env.NODE_ENV === "production";
+  // Determine if we need to apply admin defaults
   const hasGitHubOAuth = !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
-  const shouldUseAdminDefaults = !isProduction && !hasGitHubOAuth;
+  const hasAdminConfig = !!(env.ADMIN_USER_EMAIL && env.ADMIN_USER_PASSWORD);
+  const hasAnyAuth = hasGitHubOAuth || hasAdminConfig;
+
+  // Only apply admin defaults if no auth method is configured at all
+  const shouldUseAdminDefaults = !hasAnyAuth;
 
   const envToValidate = {
     ...env,
-    // Apply dev defaults conditionally (if not set and should use defaults)
-    ADMIN_USER_EMAIL: env.ADMIN_USER_EMAIL ?? (shouldUseAdminDefaults ? DEV_AUTH.ADMIN_EMAIL : ""),
-    ADMIN_USER_PASSWORD: env.ADMIN_USER_PASSWORD ?? (shouldUseAdminDefaults ? DEV_AUTH.ADMIN_PASSWORD : ""),
-    ADMIN_USER_NAME: env.ADMIN_USER_NAME ?? (shouldUseAdminDefaults ? DEV_AUTH.ADMIN_NAME : ""),
+    // Apply admin defaults only when no auth method is configured
+    ADMIN_USER_EMAIL: env.ADMIN_USER_EMAIL ?? (shouldUseAdminDefaults ? DEV_AUTH.ADMIN_EMAIL : undefined),
+    ADMIN_USER_PASSWORD: env.ADMIN_USER_PASSWORD ?? (shouldUseAdminDefaults ? DEV_AUTH.ADMIN_PASSWORD : undefined),
+    ADMIN_USER_NAME: env.ADMIN_USER_NAME ?? (shouldUseAdminDefaults ? DEV_AUTH.ADMIN_NAME : undefined),
   };
 
   const result = envSchema.safeParse(envToValidate);
@@ -66,11 +69,11 @@ export function loadConfig(): Env {
 
   // Validate production safety
   const config = result.data;
+  const isProduction = config.NODE_ENV === "production";
 
-  // Only validate ADMIN_USER_PASSWORD if it's actually being used (not empty)
   const warnings = [
     validateNotDevDefaultInProduction(config.NODE_ENV, config.BETTER_AUTH_SECRET, "BETTER_AUTH_SECRET"),
-    config.ADMIN_USER_PASSWORD && config.ADMIN_USER_PASSWORD.length > 0
+    config.ADMIN_USER_PASSWORD
       ? validateNotDevDefaultInProduction(config.NODE_ENV, config.ADMIN_USER_PASSWORD, "ADMIN_USER_PASSWORD")
       : null,
     validateNotDevDefaultInProduction(config.NODE_ENV, config.STRIPE_SECRET_KEY, "STRIPE_SECRET_KEY"),
@@ -78,7 +81,7 @@ export function loadConfig(): Env {
 
   if (warnings.length > 0) {
     console.error(`\n${warnings.join("\n")}\n`);
-    if (config.NODE_ENV === "production") {
+    if (isProduction) {
       console.error("❌ Cannot start in production with dev defaults. Exiting.");
       process.exit(1);
     }

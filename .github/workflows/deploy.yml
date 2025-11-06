@@ -53,7 +53,7 @@ jobs:
             COMPOSE_ID="${{ secrets.DOKPLOY_PRODUCTION_COMPOSE_ID }}"
             ENV_NAME="PRODUCTION"
           fi
-          
+
           if [ -z "$COMPOSE_ID" ]; then
             echo "⚠️  DOKPLOY_${ENV_NAME}_COMPOSE_ID not set - skipping deployment to ${{ steps.version.outputs.environment }}"
             echo "should_deploy=false" >> $GITHUB_OUTPUT
