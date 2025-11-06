@@ -1,7 +1,7 @@
 import { afterAll, describe } from "vitest";
 
 import { DrizzleJobsRepo, DrizzleRunsRepo } from "../../index.js";
-import { closeTestPool, expect, test } from "../fixtures.js";
+import { closeTestPool, createTestUser, expect, test } from "../fixtures.js";
 
 /**
  * Run contract tests against DrizzleJobsRepo with real PostgreSQL.
@@ -25,9 +25,12 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should add and retrieve endpoint", async ({ tx }) => {
       const repo = new DrizzleJobsRepo(tx, () => new Date());
 
+      // Create user first (foreign key requirement)
+      const user = await createTestUser(tx, { id: "tenant1" });
+
       // Create job first (foreign key requirement)
       const job = await repo.createJob({
-        userId: "tenant1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -50,8 +53,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should update endpoint with partial data", async ({ tx }) => {
       const repo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "tenant1" });
+
       const job = await repo.createJob({
-        userId: "tenant1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -77,8 +82,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should clear AI hints", async ({ tx }) => {
       const repo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "tenant1" });
+
       const job = await repo.createJob({
-        userId: "tenant1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -105,8 +112,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should reset failure count", async ({ tx }) => {
       const repo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "tenant1" });
+
       const job = await repo.createJob({
-        userId: "tenant1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -131,8 +140,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should create and finish a run", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "tenant1" });
+
       const job = await jobsRepo.createJob({
-        userId: "tenant1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -165,8 +176,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should list runs with pagination", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -205,8 +218,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should filter runs by status", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -239,8 +254,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should get run details with attempt", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -277,8 +294,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should get health summary", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -316,8 +335,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should get latest response for endpoint", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -369,8 +390,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should get response history with limit", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -409,8 +432,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should clamp response history limit to 50", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -446,8 +471,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should handle null response bodies in history", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -489,8 +516,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should get sibling latest responses", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Multi-Endpoint Job",
         status: "active",
       });
@@ -561,8 +590,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should exclude current endpoint from siblings", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -615,8 +646,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should return empty array when no siblings have runs", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -651,8 +684,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
       const repo = new DrizzleRunsRepo(tx);
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -704,16 +739,18 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should not return endpoints from paused jobs in getEndpointsWithRecentRuns", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       // Create an active job
       const activeJob = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Active Job",
         status: "active",
       });
 
       // Create a paused job
       const pausedJob = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Paused Job",
         status: "paused",
       });
@@ -760,16 +797,18 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should not return endpoints from archived jobs in getEndpointsWithRecentRuns", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       // Create an active job
       const activeJob = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Active Job",
         status: "active",
       });
 
       // Create an archived job
       const archivedJob = await jobsRepo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Archived Job",
         status: "active", // Will be archived below
       });
@@ -848,8 +887,10 @@ describe("drizzle Repos (PostgreSQL)", () => {
       const now = new Date("2025-01-01T12:00:00.000Z");
       const repo = new DrizzleJobsRepo(tx, () => now);
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       const job = await repo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Test Job",
         status: "active",
       });
@@ -904,16 +945,18 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should not claim endpoints from paused jobs", async ({ tx }) => {
       const repo = new DrizzleJobsRepo(tx, () => new Date("2025-01-01T12:00:00.000Z"));
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       // Create an active job
       const activeJob = await repo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Active Job",
         status: "active",
       });
 
       // Create a paused job
       const pausedJob = await repo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Paused Job",
         status: "paused",
       });
@@ -950,16 +993,18 @@ describe("drizzle Repos (PostgreSQL)", () => {
     test("should not claim endpoints from archived jobs", async ({ tx }) => {
       const repo = new DrizzleJobsRepo(tx, () => new Date("2025-01-01T12:00:00.000Z"));
 
+      const user = await createTestUser(tx, { id: "user1" });
+
       // Create an active job
       const activeJob = await repo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Active Job",
         status: "active",
       });
 
       // Create an archived job
       const archivedJob = await repo.createJob({
-        userId: "user1",
+        userId: user.id,
         name: "Archived Job",
         status: "active", // Will be archived below
       });
