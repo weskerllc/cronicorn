@@ -79,4 +79,3 @@ Fair Source License v0.9 - Free to use and self-host. See [LICENSE](./LICENSE) f
 Made by developers, for developers
 
 </div>
-
