@@ -43,11 +43,31 @@ jobs:
             echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Set Compose ID
+        id: compose_id
+        run: |
+          if [ "${{ steps.version.outputs.environment }}" = "staging" ]; then
+            COMPOSE_ID="${{ secrets.DOKPLOY_STAGING_COMPOSE_ID }}"
+            ENV_NAME="STAGING"
+          else
+            COMPOSE_ID="${{ secrets.DOKPLOY_PRODUCTION_COMPOSE_ID }}"
+            ENV_NAME="PRODUCTION"
+          fi
+          
+          if [ -z "$COMPOSE_ID" ]; then
+            echo "⚠️  DOKPLOY_${ENV_NAME}_COMPOSE_ID not set - skipping deployment to ${{ steps.version.outputs.environment }}"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          else
+            echo "compose_id=$COMPOSE_ID" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Deploy to Dokploy via API
+        if: steps.compose_id.outputs.should_deploy == 'true'
         env:
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_TOKEN: ${{ secrets.DOKPLOY_TOKEN }}
-          DOKPLOY_COMPOSE_ID: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_COMPOSE_ID || secrets.DOKPLOY_PRODUCTION_COMPOSE_ID }}
+          DOKPLOY_COMPOSE_ID: ${{ steps.compose_id.outputs.compose_id }}
           DEPLOY_VERSION: ${{ steps.version.outputs.version }}
           DEPLOY_ENVIRONMENT: ${{ steps.version.outputs.environment }}
         run: |
@@ -162,9 +182,20 @@ jobs:
 
       - name: Create deployment summary
         run: |
-          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          if [ "${{ steps.compose_id.outputs.should_deploy }}" = "true" ]; then
+            cat >> $GITHUB_STEP_SUMMARY << 'EOF'
           ## 🚀 Deployment Summary
 
           **Environment:** `${{ steps.version.outputs.environment }}`
           **Version:** `${{ steps.version.outputs.version }}`
           EOF
+          else
+            cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          ## ⚠️ Deployment Skipped
+
+          **Environment:** `${{ steps.version.outputs.environment }}`
+          **Reason:** Compose ID secret not configured
+
+          To enable ${{ steps.version.outputs.environment }} deployments, add `DOKPLOY_${{ steps.version.outputs.environment == 'staging' && 'STAGING' || 'PRODUCTION' }}_COMPOSE_ID` to GitHub secrets.
+          EOF
+          fi
