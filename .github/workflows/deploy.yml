@@ -16,10 +16,9 @@ on:
           - staging
           - production
       version:
-        description: "Version to deploy (e.g., v1.6.1 or latest)"
+        description: "Version to deploy (e.g., 1.6.1 or latest)"
         required: true
         type: string
-        default: latest
 
 jobs:
   deploy:
@@ -37,112 +36,160 @@ jobs:
           if [ "${{ github.event_name }}" = "release" ]; then
             # Auto-deploy to staging with latest tag
             echo "version=latest" >> $GITHUB_OUTPUT
-            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
             echo "environment=staging" >> $GITHUB_OUTPUT
           else
             # Manual deployment
             echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-            echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
             echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Update IMAGE_TAG in Dokploy
+      - name: Deploy to Dokploy via API
         env:
-          DOKPLOY_API_URL: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_API_URL || secrets.DOKPLOY_PRODUCTION_API_URL }}
-          DOKPLOY_API_TOKEN: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_API_TOKEN || secrets.DOKPLOY_PRODUCTION_API_TOKEN }}
-          DOKPLOY_PROJECT_ID: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_PROJECT_ID || secrets.DOKPLOY_PRODUCTION_PROJECT_ID }}
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_TOKEN: ${{ secrets.DOKPLOY_TOKEN }}
+          DOKPLOY_COMPOSE_ID: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_COMPOSE_ID || secrets.DOKPLOY_PRODUCTION_COMPOSE_ID }}
           DEPLOY_VERSION: ${{ steps.version.outputs.version }}
           DEPLOY_ENVIRONMENT: ${{ steps.version.outputs.environment }}
         run: |
-          echo "🔧 Updating IMAGE_TAG to $DEPLOY_VERSION in Dokploy $DEPLOY_ENVIRONMENT"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 Deploying Cronicorn to $DEPLOY_ENVIRONMENT"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Target version: $DEPLOY_VERSION"
+          echo "Compose ID: $DOKPLOY_COMPOSE_ID"
+          echo ""
 
-          # Check if API credentials are configured
-          if [ -z "$DOKPLOY_API_URL" ] || [ -z "$DOKPLOY_API_TOKEN" ] || [ -z "$DOKPLOY_PROJECT_ID" ]; then
-            echo "⚠️  Dokploy API not configured for $DEPLOY_ENVIRONMENT - skipping IMAGE_TAG update"
-            echo "To enable automatic IMAGE_TAG updates, configure:"
-            echo "  - DOKPLOY_${DEPLOY_ENVIRONMENT^^}_API_URL"
-            echo "  - DOKPLOY_${DEPLOY_ENVIRONMENT^^}_API_TOKEN"
-            echo "  - DOKPLOY_${DEPLOY_ENVIRONMENT^^}_PROJECT_ID"
-          else
-            # Update IMAGE_TAG environment variable via Dokploy API
-            echo "Updating IMAGE_TAG environment variable..."
+          # Normalize URL (remove trailing slash)
+          DOKPLOY_URL="${DOKPLOY_URL%/}"
 
-            # Get current environment variables
-            CURRENT_ENV=$(curl -s -X GET "$DOKPLOY_API_URL/api/project/$DOKPLOY_PROJECT_ID/env" \
-              -H "Authorization: Bearer $DOKPLOY_API_TOKEN" \
-              -H "Content-Type: application/json")
+          # Step 1: Fetch current configuration
+          echo "📥 Step 1/4: Fetching current configuration..."
+          COMPOSE_DATA=$(curl -s -X GET \
+            "$DOKPLOY_URL/api/compose.one?composeId=$DOKPLOY_COMPOSE_ID" \
+            -H "x-api-key: $DOKPLOY_TOKEN")
 
-            # Update IMAGE_TAG value
-            UPDATED_ENV=$(echo "$CURRENT_ENV" | jq --arg tag "$DEPLOY_VERSION" \
-              'if type == "array" then
-                map(if .key == "IMAGE_TAG" then .value = $tag else . end)
-              elif type == "object" and has("IMAGE_TAG") then
-                .IMAGE_TAG = $tag
-              else
-                . + {"IMAGE_TAG": $tag}
-              end')
-
-            # Send updated environment variables back
-            curl -X PUT "$DOKPLOY_API_URL/api/project/$DOKPLOY_PROJECT_ID/env" \
-              -H "Authorization: Bearer $DOKPLOY_API_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "$UPDATED_ENV" \
-              --fail-with-body
-
-            echo "✅ IMAGE_TAG updated to $DEPLOY_VERSION"
-          fi
-
-      - name: Deploy to Dokploy via Webhook
-        env:
-          DOKPLOY_WEBHOOK_URL: ${{ steps.version.outputs.environment == 'staging' && secrets.DOKPLOY_STAGING_WEBHOOK_URL || secrets.DOKPLOY_PRODUCTION_WEBHOOK_URL }}
-          DEPLOY_VERSION: ${{ steps.version.outputs.version }}
-          DEPLOY_TAG: ${{ steps.version.outputs.tag }}
-          DEPLOY_ENVIRONMENT: ${{ steps.version.outputs.environment }}
-        run: |
-          echo "🚀 Deploying to $DEPLOY_ENVIRONMENT"
-          echo "📦 Version: $DEPLOY_VERSION (tag: $DEPLOY_TAG)"
-
-          # Call Dokploy webhook if configured
-          if [ -n "$DOKPLOY_WEBHOOK_URL" ]; then
-            echo "Triggering Dokploy deployment..."
-
-            # Construct JSON payload with proper escaping using jq
-            PAYLOAD=$(jq -n \
-              --arg version "$DEPLOY_VERSION" \
-              --arg tag "$DEPLOY_TAG" \
-              --arg environment "$DEPLOY_ENVIRONMENT" \
-              '{version: $version, tag: $tag, environment: $environment}')
-
-            # Send webhook request
-            curl -X POST "$DOKPLOY_WEBHOOK_URL" \
-              -H "Content-Type: application/json" \
-              -d "$PAYLOAD" \
-              --fail-with-body
-
-            echo "✅ Deployment triggered successfully!"
-          else
-            echo "⚠️  No webhook URL configured for $DEPLOY_ENVIRONMENT"
-            echo "Please set DOKPLOY_STAGING_WEBHOOK_URL or DOKPLOY_PRODUCTION_WEBHOOK_URL secret"
+          if [ $? -ne 0 ]; then
+            echo "❌ Failed to fetch compose configuration"
             exit 1
           fi
 
+          # Check if we got valid JSON
+          if ! echo "$COMPOSE_DATA" | jq -e . >/dev/null 2>&1; then
+            echo "❌ Invalid response from API"
+            echo "Response: $COMPOSE_DATA"
+            exit 1
+          fi
+
+          echo "✅ Configuration fetched"
+          echo ""
+
+          # Step 2: Extract and update env
+          echo "📝 Step 2/4: Updating IMAGE_TAG..."
+          CURRENT_ENV=$(echo "$COMPOSE_DATA" | jq -r '.env // ""')
+
+          # Show current IMAGE_TAG
+          CURRENT_TAG=$(echo "$CURRENT_ENV" | grep "^IMAGE_TAG=" | cut -d'=' -f2 | sed 's/ *#.*//')
+          echo "   Current: $CURRENT_TAG"
+          echo "   New:     $DEPLOY_VERSION"
+          echo ""
+
+          # Update IMAGE_TAG
+          if echo "$CURRENT_ENV" | grep -q "^IMAGE_TAG="; then
+            # Replace existing IMAGE_TAG line (preserving any comments)
+            UPDATED_ENV=$(echo "$CURRENT_ENV" | sed "s/^IMAGE_TAG=.*/IMAGE_TAG=$DEPLOY_VERSION  # Use specific version like v1.2.3 for production/")
+          else
+            # Add IMAGE_TAG if it doesn't exist
+            UPDATED_ENV="$CURRENT_ENV"$'\n'"IMAGE_TAG=$DEPLOY_VERSION"
+          fi
+
+          echo "✅ Environment updated"
+          echo ""
+
+          # Step 3: Push updated environment to Dokploy
+          echo "⬆️  Step 3/4: Pushing updated environment to Dokploy..."
+
+          UPDATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "$DOKPLOY_URL/api/compose.update" \
+            -H "x-api-key: $DOKPLOY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg id "$DOKPLOY_COMPOSE_ID" --arg env "$UPDATED_ENV" '{composeId: $id, env: $env}')")
+
+          UPDATE_HTTP_CODE=$(echo "$UPDATE_RESPONSE" | tail -n1)
+          UPDATE_BODY=$(echo "$UPDATE_RESPONSE" | sed '$d')
+
+          if [ "$UPDATE_HTTP_CODE" = "200" ]; then
+            echo "✅ Environment updated in Dokploy"
+          else
+            echo "❌ Failed to update environment (HTTP $UPDATE_HTTP_CODE)"
+            echo "Response: $UPDATE_BODY"
+            exit 1
+          fi
+          echo ""
+
+          # Step 4: Trigger deployment
+          echo "🚢 Step 4/4: Triggering deployment..."
+
+          DEPLOY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "$DOKPLOY_URL/api/compose.deploy" \
+            -H "x-api-key: $DOKPLOY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg id "$DOKPLOY_COMPOSE_ID" '{composeId: $id}')")
+
+          DEPLOY_HTTP_CODE=$(echo "$DEPLOY_RESPONSE" | tail -n1)
+          DEPLOY_BODY=$(echo "$DEPLOY_RESPONSE" | sed '$d')
+
+          if [ "$DEPLOY_HTTP_CODE" = "200" ]; then
+            echo "✅ Deployment triggered successfully"
+          else
+            echo "❌ Failed to trigger deployment (HTTP $DEPLOY_HTTP_CODE)"
+            echo "Response: $DEPLOY_BODY"
+            exit 1
+          fi
+          echo ""
+
+          # Extract deployment ID if available
+          DEPLOYMENT_ID=$(echo "$DEPLOY_BODY" | jq -r '.deploymentId // empty')
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Deployment Started!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Version: $DEPLOY_VERSION"
+          if [ -n "$DEPLOYMENT_ID" ]; then
+            echo "Deployment ID: $DEPLOYMENT_ID"
+          fi
+          echo ""
+
       - name: Create deployment summary
         run: |
-          cat >> $GITHUB_STEP_SUMMARY << EOF
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
           ## 🚀 Deployment Summary
 
-          **Environment:** \`${{ steps.version.outputs.environment }}\`
-          **Version:** \`${{ steps.version.outputs.version }}\`
-          **Tag:** \`${{ steps.version.outputs.tag }}\`
-          **Registry:** \`ghcr.io/weskerllc/cronicorn\`
+          **Environment:** `${{ steps.version.outputs.environment }}`
+          **Version:** `${{ steps.version.outputs.version }}`
+          **Deployment Method:** Dokploy API
           **Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
 
           ### 📦 Deployed Images
-          - \`ghcr.io/weskerllc/cronicorn/api:${{ steps.version.outputs.version }}\`
-          - \`ghcr.io/weskerllc/cronicorn/scheduler:${{ steps.version.outputs.version }}\`
-          - \`ghcr.io/weskerllc/cronicorn/ai-planner:${{ steps.version.outputs.version }}\`
-          - \`ghcr.io/weskerllc/cronicorn/web:${{ steps.version.outputs.version }}\`
-          - \`ghcr.io/weskerllc/cronicorn/docs:${{ steps.version.outputs.version }}\`
-          - \`ghcr.io/weskerllc/cronicorn/migrator:${{ steps.version.outputs.version }}\`
+          All services will pull: `ghcr.io/weskerllc/cronicorn/*:${{ steps.version.outputs.version }}`
 
+          - api
+          - scheduler
+          - ai-planner
+          - web
+          - docs
+          - migrator
+
+          ### 🔄 How It Works
+          1. **Fetch** current Dokploy compose configuration via API
+          2. **Update** `IMAGE_TAG` environment variable to `${{ github.event.inputs.version }}`
+          3. **Push** updated environment back to Dokploy
+          4. **Trigger** deployment via API
+
+          ### 📝 To Rollback
+          Simply trigger a new deployment with the previous version tag.
+
+          ### 🔗 Links
+          - [Dokploy Dashboard](http://146.190.43.32:3000/dashboard)
+          - [Production Site](https://cronicorn.com)
           EOF
