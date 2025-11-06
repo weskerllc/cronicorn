@@ -20,6 +20,7 @@ const sidebars: SidebarsConfig = {
     "core-concepts",
     "use-cases",
     "mcp-server",
+    "self-hosting",
     "competitive-analysis",
     {
       type: "category",
