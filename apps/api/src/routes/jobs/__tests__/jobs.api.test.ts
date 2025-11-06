@@ -3,7 +3,7 @@ import { afterAll, describe } from "vitest";
 import type { Env } from "../../../lib/config.js";
 
 import { createApp } from "../../../app.js";
-import { closeTestPool, expect, test } from "../../../lib/__tests__/fixtures.js";
+import { closeTestPool, createTestUser, expect, test } from "../../../lib/__tests__/fixtures.js";
 import { createMockAuth, createMockSession } from "../../../lib/__tests__/test-helpers.js";
 
 /**
@@ -53,6 +53,9 @@ describe("jobs API", () => {
 
   describe("post /api/jobs", () => {
     test("creates job with valid input", async ({ tx }) => {
+      // Create test user first (required by foreign key constraint)
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -82,6 +85,8 @@ describe("jobs API", () => {
 
   describe("get /api/jobs/:id", () => {
     test("returns job by id", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -110,6 +115,8 @@ describe("jobs API", () => {
     });
 
     test("returns 404 for non-existent job", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -124,6 +131,8 @@ describe("jobs API", () => {
 
   describe("get /api/jobs", () => {
     test("lists all jobs for user", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -151,6 +160,8 @@ describe("jobs API", () => {
     });
 
     test("filters jobs by status", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -186,6 +197,8 @@ describe("jobs API", () => {
 
   describe("patch /api/jobs/:id", () => {
     test("updates job name and description", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -214,6 +227,8 @@ describe("jobs API", () => {
 
   describe("delete /api/jobs/:id", () => {
     test("archives job (soft delete)", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -239,6 +254,8 @@ describe("jobs API", () => {
 
   describe("post /api/jobs/:jobId/endpoints", () => {
     test("adds endpoint to job with cron schedule", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -272,6 +289,8 @@ describe("jobs API", () => {
     });
 
     test("adds endpoint with interval schedule", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -304,6 +323,8 @@ describe("jobs API", () => {
     });
 
     test("saves description and optional fields when creating endpoint", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -342,6 +363,8 @@ describe("jobs API", () => {
 
   describe("get /api/jobs/:jobId/endpoints", () => {
     test("lists all endpoints for a job", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -387,6 +410,8 @@ describe("jobs API", () => {
 
   describe("patch /api/jobs/:jobId/endpoints/:id", () => {
     test("updates endpoint configuration", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -428,6 +453,8 @@ describe("jobs API", () => {
 
   describe("delete /api/jobs/:jobId/endpoints/:id", () => {
     test("deletes endpoint", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -463,6 +490,8 @@ describe("jobs API", () => {
 
   describe("post /api/endpoints/:id/hints/interval", () => {
     test("applies interval hint", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -502,6 +531,8 @@ describe("jobs API", () => {
 
   describe("post /api/endpoints/:id/hints/oneshot", () => {
     test("schedules one-shot run", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -542,6 +573,8 @@ describe("jobs API", () => {
 
   describe("post /api/endpoints/:id/pause", () => {
     test("pauses endpoint", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -579,6 +612,8 @@ describe("jobs API", () => {
     });
 
     test("resumes endpoint when untilIso is null", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -617,6 +652,8 @@ describe("jobs API", () => {
 
   describe("delete /api/endpoints/:id/hints", () => {
     test("clears all hints", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -650,6 +687,8 @@ describe("jobs API", () => {
 
   describe("post /api/endpoints/:id/reset-failures", () => {
     test("resets failure count", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -685,6 +724,8 @@ describe("jobs API", () => {
 
   describe("get /api/endpoints/:id/runs", () => {
     test("lists run history", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -719,6 +760,8 @@ describe("jobs API", () => {
     });
 
     test("filters runs by status", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -752,6 +795,8 @@ describe("jobs API", () => {
 
   describe("get /api/endpoints/:id/health", () => {
     test("returns health summary", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });
@@ -790,6 +835,8 @@ describe("jobs API", () => {
 
   describe("endpoint tier limits", () => {
     test("enforces free tier limit (10 endpoints) across multiple jobs", async ({ tx }) => {
+      await createTestUser(tx, { id: mockUserId });
+
       const mockSession = createMockSession(mockUserId);
       const mockAuth = createMockAuth(mockSession);
       const { app } = await createApp(tx, testConfig, mockAuth, { useTransactions: false });

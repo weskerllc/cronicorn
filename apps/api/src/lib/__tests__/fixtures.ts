@@ -58,3 +58,24 @@ export { expect } from "vitest";
 export async function closeTestPool() {
   await pool.end();
 }
+
+/**
+ * Test factory for creating users in tests.
+ * Required for foreign key constraints on jobs.userId.
+ */
+export async function createTestUser(tx: NodePgDatabase<typeof schema>, overrides?: Partial<typeof schema.user.$inferInsert>) {
+  const defaultUser: typeof schema.user.$inferInsert = {
+    id: overrides?.id || `user_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    name: overrides?.name || "Test User",
+    email: overrides?.email || `test${Date.now()}@example.com`,
+    emailVerified: overrides?.emailVerified ?? false,
+    createdAt: overrides?.createdAt || new Date(),
+    updatedAt: overrides?.updatedAt || new Date(),
+    tier: overrides?.tier || "free",
+    isAnonymous: overrides?.isAnonymous || false,
+    ...overrides,
+  };
+
+  const [user] = await tx.insert(schema.user).values(defaultUser).returning();
+  return user!;
+}
