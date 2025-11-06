@@ -16,9 +16,10 @@
 :root {
   --background: oklch(1.00 0 0);
   --foreground: oklch(0.14 0 0);
-  --card: oklch(1.00 0 0);
-  --card-foreground: oklch(0.14 0 0);
-  --popover: oklch(1.00 0 0);
+  --card: oklch(0.985 0 0);          /* was 1 */
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(0.985 0 0);
+  --popover-foreground: oklch(0.145 0 0);
   --popover-foreground: oklch(0.14 0 0);
   --primary: oklch(0.20 0 0);
   --primary-foreground: oklch(0.99 0 0);
@@ -29,7 +30,7 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.20 0 0);
   --destructive: oklch(0.58 0.24 28.48);
-  --border: oklch(0.92 0 0);
+  --border: oklch(0.915 0 0);        /* was 0.922 */
   --input: oklch(0.92 0 0);
   --ring: oklch(0.71 0 0);
   --chart-1: oklch(0.65 0.22 36.85);
