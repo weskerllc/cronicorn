@@ -271,7 +271,8 @@ export class DrizzleRunsRepo implements RunsRepo {
   }
 
   async getEndpointsWithRecentRuns(since: Date): Promise<string[]> {
-    // Only return endpoints from non-paused jobs (or endpoints without jobs for backward compat)
+    // Only return endpoints from active jobs (exclude paused/archived)
+    // or endpoints without jobs for backward compat
     const results = await this.tx
       .selectDistinct({ endpointId: runs.endpointId })
       .from(runs)
@@ -282,7 +283,10 @@ export class DrizzleRunsRepo implements RunsRepo {
           gte(runs.startedAt, since),
           or(
             isNull(jobs.status), // No job associated (backward compat)
-            ne(jobs.status, "paused"), // Job exists and is not paused
+            and(
+              ne(jobs.status, "paused"), // Job exists and is not paused
+              ne(jobs.status, "archived"), // Job exists and is not archived
+            ),
           ),
         ),
       );
