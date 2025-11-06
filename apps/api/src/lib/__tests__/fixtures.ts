@@ -76,6 +76,11 @@ export async function createTestUser(tx: NodePgDatabase<typeof schema>, override
     ...overrides,
   };
 
-  const [user] = await tx.insert(schema.user).values(defaultUser).returning();
-  return user!;
+  // eslint-disable-next-line ts/no-explicit-any, ts/consistent-type-assertions
+  const users = await (tx.insert(schema.user as any).values(defaultUser).returning());
+  // @ts-expect-error Ignoring drizzle typing issue in test fixture
+  if (!users[0])
+    throw new Error("Failed to create test user");
+  // @ts-expect-error Ignoring drizzle typing issue in test fixture
+  return users[0];
 }
