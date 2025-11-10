@@ -1,7 +1,7 @@
 import type { SessionsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { desc, eq, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, sql, sum } from "drizzle-orm";
 
 import { aiAnalysisSessions, jobEndpoints, jobs } from "./schema.js";
 
@@ -44,15 +44,15 @@ export class DrizzleSessionsRepo implements SessionsRepo {
 
   async getRecentSessions(
     endpointId: string,
-        limit = 10,
+    limit = 10,
   ): Promise<Array<{
-      id: string;
-      analyzedAt: Date;
-      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
-      reasoning: string;
-      tokenUsage: number | null;
-      durationMs: number | null;
-    }>> {
+    id: string;
+    analyzedAt: Date;
+    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+    reasoning: string;
+    tokenUsage: number | null;
+    durationMs: number | null;
+  }>> {
     const results = await this.tx
       .select({
         id: aiAnalysisSessions.id,
@@ -93,43 +93,47 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     return total ? Number(total) : 0;
   }
 
-  async getRecentSessionsGlobal(
-    userId: string,
-    limit = 50,
-  ): Promise<Array<{
-      id: string;
-      endpointId: string;
-      analyzedAt: Date;
-      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
-      reasoning: string;
-      tokenUsage: number | null;
-      durationMs: number | null;
-    }>> {
+  async getAISessionTimeSeries(filters: {
+    userId: string;
+    jobId?: string;
+    sinceDate?: Date;
+  }): Promise<Array<{
+    date: string;
+    endpointId: string;
+    endpointName: string;
+    sessionCount: number;
+    totalTokens: number;
+  }>> {
+    const conditions = [eq(jobs.userId, filters.userId)];
+
+    if (filters.sinceDate) {
+      conditions.push(gte(aiAnalysisSessions.analyzedAt, filters.sinceDate));
+    }
+    if (filters.jobId) {
+      conditions.push(eq(jobs.id, filters.jobId));
+    }
+
     const results = await this.tx
       .select({
-        id: aiAnalysisSessions.id,
-        endpointId: aiAnalysisSessions.endpointId,
-        analyzedAt: aiAnalysisSessions.analyzedAt,
-        toolCalls: aiAnalysisSessions.toolCalls,
-        reasoning: aiAnalysisSessions.reasoning,
-        tokenUsage: aiAnalysisSessions.tokenUsage,
-        durationMs: aiAnalysisSessions.durationMs,
+        date: sql<string>`DATE(${aiAnalysisSessions.analyzedAt})`,
+        endpointId: jobEndpoints.id,
+        endpointName: jobEndpoints.name,
+        sessionCount: count(),
+        totalTokens: sum(aiAnalysisSessions.tokenUsage),
       })
       .from(aiAnalysisSessions)
       .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
       .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
-      .where(eq(jobs.userId, userId))
-      .orderBy(desc(aiAnalysisSessions.analyzedAt))
-      .limit(Math.min(limit, 100)); // Cap at 100 for safety
+      .where(and(...conditions))
+      .groupBy(sql`DATE(${aiAnalysisSessions.analyzedAt})`, jobEndpoints.id, jobEndpoints.name)
+      .orderBy(sql`DATE(${aiAnalysisSessions.analyzedAt}) ASC`);
 
-    return results.map(r => ({
-      id: r.id,
-      endpointId: r.endpointId,
-      analyzedAt: r.analyzedAt,
-      toolCalls: r.toolCalls ?? [],
-      reasoning: r.reasoning ?? "",
-      tokenUsage: r.tokenUsage,
-      durationMs: r.durationMs,
+    return results.map(row => ({
+      date: row.date,
+      endpointId: row.endpointId,
+      endpointName: row.endpointName,
+      sessionCount: Number(row.sessionCount),
+      totalTokens: row.totalTokens ? Number(row.totalTokens) : 0,
     }));
   }
 }

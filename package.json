@@ -50,6 +50,7 @@
     "db": "docker compose -f docker-compose.dev.yml up -d",
     "db:reset": "docker compose down -v && pnpm db",
     "db:migrate": "dotenv -e .env -- pnpm run -r --parallel migrate",
+    "db:seed": "dotenv -e .env -- pnpm run -r --parallel seed",
     "db:generate": "dotenv -e .env -- pnpm run -r --parallel generate",
     "studio": "dotenv -e .env -- pnpm run -r --parallel studio",
     "🚀 ---------- SCENARIOS ----------": "",

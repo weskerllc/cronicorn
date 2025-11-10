@@ -65,6 +65,16 @@ describe("dashboardManager", () => {
       getResponseHistory: vi.fn(),
       getSiblingLatestResponses: vi.fn(),
       cleanupZombieRuns: vi.fn(),
+      getJobHealthDistribution: vi.fn().mockResolvedValue([]),
+      getFilteredMetrics: vi.fn().mockResolvedValue({
+        totalRuns: 0,
+        successCount: 0,
+        failureCount: 0,
+        avgDurationMs: null,
+      }),
+      getSourceDistribution: vi.fn().mockResolvedValue([]),
+      getRunTimeSeries: vi.fn().mockResolvedValue([]),
+      getEndpointTimeSeries: vi.fn().mockResolvedValue([]),
     };
 
     // Mock SessionsRepo with all required methods
@@ -72,7 +82,7 @@ describe("dashboardManager", () => {
       create: vi.fn(),
       getRecentSessions: vi.fn(),
       getTotalTokenUsage: vi.fn(),
-      getRecentSessionsGlobal: vi.fn().mockResolvedValue([]),
+      getAISessionTimeSeries: vi.fn().mockResolvedValue([]),
     };
 
     // Fake clock for deterministic time-based tests
@@ -167,8 +177,6 @@ describe("dashboardManager", () => {
       expect(result.successRate.overall).toBeGreaterThan(0);
       expect(result.recentActivity.runs24h).toBe(2);
       expect(result.runTimeSeries).toHaveLength(7); // Default 7 days
-      expect(result.topEndpoints.length).toBeGreaterThanOrEqual(0);
-      expect(result.recentRuns.length).toBeGreaterThanOrEqual(0);
     });
 
     it("should cap days parameter at 30", async () => {
@@ -194,8 +202,6 @@ describe("dashboardManager", () => {
       expect(result.successRate.overall).toBe(0);
       expect(result.successRate.trend).toBe("stable");
       expect(result.recentActivity.runs24h).toBe(0);
-      expect(result.topEndpoints).toEqual([]);
-      expect(result.recentRuns).toEqual([]);
     });
   });
 
@@ -244,7 +250,7 @@ describe("dashboardManager", () => {
           lastRun: null,
           failureStreak: 0,
         })
-      // Also called by getTopEndpoints (for last 30 days)
+        // Also called by getTopEndpoints (for last 30 days)
         .mockResolvedValue({
           successCount: 50,
           failureCount: 5,
@@ -301,7 +307,7 @@ describe("dashboardManager", () => {
           lastRun: null,
           failureStreak: 0,
         })
-      // Also called by getTopEndpoints
+        // Also called by getTopEndpoints
         .mockResolvedValue({
           successCount: 50,
           failureCount: 5,
@@ -356,7 +362,7 @@ describe("dashboardManager", () => {
           lastRun: null,
           failureStreak: 0,
         })
-      // Also called by getTopEndpoints
+        // Also called by getTopEndpoints
         .mockResolvedValue({
           successCount: 50,
           failureCount: 5,
@@ -586,300 +592,6 @@ describe("dashboardManager", () => {
       for (let i = 1; i < result.runTimeSeries.length; i++) {
         expect(result.runTimeSeries[i].date > result.runTimeSeries[i - 1].date).toBe(true);
       }
-    });
-  });
-
-  // ==================== Top Endpoints Tests ====================
-
-  describe("topEndpoints", () => {
-    it("should rank endpoints by run count", async () => {
-      const mockJob: Job & { endpointCount: number } = {
-        id: "job-1",
-        userId: "user-1",
-        name: "Test Job",
-        status: "active",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        endpointCount: 3,
-      };
-
-      const mockEndpoints: JobEndpoint[] = [
-        { id: "ep-1", jobId: "job-1", tenantId: "user-1", name: "High Volume", nextRunAt: new Date(), failureCount: 0 },
-        { id: "ep-2", jobId: "job-1", tenantId: "user-1", name: "Medium Volume", nextRunAt: new Date(), failureCount: 0 },
-        { id: "ep-3", jobId: "job-1", tenantId: "user-1", name: "Low Volume", nextRunAt: new Date(), failureCount: 0 },
-      ];
-
-      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([mockJob]);
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue(mockEndpoints);
-      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
-      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
-
-      // ep-1: 100 runs, ep-2: 50 runs, ep-3: 10 runs
-      vi.mocked(mockRunsRepo.getHealthSummary)
-        .mockResolvedValueOnce({
-          successCount: 95,
-          failureCount: 5,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
-        })
-        .mockResolvedValueOnce({
-          successCount: 45,
-          failureCount: 5,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
-        })
-        .mockResolvedValueOnce({
-          successCount: 8,
-          failureCount: 2,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
-        })
-      // For calculateOverallSuccessRate - current period (3 endpoints)
-        .mockResolvedValueOnce({
-          successCount: 10,
-          failureCount: 2,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
-        })
-        .mockResolvedValueOnce({
-          successCount: 8,
-          failureCount: 2,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
-        })
-        .mockResolvedValueOnce({
-          successCount: 6,
-          failureCount: 2,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
-        })
-      // For calculateOverallSuccessRate - previous period (3 endpoints)
-        .mockResolvedValueOnce({
-          successCount: 10,
-          failureCount: 2,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
-        })
-        .mockResolvedValueOnce({
-          successCount: 8,
-          failureCount: 2,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
-        })
-        .mockResolvedValueOnce({
-          successCount: 6,
-          failureCount: 2,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
-        });
-
-      const result = await manager.getDashboardStats("user-1");
-
-      expect(result.topEndpoints).toHaveLength(3);
-      // Verify endpoints are ranked by run count (descending)
-      expect(result.topEndpoints[0].name).toBe("High Volume");
-      expect(result.topEndpoints[0].runCount).toBeGreaterThan(result.topEndpoints[1].runCount);
-      expect(result.topEndpoints[1].name).toBe("Medium Volume");
-      expect(result.topEndpoints[1].runCount).toBeGreaterThan(result.topEndpoints[2].runCount);
-      expect(result.topEndpoints[2].name).toBe("Low Volume");
-    });
-
-    it("should limit to top 5 endpoints", async () => {
-      const mockJob: Job & { endpointCount: number } = {
-        id: "job-1",
-        userId: "user-1",
-        name: "Test Job",
-        status: "active",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        endpointCount: 10,
-      };
-
-      // Create 10 endpoints
-      const mockEndpoints: JobEndpoint[] = Array.from({ length: 10 }, (_, i) => ({
-        id: `ep-${i}`,
-        jobId: "job-1",
-        tenantId: "user-1",
-        name: `Endpoint ${i}`,
-        nextRunAt: new Date(),
-        failureCount: 0,
-      }));
-
-      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([mockJob]);
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue(mockEndpoints);
-      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
-      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
-
-      // Mock health summaries with varying run counts
-      vi.mocked(mockRunsRepo.getHealthSummary).mockImplementation(async () => ({
-        successCount: Math.floor(Math.random() * 100),
-        failureCount: Math.floor(Math.random() * 10),
-        avgDurationMs: 500,
-        lastRun: { at: new Date(), status: "success" },
-        failureStreak: 0,
-      }));
-
-      const result = await manager.getDashboardStats("user-1");
-
-      expect(result.topEndpoints).toHaveLength(5);
-    });
-
-    it("should calculate success rate correctly", async () => {
-      const mockJob: Job & { endpointCount: number } = {
-        id: "job-1",
-        userId: "user-1",
-        name: "Test Job",
-        status: "active",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        endpointCount: 1,
-      };
-
-      const mockEndpoint: JobEndpoint = {
-        id: "ep-1",
-        jobId: "job-1",
-        tenantId: "user-1",
-        name: "Test Endpoint",
-        nextRunAt: new Date(),
-        failureCount: 0,
-      };
-
-      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([mockJob]);
-      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([mockEndpoint]);
-      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
-      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
-
-      // 8 success / 2 failures = 80% success rate
-      vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue({
-        successCount: 8,
-        failureCount: 2,
-        avgDurationMs: 500,
-        lastRun: { at: new Date(), status: "success" },
-        failureStreak: 0,
-      });
-
-      const result = await manager.getDashboardStats("user-1");
-
-      expect(result.topEndpoints[0].successRate).toBe(80.0);
-    });
-  });
-
-  // ==================== Recent Runs Tests ====================
-
-  describe("recentRunsGlobal", () => {
-    it("should enrich runs with endpoint and job names", async () => {
-      const mockJob: Job = {
-        id: "job-1",
-        userId: "user-1",
-        name: "Production API",
-        status: "active",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const mockEndpoint: JobEndpoint = {
-        id: "ep-1",
-        jobId: "job-1",
-        tenantId: "user-1",
-        name: "Health Check",
-        nextRunAt: new Date(),
-        failureCount: 0,
-      };
-
-      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
-      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(mockJob);
-
-      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({
-        runs: [
-          {
-            runId: "run-1",
-            endpointId: "ep-1",
-            startedAt: new Date("2025-10-20T11:30:00Z"),
-            status: "success",
-            durationMs: 450,
-            source: "baseline-cron",
-          },
-        ],
-        total: 1,
-      });
-
-      const result = await manager.getDashboardStats("user-1");
-
-      expect(result.recentRuns).toHaveLength(1);
-      expect(result.recentRuns[0].endpointName).toBe("Health Check");
-      expect(result.recentRuns[0].jobName).toBe("Production API");
-      expect(result.recentRuns[0].source).toBe("baseline-cron");
-    });
-
-    it("should handle missing job gracefully", async () => {
-      const mockEndpoint: JobEndpoint = {
-        id: "ep-deleted",
-        jobId: "job-unknown",
-        tenantId: "user-1",
-        name: "Deleted Endpoint",
-        nextRunAt: new Date(),
-        failureCount: 0,
-      };
-
-      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
-      vi.mocked(mockJobsRepo.getJob).mockResolvedValue(null);
-
-      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({
-        runs: [
-          {
-            runId: "run-1",
-            endpointId: "ep-deleted",
-            startedAt: new Date(),
-            status: "success",
-            durationMs: 100,
-          },
-        ],
-        total: 1,
-      });
-
-      const result = await manager.getDashboardStats("user-1");
-
-      // Endpoint name is preserved, but job is "Unknown Job" when job lookup fails
-      expect(result.recentRuns[0].endpointName).toBe("Deleted Endpoint");
-      expect(result.recentRuns[0].jobName).toBe("Unknown Job");
-    });
-
-    it("should limit to 50 recent runs", async () => {
-      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
-
-      // Create exactly 50 runs (the limit we pass to listRuns)
-      const fiftyRuns = Array.from({ length: 50 }, (_, i) => ({
-        runId: `run-${i}`,
-        endpointId: "ep-1",
-        startedAt: new Date(baseDate.getTime() - i * 60 * 1000),
-        status: "success" as const,
-        durationMs: 100,
-      }));
-
-      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({
-        runs: fiftyRuns,
-        total: 100, // Total could be higher, but we only return 50
-      });
-
-      const result = await manager.getDashboardStats("user-1");
-
-      // Verify the manager requested 50 runs
-      expect(mockRunsRepo.listRuns).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: "user-1", limit: 50 }),
-      );
-      // Result should have exactly the runs returned by the mock
-      expect(result.recentRuns.length).toBe(50);
     });
   });
 });
