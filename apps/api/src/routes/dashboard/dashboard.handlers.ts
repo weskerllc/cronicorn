@@ -18,6 +18,7 @@ export const getDashboardStats: AppRouteHandler<routes.GetDashboardStatsRoute> =
       jobId: query.jobId,
       source: query.source,
       timeRange: query.timeRange,
+      endpointLimit: query.endpointLimit,
     });
     return c.json(mappers.mapDashboardStatsToResponse(stats), HTTPStatusCodes.OK);
   });

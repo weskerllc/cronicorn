@@ -56,25 +56,33 @@ export function AISessionsChart({ data, timeRange = '7d' }: AISessionsChartProps
     }, [timeRange]);
 
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
-    const { chartData, endpoints, chartConfig } = useMemo(() => {
-        // Get unique endpoints
-        const endpointList: Array<string> = [];
-        const endpointSet = new Set<string>();
-
+    const { chartData, endpoints, chartConfig, totalEndpoints } = useMemo(() => {
+        // Calculate total sessions per endpoint to find top performers
+        const endpointTotals = new Map<string, number>();
         data.forEach((item) => {
-            if (!endpointSet.has(item.endpointName)) {
-                endpointSet.add(item.endpointName);
-                endpointList.push(item.endpointName);
-            }
+            const existing = endpointTotals.get(item.endpointName) || 0;
+            endpointTotals.set(item.endpointName, existing + item.sessionCount);
         });
+
+        // Sort endpoints by total sessions DESC and take top 10
+        const MAX_ENDPOINTS = 10;
+        const sortedEndpoints = Array.from(endpointTotals.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, MAX_ENDPOINTS)
+            .map(([name]) => name);
+
+        const endpointList = sortedEndpoints;
 
         // Create color mappings and chart config
         const mappings = createEndpointColorMappings(endpointList);
         const config = buildChartConfigFromMappings(mappings);
 
-        // Group by date
+        // Group by date (only for top endpoints)
         const dateMap = new Map<string, Record<string, string | number>>();
+        const endpointSet = new Set(endpointList);
         data.forEach(item => {
+            // Skip endpoints not in top 10
+            if (!endpointSet.has(item.endpointName)) return;
             if (!dateMap.has(item.date)) {
                 // Store timestamp for X-axis domain calculation
                 dateMap.set(item.date, {
@@ -95,6 +103,7 @@ export function AISessionsChart({ data, timeRange = '7d' }: AISessionsChartProps
             chartData: transformedData,
             endpoints: endpointList,
             chartConfig: config,
+            totalEndpoints: endpointTotals.size,
         };
     }, [data]);
 
@@ -107,7 +116,9 @@ export function AISessionsChart({ data, timeRange = '7d' }: AISessionsChartProps
                     <CardTitle>AI Sessions Timeline</CardTitle>
                     <CardDescription>
                         {hasData
-                            ? `Showing AI analysis activity over the selected time period`
+                            ? totalEndpoints > endpoints.length
+                                ? `Showing top ${endpoints.length} of ${totalEndpoints} endpoints by session count`
+                                : `Showing AI analysis activity over the selected time period`
                             : "No AI session data available"}
                     </CardDescription>
                 </div>

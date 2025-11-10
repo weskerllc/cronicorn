@@ -1,7 +1,7 @@
 import type { SessionsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, count, desc, eq, gte, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, sql, sum } from "drizzle-orm";
 
 import { aiAnalysisSessions, jobEndpoints, jobs } from "./schema.js";
 
@@ -46,13 +46,13 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     endpointId: string,
     limit = 10,
   ): Promise<Array<{
-    id: string;
-    analyzedAt: Date;
-    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
-    reasoning: string;
-    tokenUsage: number | null;
-    durationMs: number | null;
-  }>> {
+      id: string;
+      analyzedAt: Date;
+      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+      reasoning: string;
+      tokenUsage: number | null;
+      durationMs: number | null;
+    }>> {
     const results = await this.tx
       .select({
         id: aiAnalysisSessions.id,
@@ -97,13 +97,14 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    endpointLimit?: number;
   }): Promise<Array<{
-    date: string;
-    endpointId: string;
-    endpointName: string;
-    sessionCount: number;
-    totalTokens: number;
-  }>> {
+      date: string;
+      endpointId: string;
+      endpointName: string;
+      sessionCount: number;
+      totalTokens: number;
+    }>> {
     const conditions = [eq(jobs.userId, filters.userId)];
 
     if (filters.sinceDate) {
@@ -111,6 +112,36 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     }
     if (filters.jobId) {
       conditions.push(eq(jobs.id, filters.jobId));
+    }
+
+    // If endpointLimit is specified, first find top N endpoints by session count
+    let topEndpointIds: string[] | undefined;
+    if (filters.endpointLimit !== undefined) {
+      const topEndpoints = await this.tx
+        .select({
+          endpointId: jobEndpoints.id,
+          totalSessions: count(),
+        })
+        .from(aiAnalysisSessions)
+        .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
+        .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+        .where(and(...conditions))
+        .groupBy(jobEndpoints.id)
+        .orderBy(desc(count()))
+        .limit(filters.endpointLimit);
+
+      topEndpointIds = topEndpoints.map(e => e.endpointId);
+
+      // If no endpoints found, return empty array
+      if (topEndpointIds.length === 0) {
+        return [];
+      }
+    }
+
+    // Add endpoint filter if we have top endpoint IDs
+    const timeSeriesConditions = [...conditions];
+    if (topEndpointIds) {
+      timeSeriesConditions.push(inArray(jobEndpoints.id, topEndpointIds));
     }
 
     const results = await this.tx
@@ -124,7 +155,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       .from(aiAnalysisSessions)
       .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
       .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
-      .where(and(...conditions))
+      .where(and(...timeSeriesConditions))
       .groupBy(sql`DATE(${aiAnalysisSessions.analyzedAt})`, jobEndpoints.id, jobEndpoints.name)
       .orderBy(sql`DATE(${aiAnalysisSessions.analyzedAt}) ASC`);
 

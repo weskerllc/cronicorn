@@ -1,6 +1,10 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
-import { Label } from "@cronicorn/ui-library/components/label";
-import { Card } from "@cronicorn/ui-library/components/card";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Button } from "@cronicorn/ui-library/components/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@cronicorn/ui-library/components/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@cronicorn/ui-library/components/popover";
+import { cn } from "@cronicorn/ui-library/lib/utils";
+import { useState } from "react";
 
 import type { JobHealthItem } from "@cronicorn/api-contracts/dashboard";
 
@@ -38,28 +42,72 @@ export function FilterBar({
     onFilterChange,
     availableJobs = [],
 }: FilterBarProps) {
+    const [jobComboOpen, setJobComboOpen] = useState(false);
+    const selectedJobId = filters.jobId ?? "all";
+
     return (
         <div className="flex items-center gap-2 flex-wrap">
             {/* Job Filter */}
             <div className="space-y-2">
-                <Select
-                    value={filters.jobId ?? 'all'}
-                    onValueChange={(value) =>
-                        onFilterChange("jobId", value === "all" ? null : value)
-                    }
-                >
-                    <SelectTrigger id="job-filter">
-                        <SelectValue placeholder="All Jobs" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Jobs</SelectItem>
-                        {availableJobs.map((job) => (
-                            <SelectItem key={job.jobId} value={job.jobId}>
-                                {job.jobName}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <Popover open={jobComboOpen} onOpenChange={setJobComboOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={jobComboOpen}
+                            className="w-[180px] justify-between"
+                        >
+                            {selectedJobId === "all"
+                                ? "All Jobs"
+                                : availableJobs.find((job) => job.jobId === selectedJobId)?.jobName || "All Jobs"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[180px] p-0">
+                        <Command>
+                            <CommandInput placeholder="Search jobs..." />
+                            <CommandList>
+                                <CommandEmpty>No job found.</CommandEmpty>
+                                <CommandGroup>
+                                    <CommandItem
+                                        key="all"
+                                        value="all"
+                                        onSelect={() => {
+                                            onFilterChange("jobId", null);
+                                            setJobComboOpen(false);
+                                        }}
+                                    >
+                                        <Check
+                                            className={cn(
+                                                "mr-2 h-4 w-4",
+                                                selectedJobId === "all" ? "opacity-100" : "opacity-0"
+                                            )}
+                                        />
+                                        All Jobs
+                                    </CommandItem>
+                                    {availableJobs.map((job) => (
+                                        <CommandItem
+                                            key={job.jobId}
+                                            value={job.jobName}
+                                            onSelect={() => {
+                                                onFilterChange("jobId", job.jobId);
+                                                setJobComboOpen(false);
+                                            }}
+                                        >
+                                            <Check
+                                                className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    selectedJobId === job.jobId ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+                                            {job.jobName}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
             </div>
 
             {/* Source Filter */}

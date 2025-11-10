@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Rectangle, XAxis, YAxis } from "recharts";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
 
 import {
     Card,
@@ -18,6 +17,14 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@cronicorn/ui-library/components/chart";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@cronicorn/ui-library/components/pagination";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 
 import type { JobHealthItem } from "@cronicorn/api-contracts/dashboard";
@@ -25,11 +32,11 @@ import type { JobHealthItem } from "@cronicorn/api-contracts/dashboard";
 const chartConfig = {
     successCount: {
         label: "Success",
-        color: "var(--chart-2)",
+        color: "var(--color-success)",
     },
     failureCount: {
         label: "Failed",
-        color: "var(--chart-1)",
+        color: "var(--color-destructive)",
     },
 } satisfies ChartConfig;
 
@@ -44,16 +51,25 @@ export function JobHealthChart({
     onJobClick,
     selectedJobId,
 }: JobHealthChartProps) {
-    // const [selectedJobId, setSelectedJobId] = useState<string>("all");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
-    // const filteredData = useMemo(() => {
-    //     if (selectedJobId === "all") return data;
-    //     return data.filter(item => item.jobId === selectedJobId);
-    // }, [data, selectedJobId]);
+    const { paginatedData, totalPages, startIndex, endIndex } = useMemo(() => {
+        const total = Math.ceil(data.length / itemsPerPage);
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginated = data.slice(start, end);
+        return {
+            paginatedData: paginated,
+            totalPages: total,
+            startIndex: start + 1,
+            endIndex: Math.min(end, data.length),
+        };
+    }, [data, currentPage]);
 
     const activeIndex = useMemo(
-        () => data.findIndex((item) => item.jobId === selectedJobId),
-        [data, selectedJobId]
+        () => paginatedData.findIndex((item) => item.jobId === selectedJobId),
+        [paginatedData, selectedJobId]
     );
 
     if (data.length === 0) {
@@ -78,27 +94,19 @@ export function JobHealthChart({
                     <CardDescription>
                         <p>Active Jobs</p>
                         <p className="text-foreground font-medium">{data.length}</p>
+                        {totalPages > 1 && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Showing {startIndex}-{endIndex} of {data.length}
+                            </p>
+                        )}
                     </CardDescription>
                 </div>
-                <Select value={selectedJobId} onValueChange={(id) => onJobClick?.(id)}>
-                    <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select job" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Jobs</SelectItem>
-                        {data.map((job) => (
-                            <SelectItem key={job.jobId} value={job.jobId}>
-                                {job.jobName}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig}>
                     <BarChart
                         accessibilityLayer
-                        data={data}
+                        data={paginatedData}
                         layout="vertical"
                     >
                         <CartesianGrid horizontal={false} />
@@ -118,7 +126,7 @@ export function JobHealthChart({
                             stackId="a"
                             fill="var(--color-successCount)"
                             radius={[4, 0, 0, 4]}
-                            onClick={(data) => onJobClick?.(data.jobId)}
+                            onClick={(barData) => onJobClick?.(barData.jobId)}
                             style={{ cursor: "pointer" }}
                             activeIndex={activeIndex}
                             activeBar={(props: any) => {
@@ -139,9 +147,8 @@ export function JobHealthChart({
                             stackId="a"
                             fill="var(--color-failureCount)"
                             radius={[0, 4, 4, 0]}
-                            onClick={(data) => onJobClick?.(data.jobName)}
+                            onClick={(barData) => onJobClick?.(barData.jobName)}
                             style={{ cursor: "pointer" }}
-
                             activeIndex={activeIndex}
                             activeBar={(props: any) => {
                                 return (
@@ -158,6 +165,55 @@ export function JobHealthChart({
                         />
                     </BarChart>
                 </ChartContainer>
+
+                {totalPages > 1 && (
+                    <div className="mt-4 flex justify-center">
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum: number;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <PaginationItem key={pageNum}>
+                                            <PaginationLink
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                isActive={currentPage === pageNum}
+                                                className="cursor-pointer"
+                                            >
+                                                {pageNum}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    );
+                                })}
+
+                                <PaginationItem>
+                                    <PaginationNext
+                                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                        className={
+                                            currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                                        }
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

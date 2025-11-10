@@ -95,6 +95,20 @@ export type JobsRepo = {
   countEndpointsByUser: (userId: string) => Promise<number>;
 
   /**
+   * Get endpoint counts by status for dashboard statistics.
+   * Optimized single-query aggregation instead of fetching all endpoints.
+   *
+   * @param userId - The user/tenant ID
+   * @param now - Current timestamp for paused check
+   * @returns Endpoint counts (total, active, paused)
+   */
+  getEndpointCounts: (userId: string, now: Date) => Promise<{
+    total: number;
+    active: number;
+    paused: number;
+  }>;
+
+  /**
    * Get user's tier for quota enforcement.
    * Returns tier level ("free" | "pro" | "enterprise") for the given user ID.
    */
@@ -274,9 +288,10 @@ export type RunsRepo = {
   }>>;
 
   /**
-   * Get time-series data for run activity grouped by endpoint (aggregated by SQL).
+   * Get time-series of run activity by endpoint.
    *
-   * @param filters - Filter criteria including date range
+   * @param filters - Filter criteria including date range and optional job/source filters
+   * @param filters.endpointLimit - Maximum number of endpoints to include (sorted by run count DESC)
    * @returns Array of daily run counts by status per endpoint
    */
   getEndpointTimeSeries: (filters: {
@@ -284,6 +299,7 @@ export type RunsRepo = {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    endpointLimit?: number;
   }) => Promise<Array<{
     date: string; // YYYY-MM-DD
     endpointId: string;
@@ -415,15 +431,17 @@ export type SessionsRepo = {
   getTotalTokenUsage: (endpointId: string, since: Date) => Promise<number>;
 
   /**
-   * Get time-series data for AI session activity (aggregated by SQL).
+   * Get time-series of AI analysis sessions by endpoint.
    *
    * @param filters - Filter criteria including date range
+   * @param filters.endpointLimit - Maximum number of endpoints to include (sorted by session count DESC)
    * @returns Array of daily session counts
    */
   getAISessionTimeSeries: (filters: {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    endpointLimit?: number;
   }) => Promise<Array<{
     date: string; // YYYY-MM-DD
     endpointId: string;

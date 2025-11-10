@@ -42,6 +42,7 @@ describe("jobsManager", () => {
       listEndpointsByJob: vi.fn(),
       deleteEndpoint: vi.fn(),
       countEndpointsByUser: vi.fn(),
+      getEndpointCounts: vi.fn(),
       getUserById: vi.fn(),
       getUserByStripeCustomerId: vi.fn(),
       updateUserSubscription: vi.fn(),

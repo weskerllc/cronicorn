@@ -20,6 +20,7 @@ export function useDashboardFilters() {
                     ...prev,
                     [key]: value || undefined,
                 }),
+                resetScroll: false, // Prevent scroll to top when filters change
             });
         },
         [navigate]
@@ -35,6 +36,7 @@ export function useDashboardFilters() {
                     ...prev,
                     ...updates,
                 }),
+                resetScroll: false, // Prevent scroll to top when filters change
             });
         },
         [navigate]
@@ -50,6 +52,7 @@ export function useDashboardFilters() {
                     ...prev,
                     [key]: undefined,
                 }),
+                resetScroll: false, // Prevent scroll to top when filters change
             });
         },
         [navigate]
@@ -63,6 +66,7 @@ export function useDashboardFilters() {
             search: {
                 timeRange: '7d', // Keep default timeRange
             },
+            resetScroll: false, // Prevent scroll to top when filters change
         });
     }, [navigate]);
 
@@ -77,6 +81,7 @@ export function useDashboardFilters() {
                     ...prev,
                     [key]: currentValue === value ? undefined : value,
                 }),
+                resetScroll: false, // Prevent scroll to top when filters change
             });
         },
         [navigate, search]
