@@ -82,16 +82,16 @@ export class DrizzleRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-    runs: Array<{
-      runId: string;
-      endpointId: string;
-      startedAt: Date;
-      status: string;
-      durationMs?: number;
-      source?: string;
-    }>;
-    total: number;
-  }> {
+      runs: Array<{
+        runId: string;
+        endpointId: string;
+        startedAt: Date;
+        status: string;
+        durationMs?: number;
+        source?: string;
+      }>;
+      total: number;
+    }> {
     // Build conditions
     // Build query conditions
     const conditions = [];
@@ -213,11 +213,11 @@ export class DrizzleRunsRepo implements RunsRepo {
     source?: string;
     sinceDate?: Date;
   }): Promise<{
-    totalRuns: number;
-    successCount: number;
-    failureCount: number;
-    avgDurationMs: number | null;
-  }> {
+      totalRuns: number;
+      successCount: number;
+      failureCount: number;
+      avgDurationMs: number | null;
+    }> {
     const conditions = [eq(jobs.userId, filters.userId)];
 
     if (filters.jobId) {
@@ -257,9 +257,9 @@ export class DrizzleRunsRepo implements RunsRepo {
     source?: string;
     sinceDate?: Date;
   }): Promise<Array<{
-    source: string;
-    count: number;
-  }>> {
+      source: string;
+      count: number;
+    }>> {
     const conditions = [
       eq(jobs.userId, filters.userId),
       not(isNull(runs.source)), // Exclude null sources
@@ -298,10 +298,10 @@ export class DrizzleRunsRepo implements RunsRepo {
     source?: string;
     sinceDate?: Date;
   }): Promise<Array<{
-    date: string;
-    success: number;
-    failure: number;
-  }>> {
+      date: string;
+      success: number;
+      failure: number;
+    }>> {
     const conditions = [eq(jobs.userId, filters.userId)];
 
     if (filters.sinceDate) {
@@ -339,13 +339,14 @@ export class DrizzleRunsRepo implements RunsRepo {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    endpointLimit?: number;
   }): Promise<Array<{
-    date: string;
-    endpointId: string;
-    endpointName: string;
-    success: number;
-    failure: number;
-  }>> {
+      date: string;
+      endpointId: string;
+      endpointName: string;
+      success: number;
+      failure: number;
+    }>> {
     const conditions = [eq(jobs.userId, filters.userId)];
 
     if (filters.sinceDate) {
@@ -356,6 +357,36 @@ export class DrizzleRunsRepo implements RunsRepo {
     }
     if (filters.source) {
       conditions.push(eq(runs.source, filters.source));
+    }
+
+    // If endpointLimit is specified, first find top N endpoints by run count
+    let topEndpointIds: string[] | undefined;
+    if (filters.endpointLimit !== undefined) {
+      const topEndpoints = await this.tx
+        .select({
+          endpointId: jobEndpoints.id,
+          totalRuns: count(),
+        })
+        .from(runs)
+        .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+        .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+        .where(and(...conditions))
+        .groupBy(jobEndpoints.id)
+        .orderBy(desc(count()))
+        .limit(filters.endpointLimit);
+
+      topEndpointIds = topEndpoints.map(e => e.endpointId);
+
+      // If no endpoints found, return empty array
+      if (topEndpointIds.length === 0) {
+        return [];
+      }
+    }
+
+    // Add endpoint filter if we have top endpoint IDs
+    const timeSeriesConditions = [...conditions];
+    if (topEndpointIds) {
+      timeSeriesConditions.push(inArray(jobEndpoints.id, topEndpointIds));
     }
 
     const results = await this.tx
@@ -369,7 +400,7 @@ export class DrizzleRunsRepo implements RunsRepo {
       .from(runs)
       .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
       .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
-      .where(and(...conditions))
+      .where(and(...timeSeriesConditions))
       .groupBy(sql`DATE(${runs.startedAt})`, jobEndpoints.id, jobEndpoints.name)
       .orderBy(sql`DATE(${runs.startedAt}) ASC`, jobEndpoints.name);
 
@@ -547,11 +578,11 @@ export class DrizzleRunsRepo implements RunsRepo {
     limit: number,
     offset?: number,
   ): Promise<Array<{
-    responseBody: JsonValue | null;
-    timestamp: Date;
-    status: string;
-    durationMs: number;
-  }>> {
+      responseBody: JsonValue | null;
+      timestamp: Date;
+      status: string;
+      durationMs: number;
+    }>> {
     // Clamp limit to max 50
     const clampedLimit = Math.min(limit, 50);
 
@@ -584,12 +615,12 @@ export class DrizzleRunsRepo implements RunsRepo {
     jobId: string,
     excludeEndpointId: string,
   ): Promise<Array<{
-    endpointId: string;
-    endpointName: string;
-    responseBody: JsonValue | null;
-    timestamp: Date;
-    status: string;
-  }>> {
+      endpointId: string;
+      endpointName: string;
+      responseBody: JsonValue | null;
+      timestamp: Date;
+      status: string;
+    }>> {
     // This requires a lateral join to get latest run per endpoint.
     // We'll use a window function approach instead (simpler with Drizzle).
 

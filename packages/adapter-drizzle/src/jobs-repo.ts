@@ -551,6 +551,34 @@ export class DrizzleJobsRepo implements JobsRepo {
     return result[0]?.count ?? 0;
   }
 
+  async getEndpointCounts(userId: string, now: Date): Promise<{
+    total: number;
+    active: number;
+    paused: number;
+  }> {
+    const result = await this.tx
+      .select({
+        total: sql<number>`COUNT(*)::int`,
+        paused: sql<number>`COUNT(*) FILTER (WHERE ${jobEndpoints.pausedUntil} IS NOT NULL AND ${jobEndpoints.pausedUntil} > ${now})::int`,
+      })
+      .from(jobEndpoints)
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(and(
+        eq(jobs.userId, userId),
+        eq(jobs.status, "active"),
+      ));
+
+    const row = result[0];
+    const total = row?.total ?? 0;
+    const paused = row?.paused ?? 0;
+
+    return {
+      total,
+      active: total - paused,
+      paused,
+    };
+  }
+
   async getUserTier(userId: string): Promise<"free" | "pro" | "enterprise"> {
     const result = await this.tx
       .select({ tier: user.tier })

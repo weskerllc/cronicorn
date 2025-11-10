@@ -12,17 +12,12 @@ import {
 } from "@cronicorn/ui-library/components/card";
 import {
     ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
     ChartStyle,
     ChartTooltip,
     ChartTooltipContent,
 } from "@cronicorn/ui-library/components/chart";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@cronicorn/ui-library/components/select";
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import type { SourceDistributionItem } from "@cronicorn/api-contracts/dashboard";
@@ -94,14 +89,15 @@ export function SchedulingIntelligenceChart({
         .reduce((sum, item) => sum + item.count, 0);
     const aiDrivenPct = totalRuns > 0 ? (aiRuns / totalRuns) * 100 : 0;
 
-    const [activeSource, setActiveSource] = React.useState(data[0]?.source);
+    const [activeSource, setActiveSource] = React.useState<string | null>(null);
 
     const activeIndex = React.useMemo(
-        () => chartData.findIndex((item) => item.source === (selectedSource || activeSource)),
+        () => {
+            const source = selectedSource || activeSource;
+            return source ? chartData.findIndex((item) => item.source === source) : -1;
+        },
         [chartData, selectedSource, activeSource]
     );
-
-    const sources = React.useMemo(() => chartData.map((item) => item.source), [chartData]);
 
     if (data.length === 0) {
         return (
@@ -127,43 +123,6 @@ export function SchedulingIntelligenceChart({
                         How your system is being scheduled
                     </CardDescription>
                 </div>
-                <Select
-                    value={selectedSource || activeSource}
-                    onValueChange={(value) => {
-                        setActiveSource(value);
-                        onSourceClick?.(value);
-                    }}
-                >
-                    <SelectTrigger
-                        className="ml-auto h-7 w-40 rounded-lg pl-2.5"
-                        aria-label="Select a source"
-                    >
-                        <SelectValue placeholder="Select source" />
-                    </SelectTrigger>
-                    <SelectContent align="end" className="rounded-xl">
-                        {sources.map((key) => {
-                            const config = chartConfig[key as keyof typeof chartConfig];
-
-                            return (
-                                <SelectItem
-                                    key={key}
-                                    value={key}
-                                    className="rounded-lg [&_span]:flex"
-                                >
-                                    <div className="flex items-center gap-2 text-xs">
-                                        <span
-                                            className="flex h-3 w-3 shrink-0 rounded-xs"
-                                            style={{
-                                                backgroundColor: `var(--color-${key})`,
-                                            }}
-                                        />
-                                        {config.label}
-                                    </div>
-                                </SelectItem>
-                            );
-                        })}
-                    </SelectContent>
-                </Select>
             </CardHeader>
             <CardContent className="flex flex-1 justify-center pb-0">
                 <ChartContainer
@@ -184,8 +143,11 @@ export function SchedulingIntelligenceChart({
                             strokeWidth={5}
                             activeIndex={activeIndex}
                             onClick={(dataPoint) => {
-                                setActiveSource(dataPoint.source);
-                                onSourceClick?.(dataPoint.source);
+                                const clickedSource = dataPoint.source;
+                                // Toggle: if clicking the active segment, deselect it
+                                const newSource = activeSource === clickedSource ? null : clickedSource;
+                                setActiveSource(newSource);
+                                onSourceClick?.(newSource || '');
                             }}
                             cursor="pointer"
                             activeShape={({
@@ -232,6 +194,10 @@ export function SchedulingIntelligenceChart({
                                 }}
                             />
                         </Pie>
+                        <ChartLegend
+                            content={<ChartLegendContent nameKey="source" />}
+                            verticalAlign="bottom"
+                        />
                     </PieChart>
                 </ChartContainer>
             </CardContent>

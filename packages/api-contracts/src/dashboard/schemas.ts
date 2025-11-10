@@ -221,6 +221,10 @@ export const DashboardStatsQuerySchema = z.object({
     description: "Time range filter for runs (optional, overrides 'days' for certain queries)",
     example: "7d",
   }),
+  endpointLimit: z.coerce.number().int().positive().max(100).optional().default(20).openapi({
+    description: "Maximum number of endpoints to include in time-series data (sorted by run count DESC). Max 100, default 20.",
+    example: 20,
+  }),
 }).openapi({
   description: "Query parameters for dashboard stats",
 });

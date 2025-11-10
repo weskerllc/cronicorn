@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
 import { ExecutionTimelineChart } from "../../components/dashboard-new/execution-timeline-chart";
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/_authed/dashboard")({
   validateSearch: dashboardSearchSchema,
   loaderDeps: ({ search: { jobId, source, timeRange } }) => ({ jobId, source, timeRange }),
   loader: async ({ context: { queryClient }, deps: { jobId, source, timeRange } }) => {
+    // ensureQueryData will fetch if not cached, or return cached data if fresh
     await queryClient.ensureQueryData(
       dashboardStatsQueryOptions({
         days: 7,
@@ -35,19 +36,37 @@ export const Route = createFileRoute("/_authed/dashboard")({
     );
   },
   component: DashboardPage,
+  errorComponent: ({ error }) => (
+    <div className="flex items-center justify-center min-h-[400px] p-4">
+      <div className="text-center space-y-4">
+        <h2 className="text-xl font-semibold text-destructive">Failed to load dashboard</h2>
+        <p className="text-sm text-muted-foreground">{error.message}</p>
+      </div>
+    </div>
+  ),
+  pendingComponent: () => (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+        <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+      </div>
+    </div>
+  ),
 });
 
 function DashboardPage() {
   const { filters, toggleFilter } = useDashboardFilters();
 
-  const { data: dashboardData } = useQuery(
-    dashboardStatsQueryOptions({
+
+  const { data: dashboardData, isPlaceholderData } = useQuery({
+    ...dashboardStatsQueryOptions({
       days: 7,
       jobId: filters.jobId,
       source: filters.source,
       timeRange: filters.timeRange
-    })
-  );
+    }),
+    placeholderData: keepPreviousData,
+  });
 
   const handleFilterChange = (key: keyof DashboardSearch, value: string | null) => {
     if (value === null) {
@@ -56,6 +75,7 @@ function DashboardPage() {
       toggleFilter(key, value);
     }
   };
+
 
   return (
     <>
@@ -69,9 +89,8 @@ function DashboardPage() {
           onFilterChange={handleFilterChange}
           availableJobs={dashboardData?.jobHealth || []}
         />
-
       } />
-      <div className="space-y-6">
+      <div className="space-y-6" style={{ opacity: isPlaceholderData ? 0.7 : 1 }}>
         <div className="grid gap-6 lg:grid-cols-2">
           <JobHealthChart
             data={dashboardData?.jobHealth || []}

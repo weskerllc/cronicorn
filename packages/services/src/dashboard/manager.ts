@@ -5,12 +5,9 @@ import type {
   DashboardStats,
   EndpointStats,
   EndpointTimeSeriesPoint,
-  FilteredMetrics,
-  JobHealthItem,
   JobStats,
   RecentActivityStats,
   RunTimeSeriesPoint,
-  SourceDistributionItem,
   SuccessRateStats,
 } from "./types.js";
 
@@ -65,6 +62,7 @@ export class DashboardManager {
    * @param options.jobId - Filter by job ID (optional)
    * @param options.source - Filter by scheduling source (optional)
    * @param options.timeRange - Time range filter: 24h, 7d, 30d, all (optional)
+   * @param options.endpointLimit - Maximum number of endpoints in time-series (default: 20)
    * @returns Aggregated dashboard statistics
    */
   async getDashboardStats(
@@ -74,6 +72,7 @@ export class DashboardManager {
       jobId?: string;
       source?: string;
       timeRange?: "24h" | "7d" | "30d" | "all";
+      endpointLimit?: number;
     } = {},
   ): Promise<DashboardStats> {
     const days = Math.min(options.days ?? 7, 30);
@@ -140,8 +139,8 @@ export class DashboardManager {
         // Explicitly omit source filter
       }),
       this.getRunTimeSeries(userId, days, now, filters),
-      this.getEndpointTimeSeries(userId, days, now, filters),
-      this.getAISessionTimeSeries(userId, days, now, filters),
+      this.getEndpointTimeSeries(userId, days, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
+      this.getAISessionTimeSeries(userId, days, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
     ]);
 
     return {
@@ -179,23 +178,15 @@ export class DashboardManager {
    * @returns Endpoint counts (total, active, paused)
    */
   private async getEndpointsStats(userId: string): Promise<EndpointStats> {
-    const jobs = await this.jobsRepo.listJobs(userId, { status: "active" });
     const now = this.clock.now();
 
-    // Fetch all endpoints across all jobs
-    const allEndpoints = await Promise.all(
-      jobs.map(job => this.jobsRepo.listEndpointsByJob(job.id)),
-    );
-
-    const endpoints = allEndpoints.flat();
-    const paused = endpoints.filter(
-      ep => ep.pausedUntil && new Date(ep.pausedUntil) > now,
-    ).length;
+    // Use aggregated query to count endpoints directly from database
+    const stats = await this.jobsRepo.getEndpointCounts(userId, now);
 
     return {
-      total: endpoints.length,
-      active: endpoints.length - paused,
-      paused,
+      total: stats.total,
+      active: stats.active,
+      paused: stats.paused,
     };
   }
 
@@ -210,57 +201,31 @@ export class DashboardManager {
     userId: string,
     days: number,
   ): Promise<SuccessRateStats> {
-    // Get all active endpoints
-    const jobs = await this.jobsRepo.listJobs(userId, { status: "active" });
-    const allEndpoints = await Promise.all(
-      jobs.map(job => this.jobsRepo.listEndpointsByJob(job.id)),
-    );
-    const endpoints = allEndpoints.flat();
-
-    if (endpoints.length === 0) {
-      return {
-        overall: 0,
-        trend: "stable",
-      };
-    }
-
     const now = this.clock.now();
     const periodStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     const previousPeriodStart = new Date(
       periodStart.getTime() - days * 24 * 60 * 60 * 1000,
     );
 
-    // Fetch health summaries for all endpoints in parallel
-    const currentHealthPromises = endpoints.map(ep =>
-      this.runsRepo.getHealthSummary(ep.id, periodStart),
-    );
-    const previousHealthPromises = endpoints.map(ep =>
-      this.runsRepo.getHealthSummary(ep.id, previousPeriodStart),
-    );
-
-    const [currentHealths, previousHealths] = await Promise.all([
-      Promise.all(currentHealthPromises),
-      Promise.all(previousHealthPromises),
+    // Use aggregated queries instead of fetching per-endpoint
+    const [currentMetrics, previousMetrics] = await Promise.all([
+      this.runsRepo.getFilteredMetrics({
+        userId,
+        sinceDate: periodStart,
+      }),
+      this.runsRepo.getFilteredMetrics({
+        userId,
+        sinceDate: previousPeriodStart,
+      }),
     ]);
 
     // Calculate current period success rate
-    const currentTotal = currentHealths.reduce(
-      (sum, h) => sum + h.successCount + h.failureCount,
-      0,
-    );
-    const currentSuccess = currentHealths.reduce((sum, h) => sum + h.successCount, 0);
-    const currentRate = currentTotal > 0 ? (currentSuccess / currentTotal) * 100 : 0;
+    const currentTotal = currentMetrics.successCount + currentMetrics.failureCount;
+    const currentRate = currentTotal > 0 ? (currentMetrics.successCount / currentTotal) * 100 : 0;
 
     // Calculate previous period success rate
-    const previousTotal = previousHealths.reduce(
-      (sum, h) => sum + h.successCount + h.failureCount,
-      0,
-    );
-    const previousSuccess = previousHealths.reduce(
-      (sum, h) => sum + h.successCount,
-      0,
-    );
-    const previousRate = previousTotal > 0 ? (previousSuccess / previousTotal) * 100 : 0;
+    const previousTotal = previousMetrics.successCount + previousMetrics.failureCount;
+    const previousRate = previousTotal > 0 ? (previousMetrics.successCount / previousTotal) * 100 : 0;
 
     // Determine trend (consider ±2% as stable)
     let trend: "up" | "down" | "stable" = "stable";
@@ -367,6 +332,11 @@ export class DashboardManager {
    * @param days - Number of days to include
    * @param now - Current timestamp
    * @param filters - Filter options
+   * @param filters.endpointLimit - Maximum number of endpoints to include (sorted by run count DESC)
+   * @param filters.userId - User ID filter
+   * @param filters.jobId - Job ID filter (optional)
+   * @param filters.source - Scheduling source filter (optional)
+   * @param filters.sinceDate - Start date for filtering runs
    * @returns Array of daily run counts by endpoint
    */
   private async getEndpointTimeSeries(
@@ -378,6 +348,7 @@ export class DashboardManager {
       jobId?: string;
       source?: string;
       sinceDate: Date;
+      endpointLimit?: number;
     },
   ): Promise<EndpointTimeSeriesPoint[]> {
     // Get aggregated data from repository (SQL aggregation)
@@ -430,6 +401,7 @@ export class DashboardManager {
    * @param filters.userId - User ID filter
    * @param filters.jobId - Job ID filter (optional)
    * @param filters.sinceDate - Start date for filtering sessions
+   * @param filters.endpointLimit - Maximum number of endpoints to include (sorted by session count DESC)
    * @returns Array of daily AI session counts
    */
   private async getAISessionTimeSeries(
@@ -440,6 +412,7 @@ export class DashboardManager {
       userId: string;
       jobId?: string;
       sinceDate: Date;
+      endpointLimit?: number;
     },
   ): Promise<AISessionTimeSeriesPoint[]> {
     // Get aggregated data from repository (SQL aggregation by date + endpoint)

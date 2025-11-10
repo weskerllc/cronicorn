@@ -20,6 +20,7 @@ describe("subscriptionsManager", () => {
     // Mock JobsRepo
     mockJobsRepo = {
       getUserById: vi.fn(),
+      getEndpointCounts: vi.fn(),
       getUserByStripeCustomerId: vi.fn(),
       updateUserSubscription: vi.fn(),
       // Other methods not used in subscription tests
