@@ -179,6 +179,8 @@ export type RunsRepo = {
     jobId?: string;
     endpointId?: string;
     status?: "success" | "failed";
+    source?: string;
+    sinceDate?: Date;
     limit?: number;
     offset?: number;
   }) => Promise<{
@@ -205,6 +207,90 @@ export type RunsRepo = {
     source?: string;
     attempt: number;
   } | null>;
+
+  /**
+   * Get aggregated job health distribution.
+   * Returns success/failure counts grouped by job (unfiltered except userId).
+   *
+   * @param userId - The user ID
+   * @returns Array of jobs with run counts
+   */
+  getJobHealthDistribution: (userId: string) => Promise<Array<{
+    jobId: string;
+    jobName: string;
+    successCount: number;
+    failureCount: number;
+  }>>;
+
+  /**
+   * Get aggregated metrics for filtered runs.
+   *
+   * @param filters - Filter criteria
+   * @returns Aggregated run metrics
+   */
+  getFilteredMetrics: (filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }) => Promise<{
+    totalRuns: number;
+    successCount: number;
+    failureCount: number;
+    avgDurationMs: number | null;
+  }>;
+
+  /**
+   * Get distribution of runs by scheduling source.
+   *
+   * @param filters - Filter criteria
+   * @returns Array of sources with counts
+   */
+  getSourceDistribution: (filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }) => Promise<Array<{
+    source: string;
+    count: number;
+  }>>;
+
+  /**
+   * Get time-series data for run activity (aggregated by SQL).
+   *
+   * @param filters - Filter criteria including date range
+   * @returns Array of daily run counts by status
+   */
+  getRunTimeSeries: (filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }) => Promise<Array<{
+    date: string; // YYYY-MM-DD
+    success: number;
+    failure: number;
+  }>>;
+
+  /**
+   * Get time-series data for run activity grouped by endpoint (aggregated by SQL).
+   *
+   * @param filters - Filter criteria including date range
+   * @returns Array of daily run counts by status per endpoint
+   */
+  getEndpointTimeSeries: (filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }) => Promise<Array<{
+    date: string; // YYYY-MM-DD
+    endpointId: string;
+    endpointName: string;
+    success: number;
+    failure: number;
+  }>>;
 
   /**
    * Get health summary for an endpoint over a time window.
@@ -329,20 +415,20 @@ export type SessionsRepo = {
   getTotalTokenUsage: (endpointId: string, since: Date) => Promise<number>;
 
   /**
-   * Get recent analysis sessions across all endpoints for a user.
-   * Used by dashboard to display recent AI activity.
+   * Get time-series data for AI session activity (aggregated by SQL).
    *
-   * @param userId - The user ID
-   * @param limit - Maximum number of sessions to return (default: 50)
-   * @returns Array of sessions with endpoint context, ordered newest to oldest
+   * @param filters - Filter criteria including date range
+   * @returns Array of daily session counts
    */
-  getRecentSessionsGlobal: (userId: string, limit?: number) => Promise<Array<{
-    id: string;
+  getAISessionTimeSeries: (filters: {
+    userId: string;
+    jobId?: string;
+    sinceDate?: Date;
+  }) => Promise<Array<{
+    date: string; // YYYY-MM-DD
     endpointId: string;
-    analyzedAt: Date;
-    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
-    reasoning: string;
-    tokenUsage: number | null;
-    durationMs: number | null;
+    endpointName: string;
+    sessionCount: number;
+    totalTokens: number;
   }>>;
 };

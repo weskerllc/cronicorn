@@ -69,6 +69,63 @@ export const DashboardStatsResponseSchema = z.object({
     description: "Recent activity metrics (last 24 hours)",
   }),
 
+  jobHealth: z.array(
+    z.object({
+      jobId: z.string().openapi({
+        description: "Job ID",
+      }),
+      jobName: z.string().openapi({
+        description: "Job name",
+      }),
+      successCount: z.number().int().nonnegative().openapi({
+        description: "Number of successful runs for this job",
+        example: 142,
+      }),
+      failureCount: z.number().int().nonnegative().openapi({
+        description: "Number of failed runs for this job",
+        example: 8,
+      }),
+    }),
+  ).openapi({
+    description: "Job health distribution (unfiltered - shows all jobs)",
+  }),
+
+  filteredMetrics: z.object({
+    totalRuns: z.number().int().nonnegative().openapi({
+      description: "Total number of runs matching filters",
+      example: 287,
+    }),
+    successCount: z.number().int().nonnegative().openapi({
+      description: "Successful runs matching filters",
+      example: 271,
+    }),
+    failureCount: z.number().int().nonnegative().openapi({
+      description: "Failed runs matching filters",
+      example: 16,
+    }),
+    avgDurationMs: z.number().nullable().openapi({
+      description: "Average duration in milliseconds for filtered runs",
+      example: 234.5,
+    }),
+  }).openapi({
+    description: "Aggregated metrics for filtered runs",
+  }),
+
+  sourceDistribution: z.array(
+    z.object({
+      source: z.string().openapi({
+        description: "Scheduling source type",
+        example: "ai-interval",
+      }),
+      count: z.number().int().nonnegative().openapi({
+        description: "Number of runs from this source",
+        example: 45,
+      }),
+    }),
+  ).openapi({
+    description: "Distribution of runs by scheduling source (filtered)",
+  }),
+
   runTimeSeries: z.array(
     z.object({
       date: z.string().openapi({
@@ -85,97 +142,61 @@ export const DashboardStatsResponseSchema = z.object({
       }),
     }),
   ).openapi({
-    description: "Time-series data for run activity (last 7 days)",
+    description: "Time-series data for run activity (filtered by query params)",
   }),
 
-  topEndpoints: z.array(
+  endpointTimeSeries: z.array(
     z.object({
-      id: z.string().openapi({
+      date: z.string().openapi({
+        description: "Date in YYYY-MM-DD format",
+        example: "2025-10-20",
+      }),
+      endpointId: z.string().openapi({
         description: "Endpoint ID",
+        example: "ep-abc123",
       }),
-      name: z.string().openapi({
+      endpointName: z.string().openapi({
         description: "Endpoint name",
+        example: "Health Check",
       }),
-      jobName: z.string().openapi({
-        description: "Parent job name",
+      success: z.number().int().nonnegative().openapi({
+        description: "Number of successful runs for this endpoint on this date",
+        example: 15,
       }),
-      successRate: z.number().min(0).max(100).openapi({
-        description: "Success rate percentage for this endpoint",
-        example: 98.5,
-      }),
-      lastRunAt: z.string().datetime().nullable().openapi({
-        description: "Timestamp of last run",
-      }),
-      runCount: z.number().int().nonnegative().openapi({
-        description: "Total number of runs for this endpoint",
-        example: 156,
+      failure: z.number().int().nonnegative().openapi({
+        description: "Number of failed runs for this endpoint on this date",
+        example: 1,
       }),
     }),
   ).openapi({
-    description: "Top 5 endpoints by run count",
+    description: "Time-series data for run activity grouped by endpoint (filtered by query params)",
   }),
 
-  recentRuns: z.array(
+  aiSessionTimeSeries: z.array(
     z.object({
-      id: z.string(),
-      endpointId: z.string(),
+      date: z.string().openapi({
+        description: "Date in YYYY-MM-DD format",
+        example: "2025-10-20",
+      }),
+      endpointId: z.string().openapi({
+        description: "Endpoint ID",
+        example: "ep-123",
+      }),
       endpointName: z.string().openapi({
-        description: "Name of the endpoint that ran",
+        description: "Endpoint name",
+        example: "Health Check",
       }),
-      jobName: z.string().openapi({
-        description: "Name of the parent job",
+      sessionCount: z.number().int().nonnegative().openapi({
+        description: "Number of AI analysis sessions for this endpoint on this date",
+        example: 12,
       }),
-      status: z.string().openapi({
-        description: "Run status (success, failed, timeout, cancelled)",
-        example: "success",
-      }),
-      startedAt: z.string().datetime().openapi({
-        description: "When the run started",
-      }),
-      durationMs: z.number().int().nonnegative().nullable().openapi({
-        description: "Duration in milliseconds",
-        example: 234,
-      }),
-      source: z.string().nullable().openapi({
-        description: "What triggered this run (baseline-cron, ai-interval, etc)",
-        example: "baseline-cron",
+      totalTokens: z.number().int().nonnegative().openapi({
+        description: "Total tokens consumed for this endpoint on this date",
+        example: 15420,
       }),
     }),
   ).openapi({
-    description: "Most recent 50 runs across all endpoints",
-  }),
-
-  recentAISessions: z.array(
-    z.object({
-      id: z.string(),
-      endpointId: z.string(),
-      endpointName: z.string().openapi({
-        description: "Name of the endpoint that was analyzed",
-      }),
-      jobName: z.string().openapi({
-        description: "Name of the parent job",
-      }),
-      analyzedAt: z.string().datetime().openapi({
-        description: "When the AI analysis occurred",
-      }),
-      reasoning: z.string().openapi({
-        description: "AI's reasoning/explanation for its decisions",
-      }),
-      tokenUsage: z.number().int().nonnegative().nullable().openapi({
-        description: "Number of tokens consumed",
-        example: 1523,
-      }),
-      durationMs: z.number().int().nonnegative().nullable().openapi({
-        description: "Analysis duration in milliseconds",
-        example: 3421,
-      }),
-      toolCallCount: z.number().int().nonnegative().openapi({
-        description: "Number of tools called during analysis",
-        example: 3,
-      }),
-    }),
-  ).openapi({
-    description: "Most recent 50 AI analysis sessions across all endpoints",
+    description: "Time-series data for AI session activity grouped by endpoint (filtered by query params)",
   }),
 }).openapi({
   description: "Aggregated dashboard statistics for the authenticated user",
@@ -187,6 +208,18 @@ export const DashboardStatsQuerySchema = z.object({
   days: z.coerce.number().int().positive().max(30).optional().default(7).openapi({
     description: "Number of days for time-series data (max 30)",
     example: 7,
+  }),
+  jobId: z.string().optional().openapi({
+    description: "Filter by job ID (optional)",
+    example: "job_123abc",
+  }),
+  source: z.string().optional().openapi({
+    description: "Filter by scheduling source (baseline-cron, baseline-interval, ai-interval, ai-oneshot, clamped-min, clamped-max, etc.)",
+    example: "ai-interval",
+  }),
+  timeRange: z.enum(["24h", "7d", "30d", "all"]).optional().openapi({
+    description: "Time range filter for runs (optional, overrides 'days' for certain queries)",
+    example: "7d",
   }),
 }).openapi({
   description: "Query parameters for dashboard stats",
