@@ -11,10 +11,8 @@ import { DashboardCard } from "./dashboard-card";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import type { SourceDistributionItem } from "@cronicorn/api-contracts/dashboard";
 
-const chartConfig = {
-    runs: {
-        label: "Runs",
-    },
+// Default color mappings for known source types
+const SOURCE_CONFIG: Record<string, { label: string; color: string }> = {
     "baseline-cron": {
         label: "Baseline (Cron)",
         color: "var(--chart-3)",
@@ -47,7 +45,45 @@ const chartConfig = {
         label: "Unknown",
         color: "var(--muted-foreground)",
     },
-} satisfies ChartConfig;
+};
+
+// Chart colors to cycle through for unknown sources
+const CHART_COLORS = [
+    "var(--chart-1)",
+    "var(--chart-2)",
+    "var(--chart-3)",
+    "var(--chart-4)",
+    "var(--chart-5)",
+];
+
+/**
+ * Dynamically builds a ChartConfig from the data sources
+ * Uses predefined configs for known sources, generates configs for unknown ones
+ */
+function buildChartConfig(data: Array<SourceDistributionItem>): ChartConfig {
+    const config: ChartConfig = {
+        runs: { label: "Runs" },
+    };
+
+    data.forEach((item, index) => {
+        if (SOURCE_CONFIG[item.source]) {
+            // Use predefined config for known sources
+            config[item.source] = SOURCE_CONFIG[item.source];
+        } else {
+            // Generate config for unknown sources
+            const colorIndex = index % CHART_COLORS.length;
+            config[item.source] = {
+                label: item.source
+                    .split('-')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' '),
+                color: CHART_COLORS[colorIndex],
+            };
+        }
+    });
+
+    return config;
+}
 
 interface SchedulingIntelligenceChartProps {
     data: Array<SourceDistributionItem>;
@@ -58,15 +94,15 @@ export function SchedulingIntelligenceChart({
 }: SchedulingIntelligenceChartProps) {
     const id = "scheduling-intelligence";
 
+    // Dynamically build chart config from incoming data
+    const chartConfig = React.useMemo(() => buildChartConfig(data), [data]);
+
     // Transform data to add fill property for each source
-    // Only include sources that exist in chartConfig to avoid rendering issues
     const chartData = React.useMemo(
-        () => data
-            .filter(item => item.source in chartConfig)
-            .map(item => ({
-                ...item,
-                fill: `var(--color-${item.source})`
-            })),
+        () => data.map(item => ({
+            ...item,
+            fill: `var(--color-${item.source})`
+        })),
         [data]
     );
 
@@ -135,11 +171,9 @@ export function SchedulingIntelligenceChart({
             </div>
             <div className="flex flex-col flex-1 items-center gap-2 justify-center flex-wrap">
                 {hasData ? data.map((item) => {
-                    // Check if source exists in chartConfig before accessing
-                    if (!(item.source in chartConfig)) return null;
                     const config = chartConfig[item.source as keyof typeof chartConfig];
-                    // Skip rendering if config doesn't have a color property
-                    if (typeof config !== 'object' || !('color' in config)) return null;
+                    // Skip if config doesn't have a color (shouldn't happen with dynamic config)
+                    if (!config || typeof config !== 'object' || !('color' in config)) return null;
                     return (
                         <div key={item.source} className="flex items-center gap-1.5 text-xs">
                             <div
