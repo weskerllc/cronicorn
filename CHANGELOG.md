@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/weskerllc/cronicorn/compare/v1.9.0...v1.9.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* Fix ChartStyle filter crash on non-object config entries ([#33](https://github.com/weskerllc/cronicorn/issues/33)) ([22d5a36](https://github.com/weskerllc/cronicorn/commit/22d5a36db1d0a8674822b58602a4c72d29a65891))
+
 # [1.9.0](https://github.com/weskerllc/cronicorn/compare/v1.8.4...v1.9.0) (2025-11-13)
 
 
