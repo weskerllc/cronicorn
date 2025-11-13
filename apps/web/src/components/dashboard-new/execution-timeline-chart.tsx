@@ -1,34 +1,27 @@
 "use client";
 
 import { useMemo } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@cronicorn/ui-library/components/card";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
     ChartContainer,
     ChartTooltip,
     ChartTooltipContent,
 } from "@cronicorn/ui-library/components/chart";
+import { DashboardCard } from "./dashboard-card";
 import type { EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
-import {
-    buildChartConfigFromMappings,
-    createEndpointColorMappings,
-    getSanitizedKey
-} from "@/lib/endpoint-colors";
+import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
+import { getSanitizedKey } from "@/lib/endpoint-colors";
 
 interface ExecutionTimelineChartProps {
     data: Array<EndpointTimeSeriesPoint>;
+    /** Pre-calculated chart config for consistent colors */
+    chartConfig: ChartConfig;
     timeRange?: string;
 }
 
 export function ExecutionTimelineChart({
     data,
+    chartConfig,
     timeRange = '7d',
 }: ExecutionTimelineChartProps) {
     // Calculate domain bounds based on time range
@@ -57,7 +50,7 @@ export function ExecutionTimelineChart({
     }, [timeRange]);
 
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
-    const { chartData, endpoints, chartConfig, totalEndpoints } = useMemo(() => {
+    const { chartData, endpoints, totalEndpoints } = useMemo(() => {
         // Calculate total runs per endpoint to find top performers
         const endpointTotals = new Map<string, number>();
         data.forEach((item) => {
@@ -65,7 +58,7 @@ export function ExecutionTimelineChart({
             endpointTotals.set(item.endpointName, existing + item.success + item.failure);
         });
 
-        // Sort endpoints by total runs DESC and take top 10
+        // Sort endpoints by total runs DESC and take top 10 for display
         const MAX_ENDPOINTS = 10;
         const sortedEndpoints = Array.from(endpointTotals.entries())
             .sort((a, b) => b[1] - a[1])
@@ -73,10 +66,6 @@ export function ExecutionTimelineChart({
             .map(([name]) => name);
 
         const endpointList = sortedEndpoints;
-
-        // Create color mappings and chart config
-        const mappings = createEndpointColorMappings(endpointList);
-        const config = buildChartConfigFromMappings(mappings);
 
         // Group by date (only for top endpoints)
         const dateMap = new Map<string, Record<string, string | number>>();
@@ -101,32 +90,42 @@ export function ExecutionTimelineChart({
         return {
             chartData: transformedData,
             endpoints: endpointList,
-            chartConfig: config,
             totalEndpoints: endpointTotals.size,
         };
     }, [data]);
 
     const hasData = data.some(point => point.success > 0 || point.failure > 0);
 
-    return (
-        <Card>
-            <CardHeader className="flex-row items-start space-y-0 pb-0">
-                <div className="grid gap-1">
-                    <CardTitle>Execution Timeline by Endpoint</CardTitle>
-                    <CardDescription>
-                        {hasData
-                            ? totalEndpoints > endpoints.length
-                                ? `Showing top ${endpoints.length} of ${totalEndpoints} endpoints by run count`
-                                : "Run activity over time grouped by endpoint"
-                            : "No executions in selected time range"}
-                    </CardDescription>
-                </div>
-            </CardHeader>
+    // Calculate total invocations
+    const totalInvocations = useMemo(() => {
+        return data.reduce((sum, point) => sum + point.success + point.failure, 0);
+    }, [data]);
 
-            <CardContent className="pt-4">
+    const description = hasData ? (
+        <>
+            <p>
+                Invocations: <span className="text-foreground font-medium">{totalInvocations.toLocaleString()}</span>
+                {totalEndpoints > endpoints.length && (
+                    <span className="text-muted-foreground text-xs ml-2">
+                        (Showing top {endpoints.length} of {totalEndpoints} endpoints)
+                    </span>
+                )}
+            </p>
+        </>
+    ) : (
+        "No data to display"
+    );
+
+    return (
+        <DashboardCard
+            title="Execution Timeline by Endpoint"
+            description={description}
+            contentClassName="p-3"
+        >
+            {hasData ? (
                 <ChartContainer
                     config={chartConfig}
-                    className="aspect-auto h-[250px] w-full"
+                    className="aspect-auto h-full w-full"
                 >
                     <AreaChart data={chartData}>
                         <defs>
@@ -155,37 +154,48 @@ export function ExecutionTimelineChart({
                                 );
                             })}
                         </defs>
-                        <CartesianGrid vertical={false} />
+                        <CartesianGrid horizontal={true} vertical={false} strokeDasharray="3 3" />
                         <XAxis
                             dataKey="date"
                             tickLine={false}
-                            axisLine={false}
+                            axisLine={true}
                             tickMargin={8}
-                            minTickGap={32}
-                            {...(domain && { domain, scale: "time", type: "number" })}
+                            type="number"
+                            scale="time"
+                            domain={['dataMin', 'dataMax']}
+                            ticks={[chartData[0]?.date, chartData[chartData.length - 1]?.date].filter(Boolean)}
                             tickFormatter={(value) => {
-                                const date = new Date(value);
+                                const date = new Date(Number(value));
                                 return date.toLocaleDateString("en-US", {
                                     month: "short",
                                     day: "numeric",
                                 });
                             }}
                         />
+                        <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            tickFormatter={(value) => value.toLocaleString()}
+                        />
                         <ChartTooltip
                             cursor={false}
-                            content={
-                                <ChartTooltipContent
-                                    labelFormatter={(value) => {
-                                        const date = new Date(value);
-                                        return date.toLocaleDateString("en-US", {
+                            content={({ active, payload }) => {
+                                if (!active || !payload || payload.length === 0) return null;
+                                const date = new Date(Number(payload[0]?.payload?.date));
+                                return (
+                                    <ChartTooltipContent
+                                        active={active}
+                                        payload={payload}
+                                        label={date.toLocaleDateString("en-US", {
                                             month: "short",
                                             day: "numeric",
                                             year: "numeric",
-                                        });
-                                    }}
-                                    indicator="dot"
-                                />
-                            }
+                                        })}
+                                        indicator="dot"
+                                    />
+                                );
+                            }}
                         />
                         {endpoints.map((endpointName) => {
                             const sanitizedKey = getSanitizedKey(endpointName);
@@ -203,7 +213,6 @@ export function ExecutionTimelineChart({
                         {/* <ChartLegend content={<ChartLegendContent />} /> */}
                     </AreaChart>
                 </ChartContainer>
-            </CardContent>
-        </Card>
+            ) : null}        </DashboardCard>
     );
 }
