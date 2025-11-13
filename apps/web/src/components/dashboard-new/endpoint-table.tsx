@@ -49,17 +49,6 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
         onEndpointClick?.(endpointName);
     };
 
-    // if (endpointStats.length === 0) {
-    //     return (
-    //         <DashboardCard
-    //             title="Endpoints"
-    //             contentClassName="items-center justify-center text-sm text-muted-foreground"
-    //         >
-    //             No data to display
-    //         </DashboardCard>
-    //     );
-    // }
-
     const description = endpointStats.length === 0 ? (
         <>
             <p>No data to display</p>
@@ -141,7 +130,6 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
                                     const mapping = colorMappings.find(m => m.name === stat.name);
                                     if (!mapping) return null;
                                     const { sanitizedKey } = mapping;
-                                    console.log({ sanitizedKey });
                                     return (
                                         <TableRow
                                             key={stat.name}

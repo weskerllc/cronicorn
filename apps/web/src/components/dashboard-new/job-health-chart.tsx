@@ -50,7 +50,7 @@ export function JobHealthChart({
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
-    const { paginatedData, totalPages, startIndex, endIndex } = useMemo(() => {
+    const { paginatedData, totalPages } = useMemo(() => {
         const total = Math.ceil(data.length / itemsPerPage);
         const start = (currentPage - 1) * itemsPerPage;
         const end = start + itemsPerPage;
@@ -58,8 +58,6 @@ export function JobHealthChart({
         return {
             paginatedData: paginated,
             totalPages: total,
-            startIndex: start + 1,
-            endIndex: Math.min(end, data.length),
         };
     }, [data, currentPage]);
 
