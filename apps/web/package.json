@@ -45,6 +45,7 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "jsdom": "^27.0.0",
+    "rollup-plugin-visualizer": "^6.0.5",
     "typescript": "catalog:",
     "vite": "^7.1.7",
     "vitest": "catalog:",
