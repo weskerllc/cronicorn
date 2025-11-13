@@ -131,6 +131,11 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([mockJob]);
       vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue(mockEndpoints);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({
+        total: 2,
+        active: 1,
+        paused: 1,
+      });
       vi.mocked(mockJobsRepo.getEndpoint).mockImplementation(async (id: string) => {
         const found = mockEndpoints.find(ep => ep.id === id);
         if (!found)
@@ -139,6 +144,13 @@ describe("dashboardManager", () => {
       });
       vi.mocked(mockJobsRepo.getJob).mockImplementation(async (id: string) => {
         return id === "job-1" ? mockJob : null;
+      });
+
+      vi.mocked(mockRunsRepo.getFilteredMetrics).mockResolvedValue({
+        totalRuns: 12,
+        successCount: 10,
+        failureCount: 2,
+        avgDurationMs: 500,
       });
 
       vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue({
@@ -182,6 +194,7 @@ describe("dashboardManager", () => {
 
     it("should cap days parameter at 30", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       const result = await manager.getDashboardStats("user-1", { days: 100 });
@@ -192,6 +205,7 @@ describe("dashboardManager", () => {
 
     it("should handle user with no jobs", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       const result = await manager.getDashboardStats("user-1");
@@ -231,34 +245,33 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([mockJob]);
       vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([mockEndpoint]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 1, active: 1, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       // Current period: 90% success (9 success / 1 failure)
       // Previous period: 80% success (8 success / 2 failures)
       // Trend should be "up" (10% improvement > 2% threshold)
-      vi.mocked(mockRunsRepo.getHealthSummary)
+      vi.mocked(mockRunsRepo.getFilteredMetrics)
         .mockResolvedValueOnce({
+          totalRuns: 10,
           successCount: 9,
           failureCount: 1,
           avgDurationMs: 500,
-          lastRun: null,
-          failureStreak: 0,
         })
         .mockResolvedValueOnce({
+          totalRuns: 10,
           successCount: 8,
           failureCount: 2,
           avgDurationMs: 500,
-          lastRun: null,
-          failureStreak: 0,
-        })
-        // Also called by getTopEndpoints (for last 30 days)
-        .mockResolvedValue({
-          successCount: 50,
-          failureCount: 5,
-          avgDurationMs: 500,
-          lastRun: { at: new Date(), status: "success" },
-          failureStreak: 0,
         });
+
+      vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue({
+        successCount: 50,
+        failureCount: 5,
+        avgDurationMs: 500,
+        lastRun: { at: new Date(), status: "success" },
+        failureStreak: 0,
+      });
 
       const result = await manager.getDashboardStats("user-1", { days: 7 });
 
@@ -288,13 +301,28 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([mockJob]);
       vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([mockEndpoint]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 1, active: 1, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       // Current period: 70% success (7 success / 3 failures)
       // Previous period: 90% success (9 success / 1 failure)
       // Trend should be "down" (20% decline > 2% threshold)
-      vi.mocked(mockRunsRepo.getHealthSummary)
+      vi.mocked(mockRunsRepo.getFilteredMetrics)
         .mockResolvedValueOnce({
+          totalRuns: 10,
+          successCount: 7,
+          failureCount: 3,
+          avgDurationMs: 500,
+        })
+        .mockResolvedValueOnce({
+          totalRuns: 10,
+          successCount: 9,
+          failureCount: 1,
+          avgDurationMs: 500,
+        });
+
+      vi.mocked(mockRunsRepo.getHealthSummary)
+        .mockResolvedValue({
           successCount: 7,
           failureCount: 3,
           avgDurationMs: 500,
@@ -345,6 +373,7 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([mockJob]);
       vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([mockEndpoint]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 1, active: 1, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       // Current: 90%, Previous: 91% (1% change < 2% threshold)
@@ -399,6 +428,7 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([mockJob]);
       vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([mockEndpoint]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 1, active: 1, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
       vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue({
         successCount: 0,
@@ -436,6 +466,7 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([mockJob]);
       vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([mockEndpoint]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 1, active: 1, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
       vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue({
         successCount: 0,
@@ -459,6 +490,7 @@ describe("dashboardManager", () => {
       const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({
         runs: [
           {
@@ -502,6 +534,7 @@ describe("dashboardManager", () => {
 
     it("should count timeout as failure", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({
         runs: [
           {
@@ -526,6 +559,7 @@ describe("dashboardManager", () => {
   describe("runTimeSeries", () => {
     it("should create time series with all days initialized to zero", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       const result = await manager.getDashboardStats("user-1", { days: 7 });
@@ -545,6 +579,14 @@ describe("dashboardManager", () => {
         .split("T")[0];
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      
+      // Mock the aggregated time series data
+      vi.mocked(mockRunsRepo.getRunTimeSeries).mockResolvedValue([
+        { date: today, success: 1, failure: 1 },
+        { date: yesterday, success: 1, failure: 0 },
+      ]);
+
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({
         runs: [
           {
@@ -585,6 +627,7 @@ describe("dashboardManager", () => {
 
     it("should sort time series chronologically", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       const result = await manager.getDashboardStats("user-1", { days: 7 });
