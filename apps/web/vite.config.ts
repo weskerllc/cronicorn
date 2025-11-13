@@ -5,6 +5,7 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import svgr from "vite-plugin-svgr";
 import { visualizer } from "rollup-plugin-visualizer";
+import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,6 +14,21 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
     svgr(),
+    // Optimize images during build
+    ViteImageOptimizer({
+      png: {
+        quality: 80,
+      },
+      jpeg: {
+        quality: 80,
+      },
+      jpg: {
+        quality: 80,
+      },
+      webp: {
+        quality: 80,
+      },
+    }),
     // Generate bundle analysis report (optional, run with ANALYZE=true)
     process.env.ANALYZE === "true" &&
       visualizer({
