@@ -65,7 +65,7 @@ function AuthenticatedLayout() {
   
   // Resolve the auth client when session is ready
   React.useEffect(() => {
-    if (!hookSession.isLoading && resolveAuthClient) {
+    if (!hookSession.isLoading) {
       resolveAuthClient(hookSession);
     }
   }, [hookSession]);
