@@ -144,4 +144,6 @@ dist
 
 .tanstack/
 .DS_Store
-.turbo/
+.turbo/# Performance reports - HTML/JSON (keep markdown only)
+docs/performance-reports/*.html
+docs/performance-reports/*.json
