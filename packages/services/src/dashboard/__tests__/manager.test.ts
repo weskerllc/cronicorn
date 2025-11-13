@@ -580,7 +580,7 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
-      
+
       // Mock the aggregated time series data
       vi.mocked(mockRunsRepo.getRunTimeSeries).mockResolvedValue([
         { date: today, success: 1, failure: 1 },
