@@ -70,7 +70,14 @@ function ChartContainer({
 
 function ChartStyle({ id, config }: { id: string; config: ChartConfig }) {
   const colorConfig = Object.entries(config).filter(
-    ([, config]) => config && typeof config === "object" && (config.theme || config.color),
+    ([, itemConfig]) => {
+      // Ensure itemConfig is a non-null object before checking properties
+      if (!itemConfig || typeof itemConfig !== "object") {
+        return false;
+      }
+      // Safely check for theme or color properties
+      return ("theme" in itemConfig && itemConfig.theme) || ("color" in itemConfig && itemConfig.color);
+    },
   );
 
   if (!colorConfig.length) {
