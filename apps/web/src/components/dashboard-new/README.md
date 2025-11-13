@@ -1,136 +1,148 @@
-# Dashboard (New) - Real Data Implementation
+# Dashboard Components - Production Implementation
 
 ## Overview
 
-The `dashboard-new` folder contains components that adapt the existing high-quality dashboard template to consume real data from the dashboard API. These components maintain the superior UI/UX of the original template while replacing fake data with live metrics.
+The `dashboard-new` folder contains production-ready dashboard components that display real-time metrics and analytics for job scheduling, endpoint execution, and AI-powered scheduling intelligence.
 
 ## Components
 
-### 1. SectionCards
-**File:** `section-cards.tsx`
+### 1. AISessionsChart
+**File:** `ai-sessions-chart.tsx`
 
-Displays 4 metric cards in a responsive grid:
-
-- **Total Jobs**: Shows total number of scheduled jobs
-- **Active Endpoints**: Displays active endpoints with paused count badge
-- **Success Rate**: Overall success percentage with trend indicator (up/down/stable)
-- **Last 24 Hours**: Recent activity showing successful runs and failures
-
-**Data Mapping:**
-```typescript
-// API Response → Card Display
-jobs.total → Total Jobs card
-endpoints.active/paused/total → Active Endpoints card  
-successRate.overall/trend → Success Rate card
-recentActivity.runs24h/success24h/failure24h → Last 24 Hours card
-```
+Stacked area chart showing AI session activity over time, grouped by endpoint.
 
 **Features:**
-- Loading skeleton with pulse animation
-- Error state with red alert banner
-- Gradient backgrounds (`from-primary/5 to-card`)
-- Container queries for responsive sizing (`@xl/main:grid-cols-2 @5xl/main:grid-cols-4`)
-- Trend badges with Tabler icons (IconTrendingUp/Down)
+- Displays top 10 endpoints by session count
+- Stacked area visualization with gradient fills
+- Consistent color assignment via pre-calculated chart config
+- Shows total session count in description
+- Responsive time-based X-axis with date formatting
 
-### 2. ChartAreaInteractive
-**File:** `chart-area-interactive.tsx`
+**Props:**
+- `data`: Array of AI session time-series points
+- `chartConfig`: Pre-calculated ChartConfig for consistent colors across components
 
-Interactive stacked area chart showing run success/failure over time:
+### 2. ExecutionTimelineChart
+**File:** `execution-timeline-chart.tsx`
 
-**Data Mapping:**
-```typescript
-// API Response → Chart Display
-runTimeSeries[].date → X-axis dates
-runTimeSeries[].success → Success area (green)
-runTimeSeries[].failure → Failure area (red)
-```
+Stacked area chart showing endpoint execution activity (success + failure) over time.
 
 **Features:**
-- Time range selector: 7 days / 30 days
-- Responsive controls:
-  - Desktop: ToggleGroup
-  - Mobile: Select dropdown (auto-switches with `useIsMobile` hook)
-- Stacked areas with gradient fills
-- Custom tooltips with date formatting
-- Chart config with semantic colors (`hsl(var(--chart-1))` for failure, `hsl(var(--chart-2))` for success)
-- Container queries for responsive sizing
+- Displays top 10 endpoints by total runs
+- Combines success and failure counts into total invocations per endpoint
+- Stacked area visualization with endpoint-specific colors
+- Shows total invocations in description
+- Time-based X-axis with formatted dates
 
-**Implementation Notes:**
-- Uses `dashboardStatsQueryOptions({ days })` query option
-- Re-fetches data when time range changes
-- Loading state shows skeleton placeholder
+**Props:**
+- `data`: Array of endpoint time-series points (success/failure per date)
+- `chartConfig`: Pre-calculated ChartConfig for color consistency
 
-### 3. DataTable
-**File:** `data-table.tsx`
+### 3. JobHealthChart
+**File:** `job-health-chart.tsx`
 
-Full-featured TanStack table with two tabs:
-
-#### Tab 1: Top Endpoints
-Shows the 5 most active endpoints with metrics:
-
-**Columns:**
-- Checkbox (select)
-- Endpoint Name (with job name subtitle)
-- Status (active badge)
-- Success Rate (color-coded badge: green ≥90%, yellow ≥50%, red <50%)
-- Total Runs
-- Last Run (date + time)
-- Actions (dropdown menu)
-
-**Data Mapping:**
-```typescript
-// API Response → Table Display
-topEndpoints[].id → Row ID
-topEndpoints[].name → Endpoint Name
-topEndpoints[].jobName → Job Name (subtitle)
-topEndpoints[].successRate → Success Rate badge
-topEndpoints[].runCount → Total Runs
-topEndpoints[].lastRunAt → Last Run timestamp
-```
-
-#### Tab 2: Recent Runs
-Shows the 20 most recent run executions:
-
-**Columns:**
-- Endpoint (name + job subtitle)
-- Status (success/failure badge)
-- Started At (timestamp)
-- Duration (milliseconds)
-
-**Data Mapping:**
-```typescript
-// API Response → Table Display
-recentRuns[].id → Row ID
-recentRuns[].endpointName → Endpoint column
-recentRuns[].jobName → Job subtitle
-recentRuns[].status → Status badge
-recentRuns[].startedAt → Started At timestamp
-recentRuns[].durationMs → Duration
-```
+Horizontal bar chart showing success vs. failure counts per job with pagination and click interactions.
 
 **Features:**
-- Row selection with checkboxes
-- Pagination (10/20/30/40/50 rows per page)
-- Sorting by any column
-- Column visibility toggle
-- Filtering (inherited from TanStack Table)
-- Loading state with spinner
-- Empty state message
-- Responsive pagination controls
-- Tab switching between top endpoints and recent runs
+- Paginated display (5 jobs per page)
+- Stacked bars: success (green) + failure (red)
+- Click on job bar to filter dashboard
+- Visual highlight for selected job
+- Active job count in description
+- Label lists for job names and success counts
+
+**Props:**
+- `data`: Array of job health items
+- `onJobClick`: Callback when job bar is clicked
+- `selectedJobId`: Currently selected job ID for visual highlighting
+
+### 4. SchedulingIntelligenceChart
+**File:** `scheduling-intelligence-chart.tsx`
+
+Pie/donut chart showing distribution of scheduling sources (baseline, AI-driven, clamped, paused).
+
+**Features:**
+- Donut chart with center label showing AI-driven percentage
+- Legend with color-coded source labels
+- Read-only visualization of scheduling source distribution
+- No data state with appropriate message
+
+**Props:**
+- `data`: Array of source distribution items (source type + count)
+
+### 5. FilterBar
+**File:** `filter-bar.tsx`
+
+Filtering controls for job selection and time range filtering.
+
+**Features:**
+- Job combobox with search (uses Command component)
+- Time range selector (24h, 7d, 30d, all)
+- "All Jobs" option to clear job filter
+- Visual indication when filters are active
+
+**Props:**
+- `filters`: Current filter values (jobId, timeRange)
+- `onFilterChange`: Callback when filter changes
+- `availableJobs`: List of jobs available for filtering
+
+### 6. EndpointTable
+**File:** `endpoint-table.tsx`
+
+Paginated table showing all endpoints with their run counts and AI session counts.
+
+**Features:**
+- Paginated display (20 items per page)
+- Color-coded endpoint indicators (consistent with charts)
+- Shows total runs and AI sessions per endpoint
+- Click on row to potentially filter/navigate (optional callback)
+- Active endpoint count in description
+- Scroll area for table overflow
+
+**Props:**
+- `endpointTimeSeries`: Endpoint execution data
+- `aiSessionTimeSeries`: AI session data
+- `colorMappings`: Pre-calculated color mappings for endpoints
+- `chartConfig`: Chart config for color consistency
+- `onEndpointClick`: Optional callback when row is clicked
+
+### 7. DashboardCard
+**File:** `dashboard-card.tsx`
+
+Reusable card wrapper component for consistent dashboard card styling.
+
+**Features:**
+- Fixed height (300px) with flex layout
+- Optional header slot for controls/filters
+- Optional footer slot for pagination
+- Customizable content area class names
+- Consistent padding and spacing
+
+**Props:**
+- `title`: Card title text
+- `description`: Optional description (supports React nodes)
+- `children`: Card content
+- `className`: Optional additional classes for the card
+- `headerSlot`: Optional slot for header controls
+- `footerSlot`: Optional slot for footer (e.g., pagination)
+- `contentClassName`: Optional classes for content area
 
 ## Data Flow
 
 ```
-dashboardStatsQueryOptions({ days })
+React Router Loader
   ↓
-React Query (useQuery)
+dashboardStatsQueryOptions({ days, jobId, timeRange })
   ↓
-Dashboard API: GET /api/dashboard/stats?days=7
+React Query (useQuery with keepPreviousData)
   ↓
-DashboardManager Service
+Dashboard API: GET /api/dashboard/stats
   ↓
-Drizzle Repositories
+DashboardManager Service (packages/services)
+  ↓
+Domain Repositories (JobsRepo, RunsRepo, SessionsRepo)
+  ↓
+Drizzle ORM
   ↓
 PostgreSQL Database
 ```
@@ -140,230 +152,167 @@ PostgreSQL Database
 **File:** `apps/web/src/lib/api-client/queries/dashboard.queries.ts`
 
 ```typescript
-export const dashboardStatsQueryOptions = ({ days }: { days: number }) =>
+export const dashboardStatsQueryOptions = ({ 
+  days, 
+  jobId, 
+  timeRange 
+}: { 
+  days: number;
+  jobId?: string;
+  timeRange?: string;
+}) =>
   queryOptions({
-    queryKey: ["dashboard", "stats", days],
-    queryFn: () => getDashboardStats({ days }),
+    queryKey: ["dashboard", "stats", days, jobId, timeRange],
+    queryFn: () => getDashboardStats({ days, jobId, timeRange }),
     staleTime: 30_000, // 30 seconds
   });
 ```
 
 **Stale Time:** 30 seconds (data refetches automatically after this period)
 
-## Responsive Design
+## Color Consistency
 
-All components use container queries for optimal responsiveness:
+All dashboard charts and visualizations use a consistent color scheme managed centrally:
 
-- **@container/main**: Applied to the main dashboard wrapper
-- **@container/card**: Applied to individual Card components
+**File:** `apps/web/src/lib/endpoint-colors.ts`
 
-**Breakpoints:**
-- `@xl/main`: 2 columns for cards
-- `@5xl/main`: 4 columns for cards
-- `@[250px]/card`: Larger title text in cards
-- `@[540px]/card`: Show full description text
-- `@[767px]/card`: Switch from Select to ToggleGroup
+- Colors are assigned deterministically based on endpoint name sorting by activity
+- A single color mapping is calculated once in the dashboard route
+- The same `chartConfig` is passed to all chart components
+- This ensures the same endpoint always has the same color across all visualizations
 
-**Mobile Optimizations:**
-- Select dropdown instead of ToggleGroup for time range
-- Simplified table pagination controls
-- Responsive text truncation
-- Condensed layouts
+**Implementation:**
+```typescript
+const { endpointColorMappings, endpointChartConfig } = useMemo(() => {
+  // Aggregate activity from all time series
+  const endpointTotals = new Map<string, number>();
+  // ... calculate totals ...
+  
+  // Sort by activity and create mappings
+  const mappings = createEndpointColorMappings(names);
+  const config = buildChartConfigFromMappings(mappings);
+  
+  return { endpointColorMappings: mappings, endpointChartConfig: config };
+}, [dashboardData]);
+```
 
 ## Usage
 
 ### Route Integration
 
-**File:** `apps/web/src/routes/dashboard-new.tsx`
+**File:** `apps/web/src/routes/_authed/dashboard.tsx`
+
+The dashboard is implemented as a TanStack Router route with:
+- Search param validation (jobId, timeRange)
+- Loader deps for proper data fetching
+- Error and pending boundaries
+- Filter state management via custom hook
 
 ```tsx
-import { ChartAreaInteractive, DataTable, SectionCards } from "@/components/dashboard-new";
+import { 
+  AISessionsChart, 
+  EndpointTable, 
+  ExecutionTimelineChart,
+  FilterBar,
+  JobHealthChart,
+  SchedulingIntelligenceChart
+} from "@/components/dashboard-new";
 
-export default function DashboardNew() {
+function DashboardPage() {
+  const { filters, toggleFilter } = useDashboardFilters();
+  const { data: dashboardData, isPlaceholderData } = useQuery({
+    ...dashboardStatsQueryOptions({ days: 7, jobId, timeRange }),
+    placeholderData: keepPreviousData,
+  });
+  
   return (
-    <div className="@container/main flex flex-1 flex-col gap-4 py-4 sm:gap-6 sm:py-6">
-      <div className="flex items-center justify-between px-4 lg:px-6">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+    <>
+      <PageHeader text="Dashboard" slotRight={<FilterBar ... />} />
+      <div style={{ opacity: isPlaceholderData ? 0.7 : 1 }}>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <JobHealthChart ... />
+          <SchedulingIntelligenceChart ... />
+        </div>
+        <EndpointTable ... />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ExecutionTimelineChart ... />
+          <AISessionsChart ... />
+        </div>
       </div>
-      
-      <SectionCards />
-      
-      <div className="px-4 lg:px-6">
-        <ChartAreaInteractive />
-      </div>
-      
-      <DataTable />
-    </div>
+    </>
   );
 }
 ```
 
-### Updating the Main Layout
+## State Management
 
-Update `apps/web/src/routes/__root.tsx` to use the new dashboard:
+**Filters:**
+- Managed via URL search params using TanStack Router
+- Custom hook `useDashboardFilters` provides filter state and toggle functions
+- Filters are validated via Zod schema
+- Filter changes trigger loader deps update → data refetch
 
-```tsx
-import { SectionCards, ChartAreaInteractive, DataTable } from "@/components/dashboard-new";
-
-// Replace template components with new ones
-<SectionCards />
-<ChartAreaInteractive />
-<DataTable />
-```
+**Data Loading:**
+- Route loader uses `ensureQueryData` for SSR-friendly prefetching
+- Client uses `useQuery` with `keepPreviousData` for smooth transitions
+- Placeholder data creates faded effect during refetch (opacity: 0.7)
 
 ## Error Handling
 
 ### Loading States
-- **SectionCards**: 4 skeleton cards with pulse animation
-- **ChartAreaInteractive**: Placeholder with loading message
-- **DataTable**: Centered spinner (IconLoader with animate-spin)
+- Route-level pending component with spinner
+- Individual components show "No data to display" when appropriate
+- Placeholder data keeps previous data visible during refetch
 
 ### Error States
-- **SectionCards**: Red alert banner with error message
-- **ChartAreaInteractive**: Shows loading message on error (could be enhanced)
-- **DataTable**: Shows "No endpoints found" if data is empty
+- Route-level error boundary with user-friendly message
+- Components gracefully handle empty data arrays
+- API errors bubble up to route error boundary
 
 ### Empty States
-- **DataTable**: "No endpoints found." message when table is empty
+- Charts show "No data to display" description
+- Tables show appropriate empty messages
+- All components handle zero-length data arrays
 
 ## Styling
 
 All components use:
-- **UI Library**: `@cronicorn/ui-library` (shadcn-based components)
-- **Icons**: `@tabler/icons-react` for consistent iconography
+- **UI Library**: `@cronicorn/ui-library` (shadcn/ui-based components)
+- **Icons**: `lucide-react` and `@tabler/icons-react`
 - **Charts**: `recharts` with custom gradients and tooltips
-- **Table**: `@tanstack/react-table` v8 with full features
-- **Theme**: CSS variables for colors (`hsl(var(--chart-1))`, `--primary`, `--muted`, etc.)
+- **Theme**: CSS variables for colors (`--chart-1`, `--color-success`, `--color-destructive`)
+- **Responsive**: Tailwind utility classes with responsive breakpoints
 
-## Future Enhancements
+## Architecture Notes
 
-### Potential Improvements
-
-1. **Real-time Updates**
-   - Add WebSocket connection for live dashboard updates
-   - Show "new data available" toast notification
-
-2. **Enhanced Filtering**
-   - Add filter by job name in DataTable
-   - Add date range picker for chart
-   - Add search bar for endpoints
-
-3. **Endpoint Details Drawer**
-   - Click endpoint name to open drawer with:
-     - Run history chart
-     - Configuration details
-     - Edit capabilities (pause, resume, modify schedule)
-
-4. **Export Functionality**
-   - Export table data as CSV/JSON
-   - Download chart as PNG
-   - Generate PDF reports
-
-5. **Status Tracking**
-   - Add "paused" status to endpoint rows (currently hardcoded as "active")
-   - Show AI hint indicators
-   - Display next scheduled run time
-
-6. **Performance Optimizations**
-   - Implement virtual scrolling for large tables
-   - Add data caching with React Query
-   - Prefetch next page of data
-
-## Testing
-
-### Unit Tests (TODO)
-```typescript
-describe("SectionCards", () => {
-  it("renders loading state", () => {});
-  it("renders error state", () => {});
-  it("displays metrics from API", () => {});
-  it("shows trend badges correctly", () => {});
-});
-
-describe("ChartAreaInteractive", () => {
-  it("switches time range", () => {});
-  it("formats dates correctly", () => {});
-  it("renders success/failure areas", () => {});
-});
-
-describe("DataTable", () => {
-  it("switches between tabs", () => {});
-  it("paginates correctly", () => {});
-  it("sorts by columns", () => {});
-  it("selects rows", () => {});
-});
-```
-
-### Integration Tests (TODO)
-- Test with real API responses
-- Test query refetching behavior
-- Test error boundary handling
+- **Domain-driven**: Service layer follows hexagonal architecture
+- **Type-safe**: Full TypeScript coverage with shared API contracts
+- **Testable**: Service layer has comprehensive unit tests (19 passing)
+- **Transaction-scoped**: All DB queries run in single transaction per request
+- **Efficient**: Aggregation happens at DB level, not in application code
 
 ## Dependencies
 
 ```json
 {
   "@cronicorn/ui-library": "workspace:*",
-  "@tabler/icons-react": "^3.x",
+  "@cronicorn/api-contracts": "workspace:*",
+  "@cronicorn/services": "workspace:*",
   "@tanstack/react-query": "^5.x",
-  "@tanstack/react-table": "^8.x",
+  "@tanstack/react-router": "^1.x",
   "recharts": "^2.x",
-  "react": "^18.x"
+  "lucide-react": "^0.x",
+  "zod": "^3.x"
 }
-```
-
-## Comparison with Template
-
-### What's Different
-
-| Aspect | Template | dashboard-new |
-|--------|----------|---------------|
-| Data Source | Hardcoded JSON (90 days fake data, 68 table rows) | Live API (`dashboardStatsQueryOptions`) |
-| Cards | $1,250 Revenue, 1,234 Customers, etc. | Total Jobs, Active Endpoints, Success Rate, 24h Activity |
-| Chart | Desktop/Mobile split | Success/Failure split |
-| Table | 68 generic rows (proposal sections) | 5 top endpoints + 20 recent runs |
-| Time Range | 90d/30d/7d | 30d/7d (90d removed, can be re-added) |
-| Drawer | Complex form with tabs | Simplified (actions dropdown only) |
-
-### What's Preserved
-
-✅ Responsive design with container queries  
-✅ Interactive time range selector  
-✅ Full TanStack Table features (sorting, pagination, filtering, column visibility)  
-✅ Tabler icons for consistency  
-✅ Gradient card backgrounds  
-✅ Chart tooltips and gradients  
-✅ Mobile-optimized controls  
-✅ Tab navigation  
-
-## Troubleshooting
-
-### Issue: Chart not updating when time range changes
-**Solution:** Verify `days` parameter is correctly mapped:
-```typescript
-const days = timeRange === "30d" ? 30 : 7;
-```
-
-### Issue: Table shows "No endpoints found"
-**Solution:** Check that `dashboardStatsQueryOptions` is returning data and `topEndpoints` array is not empty.
-
-### Issue: Trend badges not showing
-**Solution:** Ensure API returns `successRate.trend` as `"up" | "down" | "stable"`.
-
-### Issue: Icons not rendering
-**Solution:** Verify `@tabler/icons-react` is installed:
-```bash
-pnpm add @tabler/icons-react
 ```
 
 ## Related Files
 
-- **API Route**: `apps/api/src/routes/dashboard.routes.ts`
+- **Route**: `apps/web/src/routes/_authed/dashboard.tsx`
+- **API Route**: `apps/api/src/routes/dashboard/dashboard.routes.ts`
+- **API Handlers**: `apps/api/src/routes/dashboard/dashboard.handlers.ts`
 - **Service**: `packages/services/src/dashboard/manager.ts`
 - **Queries**: `apps/web/src/lib/api-client/queries/dashboard.queries.ts`
-- **Contract**: `packages/api-contracts/src/schemas/dashboard.schemas.ts`
-- **Tests**: `packages/services/src/dashboard/__tests__/manager.test.ts` (19 passing)
-
-## License
-
-Inherits license from parent project.
+- **Contracts**: `packages/api-contracts/src/dashboard/`
+- **Tests**: `packages/services/src/dashboard/__tests__/manager.test.ts`
+- **Color Utils**: `apps/web/src/lib/endpoint-colors.ts`
