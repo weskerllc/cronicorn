@@ -2,6 +2,7 @@
 
 import { useTheme } from "@cronicorn/ui-library/components/theme-provider";
 import { ThemeSwitcher } from "@cronicorn/ui-library/components/theme-switcher";
+import { APP_VERSION } from "@/config";
 
 
 interface MenuItem {
@@ -71,8 +72,11 @@ const Footer2 = ({
                             </div>
                         ))}
                     </div>
-                    <div className="flex pt-8">
+                    <div className="flex items-center justify-between pt-8">
                         <ThemeSwitcher value={theme} onChange={(v) => setTheme(v)} />
+                        <p className="text-xs text-muted-foreground">
+                            v{APP_VERSION}
+                        </p>
                     </div>
                 </footer>
             </div>
