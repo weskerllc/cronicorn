@@ -246,4 +246,83 @@ export class InMemoryRunsRepo implements RunsRepo {
 
     return zombies.length;
   }
+
+  // ============================================================================
+  // Dashboard Aggregation Methods (Phase 3)
+  // ============================================================================
+
+  async getJobHealthDistribution(_userId: string): Promise<Array<{
+    jobId: string;
+    jobName: string;
+    successCount: number;
+    failureCount: number;
+  }>> {
+    // Stub implementation for in-memory repo
+    // Real implementation is in DrizzleRunsRepo with SQL aggregation
+    return [];
+  }
+
+  async getFilteredMetrics(_filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }): Promise<{
+      totalRuns: number;
+      successCount: number;
+      failureCount: number;
+      avgDurationMs: number | null;
+    }> {
+    // Stub implementation for in-memory repo
+    return {
+      totalRuns: 0,
+      successCount: 0,
+      failureCount: 0,
+      avgDurationMs: null,
+    };
+  }
+
+  async getSourceDistribution(_filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }): Promise<Array<{
+      source: string;
+      count: number;
+    }>> {
+    // Stub implementation for in-memory repo
+    return [];
+  }
+
+  async getRunTimeSeries(_filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }): Promise<Array<{
+      date: string;
+      success: number;
+      failure: number;
+    }>> {
+    // Stub implementation for in-memory repo
+    return [];
+  }
+
+  async getEndpointTimeSeries(_filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+    endpointLimit?: number;
+  }): Promise<Array<{
+      date: string;
+      endpointId: string;
+      endpointName: string;
+      success: number;
+      failure: number;
+    }>> {
+    // Stub implementation for in-memory repo
+    return [];
+  }
 }

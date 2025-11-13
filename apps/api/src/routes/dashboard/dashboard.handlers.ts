@@ -13,7 +13,13 @@ export const getDashboardStats: AppRouteHandler<routes.GetDashboardStatsRoute> =
   const { userId } = getAuthContext(c);
 
   return c.get("withDashboardManager")(async (manager) => {
-    const stats = await manager.getDashboardStats(userId, { days: query.days });
+    const stats = await manager.getDashboardStats(userId, {
+      days: query.days,
+      jobId: query.jobId,
+      source: query.source,
+      timeRange: query.timeRange,
+      endpointLimit: query.endpointLimit,
+    });
     return c.json(mappers.mapDashboardStatsToResponse(stats), HTTPStatusCodes.OK);
   });
 };

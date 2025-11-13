@@ -299,6 +299,35 @@ export class InMemoryJobsRepo implements JobsRepo {
       .length;
   }
 
+  async getEndpointCounts(userId: string, now: Date): Promise<{
+    total: number;
+    active: number;
+    paused: number;
+  }> {
+    const endpoints = [...this.map.values()].filter((ep) => {
+      // Filter by userId and only include endpoints from active jobs
+      if (ep.tenantId !== userId)
+        return false;
+      if (ep.jobId) {
+        const job = this.jobs.get(ep.jobId);
+        if (!job || job.status !== "active")
+          return false;
+      }
+      return true;
+    });
+
+    const total = endpoints.length;
+    const paused = endpoints.filter(
+      ep => ep.pausedUntil && ep.pausedUntil > now,
+    ).length;
+
+    return {
+      total,
+      active: total - paused,
+      paused,
+    };
+  }
+
   async getUserTier(_userId: string): Promise<"free" | "pro" | "enterprise"> {
     // In-memory fixture: always return "free" as safe default
     // Tests can mock this method if different tier behavior needed

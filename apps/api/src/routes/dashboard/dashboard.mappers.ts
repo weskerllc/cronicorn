@@ -11,17 +11,10 @@ export function mapDashboardStatsToResponse(stats: DashboardStats): DashboardSta
     successRate: stats.successRate,
     recentActivity: stats.recentActivity,
     runTimeSeries: stats.runTimeSeries,
-    topEndpoints: stats.topEndpoints.map(ep => ({
-      ...ep,
-      lastRunAt: ep.lastRunAt ? ep.lastRunAt.toISOString() : null,
-    })),
-    recentRuns: stats.recentRuns.map(run => ({
-      ...run,
-      startedAt: run.startedAt.toISOString(),
-    })),
-    recentAISessions: stats.recentAISessions.map(session => ({
-      ...session,
-      analyzedAt: session.analyzedAt.toISOString(),
-    })),
+    endpointTimeSeries: stats.endpointTimeSeries,
+    jobHealth: stats.jobHealth,
+    filteredMetrics: stats.filteredMetrics,
+    sourceDistribution: stats.sourceDistribution,
+    aiSessionTimeSeries: stats.aiSessionTimeSeries,
   };
 }
