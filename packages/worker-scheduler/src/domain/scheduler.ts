@@ -41,11 +41,14 @@ export class Scheduler implements IScheduler {
       "Handling endpoint execution",
     );
 
+    // Calculate the source before execution (what schedule triggered this run)
+    const prePlan = planNextRun(now, ep, cron);
+
     const runId = await runs.create({
       endpointId,
       status: "running",
       attempt: ep.failureCount + 1,
-      source: "scheduler",
+      source: prePlan.source,
     });
 
     const runLogger = epLogger.child({ runId, attempt: ep.failureCount + 1 });

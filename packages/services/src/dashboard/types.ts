@@ -30,36 +30,39 @@ export type RunTimeSeriesPoint = {
   failure: number;
 };
 
-export type TopEndpoint = {
-  id: string;
-  name: string;
-  jobName: string;
-  successRate: number;
-  lastRunAt: Date | null;
-  runCount: number;
-};
-
-export type RecentRun = {
-  id: string;
+export type EndpointTimeSeriesPoint = {
+  date: string; // YYYY-MM-DD format
   endpointId: string;
   endpointName: string;
-  jobName: string;
-  status: string;
-  startedAt: Date;
-  durationMs: number | null;
-  source: string | null;
+  success: number;
+  failure: number;
 };
 
-export type RecentAISession = {
-  id: string;
+export type JobHealthItem = {
+  jobId: string;
+  jobName: string;
+  successCount: number;
+  failureCount: number;
+};
+
+export type FilteredMetrics = {
+  totalRuns: number;
+  successCount: number;
+  failureCount: number;
+  avgDurationMs: number | null;
+};
+
+export type SourceDistributionItem = {
+  source: string;
+  count: number;
+};
+
+export type AISessionTimeSeriesPoint = {
+  date: string; // YYYY-MM-DD format
   endpointId: string;
   endpointName: string;
-  jobName: string;
-  analyzedAt: Date;
-  reasoning: string;
-  tokenUsage: number | null;
-  durationMs: number | null;
-  toolCallCount: number;
+  sessionCount: number;
+  totalTokens: number;
 };
 
 export type DashboardStats = {
@@ -67,8 +70,10 @@ export type DashboardStats = {
   endpoints: EndpointStats;
   successRate: SuccessRateStats;
   recentActivity: RecentActivityStats;
+  jobHealth: JobHealthItem[];
+  filteredMetrics: FilteredMetrics;
+  sourceDistribution: SourceDistributionItem[];
   runTimeSeries: RunTimeSeriesPoint[];
-  topEndpoints: TopEndpoint[];
-  recentRuns: RecentRun[];
-  recentAISessions: RecentAISession[];
+  endpointTimeSeries: EndpointTimeSeriesPoint[];
+  aiSessionTimeSeries: AISessionTimeSeriesPoint[];
 };
