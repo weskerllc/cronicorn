@@ -1,3 +1,10 @@
+## [1.9.3](https://github.com/weskerllc/cronicorn/compare/v1.9.2...v1.9.3) (2025-11-13)
+
+
+### Bug Fixes
+
+* Fix error loading dashboard with dynamic values ([#35](https://github.com/weskerllc/cronicorn/issues/35)) ([9cad833](https://github.com/weskerllc/cronicorn/commit/9cad83381bda3c667ff61cda4d57542e90959c00))
+
 ## [1.9.2](https://github.com/weskerllc/cronicorn/compare/v1.9.1...v1.9.2) (2025-11-13)
 
 
