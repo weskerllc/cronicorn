@@ -7,7 +7,6 @@ import {
     CardHeader,
     CardTitle,
 } from "@cronicorn/ui-library/components/card";
-import { ScrollArea } from "@cronicorn/ui-library/components/scroll-area";
 import { cn } from "@cronicorn/ui-library/lib/utils";
 
 interface DashboardCardProps {
