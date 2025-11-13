@@ -1,6 +1,6 @@
 import { brand, faq, keywords, metaDescriptions, urls } from "@cronicorn/content";
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { Suspense, lazy } from "react";
 import HeaderSection from "../components/splash-page/components/header-section";
 import HeroSection from "../components/splash-page/components/hero-section";
 import { monitoringScenarios } from "../components/splash-page/timeline/timeline-scenario-data";
