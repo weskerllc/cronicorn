@@ -38,7 +38,6 @@ export function FilterBar({
         <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground mr-1">Filter by:</span>
             {/* Job Filter */}
-            {/* Job Filter */}
             <div className="space-y-2">
                 <Popover open={jobComboOpen} onOpenChange={setJobComboOpen}>
                     <PopoverTrigger asChild>
