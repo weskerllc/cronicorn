@@ -1,3 +1,19 @@
+## [1.8.4](https://github.com/weskerllc/cronicorn/compare/v1.8.3...v1.8.4) (2025-11-13)
+
+
+### Bug Fixes
+
+* Optimize home page load: defer auth, lazy load components, split bundles, prevent layout shifts, improve images, validate SEO ([#27](https://github.com/weskerllc/cronicorn/issues/27)) ([20a2a1c](https://github.com/weskerllc/cronicorn/commit/20a2a1cf4e07ec4fc3282193725be0107d6f5a41))
+
+## [1.8.3](https://github.com/weskerllc/cronicorn/compare/v1.8.2...v1.8.3) (2025-11-06)
+
+
+### Bug Fixes
+
+* Auth config ([506d2d2](https://github.com/weskerllc/cronicorn/commit/506d2d25856584e5ce4f8960320bc4f4af9b4574))
+* Cascade delete runs on endpoints ([c63ee56](https://github.com/weskerllc/cronicorn/commit/c63ee56604f53524591e40e426045ca3bc3ec90c))
+* Prevent scheduler from executing endpoints in an archived job ([c8f5b11](https://github.com/weskerllc/cronicorn/commit/c8f5b1170bb4b28727d9b0040f1df2330d90d2b0))
+
 ## [1.8.2](https://github.com/weskerllc/cronicorn/compare/v1.8.1...v1.8.2) (2025-11-06)
 
 
