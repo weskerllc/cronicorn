@@ -6,6 +6,10 @@ import HeroSection from "../components/splash-page/components/hero-section";
 import { monitoringScenarios } from "../components/splash-page/timeline/timeline-scenario-data";
 import AppLogo from "../logo.svg?react";
 import { SEO, createFAQSchema, createOrganizationSchema, createSoftwareApplicationSchema, createWebsiteSchema } from "@/components/SEO";
+import { TimelineSkeleton } from "@/components/skeletons/timeline-skeleton";
+import { FeatureCardsSkeleton } from "@/components/skeletons/feature-cards-skeleton";
+import { LogoGridSkeleton } from "@/components/skeletons/logo-grid-skeleton";
+import { FooterSkeleton } from "@/components/skeletons/footer-skeleton";
 
 // Lazy load heavy components for better initial page load
 const BackgroundEffects = lazy(() => import("../components/splash-page/components/background-effects"));
@@ -66,27 +70,23 @@ function Index() {
 
             <div className="grid grid-cols-1 items-start lg:grid-cols-2 gap-12 lg:gap-16 py-12 md:py-20 overflow-hidden">
               <HeroSection />
-              <Suspense fallback={
-                <div className="flex items-center justify-center min-h-[400px]">
-                  <div className="animate-pulse text-muted-foreground">Loading timeline...</div>
-                </div>
-              }>
+              <Suspense fallback={<TimelineSkeleton />}>
                 <TimelineSection tabData={tabData} />
               </Suspense>
             </div>
 
-            <Suspense fallback={null}>
+            <Suspense fallback={<FeatureCardsSkeleton />}>
               <FeatureCardsSection />
             </Suspense>
 
-            <Suspense fallback={null}>
+            <Suspense fallback={<LogoGridSkeleton />}>
               <LogoGrid />
             </Suspense>
 
           </div>
         </section>
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<FooterSkeleton />}>
           <div className="w-full   px-4 md:px-8    border-t border-border/40  ">
             <Footer2
               tagline={brand.title}
