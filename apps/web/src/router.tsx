@@ -17,7 +17,6 @@ export const router = createRouter({
     defaultPreloadStaleTime: 0,
   routeTree,
   context: {
-    // auth is a function that returns a promise to defer initialization
-    auth: undefined! as () => Promise<AuthContextValue>,
+    auth: undefined! as Promise<AuthContextValue>,
   },
 })

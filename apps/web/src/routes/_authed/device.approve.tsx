@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authed/device/approve")({
         };
     },
     async loader({ context }) {
-        const auth = await context.auth();
+        const auth = await context.auth;
         if (!auth.user) {
             throw redirect({ to: "/login", search: { redirect: location.href } });
         }
@@ -30,8 +30,8 @@ export const Route = createFileRoute("/_authed/device/approve")({
 });
 
 function DeviceApproval() {
-    const loaderData = Route.useLoaderData();
-    if (!loaderData.user) {
+    const { user } = Route.useLoaderData();
+    if (!user) {
         throw redirect({ to: "/login", search: { redirect: location.href } });
     }
 

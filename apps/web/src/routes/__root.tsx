@@ -21,7 +21,7 @@ const queryClient = new QueryClient({
 
 // Define router context type for loader access
 export const Route = createRootRouteWithContext<{
-  auth: () => Promise<AuthContextValue>;
+  auth: Promise<AuthContextValue>;
 }>()({
   beforeLoad: () => ({
     queryClient,

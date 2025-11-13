@@ -102,5 +102,8 @@ export default defineConfig({
   preview: {
     port: 5173,
     strictPort: true,
+    proxy: {
+      "/api": "http://localhost:3333",
+    },
   },
 });

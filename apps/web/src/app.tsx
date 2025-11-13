@@ -1,35 +1,40 @@
 import { RouterProvider } from '@tanstack/react-router'
 import { UnheadProvider, createHead } from '@unhead/react/client'
 
+import React from 'react';
 import { ThemeProvider } from "@cronicorn/ui-library/components/theme-provider"
 import { router } from './router'
+import { AuthProvider, useAuth } from './lib/auth-context'
 import { TailwindIndicator } from './components/tailwind-indicator';
 import type { AuthContextValue } from './lib/auth-context';
 
-// Create a lazy auth resolver that only initializes when needed
 let resolveAuthClient: (client: AuthContextValue) => void;
-let authClientPromise: Promise<AuthContextValue> | null = null;
+const authClient: Promise<AuthContextValue> = new Promise(
+  (resolve) => { resolveAuthClient = resolve; },
+);
 
-function getAuthClient(): Promise<AuthContextValue> {
-  if (!authClientPromise) {
-    authClientPromise = new Promise((resolve) => {
-      resolveAuthClient = resolve;
-    });
-  }
-  return authClientPromise;
+function InnerApp() {
+  const hookSession = useAuth();
+  // Resolve the auth client when session is ready
+  React.useEffect(() => {
+    if (!hookSession.isLoading) {
+      resolveAuthClient(hookSession);
+    }
+  }, [hookSession]);
+  return <RouterProvider router={router} context={{ auth: authClient }} />;
 }
-
-export { resolveAuthClient };
 
 export default function App() {
   const head = createHead()
 
   return (
     <UnheadProvider head={head}>
-      <ThemeProvider storageKey="cronicorn-ui-theme">
-        <TailwindIndicator />
-        <RouterProvider router={router} context={{ auth: getAuthClient }} />
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider storageKey="cronicorn-ui-theme">
+          <TailwindIndicator />
+          <InnerApp />
+        </ThemeProvider>
+      </AuthProvider>
     </UnheadProvider>
   )
 }
