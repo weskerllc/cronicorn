@@ -1,3 +1,10 @@
+## [1.8.4](https://github.com/weskerllc/cronicorn/compare/v1.8.3...v1.8.4) (2025-11-13)
+
+
+### Bug Fixes
+
+* Optimize home page load: defer auth, lazy load components, split bundles, prevent layout shifts, improve images, validate SEO ([#27](https://github.com/weskerllc/cronicorn/issues/27)) ([20a2a1c](https://github.com/weskerllc/cronicorn/commit/20a2a1cf4e07ec4fc3282193725be0107d6f5a41))
+
 ## [1.8.3](https://github.com/weskerllc/cronicorn/compare/v1.8.2...v1.8.3) (2025-11-06)
 
 
