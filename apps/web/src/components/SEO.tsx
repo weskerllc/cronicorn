@@ -43,8 +43,10 @@ export function SEO({
     // Full URL
     const fullUrl = url ? `${APP_URL}${url}` : APP_URL;
 
-    // Canonical URL
-    const canonicalUrl = canonical || fullUrl;
+    // Canonical URL - ensure it's absolute
+    const canonicalUrl = canonical 
+        ? (canonical.startsWith('http') ? canonical : `${APP_URL}${canonical}`)
+        : fullUrl;
 
     // Use Unhead to inject meta tags
     useHead({
