@@ -88,7 +88,7 @@ export default defineConfig({
     // Increase chunk size warning limit (default is 500kb)
     chunkSizeWarningLimit: 1000,
     // Enable source maps for production debugging
-    sourcemap: false,
+    sourcemap: true,
   },
   server: {
     proxy: {
