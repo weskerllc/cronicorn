@@ -59,11 +59,14 @@ export function SchedulingIntelligenceChart({
     const id = "scheduling-intelligence";
 
     // Transform data to add fill property for each source
+    // Only include sources that exist in chartConfig to avoid rendering issues
     const chartData = React.useMemo(
-        () => data.map(item => ({
-            ...item,
-            fill: `var(--color-${item.source})`
-        })),
+        () => data
+            .filter(item => item.source in chartConfig)
+            .map(item => ({
+                ...item,
+                fill: `var(--color-${item.source})`
+            })),
         [data]
     );
 
