@@ -42,6 +42,7 @@ describe("jobsManager", () => {
       listEndpointsByJob: vi.fn(),
       deleteEndpoint: vi.fn(),
       countEndpointsByUser: vi.fn(),
+      getEndpointCounts: vi.fn(),
       getUserById: vi.fn(),
       getUserByStripeCustomerId: vi.fn(),
       updateUserSubscription: vi.fn(),
@@ -58,6 +59,16 @@ describe("jobsManager", () => {
       getResponseHistory: vi.fn(),
       getSiblingLatestResponses: vi.fn(),
       cleanupZombieRuns: vi.fn(),
+      getJobHealthDistribution: vi.fn().mockResolvedValue([]),
+      getFilteredMetrics: vi.fn().mockResolvedValue({
+        totalRuns: 0,
+        successCount: 0,
+        failureCount: 0,
+        avgDurationMs: null,
+      }),
+      getSourceDistribution: vi.fn().mockResolvedValue([]),
+      getRunTimeSeries: vi.fn().mockResolvedValue([]),
+      getEndpointTimeSeries: vi.fn().mockResolvedValue([]),
     };
     const now = new Date("2025-01-14T12:00:00Z");
     fakeClock = { now: () => now, sleep: async () => { } };

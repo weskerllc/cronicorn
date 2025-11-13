@@ -1,7 +1,7 @@
 import type { HealthSummary, JsonValue, RunsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, avg, count, desc, eq, gte, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, inArray, isNull, lte, ne, not, or, sql } from "drizzle-orm";
 
 import { jobEndpoints, jobs, runs } from "./schema.js";
 
@@ -74,8 +74,11 @@ export class DrizzleRunsRepo implements RunsRepo {
   async listRuns(filters: {
     userId: string;
     jobId?: string;
+    jobName?: string;
     endpointId?: string;
     status?: "success" | "failed";
+    source?: string;
+    sinceDate?: Date;
     limit?: number;
     offset?: number;
   }): Promise<{
@@ -99,13 +102,21 @@ export class DrizzleRunsRepo implements RunsRepo {
     if (filters.endpointId) {
       conditions.push(eq(runs.endpointId, filters.endpointId));
     }
-    else if (filters.jobId) {
+    if (filters.jobId) {
       // If filtering by job, need to join with endpoints
       conditions.push(eq(jobEndpoints.jobId, filters.jobId));
     }
 
     if (filters.status) {
       conditions.push(eq(runs.status, filters.status));
+    }
+
+    if (filters.source) {
+      conditions.push(eq(runs.source, filters.source));
+    }
+
+    if (filters.sinceDate) {
+      conditions.push(gte(runs.startedAt, filters.sinceDate));
     }
 
     // Build and execute query - construct in one fluent chain
@@ -164,6 +175,242 @@ export class DrizzleRunsRepo implements RunsRepo {
       })),
       total,
     };
+  }
+
+  async getJobHealthDistribution(userId: string): Promise<Array<{
+    jobId: string;
+    jobName: string;
+    successCount: number;
+    failureCount: number;
+  }>> {
+    const results = await this.tx
+      .select({
+        jobId: jobs.id,
+        jobName: jobs.name,
+        successCount: count(sql`CASE WHEN ${runs.status} = 'success' THEN 1 END`),
+        failureCount: count(sql`CASE WHEN ${runs.status} IN ('failed', 'timeout') THEN 1 END`),
+      })
+      .from(jobs)
+      .leftJoin(jobEndpoints, eq(jobEndpoints.jobId, jobs.id))
+      .leftJoin(runs, eq(runs.endpointId, jobEndpoints.id))
+      .where(and(
+        eq(jobs.userId, userId),
+        eq(jobs.status, "active"),
+      ))
+      .groupBy(jobs.id, jobs.name);
+
+    return results.map(row => ({
+      jobId: row.jobId,
+      jobName: row.jobName,
+      successCount: Number(row.successCount),
+      failureCount: Number(row.failureCount),
+    }));
+  }
+
+  async getFilteredMetrics(filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }): Promise<{
+      totalRuns: number;
+      successCount: number;
+      failureCount: number;
+      avgDurationMs: number | null;
+    }> {
+    const conditions = [eq(jobs.userId, filters.userId)];
+
+    if (filters.jobId) {
+      conditions.push(eq(jobs.id, filters.jobId));
+    }
+    if (filters.source) {
+      conditions.push(eq(runs.source, filters.source));
+    }
+    if (filters.sinceDate) {
+      conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+
+    const result = await this.tx
+      .select({
+        totalRuns: count(),
+        successCount: count(sql`CASE WHEN ${runs.status} = 'success' THEN 1 END`),
+        failureCount: count(sql`CASE WHEN ${runs.status} IN ('failed', 'timeout') THEN 1 END`),
+        avgDurationMs: avg(runs.durationMs),
+      })
+      .from(runs)
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(and(...conditions));
+
+    const row = result[0];
+    return {
+      totalRuns: Number(row?.totalRuns ?? 0),
+      successCount: Number(row?.successCount ?? 0),
+      failureCount: Number(row?.failureCount ?? 0),
+      avgDurationMs: row?.avgDurationMs ? Number(row.avgDurationMs) : null,
+    };
+  }
+
+  async getSourceDistribution(filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }): Promise<Array<{
+      source: string;
+      count: number;
+    }>> {
+    const conditions = [
+      eq(jobs.userId, filters.userId),
+      not(isNull(runs.source)), // Exclude null sources
+    ];
+
+    if (filters.jobId) {
+      conditions.push(eq(jobs.id, filters.jobId));
+    }
+    if (filters.source) {
+      conditions.push(eq(runs.source, filters.source));
+    }
+    if (filters.sinceDate) {
+      conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+
+    const results = await this.tx
+      .select({
+        source: runs.source,
+        count: count(),
+      })
+      .from(runs)
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(and(...conditions))
+      .groupBy(runs.source);
+
+    return results.map(row => ({
+      source: row.source!,
+      count: Number(row.count),
+    }));
+  }
+
+  async getRunTimeSeries(filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+  }): Promise<Array<{
+      date: string;
+      success: number;
+      failure: number;
+    }>> {
+    const conditions = [eq(jobs.userId, filters.userId)];
+
+    if (filters.sinceDate) {
+      conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+    if (filters.jobId) {
+      conditions.push(eq(jobs.id, filters.jobId));
+    }
+    if (filters.source) {
+      conditions.push(eq(runs.source, filters.source));
+    }
+
+    const results = await this.tx
+      .select({
+        date: sql<string>`DATE(${runs.startedAt})`,
+        success: count(sql`CASE WHEN ${runs.status} = 'success' THEN 1 END`),
+        failure: count(sql`CASE WHEN ${runs.status} IN ('failed', 'timeout') THEN 1 END`),
+      })
+      .from(runs)
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(and(...conditions))
+      .groupBy(sql`DATE(${runs.startedAt})`)
+      .orderBy(sql`DATE(${runs.startedAt}) ASC`);
+
+    return results.map(row => ({
+      date: row.date,
+      success: Number(row.success),
+      failure: Number(row.failure),
+    }));
+  }
+
+  async getEndpointTimeSeries(filters: {
+    userId: string;
+    jobId?: string;
+    source?: string;
+    sinceDate?: Date;
+    endpointLimit?: number;
+  }): Promise<Array<{
+      date: string;
+      endpointId: string;
+      endpointName: string;
+      success: number;
+      failure: number;
+    }>> {
+    const conditions = [eq(jobs.userId, filters.userId)];
+
+    if (filters.sinceDate) {
+      conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+    if (filters.jobId) {
+      conditions.push(eq(jobs.id, filters.jobId));
+    }
+    if (filters.source) {
+      conditions.push(eq(runs.source, filters.source));
+    }
+
+    // If endpointLimit is specified, first find top N endpoints by run count
+    let topEndpointIds: string[] | undefined;
+    if (filters.endpointLimit !== undefined) {
+      const topEndpoints = await this.tx
+        .select({
+          endpointId: jobEndpoints.id,
+          totalRuns: count(),
+        })
+        .from(runs)
+        .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+        .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+        .where(and(...conditions))
+        .groupBy(jobEndpoints.id)
+        .orderBy(desc(count()))
+        .limit(filters.endpointLimit);
+
+      topEndpointIds = topEndpoints.map(e => e.endpointId);
+
+      // If no endpoints found, return empty array
+      if (topEndpointIds.length === 0) {
+        return [];
+      }
+    }
+
+    // Add endpoint filter if we have top endpoint IDs
+    const timeSeriesConditions = [...conditions];
+    if (topEndpointIds) {
+      timeSeriesConditions.push(inArray(jobEndpoints.id, topEndpointIds));
+    }
+
+    const results = await this.tx
+      .select({
+        date: sql<string>`DATE(${runs.startedAt})`,
+        endpointId: jobEndpoints.id,
+        endpointName: jobEndpoints.name,
+        success: count(sql`CASE WHEN ${runs.status} = 'success' THEN 1 END`),
+        failure: count(sql`CASE WHEN ${runs.status} IN ('failed', 'timeout') THEN 1 END`),
+      })
+      .from(runs)
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(and(...timeSeriesConditions))
+      .groupBy(sql`DATE(${runs.startedAt})`, jobEndpoints.id, jobEndpoints.name)
+      .orderBy(sql`DATE(${runs.startedAt}) ASC`, jobEndpoints.name);
+
+    return results.map(row => ({
+      date: row.date,
+      endpointId: row.endpointId,
+      endpointName: row.endpointName,
+      success: Number(row.success),
+      failure: Number(row.failure),
+    }));
   }
 
   async getRunDetails(runId: string): Promise<{

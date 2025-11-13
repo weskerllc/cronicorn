@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * Job status enum - provides type safety at both compile-time and runtime.
@@ -89,7 +89,10 @@ export const jobEndpoints = pgTable("job_endpoints", {
 
   // Adapter-specific (not in domain entity)
   _lockedUntil: timestamp("_locked_until", { mode: "date" }),
-});
+}, table => ({
+  jobIdIdx: index("job_endpoints_job_id_idx").on(table.jobId),
+  nextRunAtIdx: index("job_endpoints_next_run_at_idx").on(table.nextRunAt),
+}));
 
 /**
  * Runs table.
@@ -108,7 +111,13 @@ export const runs = pgTable("runs", {
   errorDetails: jsonb("error_details"),
   responseBody: jsonb("response_body").$type<import("@cronicorn/domain").JsonValue>(), // Response data from endpoint (if JSON and within size limit)
   statusCode: integer("status_code"), // HTTP status code (200, 404, 500, etc.)
-});
+}, table => ({
+  endpointIdIdx: index("runs_endpoint_id_idx").on(table.endpointId),
+  startedAtIdx: index("runs_started_at_idx").on(table.startedAt),
+  statusIdx: index("runs_status_idx").on(table.status),
+  // Composite index for common dashboard queries
+  endpointStartedIdx: index("runs_endpoint_started_idx").on(table.endpointId, table.startedAt),
+}));
 
 export type JobRow = typeof jobs.$inferSelect;
 export type JobInsert = typeof jobs.$inferInsert;
@@ -191,7 +200,10 @@ export const aiAnalysisSessions = pgTable("ai_analysis_sessions", {
   reasoning: text("reasoning"), // AI's explanation/decision
   tokenUsage: integer("token_usage"), // Total tokens consumed
   durationMs: integer("duration_ms"), // Analysis duration
-});
+}, table => ({
+  endpointIdIdx: index("ai_sessions_endpoint_id_idx").on(table.endpointId),
+  analyzedAtIdx: index("ai_sessions_analyzed_at_idx").on(table.analyzedAt),
+}));
 
 /**
  * Device Authorization tables (Better Auth OAuth Device Flow).
