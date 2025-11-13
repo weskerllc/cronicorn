@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/weskerllc/cronicorn/compare/v1.8.4...v1.9.0) (2025-11-13)
+
+
+### Features
+
+* Dashboard Redesign ([#28](https://github.com/weskerllc/cronicorn/issues/28)) ([227c62a](https://github.com/weskerllc/cronicorn/commit/227c62abca6a0d6ad515c84f77e9755f26a1d124))
+
 ## [1.8.4](https://github.com/weskerllc/cronicorn/compare/v1.8.3...v1.8.4) (2025-11-13)
 
 
