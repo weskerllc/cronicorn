@@ -132,8 +132,11 @@ export function SchedulingIntelligenceChart({
             </div>
             <div className="flex flex-col flex-1 items-center gap-2 justify-center flex-wrap">
                 {hasData ? data.map((item) => {
+                    // Check if source exists in chartConfig before accessing
+                    if (!(item.source in chartConfig)) return null;
                     const config = chartConfig[item.source as keyof typeof chartConfig];
-                    if (!('color' in config)) return null;
+                    // Skip rendering if config doesn't have a color property
+                    if (typeof config !== 'object' || !('color' in config)) return null;
                     return (
                         <div key={item.source} className="flex items-center gap-1.5 text-xs">
                             <div
