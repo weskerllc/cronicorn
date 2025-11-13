@@ -102,30 +102,33 @@ export function ExecutionTimelineChart({
                 >
                     <AreaChart data={chartData}>
                         <defs>
-                            {endpoints.map((endpointName) => {
-                                const sanitizedKey = getSanitizedKey(endpointName);
-                                return (
-                                    <linearGradient
-                                        key={endpointName}
-                                        id={`fill${sanitizedKey}`}
-                                        x1="0"
-                                        y1="0"
-                                        x2="0"
-                                        y2="1"
-                                    >
-                                        <stop
-                                            offset="5%"
-                                            stopColor={`var(--color-${sanitizedKey})`}
-                                            stopOpacity={0.8}
-                                        />
-                                        <stop
-                                            offset="95%"
-                                            stopColor={`var(--color-${sanitizedKey})`}
-                                            stopOpacity={0.1}
-                                        />
-                                    </linearGradient>
-                                );
-                            })}
+                            {endpoints
+                                .filter(name => name && typeof name === "string")
+                                .map((endpointName) => {
+                                    const sanitizedKey = getSanitizedKey(endpointName);
+                                    if (!sanitizedKey) return null;
+                                    return (
+                                        <linearGradient
+                                            key={endpointName}
+                                            id={`fill${sanitizedKey}`}
+                                            x1="0"
+                                            y1="0"
+                                            x2="0"
+                                            y2="1"
+                                        >
+                                            <stop
+                                                offset="5%"
+                                                stopColor={`var(--color-${sanitizedKey})`}
+                                                stopOpacity={0.8}
+                                            />
+                                            <stop
+                                                offset="95%"
+                                                stopColor={`var(--color-${sanitizedKey})`}
+                                                stopOpacity={0.1}
+                                            />
+                                        </linearGradient>
+                                    );
+                                })}
                         </defs>
                         <CartesianGrid horizontal={true} vertical={false} strokeDasharray="3 3" />
                         <XAxis
@@ -170,19 +173,22 @@ export function ExecutionTimelineChart({
                                 );
                             }}
                         />
-                        {endpoints.map((endpointName) => {
-                            const sanitizedKey = getSanitizedKey(endpointName);
-                            return (
-                                <Area
-                                    key={endpointName}
-                                    dataKey={endpointName}
-                                    type="natural"
-                                    fill={`url(#fill${sanitizedKey})`}
-                                    stroke={`var(--color-${sanitizedKey})`}
-                                    stackId="a"
-                                />
-                            );
-                        })}
+                        {endpoints
+                            .filter(name => name && typeof name === "string")
+                            .map((endpointName) => {
+                                const sanitizedKey = getSanitizedKey(endpointName);
+                                if (!sanitizedKey) return null;
+                                return (
+                                    <Area
+                                        key={endpointName}
+                                        dataKey={endpointName}
+                                        type="natural"
+                                        fill={`url(#fill${sanitizedKey})`}
+                                        stroke={`var(--color-${sanitizedKey})`}
+                                        stackId="a"
+                                    />
+                                );
+                            })}
                     </AreaChart>
                 </ChartContainer>
             ) : null}

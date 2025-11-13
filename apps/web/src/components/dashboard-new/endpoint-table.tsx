@@ -127,8 +127,9 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
                             </TableHeader>
                             <TableBody>
                                 {paginatedStats.map((stat) => {
-                                    const mapping = colorMappings.find(m => m.name === stat.name);
-                                    if (!mapping) return null;
+                                    if (!stat || !stat.name) return null;
+                                    const mapping = colorMappings.find(m => m && m.name === stat.name);
+                                    if (!mapping || !mapping.sanitizedKey) return null;
                                     const { sanitizedKey } = mapping;
                                     return (
                                         <TableRow
