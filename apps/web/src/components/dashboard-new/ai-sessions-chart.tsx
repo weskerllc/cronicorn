@@ -4,8 +4,6 @@ import { useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
     ChartContainer,
-    ChartLegend,
-    ChartLegendContent,
     ChartTooltip,
     ChartTooltipContent,
 } from "@cronicorn/ui-library/components/chart";
@@ -22,31 +20,6 @@ interface AISessionsChartProps {
 }
 
 export function AISessionsChart({ data, chartConfig, timeRange = '7d' }: AISessionsChartProps) {
-    // Calculate domain bounds based on time range
-    const domain = useMemo(() => {
-        const now = new Date();
-        const end = now.getTime();
-        let start: number;
-
-        switch (timeRange) {
-            case '24h':
-                start = end - 24 * 60 * 60 * 1000;
-                break;
-            case '7d':
-                start = end - 7 * 24 * 60 * 60 * 1000;
-                break;
-            case '30d':
-                start = end - 30 * 24 * 60 * 60 * 1000;
-                break;
-            case 'all':
-            default:
-                // For 'all', use data bounds
-                return undefined;
-        }
-
-        return [start, end];
-    }, [timeRange]);
-
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
         // Calculate total sessions per endpoint to find top performers
