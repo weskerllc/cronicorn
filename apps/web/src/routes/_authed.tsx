@@ -4,13 +4,10 @@ import React from "react";
 import { SidebarInset, SidebarProvider } from "@cronicorn/ui-library/components/sidebar";
 import { AppSidebar } from "../components/nav/app-sidebar";
 import { SiteHeader } from "../components/nav/site-header";
-import { AuthProvider, useAuth } from "../lib/auth-context";
-import { resolveAuthClient } from "../app";
 
 export const Route = createFileRoute("/_authed")({
   beforeLoad: async ({ context }) => {
-    // Initialize auth client when entering protected routes
-    const auth = await context.auth();
+    const auth = await context.auth;
     if (!auth.isAuthenticated) {
       throw redirect({
         to: '/login',
@@ -21,7 +18,7 @@ export const Route = createFileRoute("/_authed")({
     }
   },
   async loader({ context }) {
-    const auth = await context.auth();
+    const auth = await context.auth;
     if (!auth.user) {
       throw redirect({ to: "/login", search: { redirect: location.href } });
     }
@@ -30,8 +27,9 @@ export const Route = createFileRoute("/_authed")({
   component: AuthenticatedLayout,
 });
 
-function AuthenticatedLayoutInner() {
+function AuthenticatedLayout() {
   const { user } = Route.useLoaderData();
+
   if (!user) {
     throw redirect({ to: "/login", search: { redirect: location.href } });
   }
@@ -57,22 +55,5 @@ function AuthenticatedLayoutInner() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
-}
-
-function AuthenticatedLayout() {
-  const hookSession = useAuth();
-  
-  // Resolve the auth client when session is ready
-  React.useEffect(() => {
-    if (!hookSession.isLoading) {
-      resolveAuthClient(hookSession);
-    }
-  }, [hookSession]);
-
-  return (
-    <AuthProvider>
-      <AuthenticatedLayoutInner />
-    </AuthProvider>
   );
 }
