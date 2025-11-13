@@ -13,17 +13,15 @@ const authClient: Promise<AuthContextValue> = new Promise(
   (resolve) => { resolveAuthClient = resolve; },
 );
 
-
 function InnerApp() {
   const hookSession = useAuth();
-  // Resolve the auth client when session is ready or immediately in dev
+  // Resolve the auth client when session is ready
   React.useEffect(() => {
     if (!hookSession.isLoading) {
       resolveAuthClient(hookSession);
     }
   }, [hookSession]);
   return <RouterProvider router={router} context={{ auth: authClient }} />;
-
 }
 
 export default function App() {
