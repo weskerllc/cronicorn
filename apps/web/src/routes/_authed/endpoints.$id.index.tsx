@@ -460,38 +460,28 @@ function ViewEndpointPage() {
         </Button>
       </div>
 
-      <Separator className="my-8" />
+      <Separator className="my-2" />
 
-      <div className="flex flex-col">
-        <h2>Recent Runs</h2>
-      </div>
       {/* Recent Runs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Runs</CardTitle>
-          <CardDescription>Last 10 execution attempts</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={runsData.runs.map(run => ({
-              ...run,
-              status: run.status as "success" | "failure" | "timeout" | "cancelled",
-              startedAt: new Date(run.startedAt),
-            }))}
-            emptyMessage="No runs found for this endpoint."
-          />
-          {runsData.runs.length >= 10 && (
-            <div className="mt-4 text-center">
-              <Button variant="link" asChild>
-                <Link to="/endpoints/$id/runs" params={{ id }}>
-                  View All Runs →
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <DataTable
+        tableTitle="Recent Runs"
+        columns={columns}
+        data={runsData.runs.map(run => ({
+          ...run,
+          status: run.status as "success" | "failure" | "timeout" | "cancelled",
+          startedAt: new Date(run.startedAt),
+        }))}
+        emptyMessage="No runs found for this endpoint."
+      />
+      {runsData.runs.length >= 10 && (
+        <div className="mt-4 text-center">
+          <Button variant="link" asChild>
+            <Link to="/endpoints/$id/runs" params={{ id }}>
+              View All Runs →
+            </Link>
+          </Button>
+        </div>
+      )}
     </>
   );
 }
