@@ -16,10 +16,9 @@ interface AISessionsChartProps {
     data: Array<AISessionTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
-    timeRange?: string;
 }
 
-export function AISessionsChart({ data, chartConfig, timeRange = '7d' }: AISessionsChartProps) {
+export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
         // Calculate total sessions per endpoint to find top performers

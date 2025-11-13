@@ -1,4 +1,3 @@
-export { ActiveFilters } from "./active-filters";
 export { AISessionsChart } from "./ai-sessions-chart";
 export { EndpointTable } from "./endpoint-table";
 export { ExecutionTimelineChart } from "./execution-timeline-chart";
