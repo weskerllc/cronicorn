@@ -1,24 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Label, Pie, PieChart, Sector } from "recharts";
-
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@cronicorn/ui-library/components/card";
+import { Label, Pie, PieChart } from "recharts";
 import {
     ChartContainer,
-    ChartLegend,
-    ChartLegendContent,
-    ChartStyle,
     ChartTooltip,
     ChartTooltipContent,
 } from "@cronicorn/ui-library/components/chart";
-import type { PieSectorDataItem } from "recharts/types/polar/Pie";
+import { DashboardCard } from "./dashboard-card";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import type { SourceDistributionItem } from "@cronicorn/api-contracts/dashboard";
 
@@ -62,14 +51,10 @@ const chartConfig = {
 
 interface SchedulingIntelligenceChartProps {
     data: Array<SourceDistributionItem>;
-    onSourceClick?: (source: string) => void;
-    selectedSource?: string | null;
 }
 
 export function SchedulingIntelligenceChart({
     data,
-    onSourceClick,
-    selectedSource,
 }: SchedulingIntelligenceChartProps) {
     const id = "scheduling-intelligence";
 
@@ -89,80 +74,28 @@ export function SchedulingIntelligenceChart({
         .reduce((sum, item) => sum + item.count, 0);
     const aiDrivenPct = totalRuns > 0 ? (aiRuns / totalRuns) * 100 : 0;
 
-    const [activeSource, setActiveSource] = React.useState<string | null>(null);
-
-    const activeIndex = React.useMemo(
-        () => {
-            const source = selectedSource || activeSource;
-            return source ? chartData.findIndex((item) => item.source === source) : -1;
-        },
-        [chartData, selectedSource, activeSource]
-    );
-
-    if (data.length === 0) {
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Scheduling Intelligence</CardTitle>
-                    <CardDescription>No scheduling data available</CardDescription>
-                </CardHeader>
-                <CardContent className="flex h-[300px] items-center justify-center text-muted-foreground">
-                    <p>No runs found to display scheduling sources</p>
-                </CardContent>
-            </Card>
-        );
-    }
+    const hasData = data.length > 0;
 
     return (
-        <Card data-chart={id} className="flex flex-col">
-            <ChartStyle id={id} config={chartConfig} />
-            <CardHeader className="flex-row items-start space-y-0 pb-0">
-                <div className="grid gap-1">
-                    <CardTitle>Scheduling Intelligence</CardTitle>
-                    <CardDescription>
-                        How your system is being scheduled
-                    </CardDescription>
-                </div>
-            </CardHeader>
-            <CardContent className="flex flex-1 justify-center pb-0">
+        <DashboardCard
+            title="Scheduling Intelligence"
+            description={hasData ? "Distribution of scheduling sources (read-only)" : "No data to display"}
+            contentClassName="flex gap-4 p-3"
+        >
+            <div className="flex-auto flex items-center justify-center">
                 <ChartContainer
                     id={id}
                     config={chartConfig}
-                    className="mx-auto aspect-square w-full max-w-[300px]"
+                    className="aspect-square h-full max-h-full"
                 >
                     <PieChart>
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent hideLabel />}
-                        />
+                        {hasData && <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />}
                         <Pie
-                            data={chartData}
+                            data={hasData ? chartData : []}
                             dataKey="count"
                             nameKey="source"
                             innerRadius={60}
                             strokeWidth={5}
-                            activeIndex={activeIndex}
-                            onClick={(dataPoint) => {
-                                const clickedSource = dataPoint.source;
-                                // Toggle: if clicking the active segment, deselect it
-                                const newSource = activeSource === clickedSource ? null : clickedSource;
-                                setActiveSource(newSource);
-                                onSourceClick?.(newSource || '');
-                            }}
-                            cursor="pointer"
-                            activeShape={({
-                                outerRadius = 0,
-                                ...props
-                            }: PieSectorDataItem) => (
-                                <g>
-                                    <Sector {...props} outerRadius={outerRadius + 10} />
-                                    <Sector
-                                        {...props}
-                                        outerRadius={outerRadius + 25}
-                                        innerRadius={outerRadius + 12}
-                                    />
-                                </g>
-                            )}
                         >
                             <Label
                                 content={({ viewBox }) => {
@@ -179,7 +112,7 @@ export function SchedulingIntelligenceChart({
                                                     y={viewBox.cy}
                                                     className="fill-foreground text-3xl font-bold"
                                                 >
-                                                    {aiDrivenPct.toFixed(0)}%
+                                                    {hasData ? aiDrivenPct.toFixed(0) : '0'}%
                                                 </tspan>
                                                 <tspan
                                                     x={viewBox.cx}
@@ -194,13 +127,24 @@ export function SchedulingIntelligenceChart({
                                 }}
                             />
                         </Pie>
-                        <ChartLegend
-                            content={<ChartLegendContent nameKey="source" />}
-                            verticalAlign="bottom"
-                        />
                     </PieChart>
                 </ChartContainer>
-            </CardContent>
-        </Card>
+            </div>
+            <div className="flex flex-col flex-1 items-center gap-2 justify-center flex-wrap">
+                {hasData ? data.map((item) => {
+                    const config = chartConfig[item.source as keyof typeof chartConfig];
+                    if (!('color' in config)) return null;
+                    return (
+                        <div key={item.source} className="flex items-center gap-1.5 text-xs">
+                            <div
+                                className="h-2 w-2 shrink-0 rounded-[2px]"
+                                style={{ backgroundColor: config.color }}
+                            />
+                            <span className="text-nowrap">{config.label}</span>
+                        </div>
+                    );
+                }) : null}
+            </div>
+        </DashboardCard>
     );
 }

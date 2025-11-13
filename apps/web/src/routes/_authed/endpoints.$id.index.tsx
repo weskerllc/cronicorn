@@ -462,6 +462,9 @@ function ViewEndpointPage() {
 
       <Separator className="my-8" />
 
+      <div className="flex flex-col">
+        <h2>Recent Runs</h2>
+      </div>
       {/* Recent Runs Table */}
       <Card>
         <CardHeader>

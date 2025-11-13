@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
+import { useMemo } from "react";
 
 import { ExecutionTimelineChart } from "../../components/dashboard-new/execution-timeline-chart";
 import { FilterBar } from "../../components/dashboard-new/filter-bar";
@@ -11,11 +12,11 @@ import { AISessionsChart } from "../../components/dashboard-new/ai-sessions-char
 import { EndpointTable } from "../../components/dashboard-new/endpoint-table";
 import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";
+import { buildChartConfigFromMappings, createEndpointColorMappings } from "@/lib/endpoint-colors";
 
 // Search params schema for dashboard filters
 const dashboardSearchSchema = z.object({
   jobId: z.string().optional().catch(undefined),
-  source: z.string().optional().catch(undefined),
   timeRange: z.enum(['24h', '7d', '30d', 'all']).optional().catch('7d'),
 });
 
@@ -23,14 +24,13 @@ export type DashboardSearch = z.infer<typeof dashboardSearchSchema>;
 
 export const Route = createFileRoute("/_authed/dashboard")({
   validateSearch: dashboardSearchSchema,
-  loaderDeps: ({ search: { jobId, source, timeRange } }) => ({ jobId, source, timeRange }),
-  loader: async ({ context: { queryClient }, deps: { jobId, source, timeRange } }) => {
+  loaderDeps: ({ search: { jobId, timeRange } }) => ({ jobId, timeRange }),
+  loader: async ({ context: { queryClient }, deps: { jobId, timeRange } }) => {
     // ensureQueryData will fetch if not cached, or return cached data if fresh
     await queryClient.ensureQueryData(
       dashboardStatsQueryOptions({
         days: 7,
         jobId,
-        source,
         timeRange
       })
     );
@@ -62,7 +62,6 @@ function DashboardPage() {
     ...dashboardStatsQueryOptions({
       days: 7,
       jobId: filters.jobId,
-      source: filters.source,
       timeRange: filters.timeRange
     }),
     placeholderData: keepPreviousData,
@@ -76,6 +75,37 @@ function DashboardPage() {
     }
   };
 
+  // Calculate color mappings once for all components
+  const { endpointColorMappings, endpointChartConfig } = useMemo(() => {
+    const endpointTotals = new Map<string, number>();
+
+    // Aggregate runs from endpoint time series
+    dashboardData?.endpointTimeSeries.forEach(point => {
+      const existing = endpointTotals.get(point.endpointName) || 0;
+      endpointTotals.set(point.endpointName, existing + point.success + point.failure);
+    });
+
+    // Aggregate sessions from AI time series
+    dashboardData?.aiSessionTimeSeries.forEach(point => {
+      const existing = endpointTotals.get(point.endpointName) || 0;
+      endpointTotals.set(point.endpointName, existing + point.sessionCount);
+    });
+
+    // Sort by total activity (descending) for consistent color assignment
+    const names = Array.from(endpointTotals.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name]) => name);
+
+    // Create mappings and config once
+    const mappings = createEndpointColorMappings(names);
+    const config = buildChartConfigFromMappings(mappings);
+
+    return {
+      endpointColorMappings: mappings,
+      endpointChartConfig: config,
+    };
+  }, [dashboardData?.endpointTimeSeries, dashboardData?.aiSessionTimeSeries]);
+
 
   return (
     <>
@@ -83,7 +113,6 @@ function DashboardPage() {
         <FilterBar
           filters={{
             jobId: filters.jobId || null,
-            source: filters.source || null,
             timeRange: filters.timeRange || "7d",
           }}
           onFilterChange={handleFilterChange}
@@ -91,6 +120,8 @@ function DashboardPage() {
         />
       } />
       <div className="space-y-6" style={{ opacity: isPlaceholderData ? 0.7 : 1 }}>
+        {/* Overview Section */}
+
         <div className="grid gap-6 lg:grid-cols-2">
           <JobHealthChart
             data={dashboardData?.jobHealth || []}
@@ -101,33 +132,30 @@ function DashboardPage() {
           />
           <SchedulingIntelligenceChart
             data={dashboardData?.sourceDistribution || []}
-            onSourceClick={(handleSource) => {
-              handleFilterChange('source', handleSource);
-            }}
-            selectedSource={filters.source}
           />
         </div>
+      </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-          <div className="space-y-6">
-            <ExecutionTimelineChart
-              data={dashboardData?.endpointTimeSeries || []}
-              timeRange={filters.timeRange}
-            />
 
-            <AISessionsChart
-              data={dashboardData?.aiSessionTimeSeries || []}
-              timeRange={filters.timeRange}
-            />
-          </div>
+      <EndpointTable
+        endpointTimeSeries={dashboardData?.endpointTimeSeries || []}
+        aiSessionTimeSeries={dashboardData?.aiSessionTimeSeries || []}
+        colorMappings={endpointColorMappings}
+        chartConfig={endpointChartConfig}
+      />
 
-          <div className="lg:sticky lg:top-6 lg:self-start">
-            <EndpointTable
-              endpointTimeSeries={dashboardData?.endpointTimeSeries || []}
-              aiSessionTimeSeries={dashboardData?.aiSessionTimeSeries || []}
-            />
-          </div>
-        </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ExecutionTimelineChart
+          data={dashboardData?.endpointTimeSeries || []}
+          chartConfig={endpointChartConfig}
+          timeRange={filters.timeRange}
+        />
+        <AISessionsChart
+          data={dashboardData?.aiSessionTimeSeries || []}
+          chartConfig={endpointChartConfig}
+          timeRange={filters.timeRange}
+        />
       </div>
     </>
   );
