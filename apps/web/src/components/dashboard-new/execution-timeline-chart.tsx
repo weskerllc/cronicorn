@@ -16,13 +16,11 @@ interface ExecutionTimelineChartProps {
     data: Array<EndpointTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
-    timeRange?: string;
 }
 
 export function ExecutionTimelineChart({
     data,
     chartConfig,
-    timeRange = '7d',
 }: ExecutionTimelineChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {

@@ -38,14 +38,19 @@ const db = drizzle(pool, { schema });
 // Demo user name from env (we'll look up the ID from the database)
 const DEMO_USER_NAME = process.env.DEMO_USER_NAME || DEV_AUTH.ADMIN_NAME;
 
+// Configurable seed size (dev-friendly defaults)
+const NUM_JOBS = Number.parseInt(process.env.SEED_NUM_JOBS || "5", 10); // Default: 5 jobs (was 50)
+const ENDPOINTS_PER_JOB = Number.parseInt(process.env.SEED_ENDPOINTS_PER_JOB || "3", 10); // Default: 3 per job (was 5)
+const GENERATE_HISTORICAL_DATA = process.env.SEED_HISTORICAL_DATA === "true"; // Default: false (no historical runs)
+
 // Flash Sale Timeline (simulate recent data - today's date)
 const NOW = new Date(); // Current time
 const SALE_END = new Date(NOW.getTime() - 1 * 60 * 60 * 1000); // Sale ended 1 hour ago
 const SALE_START = new Date(NOW.getTime() - 20 * 60 * 60 * 1000); // Sale started 20 hours ago (covers most of last 24h)
 
-// Generate 50 jobs for stress testing pagination
+// Generate jobs based on configuration
 function generateJobs() {
-  const jobs = [];
+  const jobs: Array<{ id: string; name: string; description: string }> = [];
   const jobTypes = [
     { prefix: "monitoring", name: "Monitoring", desc: "Real-time monitoring" },
     { prefix: "health", name: "Health Checks", desc: "Infrastructure health" },
@@ -54,12 +59,12 @@ function generateJobs() {
     { prefix: "alerts", name: "Alert System", desc: "Notification management" },
   ];
 
-  for (let i = 1; i <= 50; i++) {
-    const type = jobTypes[i % jobTypes.length];
+  for (let i = 1; i <= NUM_JOBS; i++) {
+    const type = jobTypes[(i - 1) % jobTypes.length];
     jobs.push({
       id: `job-${type.prefix}-${i}`,
-      name: `${type.name} ${i}`,
-      description: `${type.desc} - Instance ${i}`,
+      name: `${type.name}${NUM_JOBS > 1 ? ` ${i}` : ""}`,
+      description: `${type.desc}${NUM_JOBS > 1 ? ` - Instance ${i}` : ""}`,
     });
   }
 
@@ -68,9 +73,22 @@ function generateJobs() {
 
 const JOBS = generateJobs();
 
-// Generate 5 endpoints per job (250 total endpoints)
+// Generate endpoints per job based on configuration
 function generateEndpoints(jobs: ReturnType<typeof generateJobs>) {
-  const endpoints = [];
+  type EndpointConfig = {
+    id: string;
+    jobId: string;
+    name: string;
+    url: string;
+    baselineIntervalMs: number;
+    minIntervalMs: number;
+    maxIntervalMs: number;
+    description: string;
+    pattern: string;
+    successRate: number;
+  };
+
+  const endpoints: EndpointConfig[] = [];
   const patterns = ["adaptive-tight", "adaptive-tight", "adaptive-tight", "oneshot", "steady"];
   const endpointTypes = [
     { name: "API Health", url: "/health", baseline: 2 * 60 * 1000, successRate: 0.98 },
@@ -81,10 +99,12 @@ function generateEndpoints(jobs: ReturnType<typeof generateJobs>) {
   ];
 
   jobs.forEach((job, _jobIndex) => {
-    endpointTypes.forEach((type, typeIndex) => {
-      const pattern = patterns[typeIndex % patterns.length];
+    // Generate ENDPOINTS_PER_JOB endpoints for each job
+    for (let i = 0; i < ENDPOINTS_PER_JOB; i++) {
+      const type = endpointTypes[i % endpointTypes.length];
+      const pattern = patterns[i % patterns.length];
       endpoints.push({
-        id: `ep-${job.id}-${typeIndex}`,
+        id: `ep-${job.id}-${i}`,
         jobId: job.id,
         name: `${type.name}`,
         url: `https://api.example.com${type.url}`,
@@ -95,7 +115,7 @@ function generateEndpoints(jobs: ReturnType<typeof generateJobs>) {
         pattern,
         successRate: type.successRate,
       });
-    });
+    }
   });
 
   return endpoints;
@@ -105,10 +125,17 @@ const ENDPOINTS = generateEndpoints(JOBS);
 
 /**
  * Generate realistic run data based on endpoint pattern
+ * If GENERATE_HISTORICAL_DATA is false, only creates a few recent runs (last 2 hours)
  */
 function generateRuns(endpoint: typeof ENDPOINTS[0]): Array<schema.RunInsert> {
   const runs: Array<schema.RunInsert> = [];
-  let currentTime = new Date(SALE_START.getTime() - 24 * 60 * 60 * 1000); // Start 24h before sale
+
+  // Start time: if historical data is disabled, only generate last 2 hours
+  const startTime = GENERATE_HISTORICAL_DATA
+    ? new Date(SALE_START.getTime() - 24 * 60 * 60 * 1000) // Start 24h before sale (full history)
+    : new Date(NOW.getTime() - 2 * 60 * 60 * 1000); // Last 2 hours only (dev mode)
+
+  let currentTime = new Date(startTime.getTime());
 
   const getInterval = (time: Date): number => {
     const hour = time.getHours();
@@ -189,13 +216,20 @@ function generateRuns(endpoint: typeof ENDPOINTS[0]): Array<schema.RunInsert> {
 
 /**
  * Generate AI analysis sessions (sparse - only during key moments)
- * Generate sessions for first 30 endpoints to have varied data
+ * Generate sessions for first half of endpoints to have varied data
+ * Skip if not generating historical data
  */
 function generateAISessions(endpoints: ReturnType<typeof generateEndpoints>): Array<typeof schema.aiAnalysisSessions.$inferInsert> {
   const sessions: Array<typeof schema.aiAnalysisSessions.$inferInsert> = [];
 
-  // Use first 30 endpoints for AI sessions
-  const endpointsWithAI = endpoints.slice(0, 30);
+  // Skip AI sessions if not generating historical data
+  if (!GENERATE_HISTORICAL_DATA) {
+    return sessions;
+  }
+
+  // Use first half of endpoints for AI sessions (or all if less than 10)
+  const numEndpointsWithAI = Math.min(Math.ceil(endpoints.length / 2), endpoints.length);
+  const endpointsWithAI = endpoints.slice(0, numEndpointsWithAI);
 
   // Calculate times relative to SALE_START (which is recent)
   const saleDay = new Date(SALE_START);
@@ -265,7 +299,13 @@ function generateAISessions(endpoints: ReturnType<typeof generateEndpoints>): Ar
 }
 
 async function seed() {
-  console.log("🌱 Seeding Flash Sale demo data...\n");
+  console.log("🌱 Seeding demo data...\n");
+  console.log("📊 Configuration:");
+  console.log(`  • Jobs: ${NUM_JOBS}`);
+  console.log(`  • Endpoints per job: ${ENDPOINTS_PER_JOB}`);
+  console.log(`  • Total endpoints: ${NUM_JOBS * ENDPOINTS_PER_JOB}`);
+  console.log(`  • Historical data: ${GENERATE_HISTORICAL_DATA ? "Yes (24h+ of runs)" : "No (last 2h only)"}`);
+  console.log("");
 
   // 1. Find demo user by name
   console.log(`📝 Looking up user: ${DEMO_USER_NAME}...`);
@@ -349,7 +389,9 @@ async function seed() {
   // 5. Create AI analysis sessions
   console.log("🤖 Creating AI analysis sessions...");
   const sessions = generateAISessions(ENDPOINTS);
-  await db.insert(schema.aiAnalysisSessions).values(sessions).onConflictDoNothing();
+  if (sessions.length > 0) {
+    await db.insert(schema.aiAnalysisSessions).values(sessions).onConflictDoNothing();
+  }
   console.log(`✓ Created ${sessions.length} AI sessions\n`);
 
   // 6. Summary
@@ -358,19 +400,29 @@ async function seed() {
   console.log("📊 Dashboard Data Summary:");
   console.log(`  • ${JOBS.length} jobs created`);
   console.log(`  • ${ENDPOINTS.length} endpoints created`);
-  console.log(`  • ${totalRuns} runs generated (24h+ of data)`);
+  console.log(`  • ${totalRuns} runs generated ${GENERATE_HISTORICAL_DATA ? "(24h+ of data)" : "(last 2h)"}`);
   console.log(`  • ${sessions.length} AI analysis sessions`);
-  console.log("\n🎯 Performance Testing:");
-  console.log(`  • ${JOBS.length} jobs test searchable job dropdowns`);
-  console.log(`  • ${ENDPOINTS.length} endpoints test backend pagination (default: 20)`);
-  console.log("  • Timeline charts limited to top 10 endpoints");
-  console.log("  • Endpoint table shows 20 per page with pagination");
-  console.log("\n📈 What to expect in the dashboard:");
-  console.log("  • Job Health Chart: Searchable combobox with 50 jobs");
-  console.log("  • Scheduling Intelligence: Mix of baseline, AI, and clamped runs");
-  console.log("  • Execution Timeline: Shows top 10 of 250 endpoints (sorted by run count)");
-  console.log("  • Endpoint Table: Paginated view of all 250 endpoints");
-  console.log("  • Filters: Job dropdown with search for all 50 jobs");
+
+  if (GENERATE_HISTORICAL_DATA) {
+    console.log("\n🎯 Performance Testing Mode (Full Historical Data):");
+    console.log(`  • ${JOBS.length} jobs test searchable job dropdowns`);
+    console.log(`  • ${ENDPOINTS.length} endpoints test backend pagination`);
+    console.log("  • Timeline charts limited to top 10 endpoints");
+    console.log("  • Endpoint table shows 20 per page with pagination");
+  }
+  else {
+    console.log("\n🚀 Development Mode (Recent Data Only):");
+    console.log("  • Light data for faster development");
+    console.log("  • Last 2 hours of runs only");
+    console.log("  • No AI sessions");
+  }
+
+  console.log("\n📈 Environment Variables:");
+  console.log("  • SEED_NUM_JOBS - Number of jobs to create (default: 5)");
+  console.log("  • SEED_ENDPOINTS_PER_JOB - Endpoints per job (default: 3)");
+  console.log("  • SEED_HISTORICAL_DATA - Generate full 24h+ history (default: false)");
+  console.log("\n💡 Example for performance testing:");
+  console.log("  SEED_NUM_JOBS=50 SEED_ENDPOINTS_PER_JOB=5 SEED_HISTORICAL_DATA=true pnpm seed");
   console.log("\n🔗 Navigate to /dashboard to see the results!");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
