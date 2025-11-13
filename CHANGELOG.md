@@ -1,3 +1,10 @@
+## [1.9.2](https://github.com/weskerllc/cronicorn/compare/v1.9.1...v1.9.2) (2025-11-13)
+
+
+### Bug Fixes
+
+* Fix runtime error and make chartConfig dynamic for scheduling sources ([#34](https://github.com/weskerllc/cronicorn/issues/34)) ([5fba190](https://github.com/weskerllc/cronicorn/commit/5fba19085d8ccb2965dc31f04c48ed085c97c6fa))
+
 ## [1.9.1](https://github.com/weskerllc/cronicorn/compare/v1.9.0...v1.9.1) (2025-11-13)
 
 
