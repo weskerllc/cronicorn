@@ -183,9 +183,9 @@ export function ExecutionTimelineChart({
                                 />
                             );
                         })}
-                        {/* <ChartLegend content={<ChartLegendContent />} /> */}
                     </AreaChart>
                 </ChartContainer>
-            ) : null}        </DashboardCard>
+            ) : null}
+        </DashboardCard>
     );
 }
