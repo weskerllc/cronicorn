@@ -2,7 +2,7 @@ import { Skeleton } from "@cronicorn/ui-library/components/skeleton";
 
 export function TimelineSkeleton() {
   return (
-    <div className="bg-card border rounded-md min-h-[500px] lg:min-h-[600px]">
+    <div className="bg-card border rounded-md min-h-[500px]">
       {/* Tabs skeleton */}
       <div className="border-b border-border">
         <div className="flex gap-2 p-4">
@@ -12,7 +12,7 @@ export function TimelineSkeleton() {
           <Skeleton className="h-8 w-48" />
         </div>
       </div>
-      
+
       {/* Content skeleton */}
       <div className="p-6 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
