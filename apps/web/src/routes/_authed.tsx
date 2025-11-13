@@ -1,4 +1,5 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import React from "react";
 
 import { SidebarInset, SidebarProvider } from "@cronicorn/ui-library/components/sidebar";
 import { AppSidebar } from "../components/nav/app-sidebar";
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/_authed")({
 
 function AuthenticatedLayout() {
   const { user } = Route.useLoaderData();
+
   if (!user) {
     throw redirect({ to: "/login", search: { redirect: location.href } });
   }

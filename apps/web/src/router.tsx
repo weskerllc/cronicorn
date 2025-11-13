@@ -1,6 +1,7 @@
 import { createRouter } from '@tanstack/react-router'
 
 import { routeTree } from './routeTree.gen'
+import type { AuthContextValue } from './lib/auth-context';
 
 declare module "@tanstack/react-router" {
   interface Register {
@@ -16,8 +17,6 @@ export const router = createRouter({
     defaultPreloadStaleTime: 0,
   routeTree,
   context: {
-    // auth will initially be undefined
-    // We'll be passing down the auth state from within a React component
-    auth: undefined!,
+    auth: undefined! as Promise<AuthContextValue>,
   },
 })
