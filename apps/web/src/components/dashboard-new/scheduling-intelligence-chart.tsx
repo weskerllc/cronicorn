@@ -66,6 +66,11 @@ function buildChartConfig(data: Array<SourceDistributionItem>): ChartConfig {
     };
 
     data.forEach((item, index) => {
+        // Ensure item and item.source are valid
+        if (!item || !item.source || typeof item.source !== "string") {
+            return;
+        }
+        
         if (SOURCE_CONFIG[item.source]) {
             // Use predefined config for known sources
             config[item.source] = SOURCE_CONFIG[item.source];
@@ -99,10 +104,12 @@ export function SchedulingIntelligenceChart({
 
     // Transform data to add fill property for each source
     const chartData = React.useMemo(
-        () => data.map(item => ({
-            ...item,
-            fill: `var(--color-${item.source})`
-        })),
+        () => data
+            .filter(item => item && item.source && typeof item.source === "string")
+            .map(item => ({
+                ...item,
+                fill: `var(--color-${item.source})`
+            })),
         [data]
     );
 
@@ -170,20 +177,22 @@ export function SchedulingIntelligenceChart({
                 </ChartContainer>
             </div>
             <div className="flex flex-col flex-1 items-center gap-2 justify-center flex-wrap">
-                {hasData ? data.map((item) => {
-                    const config = chartConfig[item.source as keyof typeof chartConfig];
-                    // Skip if config doesn't have a color (shouldn't happen with dynamic config)
-                    if (!config || typeof config !== 'object' || !('color' in config)) return null;
-                    return (
-                        <div key={item.source} className="flex items-center gap-1.5 text-xs">
-                            <div
-                                className="h-2 w-2 shrink-0 rounded-[2px]"
-                                style={{ backgroundColor: config.color }}
-                            />
-                            <span className="text-nowrap">{config.label}</span>
-                        </div>
-                    );
-                }) : null}
+                {hasData ? data
+                    .filter(item => item && item.source && typeof item.source === "string")
+                    .map((item) => {
+                        const config = chartConfig[item.source as keyof typeof chartConfig];
+                        // Skip if config doesn't have a color (shouldn't happen with dynamic config)
+                        if (!config || typeof config !== 'object' || !('color' in config) || !config.color) return null;
+                        return (
+                            <div key={item.source} className="flex items-center gap-1.5 text-xs">
+                                <div
+                                    className="h-2 w-2 shrink-0 rounded-[2px]"
+                                    style={{ backgroundColor: config.color }}
+                                />
+                                <span className="text-nowrap">{config.label}</span>
+                            </div>
+                        );
+                    }) : null}
             </div>
         </DashboardCard>
     );
