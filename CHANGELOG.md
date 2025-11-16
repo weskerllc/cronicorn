@@ -1,3 +1,10 @@
+## [1.9.4](https://github.com/weskerllc/cronicorn/compare/v1.9.3...v1.9.4) (2025-11-16)
+
+
+### Bug Fixes
+
+* Optimize splash page animations for mobile performance ([#37](https://github.com/weskerllc/cronicorn/issues/37)) ([410cf6d](https://github.com/weskerllc/cronicorn/commit/410cf6da12df392c7b0b8230cceeb4292884c56f))
+
 ## [1.9.3](https://github.com/weskerllc/cronicorn/compare/v1.9.2...v1.9.3) (2025-11-13)
 
 
