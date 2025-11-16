@@ -16,11 +16,12 @@ export default function DynamicScheduleTimeline({ scenario }: { scenario: Timeli
 
   return (
     <div className={cn("w-full max-w-5xl mx-auto lg:h-full ")}>
-      {/* Main Timeline Component with enhanced styling */}
+      {/* Main Timeline Component with enhanced styling and performance optimizations */}
       <div
-        className="relative lg:h-full p-3 lg:p-3 overflow-hidden"
+        className="relative lg:h-full p-3 lg:p-3 overflow-hidden will-change-auto"
         role="region"
         aria-label="Dynamic Schedule Timeline"
+        style={{ contain: "layout style" }}
       >
 
         <div className="relative">
