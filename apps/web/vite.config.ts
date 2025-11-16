@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { readFileSync } from "node:fs";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
@@ -7,8 +8,18 @@ import svgr from "vite-plugin-svgr";
 import { visualizer } from "rollup-plugin-visualizer";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
+// Read version from root package.json at build time
+const rootPackageJson = JSON.parse(
+  readFileSync(resolve(__dirname, "../../package.json"), "utf-8")
+);
+const APP_VERSION = rootPackageJson.version;
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    // Inject version as a constant at build time
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
   plugins: [
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     viteReact(),
