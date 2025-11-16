@@ -38,7 +38,7 @@ export function TimelineExecutionDot({
 
   return (
     <div
-      className={cn("absolute top-1/2 transform -translate-y-1/2 transition-all duration-700 ease-out z-10", className)}
+      className={cn("absolute top-1/2 transform -translate-y-1/2 transition-all duration-700 ease-out z-10 will-change-[left]", className)}
       style={{ left: `${positionPercent}%`, transform: `translate(-50%, -50%)` }}
     >
       <div

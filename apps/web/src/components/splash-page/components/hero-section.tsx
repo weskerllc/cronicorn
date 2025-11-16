@@ -32,10 +32,10 @@ export default function HeroSection() {
                     </div>
 
 
-                    {/* AI Assistant Callout */}
+                    {/* AI Assistant Callout - Optimized for mobile performance */}
                     <a
                         href={urls.docs.mcpServer}
-                        className="group relative flex text-left items-center gap-2 px-4 py-2 [background:linear-gradient(45deg,--theme(--color-background),--theme(--color-purple-200)_50%,--theme(--color-background))_padding-box,conic-gradient(from_var(--border-angle),--theme(--color-background)_80%,--theme(--color-indigo-400)_86%,--theme(--color-purple-300)_90%,--theme(--color-indigo-400)_94%,--theme(--color-background))_border-box] dark:[background:linear-gradient(45deg,--theme(--color-background),--theme(--color-purple-950)_50%,--theme(--color-background))_padding-box,conic-gradient(from_var(--border-angle),--theme(--color-background)_80%,--theme(--color-indigo-500)_86%,--theme(--color-indigo-300)_90%,--theme(--color-indigo-500)_94%,--theme(--color-background))_border-box] hover:[background:linear-gradient(45deg,--theme(--color-background),--theme(--color-purple-100)_50%,--theme(--color-background))_padding-box,conic-gradient(from_var(--border-angle),--theme(--color-background)_80%,--theme(--color-pink-500)_86%,--theme(--color-purple-400)_90%,--theme(--color-pink-500)_94%,--theme(--color-background))_border-box] dark:hover:[background:linear-gradient(45deg,--theme(--color-background),--theme(--color-purple-900)_50%,--theme(--color-background))_padding-box,conic-gradient(from_var(--border-angle),--theme(--color-background)_80%,--theme(--color-pink-500)_86%,--theme(--color-pink-400)_90%,--theme(--color-pink-500)_94%,--theme(--color-background))_border-box] rounded-2xl border border-transparent animate-border transition-all duration-300"
+                        className="group relative flex text-left items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-indigo-500/20 hover:to-purple-500/20 dark:from-purple-500/20 dark:via-indigo-500/20 dark:to-purple-500/20 dark:hover:from-purple-500/30 dark:hover:via-indigo-500/30 dark:hover:to-purple-500/30 rounded-2xl border-2 border-purple-500/30 hover:border-purple-500/50 transition-all duration-300 will-change-[border-color,background]"
                     >
                         <span className="text-2xl"><IconSparkles /></span>
                         <div className="flex flex-col">

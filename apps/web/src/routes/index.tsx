@@ -12,12 +12,21 @@ import { LogoGridSkeleton } from "@/components/skeletons/logo-grid-skeleton";
 import { FooterSkeleton } from "@/components/skeletons/footer-skeleton";
 
 // Lazy load heavy components for better initial page load
+// Use prefetch for critical above-the-fold components
 const BackgroundEffects = lazy(() => import("../components/splash-page/components/background-effects"));
 const TimelineSection = lazy(() => import("../components/splash-page/components/timeline-section"));
 const DynamicScheduleTimeline = lazy(() => import("../components/splash-page/timeline/timeline"));
 const LogoGrid = lazy(() => import("../components/splash-page/components/logo-grid"));
 const FeatureCardsSection = lazy(() => import("@/components/sections/feature-cards-section").then(m => ({ default: m.FeatureCardsSection })));
 const Footer2 = lazy(() => import("../components/nav/footer").then(m => ({ default: m.Footer2 })));
+
+// Prefetch critical components on mount for instant loading
+if (typeof window !== 'undefined') {
+  // Start prefetching timeline and background effects immediately
+  import("../components/splash-page/components/background-effects");
+  import("../components/splash-page/components/timeline-section");
+  import("../components/splash-page/timeline/timeline");
+}
 
 export const Route = createFileRoute("/")({
   component: Index,
