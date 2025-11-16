@@ -11,7 +11,7 @@ export function TimelineCurrentIndicator({ currentTime, maxTime, className }: Ti
 
   return (
     <div
-      className={cn("absolute top-0 bottom-0 transition-all duration-700 ease-out", className)}
+      className={cn("absolute top-0 bottom-0 transition-all duration-700 ease-out will-change-[left]", className)}
       style={{ left: `${nowPosition}%` }}
     >
       {/* Subtle vertical line */}
