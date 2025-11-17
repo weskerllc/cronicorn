@@ -1,3 +1,10 @@
+## [1.9.5](https://github.com/weskerllc/cronicorn/compare/v1.9.4...v1.9.5) (2025-11-17)
+
+
+### Bug Fixes
+
+* Fix dashboard inconsistency: show archived job runs across all charts ([#38](https://github.com/weskerllc/cronicorn/issues/38)) ([b1c7ff5](https://github.com/weskerllc/cronicorn/commit/b1c7ff54129b176d5639f7bf742783ebbca1643d))
+
 ## [1.9.4](https://github.com/weskerllc/cronicorn/compare/v1.9.3...v1.9.4) (2025-11-16)
 
 
