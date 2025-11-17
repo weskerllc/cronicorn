@@ -193,10 +193,7 @@ export class DrizzleRunsRepo implements RunsRepo {
       .from(jobs)
       .leftJoin(jobEndpoints, eq(jobEndpoints.jobId, jobs.id))
       .leftJoin(runs, eq(runs.endpointId, jobEndpoints.id))
-      .where(and(
-        eq(jobs.userId, userId),
-        eq(jobs.status, "active"),
-      ))
+      .where(eq(jobs.userId, userId))
       .groupBy(jobs.id, jobs.name);
 
     return results.map(row => ({
