@@ -22,24 +22,28 @@ export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
         // Calculate total sessions per endpoint to find top performers
-        const endpointTotals = new Map<string, number>();
+        const endpointTotals = new Map<string, { id: string; name: string; total: number }>();
         data.forEach((item) => {
-            const existing = endpointTotals.get(item.endpointName) || 0;
-            endpointTotals.set(item.endpointName, existing + item.sessionCount);
+            const existing = endpointTotals.get(item.endpointId);
+            if (existing) {
+                existing.total += item.sessionCount;
+            } else {
+                endpointTotals.set(item.endpointId, { id: item.endpointId, name: item.endpointName, total: item.sessionCount });
+            }
         });
 
         // Sort endpoints by total sessions DESC and take top 10 for display
         const MAX_ENDPOINTS = 10;
-        const sortedEndpoints = Array.from(endpointTotals.entries())
-            .sort((a, b) => b[1] - a[1])
+        const sortedEndpoints = Array.from(endpointTotals.values())
+            .sort((a, b) => b.total - a.total)
             .slice(0, MAX_ENDPOINTS)
-            .map(([name]) => name);
+            .map(ep => ({ id: ep.id, name: ep.name }));
 
         const endpointList = sortedEndpoints;
 
         // Group by date (only for top endpoints)
         const dateMap = new Map<string, Record<string, string | number>>();
-        const endpointSet = new Set(endpointList);
+        const endpointSet = new Set(endpointList.map(ep => ep.name));
         data.forEach(item => {
             // Skip endpoints not in top 10
             if (!endpointSet.has(item.endpointName)) return;
@@ -103,14 +107,16 @@ export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
                     <AreaChart data={chartData}>
                         <defs>
                             {endpoints
-                                .filter(name => name && typeof name === "string")
-                                .map((endpointName) => {
+                                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                                .filter(ep => ep && ep.name && typeof ep.name === "string")
+                                .map((endpoint) => {
+                                    const endpointName = endpoint.name;
                                     const sanitizedKey = getSanitizedKey(endpointName);
                                     if (!sanitizedKey) return null;
                                     return (
                                         <linearGradient
-                                            key={endpointName}
-                                            id={`fillSession${sanitizedKey}`}
+                                            key={endpoint.id}
+                                            id={`fill-${sanitizedKey}`}
                                             x1="0"
                                             y1="0"
                                             x2="0"
@@ -173,13 +179,15 @@ export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
                             }}
                         />
                         {endpoints
-                            .filter(name => name && typeof name === "string")
-                            .map((endpointName) => {
+                            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                            .filter(ep => ep && ep.name && typeof ep.name === "string")
+                            .map((endpoint) => {
+                                const endpointName = endpoint.name;
                                 const sanitizedKey = getSanitizedKey(endpointName);
                                 if (!sanitizedKey) return null;
                                 return (
                                     <Area
-                                        key={endpointName}
+                                        key={endpoint.id}
                                         dataKey={endpointName}
                                         type="natural"
                                         fill={`url(#fillSession${sanitizedKey})`}

@@ -41,7 +41,6 @@ const DEMO_USER_NAME = process.env.DEMO_USER_NAME || DEV_AUTH.ADMIN_NAME;
 // Configurable seed size (dev-friendly defaults)
 const NUM_JOBS = Number.parseInt(process.env.SEED_NUM_JOBS || "5", 10); // Default: 5 jobs (was 50)
 const ENDPOINTS_PER_JOB = Number.parseInt(process.env.SEED_ENDPOINTS_PER_JOB || "3", 10); // Default: 3 per job (was 5)
-const GENERATE_HISTORICAL_DATA = process.env.SEED_HISTORICAL_DATA === "true"; // Default: false (no historical runs)
 
 // Flash Sale Timeline (simulate recent data - today's date)
 const NOW = new Date(); // Current time
@@ -143,8 +142,7 @@ const ENDPOINTS = generateEndpoints(JOBS);
 
 /**
  * Generate realistic run data based on endpoint pattern
- * If GENERATE_HISTORICAL_DATA is false, only creates a few recent runs (last 2 hours)
- * Always includes runs across different time ranges for dashboard filtering tests:
+ * Includes runs across different time ranges for dashboard filtering tests:
  * - Last 24 hours
  * - Last 7 days
  * - Last 30 days
@@ -155,9 +153,7 @@ function generateRuns(endpoint: typeof ENDPOINTS[0]): Array<schema.RunInsert> {
 
   // Start time: Always start from 45 days ago to ensure we have data in all time ranges
   // This ensures dashboard filters work correctly (24h, 7d, 30d, >30d)
-  const startTime = GENERATE_HISTORICAL_DATA
-    ? DAYS_AGO_45 // Start 45 days ago (covers all filter ranges)
-    : new Date(NOW.getTime() - 2 * 60 * 60 * 1000); // Last 2 hours only (dev mode)
+  const startTime = DAYS_AGO_45;
 
   let currentTime = new Date(startTime.getTime());
 
@@ -241,15 +237,9 @@ function generateRuns(endpoint: typeof ENDPOINTS[0]): Array<schema.RunInsert> {
 /**
  * Generate AI analysis sessions (sparse - only during key moments)
  * Generate sessions for first half of endpoints to have varied data
- * Skip if not generating historical data
  */
 function generateAISessions(endpoints: ReturnType<typeof generateEndpoints>): Array<typeof schema.aiAnalysisSessions.$inferInsert> {
   const sessions: Array<typeof schema.aiAnalysisSessions.$inferInsert> = [];
-
-  // Skip AI sessions if not generating historical data
-  if (!GENERATE_HISTORICAL_DATA) {
-    return sessions;
-  }
 
   // Use first half of endpoints for AI sessions (or all if less than 10)
   const numEndpointsWithAI = Math.min(Math.ceil(endpoints.length / 2), endpoints.length);
@@ -328,7 +318,7 @@ async function seed() {
   console.log(`  • Jobs: ${NUM_JOBS}`);
   console.log(`  • Endpoints per job: ${ENDPOINTS_PER_JOB}`);
   console.log(`  • Total endpoints: ${NUM_JOBS * ENDPOINTS_PER_JOB}`);
-  console.log(`  • Historical data: ${GENERATE_HISTORICAL_DATA ? "Yes (24h+ of runs)" : "No (last 2h only)"}`);
+  console.log(`  • Historical data: 45+ days of runs`);
   console.log("");
 
   // 1. Find demo user by name
@@ -435,34 +425,25 @@ async function seed() {
   console.log(`  • ${JOBS.length} jobs created (${archivedJobsCount} archived)`);
   console.log(`  • ${ENDPOINTS.length} endpoints created (${archivedEndpointsCount} archived)`);
   console.log(`  • ${archivedJobNonArchivedEndpointsCount} non-archived endpoints in archived jobs (testing logic)`);
-  console.log(`  • ${totalRuns} runs generated ${GENERATE_HISTORICAL_DATA ? "(45+ days of data)" : "(last 2h)"}`);
+  console.log(`  • ${totalRuns} runs generated (45+ days of data)`);
   console.log(`  • ${sessions.length} AI analysis sessions`);
 
-  if (GENERATE_HISTORICAL_DATA) {
-    console.log("\n🎯 Performance Testing Mode (Full Historical Data):");
-    console.log(`  • ${JOBS.length} jobs test searchable job dropdowns`);
-    console.log(`  • ${ENDPOINTS.length} endpoints test backend pagination`);
-    console.log("  • Timeline charts limited to top 10 endpoints");
-    console.log("  • Endpoint table shows 20 per page with pagination");
-    console.log("  • Runs distributed across all time ranges:");
-    console.log("    - Last 24 hours (for real-time monitoring)");
-    console.log("    - Last 7 days (for weekly trends)");
-    console.log("    - Last 30 days (for monthly analysis)");
-    console.log("    - 30-45 days ago (for historical comparison)");
-  }
-  else {
-    console.log("\n🚀 Development Mode (Recent Data Only):");
-    console.log("  • Light data for faster development");
-    console.log("  • Last 2 hours of runs only");
-    console.log("  • No AI sessions");
-  }
+  console.log("\n🎯 Dashboard Features:");
+  console.log(`  • ${JOBS.length} jobs test searchable job dropdowns`);
+  console.log(`  • ${ENDPOINTS.length} endpoints test backend pagination`);
+  console.log("  • Timeline charts limited to top 10 endpoints");
+  console.log("  • Endpoint table shows 20 per page with pagination");
+  console.log("  • Runs distributed across all time ranges:");
+  console.log("    - Last 24 hours (for real-time monitoring)");
+  console.log("    - Last 7 days (for weekly trends)");
+  console.log("    - Last 30 days (for monthly analysis)");
+  console.log("    - 30-45 days ago (for historical comparison)");
 
   console.log("\n📈 Environment Variables:");
   console.log("  • SEED_NUM_JOBS - Number of jobs to create (default: 5)");
   console.log("  • SEED_ENDPOINTS_PER_JOB - Endpoints per job (default: 3)");
-  console.log("  • SEED_HISTORICAL_DATA - Generate full 24h+ history (default: false)");
   console.log("\n💡 Example for performance testing:");
-  console.log("  SEED_NUM_JOBS=50 SEED_ENDPOINTS_PER_JOB=5 SEED_HISTORICAL_DATA=true pnpm seed");
+  console.log("  SEED_NUM_JOBS=50 SEED_ENDPOINTS_PER_JOB=5 pnpm seed");
   console.log("\n🔗 Navigate to /dashboard to see the results!");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
