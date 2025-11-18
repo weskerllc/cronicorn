@@ -23,16 +23,16 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
     const itemsPerPage = 20;
 
     const endpointStats = useMemo(() => {
-        const stats = new Map<string, { name: string; runs: number; sessions: number }>();
+        const stats = new Map<string, { id: string; name: string; runs: number; sessions: number }>();
 
         endpointTimeSeries.forEach(point => {
-            const existing = stats.get(point.endpointId) || { name: point.endpointName, runs: 0, sessions: 0 };
+            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, sessions: 0 };
             existing.runs += point.success + point.failure;
             stats.set(point.endpointId, existing);
         });
 
         aiSessionTimeSeries.forEach(point => {
-            const existing = stats.get(point.endpointId) || { name: point.endpointName, runs: 0, sessions: 0 };
+            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, sessions: 0 };
             existing.sessions += point.sessionCount;
             stats.set(point.endpointId, existing);
         });
@@ -135,7 +135,7 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
                                     const { sanitizedKey } = mapping;
                                     return (
                                         <TableRow
-                                            key={stat.name}
+                                            key={stat.id}
                                             onClick={() => handleRowClick(stat.name)}
                                             className="cursor-pointer hover:bg-muted/50"
                                         >
