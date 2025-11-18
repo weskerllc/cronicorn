@@ -12,6 +12,27 @@ import type {
 } from "./types.js";
 
 /**
+ * Calculate time bucket granularity based on number of days.
+ * This prevents sending too many data points to the frontend.
+ *
+ * Strategy:
+ * - 1-2 days: Daily buckets (1-2 points)
+ * - 3-7 days: Daily buckets (3-7 points)
+ * - 8-14 days: Daily buckets (8-14 points)
+ * - 15-30 days: 3-day buckets (~10 points)
+ */
+function getTimeBucketSize(days: number): { bucketDays: number; bucketSql: string } {
+  if (days <= 14) {
+    // Daily granularity for 2 weeks or less
+    return { bucketDays: 1, bucketSql: "DATE" };
+  }
+  else {
+    // 3-day buckets for longer ranges (reduces 30 days to ~10 buckets)
+    return { bucketDays: 3, bucketSql: "WEEK_BUCKET" };
+  }
+}
+
+/**
  * DashboardManager aggregates data from multiple repos to provide
  * high-level statistics and metrics for the user dashboard.
  *
@@ -102,12 +123,16 @@ export class DashboardManager {
       sinceDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     }
 
+    // Determine if we should use hourly granularity (for 24h view)
+    const useHourlyGranularity = options.timeRange === "24h";
+
     // Build filter object for queries
     const filters = {
       userId,
       jobId: options.jobId,
       source: options.source,
       sinceDate: sinceDate!, // Always defined by this point
+      granularity: useHourlyGranularity ? ("hour" as const) : ("day" as const),
     };
 
     // Execute queries in parallel for performance
@@ -287,6 +312,7 @@ export class DashboardManager {
    * @param filters.jobId - Job ID filter (optional)
    * @param filters.source - Scheduling source filter (optional)
    * @param filters.sinceDate - Start date for filtering runs
+   * @param filters.granularity - Time bucket granularity (hour or day)
    * @returns Array of daily run counts
    */
   private async getRunTimeSeries(
@@ -298,12 +324,76 @@ export class DashboardManager {
       jobId?: string;
       source?: string;
       sinceDate: Date; // Required for this method
+      granularity: "hour" | "day";
     },
   ): Promise<RunTimeSeriesPoint[]> {
     // Get aggregated data from repository (SQL aggregation)
     const aggregatedData = await this.runsRepo.getRunTimeSeries(filters);
 
-    // Create a map of dates for quick lookup
+    // If hourly granularity, fill in hourly buckets instead of daily
+    if (filters.granularity === "hour") {
+      const dataMap = new Map(
+        aggregatedData.map(item => [item.date, item]),
+      );
+
+      // Fill in all hours for the time period, aligned to hour boundaries
+      const result: RunTimeSeriesPoint[] = [];
+      const hours = days * 24;
+
+      // Start from the beginning of the current hour, go back hours-1 more hours
+      const currentHourStart = new Date(now);
+      currentHourStart.setMinutes(0, 0, 0);
+
+      for (let i = hours - 1; i >= 0; i--) {
+        const date = new Date(currentHourStart.getTime() - i * 60 * 60 * 1000);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+        const existing = dataMap.get(dateStr);
+        result.push({
+          date: dateStr,
+          success: existing?.success ?? 0,
+          failure: existing?.failure ?? 0,
+        });
+      }
+      return result;
+    }
+
+    const { bucketDays } = getTimeBucketSize(days);
+
+    // If using multi-day buckets, aggregate the daily data
+    if (bucketDays > 1) {
+      const bucketMap = new Map<string, { success: number; failure: number }>();
+
+      aggregatedData.forEach((item) => {
+        const date = new Date(item.date);
+        // Calculate bucket key (round down to nearest bucket)
+        const daysSinceStart = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+        const bucketIndex = Math.floor(daysSinceStart / bucketDays);
+        const bucketStart = new Date(now.getTime() - (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
+        const bucketKey = bucketStart.toISOString().split("T")[0];
+
+        const existing = bucketMap.get(bucketKey) || { success: 0, failure: 0 };
+        existing.success += item.success;
+        existing.failure += item.failure;
+        bucketMap.set(bucketKey, existing);
+      });
+
+      // Fill in missing buckets with zeros
+      const result: RunTimeSeriesPoint[] = [];
+      const numBuckets = Math.ceil(days / bucketDays);
+      for (let i = numBuckets - 1; i >= 0; i--) {
+        const bucketStart = new Date(now.getTime() - (i * bucketDays * 24 * 60 * 60 * 1000));
+        const dateStr = bucketStart.toISOString().split("T")[0];
+        const existing = bucketMap.get(dateStr);
+        result.push({
+          date: dateStr,
+          success: existing?.success ?? 0,
+          failure: existing?.failure ?? 0,
+        });
+      }
+      return result;
+    }
+
+    // Daily granularity - create a map for quick lookup
     const dataMap = new Map(
       aggregatedData.map(item => [item.date, item]),
     );
@@ -337,6 +427,7 @@ export class DashboardManager {
    * @param filters.jobId - Job ID filter (optional)
    * @param filters.source - Scheduling source filter (optional)
    * @param filters.sinceDate - Start date for filtering runs
+   * @param filters.granularity - Time bucket granularity (hour or day)
    * @returns Array of daily run counts by endpoint
    */
   private async getEndpointTimeSeries(
@@ -349,6 +440,7 @@ export class DashboardManager {
       source?: string;
       sinceDate: Date;
       endpointLimit?: number;
+      granularity: "hour" | "day";
     },
   ): Promise<EndpointTimeSeriesPoint[]> {
     // Get aggregated data from repository (SQL aggregation)
@@ -362,7 +454,83 @@ export class DashboardManager {
       }
     });
 
-    // Create a map for quick lookup: date-endpointId -> data
+    // If hourly granularity, fill in hourly buckets
+    if (filters.granularity === "hour") {
+      const dataMap = new Map<string, typeof aggregatedData[0]>();
+      aggregatedData.forEach((item) => {
+        const key = `${item.date}-${item.endpointId}`;
+        dataMap.set(key, item);
+      });
+
+      // Fill in all hours for all endpoints, aligned to hour boundaries
+      const result: EndpointTimeSeriesPoint[] = [];
+      const hours = days * 24;
+
+      // Start from the beginning of the current hour, go back hours-1 more hours
+      const currentHourStart = new Date(now);
+      currentHourStart.setMinutes(0, 0, 0);
+
+      for (let i = hours - 1; i >= 0; i--) {
+        const date = new Date(currentHourStart.getTime() - i * 60 * 60 * 1000);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+
+        endpoints.forEach((endpoint) => {
+          const key = `${dateStr}-${endpoint.id}`;
+          const existing = dataMap.get(key);
+          result.push({
+            date: dateStr,
+            endpointId: endpoint.id,
+            endpointName: endpoint.name,
+            success: existing?.success ?? 0,
+            failure: existing?.failure ?? 0,
+          });
+        });
+      }
+      return result;
+    }
+
+    const { bucketDays } = getTimeBucketSize(days);
+
+    // If using multi-day buckets, aggregate the daily data per endpoint
+    if (bucketDays > 1) {
+      const bucketMap = new Map<string, { success: number; failure: number }>();
+
+      aggregatedData.forEach((item) => {
+        const date = new Date(item.date);
+        const daysSinceStart = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+        const bucketIndex = Math.floor(daysSinceStart / bucketDays);
+        const bucketStart = new Date(now.getTime() - (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
+        const bucketKey = `${bucketStart.toISOString().split("T")[0]}-${item.endpointId}`;
+
+        const existing = bucketMap.get(bucketKey) || { success: 0, failure: 0 };
+        existing.success += item.success;
+        existing.failure += item.failure;
+        bucketMap.set(bucketKey, existing);
+      });
+
+      // Fill in missing buckets with zeros
+      const result: EndpointTimeSeriesPoint[] = [];
+      const numBuckets = Math.ceil(days / bucketDays);
+      for (let i = numBuckets - 1; i >= 0; i--) {
+        const bucketStart = new Date(now.getTime() - (i * bucketDays * 24 * 60 * 60 * 1000));
+        const dateStr = bucketStart.toISOString().split("T")[0];
+
+        endpoints.forEach((endpoint) => {
+          const key = `${dateStr}-${endpoint.id}`;
+          const existing = bucketMap.get(key);
+          result.push({
+            date: dateStr,
+            endpointId: endpoint.id,
+            endpointName: endpoint.name,
+            success: existing?.success ?? 0,
+            failure: existing?.failure ?? 0,
+          });
+        });
+      }
+      return result;
+    }
+
+    // Daily granularity - create a map for quick lookup
     const dataMap = new Map<string, typeof aggregatedData[0]>();
     aggregatedData.forEach((item) => {
       const key = `${item.date}-${item.endpointId}`;
@@ -402,6 +570,7 @@ export class DashboardManager {
    * @param filters.jobId - Job ID filter (optional)
    * @param filters.sinceDate - Start date for filtering sessions
    * @param filters.endpointLimit - Maximum number of endpoints to include (sorted by session count DESC)
+   * @param filters.granularity - Time bucket granularity (hour or day)
    * @returns Array of daily AI session counts
    */
   private async getAISessionTimeSeries(
@@ -413,6 +582,7 @@ export class DashboardManager {
       jobId?: string;
       sinceDate: Date;
       endpointLimit?: number;
+      granularity: "hour" | "day";
     },
   ): Promise<AISessionTimeSeriesPoint[]> {
     // Get aggregated data from repository (SQL aggregation by date + endpoint)
@@ -429,7 +599,79 @@ export class DashboardManager {
       }
     });
 
-    // Create a map of date+endpoint for quick lookup
+    // If hourly granularity, fill in hourly buckets
+    if (filters.granularity === "hour") {
+      const dataMap = new Map(
+        aggregatedData.map(item => [`${item.date}_${item.endpointId}`, item]),
+      );
+
+      // Fill in all hours for all endpoints, aligned to hour boundaries
+      const result: AISessionTimeSeriesPoint[] = [];
+      const hours = days * 24;
+
+      // Start from the beginning of the current hour, go back hours-1 more hours
+      const currentHourStart = new Date(now);
+      currentHourStart.setMinutes(0, 0, 0);
+
+      for (let i = hours - 1; i >= 0; i--) {
+        const date = new Date(currentHourStart.getTime() - i * 60 * 60 * 1000);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+
+        endpointMap.forEach((endpoint) => {
+          const existing = dataMap.get(`${dateStr}_${endpoint.id}`);
+          result.push({
+            date: dateStr,
+            endpointId: endpoint.id,
+            endpointName: endpoint.name,
+            sessionCount: existing?.sessionCount ?? 0,
+            totalTokens: existing?.totalTokens ?? 0,
+          });
+        });
+      }
+      return result;
+    }
+
+    const { bucketDays } = getTimeBucketSize(days);
+
+    // If using multi-day buckets, aggregate the daily data per endpoint
+    if (bucketDays > 1) {
+      const bucketMap = new Map<string, { sessionCount: number; totalTokens: number }>();
+
+      aggregatedData.forEach((item) => {
+        const date = new Date(item.date);
+        const daysSinceStart = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+        const bucketIndex = Math.floor(daysSinceStart / bucketDays);
+        const bucketStart = new Date(now.getTime() - (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
+        const bucketKey = `${bucketStart.toISOString().split("T")[0]}_${item.endpointId}`;
+
+        const existing = bucketMap.get(bucketKey) || { sessionCount: 0, totalTokens: 0 };
+        existing.sessionCount += item.sessionCount;
+        existing.totalTokens += item.totalTokens;
+        bucketMap.set(bucketKey, existing);
+      });
+
+      // Fill in missing buckets with zeros
+      const result: AISessionTimeSeriesPoint[] = [];
+      const numBuckets = Math.ceil(days / bucketDays);
+      for (let i = numBuckets - 1; i >= 0; i--) {
+        const bucketStart = new Date(now.getTime() - (i * bucketDays * 24 * 60 * 60 * 1000));
+        const dateStr = bucketStart.toISOString().split("T")[0];
+
+        endpointMap.forEach((endpoint) => {
+          const existing = bucketMap.get(`${dateStr}_${endpoint.id}`);
+          result.push({
+            date: dateStr,
+            endpointId: endpoint.id,
+            endpointName: endpoint.name,
+            sessionCount: existing?.sessionCount ?? 0,
+            totalTokens: existing?.totalTokens ?? 0,
+          });
+        });
+      }
+      return result;
+    }
+
+    // Daily granularity - create a map for quick lookup
     const dataMap = new Map(
       aggregatedData.map(item => [`${item.date}_${item.endpointId}`, item]),
     );

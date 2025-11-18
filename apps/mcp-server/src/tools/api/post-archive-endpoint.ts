@@ -15,21 +15,21 @@ import { registerApiTool, toShape } from "../helpers/index.js";
 
 // POST /jobs/:jobId/endpoints/:id/archive
 const ArchiveEndpointRequestSchema = z.object({
-    jobId: z.string().describe("Parent job ID"),
-    id: z.string().describe("Endpoint ID to archive"),
+  jobId: z.string().describe("Parent job ID"),
+  id: z.string().describe("Endpoint ID to archive"),
 });
 
 export function registerArchiveEndpoint(server: McpServer, apiClient: ApiClient) {
-    registerApiTool(server, apiClient, {
-        name: "archiveEndpoint",
-        title: ArchiveEndpointSummary,
-        description: ArchiveEndpointDescription,
-        inputSchema: toShape(ArchiveEndpointRequestSchema),
-        outputSchema: toShape(EndpointResponseSchema),
-        inputValidator: ArchiveEndpointRequestSchema,
-        outputValidator: EndpointResponseSchema,
-        method: "POST",
-        path: input => `/jobs/${input.jobId}/endpoints/${input.id}/archive`,
-        successMessage: output => `✅ Endpoint archived: ${output.name}`,
-    });
+  registerApiTool(server, apiClient, {
+    name: "archiveEndpoint",
+    title: ArchiveEndpointSummary,
+    description: ArchiveEndpointDescription,
+    inputSchema: toShape(ArchiveEndpointRequestSchema),
+    outputSchema: toShape(EndpointResponseSchema),
+    inputValidator: ArchiveEndpointRequestSchema,
+    outputValidator: EndpointResponseSchema,
+    method: "POST",
+    path: input => `/jobs/${input.jobId}/endpoints/${input.id}/archive`,
+    successMessage: output => `✅ Endpoint archived: ${output.name}`,
+  });
 }

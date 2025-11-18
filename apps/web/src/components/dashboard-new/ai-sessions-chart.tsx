@@ -66,7 +66,8 @@ export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
         };
     }, [data]);
 
-    const hasData = data.length > 0 && data.some((d) => d.sessionCount > 0);
+    // Show chart even if all sessions are zero (to show the timeline structure)
+    const hasData = data.length > 0;
 
     // Calculate total sessions
     const totalSessions = useMemo(() => {
@@ -138,7 +139,6 @@ export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
                             type="number"
                             scale="time"
                             domain={['dataMin', 'dataMax']}
-                            ticks={[chartData[0]?.date, chartData[chartData.length - 1]?.date].filter(Boolean)}
                             tickFormatter={(value) => {
                                 const date = new Date(Number(value));
                                 return date.toLocaleDateString("en-US", {

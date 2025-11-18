@@ -3,6 +3,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   Activity,
   AlertCircle,
+  Archive,
   CheckCircle2,
   Clock,
   Edit,
@@ -29,6 +30,7 @@ import { DataTable } from "../../components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { isEndpointPaused } from "@/lib/endpoint-utils";
 import {
+  archiveEndpoint,
   endpointByIdQueryOptions,
   pauseEndpoint,
   resetFailures,
@@ -103,6 +105,20 @@ function ViewEndpointPage() {
     },
   });
 
+  const { mutateAsync: archiveMutate, isPending: archivePending } = useMutation({
+    mutationFn: async () => {
+      if (!endpoint.jobId) throw new Error("Job ID not found");
+      return archiveEndpoint(endpoint.jobId, id);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["endpoints", id] });
+      if (endpoint.jobId) {
+        await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints"] });
+      }
+      toast.success("Endpoint archived successfully");
+    },
+  });
+
   const handlePause = async () => {
     const isPaused = isEndpointPaused(endpoint.pausedUntil); const pausedUntil = isPaused ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     await pauseMutate(pausedUntil);
@@ -114,6 +130,12 @@ function ViewEndpointPage() {
 
   const handleRunNow = async () => {
     await runNowMutate();
+  };
+
+  const handleArchive = async () => {
+    if (confirm(`Archive "${endpoint.name}"? It will no longer count toward quota or be scheduled.`)) {
+      await archiveMutate();
+    }
   };
 
   const isPaused = isEndpointPaused(endpoint.pausedUntil);
@@ -200,7 +222,21 @@ function ViewEndpointPage() {
       </div>
 
       {/* Status Alerts */}
-      {isPaused && (
+      {endpoint.archivedAt && (
+        <Card className="mb-6 border-destructive">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-destructive">
+              <Archive className="h-5 w-5" />
+              <span className="font-semibold">This endpoint is archived</span>
+              <span className="text-sm">
+                on {new Date(endpoint.archivedAt).toLocaleString()}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!endpoint.archivedAt && isPaused && (
         <Card className="mb-6 border-yellow-500">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-500">
@@ -386,8 +422,13 @@ function ViewEndpointPage() {
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Status:</span>
-              <Badge variant={isPaused ? "secondary" : "default"}>
-                {isPaused ? (
+              <Badge variant={endpoint.archivedAt ? "destructive" : isPaused ? "secondary" : "default"}>
+                {endpoint.archivedAt ? (
+                  <>
+                    <Archive className="h-3 w-3 mr-1" />
+                    Archived
+                  </>
+                ) : isPaused ? (
                   <>
                     <Pause className="h-3 w-3 mr-1" />
                     Paused
@@ -429,7 +470,7 @@ function ViewEndpointPage() {
         <Button
           variant="default"
           onClick={handleRunNow}
-          disabled={runNowPending || isPaused}
+          disabled={runNowPending || isPaused || !!endpoint.archivedAt}
         >
           <Play className="h-4 w-4 mr-2" />
           {runNowPending ? "Scheduling..." : "Run Now"}
@@ -437,17 +478,27 @@ function ViewEndpointPage() {
         <Button
           variant="secondary"
           onClick={handlePause}
-          disabled={pausePending}
+          disabled={pausePending || !!endpoint.archivedAt}
         >
           {pausePending ? "Loading..." : isPaused ? "Resume Endpoint" : "Pause Endpoint"}
         </Button>
         <Button
           variant="outline"
           onClick={handleResetFailures}
-          disabled={resetPending}
+          disabled={resetPending || !!endpoint.archivedAt}
         >
           {resetPending ? "Loading..." : "Reset Failure Count"}
         </Button>
+        {!endpoint.archivedAt && (
+          <Button
+            variant="destructive"
+            onClick={handleArchive}
+            disabled={archivePending}
+          >
+            <Archive className="h-4 w-4 mr-2" />
+            {archivePending ? "Archiving..." : "Archive Endpoint"}
+          </Button>
+        )}
         <Button variant="outline" asChild>
           <Link to="/endpoints/$id/health" params={{ id }}>
             View Full Health Report
