@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/weskerllc/cronicorn/compare/v1.10.0...v1.10.1) (2025-11-18)
+
+
+### Bug Fixes
+
+* Auth headers ([eb06cbc](https://github.com/weskerllc/cronicorn/commit/eb06cbc6d26b69792b2423c1e87b242f7fa7ef9e))
+
 # [1.10.0](https://github.com/weskerllc/cronicorn/compare/v1.9.6...v1.10.0) (2025-11-18)
 
 
