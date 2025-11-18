@@ -41,6 +41,7 @@ describe("jobsManager", () => {
       updateAfterRun: vi.fn(),
       listEndpointsByJob: vi.fn(),
       deleteEndpoint: vi.fn(),
+      archiveEndpoint: vi.fn(),
       countEndpointsByUser: vi.fn(),
       getEndpointCounts: vi.fn(),
       getUserById: vi.fn(),

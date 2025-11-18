@@ -1,0 +1,1 @@
+ALTER TABLE "job_endpoints" ADD COLUMN "archived_at" timestamp;

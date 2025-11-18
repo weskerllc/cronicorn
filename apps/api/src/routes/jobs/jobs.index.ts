@@ -16,6 +16,7 @@ const router = createRouter()
   .openapi(routes.addEndpoint, handlers.addEndpoint)
   .openapi(routes.updateEndpoint, handlers.updateEndpoint)
   .openapi(routes.deleteEndpoint, handlers.deleteEndpoint)
+  .openapi(routes.archiveEndpoint, handlers.archiveEndpoint)
   .openapi(routes.getEndpoint, handlers.getEndpoint)
   .openapi(routes.listEndpoints, handlers.listEndpoints)
 

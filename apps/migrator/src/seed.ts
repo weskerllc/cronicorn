@@ -48,9 +48,12 @@ const NOW = new Date(); // Current time
 const SALE_END = new Date(NOW.getTime() - 1 * 60 * 60 * 1000); // Sale ended 1 hour ago
 const SALE_START = new Date(NOW.getTime() - 20 * 60 * 60 * 1000); // Sale started 20 hours ago (covers most of last 24h)
 
+// Time ranges for dashboard filtering tests
+const DAYS_AGO_45 = new Date(NOW.getTime() - 45 * 24 * 60 * 60 * 1000); // Older than 30 days
+
 // Generate jobs based on configuration
 function generateJobs() {
-  const jobs: Array<{ id: string; name: string; description: string }> = [];
+  const jobs: Array<{ id: string; name: string; description: string; status: "active" | "paused" | "archived" }> = [];
   const jobTypes = [
     { prefix: "monitoring", name: "Monitoring", desc: "Real-time monitoring" },
     { prefix: "health", name: "Health Checks", desc: "Infrastructure health" },
@@ -61,10 +64,13 @@ function generateJobs() {
 
   for (let i = 1; i <= NUM_JOBS; i++) {
     const type = jobTypes[(i - 1) % jobTypes.length];
+    // Archive every 5th job to test archived job logic
+    const isArchived = i % 5 === 0;
     jobs.push({
       id: `job-${type.prefix}-${i}`,
-      name: `${type.name}${NUM_JOBS > 1 ? ` ${i}` : ""}`,
+      name: `${type.name}${NUM_JOBS > 1 ? ` ${i}` : ""}${isArchived ? " (Archived)" : ""}`,
       description: `${type.desc}${NUM_JOBS > 1 ? ` - Instance ${i}` : ""}`,
+      status: isArchived ? "archived" : "active",
     });
   }
 
@@ -86,6 +92,8 @@ function generateEndpoints(jobs: ReturnType<typeof generateJobs>) {
     description: string;
     pattern: string;
     successRate: number;
+    archived: boolean;
+    jobStatus: "active" | "paused" | "archived";
   };
 
   const endpoints: EndpointConfig[] = [];
@@ -103,10 +111,18 @@ function generateEndpoints(jobs: ReturnType<typeof generateJobs>) {
     for (let i = 0; i < ENDPOINTS_PER_JOB; i++) {
       const type = endpointTypes[i % endpointTypes.length];
       const pattern = patterns[i % patterns.length];
+
+      // Archive logic:
+      // - If job is archived, archive only first endpoint (to test mixed state)
+      // - For active jobs, archive every 7th endpoint
+      const isEndpointArchived = job.status === "archived"
+        ? i === 0 // First endpoint of archived job is also archived
+        : i % 7 === 0; // Every 7th endpoint of active jobs is archived
+
       endpoints.push({
         id: `ep-${job.id}-${i}`,
         jobId: job.id,
-        name: `${type.name}`,
+        name: `${type.name}${isEndpointArchived ? " (Archived)" : ""}`,
         url: `https://api.example.com${type.url}`,
         baselineIntervalMs: type.baseline,
         minIntervalMs: Math.floor(type.baseline / 10), // 10% of baseline
@@ -114,6 +130,8 @@ function generateEndpoints(jobs: ReturnType<typeof generateJobs>) {
         description: `${type.name} for ${job.name}`,
         pattern,
         successRate: type.successRate,
+        archived: isEndpointArchived,
+        jobStatus: job.status,
       });
     }
   });
@@ -126,13 +144,19 @@ const ENDPOINTS = generateEndpoints(JOBS);
 /**
  * Generate realistic run data based on endpoint pattern
  * If GENERATE_HISTORICAL_DATA is false, only creates a few recent runs (last 2 hours)
+ * Always includes runs across different time ranges for dashboard filtering tests:
+ * - Last 24 hours
+ * - Last 7 days
+ * - Last 30 days
+ * - Older than 30 days (45+ days ago)
  */
 function generateRuns(endpoint: typeof ENDPOINTS[0]): Array<schema.RunInsert> {
   const runs: Array<schema.RunInsert> = [];
 
-  // Start time: if historical data is disabled, only generate last 2 hours
+  // Start time: Always start from 45 days ago to ensure we have data in all time ranges
+  // This ensures dashboard filters work correctly (24h, 7d, 30d, >30d)
   const startTime = GENERATE_HISTORICAL_DATA
-    ? new Date(SALE_START.getTime() - 24 * 60 * 60 * 1000) // Start 24h before sale (full history)
+    ? DAYS_AGO_45 // Start 45 days ago (covers all filter ranges)
     : new Date(NOW.getTime() - 2 * 60 * 60 * 1000); // Last 2 hours only (dev mode)
 
   let currentTime = new Date(startTime.getTime());
@@ -326,6 +350,12 @@ async function seed() {
   const DEMO_USER_ID = demoUser.id;
   console.log(`✓ Found user: ${demoUser.email} (ID: ${DEMO_USER_ID})\n`);
 
+  // Calculate summary stats once
+  const archivedJobsCount = JOBS.filter(j => j.status === "archived").length;
+  const archivedEndpointsCount = ENDPOINTS.filter(e => e.archived).length;
+  const archivedJobEndpointsCount = ENDPOINTS.filter(e => e.jobStatus === "archived").length;
+  const archivedJobNonArchivedEndpointsCount = ENDPOINTS.filter(e => e.jobStatus === "archived" && !e.archived).length;
+
   // 2. Create jobs
   console.log("📦 Creating jobs...");
   for (const job of JOBS) {
@@ -334,13 +364,14 @@ async function seed() {
       .values({
         ...job,
         userId: DEMO_USER_ID,
-        status: "active",
+        status: job.status,
         createdAt: new Date(SALE_START.getTime() - 7 * 24 * 60 * 60 * 1000), // Created 1 week before
         updatedAt: NOW,
+        archivedAt: job.status === "archived" ? new Date(NOW.getTime() - 3 * 24 * 60 * 60 * 1000) : null, // Archived 3 days ago
       })
       .onConflictDoNothing();
   }
-  console.log(`✓ Created ${JOBS.length} jobs\n`);
+  console.log(`✓ Created ${JOBS.length} jobs (${archivedJobsCount} archived)\n`);
 
   // 3. Create endpoints
   console.log("🎯 Creating endpoints...");
@@ -359,13 +390,16 @@ async function seed() {
         minIntervalMs: endpoint.minIntervalMs,
         maxIntervalMs: endpoint.maxIntervalMs,
         timeoutMs: 5000,
-        lastRunAt: new Date(NOW.getTime() - 60000), // Last run 1 min ago
+        lastRunAt: endpoint.archived ? new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000) : new Date(NOW.getTime() - 60000), // Last run 5 days ago if archived, 1 min ago otherwise
         nextRunAt: new Date(NOW.getTime() + endpoint.baselineIntervalMs), // Next run scheduled
         failureCount: 0,
+        archivedAt: endpoint.archived ? new Date(NOW.getTime() - 2 * 24 * 60 * 60 * 1000) : null, // Archived 2 days ago
       })
       .onConflictDoNothing();
   }
-  console.log(`✓ Created ${ENDPOINTS.length} endpoints\n`);
+  console.log(`✓ Created ${ENDPOINTS.length} endpoints (${archivedEndpointsCount} archived)`);
+  console.log(`  • ${archivedJobEndpointsCount} endpoints in archived jobs`);
+  console.log(`  • ${archivedJobNonArchivedEndpointsCount} non-archived endpoints in archived jobs (for testing)\n`);
 
   // 4. Generate and insert runs
   console.log("⚡ Generating runs (this may take a moment)...");
@@ -398,9 +432,10 @@ async function seed() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("✨ Seed complete!\n");
   console.log("📊 Dashboard Data Summary:");
-  console.log(`  • ${JOBS.length} jobs created`);
-  console.log(`  • ${ENDPOINTS.length} endpoints created`);
-  console.log(`  • ${totalRuns} runs generated ${GENERATE_HISTORICAL_DATA ? "(24h+ of data)" : "(last 2h)"}`);
+  console.log(`  • ${JOBS.length} jobs created (${archivedJobsCount} archived)`);
+  console.log(`  • ${ENDPOINTS.length} endpoints created (${archivedEndpointsCount} archived)`);
+  console.log(`  • ${archivedJobNonArchivedEndpointsCount} non-archived endpoints in archived jobs (testing logic)`);
+  console.log(`  • ${totalRuns} runs generated ${GENERATE_HISTORICAL_DATA ? "(45+ days of data)" : "(last 2h)"}`);
   console.log(`  • ${sessions.length} AI analysis sessions`);
 
   if (GENERATE_HISTORICAL_DATA) {
@@ -409,6 +444,11 @@ async function seed() {
     console.log(`  • ${ENDPOINTS.length} endpoints test backend pagination`);
     console.log("  • Timeline charts limited to top 10 endpoints");
     console.log("  • Endpoint table shows 20 per page with pagination");
+    console.log("  • Runs distributed across all time ranges:");
+    console.log("    - Last 24 hours (for real-time monitoring)");
+    console.log("    - Last 7 days (for weekly trends)");
+    console.log("    - Last 30 days (for monthly analysis)");
+    console.log("    - 30-45 days ago (for historical comparison)");
   }
   else {
     console.log("\n🚀 Development Mode (Recent Data Only):");

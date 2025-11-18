@@ -119,6 +119,7 @@ export const EndpointResponseBaseSchema = z.object({
   lastRunAt: z.string().datetime().optional().describe("Last run time"),
   failureCount: z.number().int().describe("Consecutive failure count"),
   pausedUntil: z.string().datetime().optional().describe("Pause expiration time"),
+  archivedAt: z.string().datetime().optional().describe("Archive timestamp (soft delete)"),
   url: z.string().optional().describe("HTTP endpoint URL"),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).optional().describe("HTTP method"),
   headersJson: z.record(z.string(), z.string()).optional().describe("HTTP headers"),

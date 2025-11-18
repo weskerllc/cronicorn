@@ -1,7 +1,7 @@
 import type { SessionsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, count, desc, eq, gte, inArray, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, ne, sql, sum } from "drizzle-orm";
 
 import { aiAnalysisSessions, jobEndpoints, jobs } from "./schema.js";
 
@@ -98,6 +98,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     jobId?: string;
     sinceDate?: Date;
     endpointLimit?: number;
+    granularity?: "hour" | "day";
   }): Promise<Array<{
       date: string;
       endpointId: string;
@@ -105,7 +106,11 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       sessionCount: number;
       totalTokens: number;
     }>> {
-    const conditions = [eq(jobs.userId, filters.userId)];
+    const conditions = [
+      eq(jobs.userId, filters.userId),
+      ne(jobs.status, "archived"), // Exclude archived jobs
+      isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
+    ];
 
     if (filters.sinceDate) {
       conditions.push(gte(aiAnalysisSessions.analyzedAt, filters.sinceDate));
@@ -144,9 +149,15 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       timeSeriesConditions.push(inArray(jobEndpoints.id, topEndpointIds));
     }
 
+    // Use hourly or daily granularity based on filter
+    const granularity = filters.granularity ?? "day";
+    const dateExpression = granularity === "hour"
+      ? sql<string>`TO_CHAR(DATE_TRUNC('hour', ${aiAnalysisSessions.analyzedAt}), 'YYYY-MM-DD HH24:00:00')`
+      : sql<string>`DATE(${aiAnalysisSessions.analyzedAt})`;
+
     const results = await this.tx
       .select({
-        date: sql<string>`DATE(${aiAnalysisSessions.analyzedAt})`,
+        date: dateExpression,
         endpointId: jobEndpoints.id,
         endpointName: jobEndpoints.name,
         sessionCount: count(),
@@ -156,8 +167,8 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
       .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
       .where(and(...timeSeriesConditions))
-      .groupBy(sql`DATE(${aiAnalysisSessions.analyzedAt})`, jobEndpoints.id, jobEndpoints.name)
-      .orderBy(sql`DATE(${aiAnalysisSessions.analyzedAt}) ASC`);
+      .groupBy(dateExpression, jobEndpoints.id, jobEndpoints.name)
+      .orderBy(dateExpression);
 
     return results.map(row => ({
       date: row.date,
