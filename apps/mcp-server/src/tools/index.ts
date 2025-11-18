@@ -9,7 +9,6 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Credentials } from "../auth/token-store.js";
 
 import { createHttpApiClient } from "../adapters/http-api-client.js";
-import { registerDeleteEndpoint } from "./api/delete-endpoint.js";
 import { registerDeleteHints } from "./api/delete-hints.js";
 import { registerDeleteJob } from "./api/delete-job.js";
 import { registerGetDashboardStats } from "./api/get-dashboard-stats.js";
@@ -22,6 +21,7 @@ import { registerListEndpoints } from "./api/list-endpoints.js";
 import { registerListJobs } from "./api/list-jobs.js";
 import { registerPatchEndpoint } from "./api/patch-endpoint.js";
 import { registerPatchJob } from "./api/patch-job.js";
+import { registerArchiveEndpoint } from "./api/post-archive-endpoint.js";
 import { registerPostEndpointPause } from "./api/post-endpoint-pause.js";
 import { registerPostEndpoint } from "./api/post-endpoint.js";
 import { registerPostIntervalHint } from "./api/post-interval-hint.js";
@@ -57,7 +57,7 @@ export function registerTools(
   registerGetEndpoint(server, apiClient);
   registerListEndpoints(server, apiClient);
   registerPatchEndpoint(server, apiClient);
-  registerDeleteEndpoint(server, apiClient);
+  registerArchiveEndpoint(server, apiClient);
 
   // Adaptive Scheduling
   registerPostIntervalHint(server, apiClient);
