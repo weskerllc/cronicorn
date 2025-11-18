@@ -14,11 +14,16 @@ export function isEndpointPaused(pausedUntil?: string | null): boolean {
 }
 
 /**
- * Gets the status of an endpoint based on its pausedUntil timestamp
+ * Gets the status of an endpoint based on its pausedUntil and archivedAt timestamps
  * 
  * @param pausedUntil - ISO timestamp until which the endpoint is paused
- * @returns "paused" if the endpoint is currently paused, otherwise "active"
+ * @param archivedAt - ISO timestamp when the endpoint was archived
+ * @returns "archived" if archived, "paused" if paused, otherwise "active"
  */
-export function getEndpointStatus(pausedUntil?: string | null): "active" | "paused" {
+export function getEndpointStatus(
+  pausedUntil?: string | null,
+  archivedAt?: string | null
+): "active" | "paused" | "archived" {
+  if (archivedAt) return "archived";
   return isEndpointPaused(pausedUntil) ? "paused" : "active";
 }

@@ -139,7 +139,6 @@ export function ExecutionTimelineChart({
                             type="number"
                             scale="time"
                             domain={['dataMin', 'dataMax']}
-                            ticks={[chartData[0]?.date, chartData[chartData.length - 1]?.date].filter(Boolean)}
                             tickFormatter={(value) => {
                                 const date = new Date(Number(value));
                                 return date.toLocaleDateString("en-US", {
