@@ -123,32 +123,32 @@ export async function createApp(
   // Protect all /jobs and /endpoints routes with auth
   app.use("/jobs/*", async (c, next) => {
     const auth = c.get("auth");
-    return requireAuth(auth)(c, next);
+    return requireAuth(auth, config)(c, next);
   });
 
   app.use("/endpoints/*", async (c, next) => {
     const auth = c.get("auth");
-    return requireAuth(auth)(c, next);
+    return requireAuth(auth, config)(c, next);
   });
 
   app.use("/runs/*", async (c, next) => {
     const auth = c.get("auth");
-    return requireAuth(auth)(c, next);
+    return requireAuth(auth, config)(c, next);
   });
 
   app.use("/subscriptions/*", async (c, next) => {
     const auth = c.get("auth");
-    return requireAuth(auth)(c, next);
+    return requireAuth(auth, config)(c, next);
   });
 
   app.use("/dashboard/*", async (c, next) => {
     const auth = c.get("auth");
-    return requireAuth(auth)(c, next);
+    return requireAuth(auth, config)(c, next);
   });
 
   app.use("/devices/*", async (c, next) => {
     const auth = c.get("auth");
-    return requireAuth(auth)(c, next);
+    return requireAuth(auth, config)(c, next);
   });
 
   // Health check endpoint (no auth required)
