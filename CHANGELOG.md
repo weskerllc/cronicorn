@@ -1,3 +1,15 @@
+# [1.11.0](https://github.com/weskerllc/cronicorn/compare/v1.10.1...v1.11.0) (2025-11-18)
+
+
+### Bug Fixes
+
+* Unique keys on dash ([#42](https://github.com/weskerllc/cronicorn/issues/42)) ([88f6c64](https://github.com/weskerllc/cronicorn/commit/88f6c6416ca7d0bb00d22c0bfe89717f42b06891))
+
+
+### Features
+
+* Archive endpoint and dashboard improvements ([#41](https://github.com/weskerllc/cronicorn/issues/41)) ([1c9b69d](https://github.com/weskerllc/cronicorn/commit/1c9b69defab0b864ec4994e126159235fb81716f))
+
 ## [1.10.1](https://github.com/weskerllc/cronicorn/compare/v1.10.0...v1.10.1) (2025-11-18)
 
 
