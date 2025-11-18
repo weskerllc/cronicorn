@@ -21,6 +21,9 @@ export function createAuth(config: Env, db: Database) {
   const hasGitHubOAuth = !!(config.GITHUB_CLIENT_ID && config.GITHUB_CLIENT_SECRET);
   const hasAdminUser = !!(config.ADMIN_USER_EMAIL && config.ADMIN_USER_PASSWORD);
 
+  // Detect if we're in an HTTPS environment (production or staging)
+  const isHttps = config.BETTER_AUTH_URL.startsWith("https://");
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -44,6 +47,15 @@ export function createAuth(config: Env, db: Database) {
     session: {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
       updateAge: 60 * 60 * 24 * 7, // Refresh session weekly
+    },
+    // Advanced cookie configuration for production HTTPS
+    advanced: {
+      defaultCookieAttributes: {
+        sameSite: "lax", // Same-origin cookies (web and API on same domain)
+        secure: isHttps, // Only send cookies over HTTPS in production
+        httpOnly: true, // Prevent JavaScript access for security
+        path: "/",
+      },
     },
     // Email/Password auth enabled if admin user is configured
     emailAndPassword: hasAdminUser
