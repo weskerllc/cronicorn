@@ -124,9 +124,9 @@ export function DataTable<TData, TValue>({
     if (tableRef.current && enablePagination) {
       // Respect user's motion preferences
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      tableRef.current.scrollIntoView({ 
-        behavior: prefersReducedMotion ? 'auto' : 'smooth', 
-        block: 'start' 
+      tableRef.current.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'start'
       });
     }
   }, [pagination.pageIndex]);
@@ -167,7 +167,7 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader className="bg-muted sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (

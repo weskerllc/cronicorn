@@ -22,6 +22,23 @@ import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 
 import type { JobHealthItem } from "@cronicorn/api-contracts/dashboard";
 
+/**
+ * Formats a number for compact display in charts
+ * @param value - The number to format
+ * @returns Formatted string (e.g., "1.2k", "3.5M")
+ */
+function formatCompactNumber(value: number): string {
+    if (value >= 1_000_000) {
+        const millions = value / 1_000_000;
+        return millions >= 100 ? `${Math.floor(millions)}M` : `${millions.toFixed(1)}M`;
+    }
+    if (value >= 1_000) {
+        const thousands = value / 1_000;
+        return thousands >= 100 ? `${Math.floor(thousands)}k` : `${thousands.toFixed(1)}k`;
+    }
+    return value.toString();
+}
+
 const chartConfig = {
     successCount: {
         label: "Success",
@@ -66,23 +83,17 @@ export function JobHealthChart({
         [paginatedData, selectedJobId]
     );
 
-    if (data.length === 0) {
-        return (
-            <DashboardCard
-                title="Job Health Overview"
-                description="No job data available"
-                contentClassName="items-center justify-center text-muted-foreground"
-            >
-                <p>No runs found to display job health</p>
-            </DashboardCard>
-        );
-    }
 
-    const description = (
+    const hasData = data.length > 0;
+
+    const description = hasData ? (
         <>
             <p>Active Jobs: <span className="text-foreground font-medium">{data.length}</span></p>
         </>
+    ) : (
+        "No data to display"
     );
+
 
     const paginationFooter = totalPages > 1 ? (
         <Pagination>
@@ -136,7 +147,6 @@ export function JobHealthChart({
     ) : undefined;
 
     const title = selectedJobId ? "Runs Per Job • Filtered" : "Runs Per Job";
-
     return (
         <DashboardCard
             title={title}
@@ -144,19 +154,21 @@ export function JobHealthChart({
             footerSlot={paginationFooter}
             contentClassName="p-0"
         >
-            <ChartContainer config={chartConfig} className="h-full w-full flex overflow-hidden flex-col">
+            {hasData ? (<ChartContainer config={chartConfig} className="h-full w-full flex overflow-hidden flex-col">
                 <BarChart
                     accessibilityLayer
                     data={paginatedData}
                     layout="vertical"
                     width={500}
-                    height={Math.max(150, paginatedData.length * 50)}
+                    height={Math.max(150, paginatedData.length * 70)}
                     margin={{
-                        left: 8,
-                        right: 16,
+                        top: 16,
+                        left: 12,
+                        right: 18,
                     }}
+                    barCategoryGap="25%"
                 >
-                    <CartesianGrid horizontal={false} />
+                    {/* <CartesianGrid horizontal={false} /> */}
                     <XAxis hide type="number" />
                     <YAxis
                         dataKey="jobName"
@@ -168,13 +180,14 @@ export function JobHealthChart({
                         hide
                     />
                     <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                    <ChartLegend content={<ChartLegendContent />} />
+                    <ChartLegend content={<ChartLegendContent className="pb-2" />} />
 
                     <Bar
                         dataKey="successCount"
                         stackId="a"
                         fill="var(--color-successCount)"
                         radius={[4, 0, 0, 4]}
+
                         onClick={(barData) => onJobClick?.(barData.jobId)}
                         style={{ cursor: "pointer" }}
                         activeIndex={activeIndex}
@@ -193,10 +206,23 @@ export function JobHealthChart({
                     >
                         <LabelList
                             dataKey="jobName"
-                            position="insideLeft"
-                            offset={8}
-                            fill="var(--color-chart-foreground)"
+                            position="top"
+                            fill="var(--color-foreground)"
                             fontSize={12}
+                            content={(props: any) => {
+                                const { x, y, value } = props;
+                                return (
+                                    <text
+                                        x={x}
+                                        y={y ? y - 4 : 0}
+                                        fill="var(--color-foreground)"
+                                        fontSize={12}
+                                        textAnchor="start"
+                                    >
+                                        {value}
+                                    </text>
+                                );
+                            }}
                         />
                         <LabelList
                             dataKey="successCount"
@@ -204,6 +230,7 @@ export function JobHealthChart({
                             offset={8}
                             fill="var(--color-foreground)"
                             fontSize={12}
+                            formatter={(value: number) => formatCompactNumber(value)}
                         />
                     </Bar>
                     <Bar
@@ -229,6 +256,7 @@ export function JobHealthChart({
                     />
                 </BarChart>
             </ChartContainer>
+            ) : null}
         </DashboardCard>
     );
 }

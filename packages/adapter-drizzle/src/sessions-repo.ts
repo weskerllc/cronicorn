@@ -1,7 +1,7 @@
 import type { SessionsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, count, desc, eq, gte, inArray, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, ne, sql, sum } from "drizzle-orm";
 
 import { aiAnalysisSessions, jobEndpoints, jobs } from "./schema.js";
 
@@ -106,7 +106,11 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       sessionCount: number;
       totalTokens: number;
     }>> {
-    const conditions = [eq(jobs.userId, filters.userId)];
+    const conditions = [
+      eq(jobs.userId, filters.userId),
+      ne(jobs.status, "archived"), // Exclude archived jobs
+      isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
+    ];
 
     if (filters.sinceDate) {
       conditions.push(gte(aiAnalysisSessions.analyzedAt, filters.sinceDate));
