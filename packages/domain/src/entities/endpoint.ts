@@ -39,6 +39,9 @@ export type JobEndpoint = {
   // Pause control
   pausedUntil?: Date;
 
+  // Archive control (soft delete)
+  archivedAt?: Date;
+
   // Runtime state
   lastRunAt?: Date;
   nextRunAt: Date;

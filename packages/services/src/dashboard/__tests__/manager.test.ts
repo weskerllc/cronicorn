@@ -46,6 +46,7 @@ describe("dashboardManager", () => {
       updateAfterRun: vi.fn(),
       listEndpointsByJob: vi.fn(),
       deleteEndpoint: vi.fn(),
+      archiveEndpoint: vi.fn(),
       countEndpointsByUser: vi.fn(),
       getEndpointCounts: vi.fn(),
       getUserById: vi.fn(),
@@ -199,8 +200,8 @@ describe("dashboardManager", () => {
 
       const result = await manager.getDashboardStats("user-1", { days: 100 });
 
-      // Should create 30 days of time series, not 100
-      expect(result.runTimeSeries).toHaveLength(30);
+      // Should create 30 days of time series (capped), but with 3-day buckets = 10 buckets
+      expect(result.runTimeSeries).toHaveLength(10);
     });
 
     it("should handle user with no jobs", async () => {
@@ -636,6 +637,234 @@ describe("dashboardManager", () => {
       for (let i = 1; i < result.runTimeSeries.length; i++) {
         expect(result.runTimeSeries[i].date > result.runTimeSeries[i - 1].date).toBe(true);
       }
+    });
+  });
+
+  // ==================== Hourly Bucketing Tests ====================
+
+  describe("hourly time series buckets", () => {
+    it("should use hourly granularity for 24h timeRange", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+
+      // Should create 24 hourly buckets
+      expect(result.runTimeSeries).toHaveLength(24);
+
+      // Verify hourly format (YYYY-MM-DD HH:00:00)
+      result.runTimeSeries.forEach((point) => {
+        expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:00:00$/);
+      });
+    });
+
+    it("should align hourly buckets to hour boundaries", async () => {
+      // Clock time: 2025-10-20T12:00:00Z (base date)
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+
+      // Should have 24 buckets
+      expect(result.runTimeSeries).toHaveLength(24);
+
+      // Last bucket should be the current hour boundary
+      const lastBucket = result.runTimeSeries[result.runTimeSeries.length - 1];
+      expect(lastBucket.date).toMatch(/:00:00$/);
+
+      // First bucket should be 24 hours earlier (also at :00:00)
+      const firstBucket = result.runTimeSeries[0];
+      expect(firstBucket.date).toMatch(/:00:00$/);
+    });
+
+    it("should use daily granularity for 7d timeRange", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const result = await manager.getDashboardStats("user-1", { timeRange: "7d", days: 7 });
+
+      // Should create 7 daily buckets
+      expect(result.runTimeSeries).toHaveLength(7);
+
+      // Verify daily format (YYYY-MM-DD)
+      result.runTimeSeries.forEach((point) => {
+        expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      });
+    });
+
+    it("should use 3-day buckets for 30d timeRange", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const result = await manager.getDashboardStats("user-1", { timeRange: "30d", days: 30 });
+
+      // Should create 10 buckets (30 days / 3 days per bucket)
+      expect(result.runTimeSeries).toHaveLength(10);
+
+      // Verify daily format (YYYY-MM-DD)
+      result.runTimeSeries.forEach((point) => {
+        expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      });
+    });
+
+    it("should aggregate hourly data from repository correctly", async () => {
+      const now = baseDate; // 2025-10-20T12:00:00Z
+
+      // Format hour strings using the same logic as the manager
+      const formatHour = (date: Date) => {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+      };
+
+      const currentHourStart = new Date(now);
+      currentHourStart.setMinutes(0, 0, 0);
+
+      const currentHour = formatHour(currentHourStart);
+      const oneHourAgo = formatHour(new Date(currentHourStart.getTime() - 60 * 60 * 1000));
+      const twoHoursAgo = formatHour(new Date(currentHourStart.getTime() - 2 * 60 * 60 * 1000));
+
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+
+      // Mock hourly aggregated data
+      vi.mocked(mockRunsRepo.getRunTimeSeries).mockResolvedValue([
+        { date: currentHour, success: 5, failure: 1 },
+        { date: oneHourAgo, success: 3, failure: 2 },
+        { date: twoHoursAgo, success: 4, failure: 0 },
+      ]);
+
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+
+      // Find the specific hours
+      const currentHourPoint = result.runTimeSeries.find(p => p.date === currentHour);
+      const oneHourAgoPoint = result.runTimeSeries.find(p => p.date === oneHourAgo);
+      const twoHoursAgoPoint = result.runTimeSeries.find(p => p.date === twoHoursAgo);
+
+      expect(currentHourPoint).toEqual({ date: currentHour, success: 5, failure: 1 });
+      expect(oneHourAgoPoint).toEqual({ date: oneHourAgo, success: 3, failure: 2 });
+      expect(twoHoursAgoPoint).toEqual({ date: twoHoursAgo, success: 4, failure: 0 });
+
+      // Verify other hours are zero-filled
+      const threeHoursAgo = formatHour(new Date(currentHourStart.getTime() - 3 * 60 * 60 * 1000));
+      const threeHoursAgoPoint = result.runTimeSeries.find(p => p.date === threeHoursAgo);
+      expect(threeHoursAgoPoint).toEqual({ date: threeHoursAgo, success: 0, failure: 0 });
+    });
+
+    it("should handle endpoint time series with hourly buckets", async () => {
+      const now = baseDate;
+      const formatHour = (date: Date) => {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+      };
+
+      const currentHourStart = new Date(now);
+      currentHourStart.setMinutes(0, 0, 0);
+      const currentHour = formatHour(currentHourStart);
+
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+
+      // Mock endpoint time series with 2 endpoints
+      vi.mocked(mockRunsRepo.getEndpointTimeSeries).mockResolvedValue([
+        {
+          date: currentHour,
+          endpointId: "ep-1",
+          endpointName: "Endpoint 1",
+          success: 5,
+          failure: 1,
+        },
+        {
+          date: currentHour,
+          endpointId: "ep-2",
+          endpointName: "Endpoint 2",
+          success: 3,
+          failure: 0,
+        },
+      ]);
+
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+
+      // Should have 24 hours * 2 endpoints = 48 data points
+      expect(result.endpointTimeSeries).toHaveLength(48);
+
+      // Verify data for current hour
+      const ep1CurrentHour = result.endpointTimeSeries.find(
+        p => p.date === currentHour && p.endpointId === "ep-1",
+      );
+      const ep2CurrentHour = result.endpointTimeSeries.find(
+        p => p.date === currentHour && p.endpointId === "ep-2",
+      );
+
+      expect(ep1CurrentHour).toEqual({
+        date: currentHour,
+        endpointId: "ep-1",
+        endpointName: "Endpoint 1",
+        success: 5,
+        failure: 1,
+      });
+      expect(ep2CurrentHour).toEqual({
+        date: currentHour,
+        endpointId: "ep-2",
+        endpointName: "Endpoint 2",
+        success: 3,
+        failure: 0,
+      });
+    });
+
+    it("should handle AI session time series with hourly buckets", async () => {
+      const now = baseDate;
+      const formatHour = (date: Date) => {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+      };
+
+      const currentHourStart = new Date(now);
+      currentHourStart.setMinutes(0, 0, 0);
+      const currentHour = formatHour(currentHourStart);
+      const oneHourAgo = formatHour(new Date(currentHourStart.getTime() - 60 * 60 * 1000));
+
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+
+      // Mock AI session time series
+      vi.mocked(mockSessionsRepo.getAISessionTimeSeries).mockResolvedValue([
+        {
+          date: currentHour,
+          endpointId: "ep-1",
+          endpointName: "Endpoint 1",
+          sessionCount: 2,
+          totalTokens: 1500,
+        },
+      ]);
+
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+
+      // Should have hourly buckets
+      const currentHourSession = result.aiSessionTimeSeries.find(
+        p => p.date === currentHour,
+      );
+
+      expect(currentHourSession).toEqual({
+        date: currentHour,
+        endpointId: "ep-1",
+        endpointName: "Endpoint 1",
+        sessionCount: 2,
+        totalTokens: 1500,
+      });
+
+      // Verify zero-filled hours
+      const oneHourAgoSession = result.aiSessionTimeSeries.find(
+        p => p.date === oneHourAgo,
+      );
+      expect(oneHourAgoSession?.sessionCount).toBe(0);
+      expect(oneHourAgoSession?.totalTokens).toBe(0);
     });
   });
 });

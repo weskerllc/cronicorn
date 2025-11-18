@@ -86,18 +86,19 @@ export async function updateEndpoint(jobId: string, id: string, data: UpdateEndp
   return json;
 }
 
-export async function deleteEndpoint(jobId: string, id: string): Promise<void> {
-  const resp = await apiClient.api.jobs[":jobId"].endpoints[":id"].$delete({
+const $archiveEndpoint = apiClient.api.jobs[":jobId"].endpoints[":id"].archive.$post;
+type ArchiveEndpointResponse = SuccessResponse<InferResponseType<typeof $archiveEndpoint>>;
+
+export async function archiveEndpoint(jobId: string, id: string): Promise<ArchiveEndpointResponse> {
+  const resp = await apiClient.api.jobs[":jobId"].endpoints[":id"].archive.$post({
     param: { jobId, id },
   });
+  const json = await resp.json();
 
-  if (!resp.ok) {
-    const json = await resp.json();
-    if ("message" in json) {
-      throw new Error(json.message);
-    }
-    throw new Error("Failed to delete endpoint");
+  if ("message" in json) {
+    throw new Error(json.message);
   }
+  return json;
 }
 
 // ==================== Endpoint Action Mutations ====================
