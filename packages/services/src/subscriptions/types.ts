@@ -1,8 +1,9 @@
-import type { JobsRepo, PaymentProvider } from "@cronicorn/domain";
+import type { JobsRepo, PaymentProvider, WebhookEventsRepo } from "@cronicorn/domain";
 
 export type SubscriptionDeps = {
   jobsRepo: JobsRepo;
   paymentProvider: PaymentProvider;
+  webhookEventsRepo: WebhookEventsRepo;
   baseUrl: string;
 };
 
