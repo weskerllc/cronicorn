@@ -1,3 +1,10 @@
+## [1.9.6](https://github.com/weskerllc/cronicorn/compare/v1.9.5...v1.9.6) (2025-11-18)
+
+
+### Bug Fixes
+
+* GitHub OAuth session cookies for HTTPS/Cloudflare ([#39](https://github.com/weskerllc/cronicorn/issues/39)) ([44b18af](https://github.com/weskerllc/cronicorn/commit/44b18af05ec4ac261b738355b45b1fced8ab7a1c))
+
 ## [1.9.5](https://github.com/weskerllc/cronicorn/compare/v1.9.4...v1.9.5) (2025-11-17)
 
 
