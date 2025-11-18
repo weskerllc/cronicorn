@@ -73,6 +73,9 @@ export const jobEndpoints = pgTable("job_endpoints", {
   // Pause control
   pausedUntil: timestamp("paused_until", { mode: "date" }),
 
+  // Archive control (soft delete)
+  archivedAt: timestamp("archived_at", { mode: "date" }),
+
   // Runtime state
   lastRunAt: timestamp("last_run_at", { mode: "date" }),
   nextRunAt: timestamp("next_run_at", { mode: "date" }).notNull(),
