@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/weskerllc/cronicorn/compare/v1.9.6...v1.10.0) (2025-11-18)
+
+
+### Features
+
+* Display app version from package.json in web footer ([#36](https://github.com/weskerllc/cronicorn/issues/36)) ([99b4996](https://github.com/weskerllc/cronicorn/commit/99b4996c68a1836176f73e4cb354e8e8c1e70ada))
+
 ## [1.9.6](https://github.com/weskerllc/cronicorn/compare/v1.9.5...v1.9.6) (2025-11-18)
 
 
