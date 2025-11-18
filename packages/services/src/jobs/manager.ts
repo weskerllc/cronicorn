@@ -496,6 +496,24 @@ export class JobsManager {
     await this.jobsRepo.deleteEndpoint(endpointId);
   }
 
+  /**
+   * Archive an endpoint (soft delete).
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param endpointId - The endpoint ID
+   * @returns The archived endpoint
+   * @throws Error if endpoint not found or user not authorized
+   */
+  async archiveEndpoint(userId: string, endpointId: string): Promise<JobEndpoint> {
+    // Authorization check
+    const existing = await this.getEndpoint(userId, endpointId);
+    if (!existing) {
+      throw new Error("Endpoint not found or unauthorized");
+    }
+
+    return this.jobsRepo.archiveEndpoint(endpointId);
+  }
+
   // ==================== Execution Visibility ====================
 
   /**

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Archive, Pause, Play, Plus } from "lucide-react";
+import { useState } from "react";
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
@@ -20,6 +21,13 @@ import {
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { IconDotsVertical } from "@tabler/icons-react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@cronicorn/ui-library/components/select";
 import type { ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/page-header";
 import { EmptyCTA } from "@/components/empty-cta";
@@ -32,6 +40,7 @@ import {
   pauseJob,
   resumeJob,
 } from "@/lib/api-client/queries/jobs.queries";
+import { archiveEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import { getEndpointStatus } from "@/lib/endpoint-utils";
 
 export const Route = createFileRoute("/_authed/jobs/$id/")({
@@ -64,6 +73,7 @@ function JobDetailsPage() {
   const queryClient = useQueryClient();
   const { data: job } = useSuspenseQuery(jobQueryOptions(id));
   const { data: endpointsData } = useSuspenseQuery(endpointsQueryOptions(id));
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused" | "archived">("all");
 
   // Pause job mutation
   const {
@@ -104,6 +114,14 @@ function JobDetailsPage() {
     },
   });
 
+  // Archive endpoint mutation
+  const { mutateAsync: archiveEndpointMutation } = useMutation({
+    mutationFn: (endpointId: string) => archiveEndpoint(id, endpointId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["jobs", id, "endpoints"] });
+    },
+  });
+
   const handlePause = async () => {
     await pauseJobMutation();
   };
@@ -115,6 +133,12 @@ function JobDetailsPage() {
   const handleArchive = async () => {
     if (confirm("Are you sure you want to archive this job? This action can be undone by resuming the job.")) {
       await archiveJobMutation();
+    }
+  };
+
+  const handleArchiveEndpoint = async (endpointId: string, endpointName: string) => {
+    if (confirm(`Archive endpoint "${endpointName}"? It will no longer count toward quota or be scheduled.`)) {
+      await archiveEndpointMutation(endpointId);
     }
   };
 
@@ -223,6 +247,15 @@ function JobDetailsPage() {
                 View Health
               </Link>
             </DropdownMenuItem>
+            {row.original.status !== "archived" && (
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => handleArchiveEndpoint(row.original.id, row.original.name)}
+              >
+                <Archive className="size-4 mr-2" />
+                Archive Endpoint
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -345,23 +378,40 @@ function JobDetailsPage() {
           }
         />
       ) : (
-        <DataTable
-          tableTitle="Endpoints"
-          columns={columns}
-          data={endpointsData.endpoints.map(ep => ({
-            id: ep.id,
-            name: ep.name,
-            url: ep.url || '',
-            method: ep.method || 'GET',
-            status: getEndpointStatus(ep.pausedUntil),
-            pausedUntil: ep.pausedUntil,
-          }))}
-          searchKey="name"
-          searchPlaceholder="Search endpoints..."
-          emptyMessage="No endpoints found."
-          enablePagination={true}
-          defaultPageSize={10}
-        />
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Endpoints</SelectItem>
+                <SelectItem value="active">Active Only</SelectItem>
+                <SelectItem value="paused">Paused Only</SelectItem>
+                <SelectItem value="archived">Archived Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DataTable
+            tableTitle="Endpoints"
+            columns={columns}
+            data={endpointsData.endpoints
+              .map(ep => ({
+                id: ep.id,
+                name: ep.name,
+                url: ep.url || '',
+                method: ep.method || 'GET',
+                status: getEndpointStatus(ep.pausedUntil, ep.archivedAt),
+                pausedUntil: ep.pausedUntil,
+              }))
+              .filter(ep => statusFilter === "all" || ep.status === statusFilter)}
+            searchKey="name"
+            searchPlaceholder="Search endpoints..."
+            emptyMessage="No endpoints found."
+            enablePagination={true}
+            defaultPageSize={10}
+          />
+        </div>
       )}
     </>
   );

@@ -37,6 +37,7 @@ describe("subscriptionsManager", () => {
       listEndpointsByJob: vi.fn(),
       getEndpoint: vi.fn(),
       deleteEndpoint: vi.fn(),
+      archiveEndpoint: vi.fn(),
       countEndpointsByUser: vi.fn(),
       claimDueEndpoints: vi.fn(),
       setLock: vi.fn(),

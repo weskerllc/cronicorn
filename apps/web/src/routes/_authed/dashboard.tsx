@@ -22,6 +22,17 @@ const dashboardSearchSchema = z.object({
 
 export type DashboardSearch = z.infer<typeof dashboardSearchSchema>;
 
+// Helper to convert timeRange to days for chart data points
+function timeRangeToDays(timeRange?: '24h' | '7d' | '30d' | 'all'): number {
+  switch (timeRange) {
+    case '24h': return 1; // 1 day with hourly granularity = 24 data points
+    case '7d': return 7;
+    case '30d': return 30;
+    case 'all': return 30; // Cap at 30 days for performance
+    default: return 7;
+  }
+}
+
 export const Route = createFileRoute("/_authed/dashboard")({
   validateSearch: dashboardSearchSchema,
   loaderDeps: ({ search: { jobId, timeRange } }) => ({ jobId, timeRange }),
@@ -29,7 +40,7 @@ export const Route = createFileRoute("/_authed/dashboard")({
     // ensureQueryData will fetch if not cached, or return cached data if fresh
     await queryClient.ensureQueryData(
       dashboardStatsQueryOptions({
-        days: 7,
+        days: timeRangeToDays(timeRange),
         jobId,
         timeRange
       })
@@ -60,7 +71,7 @@ function DashboardPage() {
 
   const { data: dashboardData, isPlaceholderData } = useQuery({
     ...dashboardStatsQueryOptions({
-      days: 7,
+      days: timeRangeToDays(filters.timeRange),
       jobId: filters.jobId,
       timeRange: filters.timeRange
     }),

@@ -166,28 +166,33 @@ export function registerListJobs(server: McpServer, apiClient: ApiClient) {
 }
 ```
 
-## Complete Example: DELETE with 204 No Content
+## Complete Example: POST Archive with Response
 
 ```typescript
-const [DeleteEndpointRequestSchema, deleteEndpointInputShape] = createSchemaAndShape({
-    id: z.string().describe("Endpoint ID to delete"),
+const [ArchiveEndpointRequestSchema, archiveEndpointInputShape] = createSchemaAndShape({
+    jobId: z.string().describe("Parent job ID"),
+    id: z.string().describe("Endpoint ID to archive"),
 });
 
-// Empty response for 204 No Content
-const [EmptyResponseSchema, emptyResponseShape] = createSchemaAndShape({});
+const [EndpointResponseSchema, endpointResponseShape] = createSchemaAndShape({
+    id: z.string(),
+    name: z.string(),
+    archivedAt: z.string().datetime().optional(),
+    // ... other fields
+});
 
-export function registerDeleteEndpoint(server: McpServer, apiClient: ApiClient) {
+export function registerArchiveEndpoint(server: McpServer, apiClient: ApiClient) {
     registerApiTool(server, apiClient, {
-        name: "DELETE_endpoints_id",
-        title: "Delete Endpoint",
-        description: "Permanently delete an endpoint",
-        inputSchema: deleteEndpointInputShape,
-        outputSchema: emptyResponseShape,
-        inputValidator: DeleteEndpointRequestSchema,
-        outputValidator: EmptyResponseSchema,
-        method: "DELETE",
-        path: (input) => `/endpoints/${input.id}`,
-        successMessage: () => `✅ Endpoint deleted successfully`,
+        name: "archiveEndpoint",
+        title: "Archive Endpoint",
+        description: "Archive an endpoint (soft delete). The endpoint will be marked as archived and will no longer count toward quota limits or be scheduled for execution.",
+        inputSchema: archiveEndpointInputShape,
+        outputSchema: endpointResponseShape,
+        inputValidator: ArchiveEndpointRequestSchema,
+        outputValidator: EndpointResponseSchema,
+        method: "POST",
+        path: (input) => `/jobs/${input.jobId}/endpoints/${input.id}/archive`,
+        successMessage: (output) => `✅ Endpoint archived: ${output.name}`,
     });
 }
 ```

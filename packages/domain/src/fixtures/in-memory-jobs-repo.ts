@@ -152,7 +152,7 @@ export class InMemoryJobsRepo implements JobsRepo {
     const horizonMs = nowMs + withinMs;
 
     // Claim endpoints that are due now or will be due within the horizon
-    // Exclude endpoints from paused or archived jobs
+    // Exclude endpoints from paused or archived jobs, and archived endpoints
     const due = [...this.map.values()]
       .filter((e) => {
         // Check basic conditions
@@ -161,6 +161,8 @@ export class InMemoryJobsRepo implements JobsRepo {
         if (e.pausedUntil && e.pausedUntil.getTime() > nowMs)
           return false;
         if (e._lockedUntil && e._lockedUntil.getTime() > nowMs)
+          return false;
+        if (e.archivedAt) // Exclude archived endpoints
           return false;
 
         // Check parent job status if jobId exists
@@ -293,9 +295,40 @@ export class InMemoryJobsRepo implements JobsRepo {
     this.map.delete(id);
   }
 
+  async archiveEndpoint(id: string): Promise<JobEndpoint> {
+    const endpoint = this.map.get(id);
+    if (!endpoint) {
+      throw new Error(`Endpoint not found: ${id}`);
+    }
+
+    const updated = {
+      ...endpoint,
+      archivedAt: this.now(),
+    };
+    this.map.set(id, updated);
+    return structuredClone(updated);
+  }
+
   async countEndpointsByUser(userId: string): Promise<number> {
     return [...this.map.values()]
-      .filter(ep => ep.tenantId === userId)
+      .filter((ep) => {
+        // Filter out archived endpoints
+        if (ep.archivedAt)
+          return false;
+
+        // Filter by userId
+        if (ep.tenantId !== userId)
+          return false;
+
+        // Filter out endpoints from archived jobs
+        if (ep.jobId) {
+          const job = this.jobs.get(ep.jobId);
+          if (job && job.status === "archived")
+            return false;
+        }
+
+        return true;
+      })
       .length;
   }
 
