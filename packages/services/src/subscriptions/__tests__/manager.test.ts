@@ -1,4 +1,4 @@
-import type { JobsRepo, PaymentProvider } from "@cronicorn/domain";
+import type { JobsRepo, PaymentProvider, WebhookEventsRepo } from "@cronicorn/domain";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,6 +15,7 @@ describe("subscriptionsManager", () => {
   let manager: SubscriptionsManager;
   let mockJobsRepo: JobsRepo;
   let mockPaymentProvider: PaymentProvider;
+  let mockWebhookEventsRepo: WebhookEventsRepo;
 
   beforeEach(() => {
     // Mock JobsRepo
@@ -58,9 +59,19 @@ describe("subscriptionsManager", () => {
       extractTierFromSubscription: vi.fn(),
     };
 
+    // Mock WebhookEventsRepo
+    mockWebhookEventsRepo = {
+      getEvent: vi.fn().mockResolvedValue(null), // Default: no existing event
+      recordEvent: vi.fn(),
+      markProcessed: vi.fn(),
+      markFailed: vi.fn(),
+      deleteOldEvents: vi.fn(),
+    };
+
     manager = new SubscriptionsManager({
       jobsRepo: mockJobsRepo,
       paymentProvider: mockPaymentProvider,
+      webhookEventsRepo: mockWebhookEventsRepo,
       baseUrl: "http://localhost:5173",
     });
   });
@@ -198,6 +209,7 @@ describe("subscriptionsManager", () => {
     describe("checkout.session.completed", () => {
       it("should update user subscription on checkout completion", async () => {
         const event = {
+          id: "evt_test_123",
           type: "checkout.session.completed",
           data: {
             metadata: {
@@ -211,6 +223,12 @@ describe("subscriptionsManager", () => {
 
         await manager.handleWebhookEvent(event);
 
+        expect(mockWebhookEventsRepo.recordEvent).toHaveBeenCalledWith({
+          id: "evt_test_123",
+          type: "checkout.session.completed",
+          data: event.data,
+        });
+
         expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
           tier: "pro",
           stripeCustomerId: "cus_123",
@@ -218,10 +236,13 @@ describe("subscriptionsManager", () => {
           subscriptionStatus: "active",
           subscriptionEndsAt: null,
         });
+
+        expect(mockWebhookEventsRepo.markProcessed).toHaveBeenCalledWith("evt_test_123");
       });
 
       it("should throw error if metadata is missing", async () => {
         const event = {
+          id: "evt_test_456",
           type: "checkout.session.completed",
           data: {
             metadata: {},
@@ -230,6 +251,11 @@ describe("subscriptionsManager", () => {
         };
 
         await expect(manager.handleWebhookEvent(event)).rejects.toThrow(
+          "Missing userId or tier in checkout session metadata",
+        );
+
+        expect(mockWebhookEventsRepo.markFailed).toHaveBeenCalledWith(
+          "evt_test_456",
           "Missing userId or tier in checkout session metadata",
         );
       });
@@ -247,6 +273,7 @@ describe("subscriptionsManager", () => {
         vi.mocked(mockPaymentProvider.extractTierFromSubscription).mockReturnValue("enterprise");
 
         const event = {
+          id: "evt_test_789",
           type: "customer.subscription.updated",
           data: {
             customer: "cus_123",
@@ -277,6 +304,7 @@ describe("subscriptionsManager", () => {
         vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(null);
 
         const event = {
+          id: "evt_test_101",
           type: "customer.subscription.updated",
           data: {
             customer: "cus_unknown",
@@ -302,6 +330,7 @@ describe("subscriptionsManager", () => {
         vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(mockUser);
 
         const event = {
+          id: "evt_test_202",
           type: "customer.subscription.deleted",
           data: {
             customer: "cus_123",
@@ -329,6 +358,7 @@ describe("subscriptionsManager", () => {
         vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(mockUser);
 
         const event = {
+          id: "evt_test_303",
           type: "invoice.payment_succeeded",
           data: {
             customer: "cus_123",
@@ -354,6 +384,7 @@ describe("subscriptionsManager", () => {
         vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(mockUser);
 
         const event = {
+          id: "evt_test_404",
           type: "invoice.payment_failed",
           data: {
             customer: "cus_123",
@@ -371,6 +402,7 @@ describe("subscriptionsManager", () => {
     describe("unhandled events", () => {
       it("should ignore unknown event types", async () => {
         const event = {
+          id: "evt_test_505",
           type: "customer.created",
           data: {},
         };
@@ -379,6 +411,78 @@ describe("subscriptionsManager", () => {
         await manager.handleWebhookEvent(event);
 
         expect(mockJobsRepo.updateUserSubscription).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("idempotency", () => {
+      it("should not process duplicate events", async () => {
+        const event = {
+          id: "evt_test_duplicate",
+          type: "checkout.session.completed",
+          data: {
+            metadata: {
+              userId: "user_123",
+              tier: "pro",
+            },
+            customer: "cus_123",
+            subscription: "sub_123",
+          },
+        };
+
+        // Mock that event was already processed
+        vi.mocked(mockWebhookEventsRepo.getEvent).mockResolvedValue({
+          id: "evt_test_duplicate",
+          type: "checkout.session.completed",
+          processed: true,
+          processedAt: new Date(),
+          receivedAt: new Date(),
+          data: event.data,
+          error: null,
+          retryCount: 0,
+        });
+
+        await manager.handleWebhookEvent(event);
+
+        // Should not process again
+        expect(mockWebhookEventsRepo.recordEvent).not.toHaveBeenCalled();
+        expect(mockJobsRepo.updateUserSubscription).not.toHaveBeenCalled();
+        expect(mockWebhookEventsRepo.markProcessed).not.toHaveBeenCalled();
+      });
+
+      it("should process event if it was recorded but not yet processed", async () => {
+        const event = {
+          id: "evt_test_retry",
+          type: "checkout.session.completed",
+          data: {
+            metadata: {
+              userId: "user_123",
+              tier: "pro",
+            },
+            customer: "cus_123",
+            subscription: "sub_123",
+          },
+        };
+
+        // Mock that event was recorded but not yet processed (e.g., previous attempt failed)
+        vi.mocked(mockWebhookEventsRepo.getEvent).mockResolvedValue({
+          id: "evt_test_retry",
+          type: "checkout.session.completed",
+          processed: false,
+          processedAt: null,
+          receivedAt: new Date(),
+          data: event.data,
+          error: "Previous attempt failed",
+          retryCount: 1,
+        });
+
+        await manager.handleWebhookEvent(event);
+
+        // Should NOT record again (already exists)
+        expect(mockWebhookEventsRepo.recordEvent).not.toHaveBeenCalled();
+
+        // Should process the event
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalled();
+        expect(mockWebhookEventsRepo.markProcessed).toHaveBeenCalledWith("evt_test_retry");
       });
     });
   });

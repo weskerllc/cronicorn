@@ -450,3 +450,65 @@ export type SessionsRepo = {
     totalTokens: number;
   }>>;
 };
+
+/**
+ * Webhook event record for idempotency tracking.
+ */
+export type WebhookEventRecord = {
+  id: string; // Stripe event ID (evt_xxx)
+  type: string; // Event type (checkout.session.completed, etc.)
+  processed: boolean;
+  processedAt: Date | null;
+  receivedAt: Date;
+  data: unknown; // Full event data for debugging
+  error: string | null;
+  retryCount: number;
+};
+
+/**
+ * WebhookEventsRepo - Tracks processed webhook events for idempotency.
+ *
+ * Stripe may retry delivery of the same event multiple times.
+ * This repo ensures we don't process the same event twice.
+ *
+ * **Best Practice**: Check if event exists before processing, then mark as processed.
+ */
+export type WebhookEventsRepo = {
+  /**
+   * Check if webhook event has already been processed.
+   * @param eventId - Stripe event ID
+   * @returns Event record if exists, null otherwise
+   */
+  getEvent: (eventId: string) => Promise<WebhookEventRecord | null>;
+
+  /**
+   * Record a new webhook event (not yet processed).
+   * @param event - Event data
+   */
+  recordEvent: (event: {
+    id: string;
+    type: string;
+    data: unknown;
+  }) => Promise<void>;
+
+  /**
+   * Mark webhook event as successfully processed.
+   * @param eventId - Stripe event ID
+   */
+  markProcessed: (eventId: string) => Promise<void>;
+
+  /**
+   * Mark webhook event as failed with error.
+   * Increments retry count for tracking.
+   * @param eventId - Stripe event ID
+   * @param error - Error message
+   */
+  markFailed: (eventId: string, error: string) => Promise<void>;
+
+  /**
+   * Clean up old webhook events (for maintenance).
+   * Stripe recommends keeping events for at least 24 hours.
+   * @param olderThan - Delete events older than this date
+   */
+  deleteOldEvents: (olderThan: Date) => Promise<number>;
+};
