@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, LabelList, Rectangle, XAxis, YAxis } from "recharts";
 import {
     ChartContainer,
     ChartLegend,
@@ -17,6 +15,8 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@cronicorn/ui-library/components/pagination";
+import { useMemo, useState } from "react";
+import { Bar, BarChart, LabelList, Rectangle, XAxis, YAxis } from "recharts";
 import { DashboardCard } from "./dashboard-card";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 
