@@ -53,6 +53,7 @@ export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
     lastRunAt: endpoint.lastRunAt?.toISOString(),
     failureCount: endpoint.failureCount,
     pausedUntil: endpoint.pausedUntil?.toISOString(),
+    archivedAt: endpoint.archivedAt?.toISOString(),
     url: endpoint.url,
     method: endpoint.method,
     headersJson: endpoint.headersJson,
@@ -162,9 +163,9 @@ export function mapHealthSummaryToResponse(summary: {
     avgDurationMs: summary.avgDurationMs,
     lastRun: summary.lastRun
       ? {
-          status: summary.lastRun.status,
-          at: summary.lastRun.at.toISOString(),
-        }
+        status: summary.lastRun.status,
+        at: summary.lastRun.at.toISOString(),
+      }
       : null,
     failureStreak: summary.failureStreak,
   };

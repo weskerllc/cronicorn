@@ -104,6 +104,9 @@ export const UpdateEndpointDescription = "Update endpoint configuration. All fie
 export const DeleteEndpointSummary = "Delete endpoint";
 export const DeleteEndpointDescription = "Permanently delete an endpoint. This action cannot be undone. All associated run history will be deleted.";
 
+export const ArchiveEndpointSummary = "Archive endpoint";
+export const ArchiveEndpointDescription = "Archive an endpoint (soft delete). The endpoint will be marked as archived and will no longer count toward quota limits or be scheduled for execution. Archived endpoints can be permanently deleted later if needed.";
+
 // ==================== Endpoint Request/Response Schemas ====================
 
 const EndpointFieldsBaseSchema = z.object({
@@ -187,6 +190,7 @@ export const EndpointResponseSchema = z.object({
   lastRunAt: z.string().datetime().optional().describe("Last run time"),
   failureCount: z.number().int().describe("Consecutive failure count"),
   pausedUntil: z.string().datetime().optional().describe("Pause expiration time"),
+  archivedAt: z.string().datetime().optional().describe("Archive timestamp (soft delete)"),
   url: z.string().optional().describe("HTTP endpoint URL"),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).optional().describe("HTTP method"),
   headersJson: z.record(z.string(), z.string()).optional().describe("HTTP headers"),

@@ -186,6 +186,25 @@ export const deleteEndpoint: AppRouteHandler<routes.DeleteEndpointRoute> = async
   });
 };
 
+export const archiveEndpoint: AppRouteHandler<routes.ArchiveEndpointRoute> = async (c) => {
+  const { id } = c.req.valid("param");
+  const { userId } = getAuthContext(c);
+
+  return c.get("withJobsManager")(async (manager) => {
+    try {
+      const archived = await manager.archiveEndpoint(userId, id);
+      return c.json(mappers.mapEndpointToResponse(archived), HTTPStatusCodes.OK);
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : "Archive failed";
+      if (message.includes("not found") || message.includes("unauthorized")) {
+        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
+      }
+      throw error;
+    }
+  });
+};
+
 export const getEndpoint: AppRouteHandler<routes.GetEndpointRoute> = async (c) => {
   const { id } = c.req.valid("param");
   const { userId } = getAuthContext(c);
