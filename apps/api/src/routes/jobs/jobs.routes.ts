@@ -186,6 +186,21 @@ export const deleteEndpoint = createRoute({
   },
 });
 
+export const archiveEndpoint = createRoute({
+  path: "/jobs/:jobId/endpoints/:id/archive",
+  method: "post",
+  tags: ["Endpoints"],
+  summary: schemas.ArchiveEndpointSummary,
+  description: schemas.ArchiveEndpointDescription,
+  request: {
+    params: z.object({ jobId: z.string(), id: z.string() }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(schemas.EndpointResponseSchema, "Archived endpoint"),
+    ...errorResponses,
+  },
+});
+
 export const getEndpoint = createRoute({
   path: "/jobs/:jobId/endpoints/:id",
   method: "get",
@@ -360,6 +375,7 @@ export type ResumeJobRoute = typeof resumeJob;
 export type AddEndpointRoute = typeof addEndpoint;
 export type UpdateEndpointRoute = typeof updateEndpoint;
 export type DeleteEndpointRoute = typeof deleteEndpoint;
+export type ArchiveEndpointRoute = typeof archiveEndpoint;
 export type GetEndpointRoute = typeof getEndpoint;
 export type ListEndpointsRoute = typeof listEndpoints;
 

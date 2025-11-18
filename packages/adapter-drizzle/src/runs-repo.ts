@@ -99,6 +99,10 @@ export class DrizzleRunsRepo implements RunsRepo {
     // CRITICAL: Always filter by userId to ensure data isolation
     conditions.push(eq(jobs.userId, filters.userId));
 
+    // CRITICAL: Exclude archived jobs and endpoints
+    conditions.push(ne(jobs.status, "archived"));
+    conditions.push(isNull(jobEndpoints.archivedAt));
+
     if (filters.endpointId) {
       conditions.push(eq(runs.endpointId, filters.endpointId));
     }
@@ -193,7 +197,14 @@ export class DrizzleRunsRepo implements RunsRepo {
       .from(jobs)
       .leftJoin(jobEndpoints, eq(jobEndpoints.jobId, jobs.id))
       .leftJoin(runs, eq(runs.endpointId, jobEndpoints.id))
-      .where(eq(jobs.userId, userId))
+      .where(and(
+        eq(jobs.userId, userId),
+        ne(jobs.status, "archived"), // Exclude archived jobs
+        or(
+          isNull(jobEndpoints.id), // No endpoints yet
+          isNull(jobEndpoints.archivedAt), // Or endpoint not archived
+        ),
+      ))
       .groupBy(jobs.id, jobs.name);
 
     return results.map(row => ({
@@ -215,7 +226,11 @@ export class DrizzleRunsRepo implements RunsRepo {
       failureCount: number;
       avgDurationMs: number | null;
     }> {
-    const conditions = [eq(jobs.userId, filters.userId)];
+    const conditions = [
+      eq(jobs.userId, filters.userId),
+      ne(jobs.status, "archived"), // Exclude archived jobs
+      isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
+    ];
 
     if (filters.jobId) {
       conditions.push(eq(jobs.id, filters.jobId));
@@ -260,6 +275,8 @@ export class DrizzleRunsRepo implements RunsRepo {
     const conditions = [
       eq(jobs.userId, filters.userId),
       not(isNull(runs.source)), // Exclude null sources
+      ne(jobs.status, "archived"), // Exclude archived jobs
+      isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
     ];
 
     if (filters.jobId) {
@@ -294,12 +311,17 @@ export class DrizzleRunsRepo implements RunsRepo {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    granularity?: "hour" | "day";
   }): Promise<Array<{
       date: string;
       success: number;
       failure: number;
     }>> {
-    const conditions = [eq(jobs.userId, filters.userId)];
+    const conditions = [
+      eq(jobs.userId, filters.userId),
+      ne(jobs.status, "archived"), // Exclude archived jobs
+      isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
+    ];
 
     if (filters.sinceDate) {
       conditions.push(gte(runs.startedAt, filters.sinceDate));
@@ -311,9 +333,15 @@ export class DrizzleRunsRepo implements RunsRepo {
       conditions.push(eq(runs.source, filters.source));
     }
 
+    // Use hourly or daily granularity based on filter
+    const granularity = filters.granularity ?? "day";
+    const dateExpression = granularity === "hour"
+      ? sql<string>`TO_CHAR(DATE_TRUNC('hour', ${runs.startedAt}), 'YYYY-MM-DD HH24:00:00')`
+      : sql<string>`DATE(${runs.startedAt})`;
+
     const results = await this.tx
       .select({
-        date: sql<string>`DATE(${runs.startedAt})`,
+        date: dateExpression,
         success: count(sql`CASE WHEN ${runs.status} = 'success' THEN 1 END`),
         failure: count(sql`CASE WHEN ${runs.status} IN ('failed', 'timeout') THEN 1 END`),
       })
@@ -321,8 +349,8 @@ export class DrizzleRunsRepo implements RunsRepo {
       .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
       .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
       .where(and(...conditions))
-      .groupBy(sql`DATE(${runs.startedAt})`)
-      .orderBy(sql`DATE(${runs.startedAt}) ASC`);
+      .groupBy(dateExpression)
+      .orderBy(dateExpression);
 
     return results.map(row => ({
       date: row.date,
@@ -337,6 +365,7 @@ export class DrizzleRunsRepo implements RunsRepo {
     source?: string;
     sinceDate?: Date;
     endpointLimit?: number;
+    granularity?: "hour" | "day";
   }): Promise<Array<{
       date: string;
       endpointId: string;
@@ -344,7 +373,11 @@ export class DrizzleRunsRepo implements RunsRepo {
       success: number;
       failure: number;
     }>> {
-    const conditions = [eq(jobs.userId, filters.userId)];
+    const conditions = [
+      eq(jobs.userId, filters.userId),
+      ne(jobs.status, "archived"), // Exclude archived jobs
+      isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
+    ];
 
     if (filters.sinceDate) {
       conditions.push(gte(runs.startedAt, filters.sinceDate));
@@ -386,9 +419,15 @@ export class DrizzleRunsRepo implements RunsRepo {
       timeSeriesConditions.push(inArray(jobEndpoints.id, topEndpointIds));
     }
 
+    // Use hourly or daily granularity based on filter
+    const granularity = filters.granularity ?? "day";
+    const dateExpression = granularity === "hour"
+      ? sql<string>`TO_CHAR(DATE_TRUNC('hour', ${runs.startedAt}), 'YYYY-MM-DD HH24:00:00')`
+      : sql<string>`DATE(${runs.startedAt})`;
+
     const results = await this.tx
       .select({
-        date: sql<string>`DATE(${runs.startedAt})`,
+        date: dateExpression,
         endpointId: jobEndpoints.id,
         endpointName: jobEndpoints.name,
         success: count(sql`CASE WHEN ${runs.status} = 'success' THEN 1 END`),
@@ -398,8 +437,8 @@ export class DrizzleRunsRepo implements RunsRepo {
       .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
       .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
       .where(and(...timeSeriesConditions))
-      .groupBy(sql`DATE(${runs.startedAt})`, jobEndpoints.id, jobEndpoints.name)
-      .orderBy(sql`DATE(${runs.startedAt}) ASC`, jobEndpoints.name);
+      .groupBy(dateExpression, jobEndpoints.id, jobEndpoints.name)
+      .orderBy(dateExpression, jobEndpoints.name);
 
     return results.map(row => ({
       date: row.date,

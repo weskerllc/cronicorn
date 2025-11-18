@@ -14,7 +14,7 @@ interface EmptyCTAProps {
 
 export function EmptyCTA({ title, description, button, action }: EmptyCTAProps) {
   return (
-    <div className="border rounded-lg text-center bg-muted/50 p-8 sm:p-12">
+    <div className="border rounded-md text-center bg-muted/50 p-8 sm:p-12">
       <div className="max-w-md mx-auto space-y-4">
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">{title}</h3>

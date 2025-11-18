@@ -1,7 +1,7 @@
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
 import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo } from "@cronicorn/domain";
-import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 
 import { type JobEndpointRow, jobEndpoints, type JobRow, jobs, runs, user } from "./schema.js";
 
@@ -141,6 +141,7 @@ export class DrizzleJobsRepo implements JobsRepo {
             isNull(jobEndpoints._lockedUntil),
             lte(jobEndpoints._lockedUntil, now),
           ),
+          isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
           // Only check job status if jobId exists
           or(
             isNull(jobEndpoints.jobId), // No job (backward compat)
@@ -339,6 +340,7 @@ export class DrizzleJobsRepo implements JobsRepo {
       minIntervalMs: row.minIntervalMs ?? undefined,
       maxIntervalMs: row.maxIntervalMs ?? undefined,
       pausedUntil: row.pausedUntil ?? undefined,
+      archivedAt: row.archivedAt ?? undefined,
       lastRunAt: row.lastRunAt ?? undefined,
       nextRunAt: row.nextRunAt,
       failureCount: row.failureCount,
@@ -542,11 +544,39 @@ export class DrizzleJobsRepo implements JobsRepo {
     // getEndpoint will throw if row doesn't exist
   }
 
+  async archiveEndpoint(id: string): Promise<JobEndpoint> {
+    const now = this.now();
+
+    await this.tx
+      .update(jobEndpoints)
+      .set({
+        archivedAt: now,
+      })
+      .where(eq(jobEndpoints.id, id));
+
+    const archived = await this.getEndpoint(id);
+    if (!archived) {
+      throw new Error(`Endpoint not found: ${id}`);
+    }
+
+    return archived;
+  }
+
   async countEndpointsByUser(userId: string): Promise<number> {
     const result = await this.tx
       .select({ count: sql<number>`COUNT(*)::int` })
       .from(jobEndpoints)
-      .where(eq(jobEndpoints.tenantId, userId));
+      .leftJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(
+        and(
+          eq(jobEndpoints.tenantId, userId),
+          isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
+          or(
+            isNull(jobEndpoints.jobId), // Backwards compat: endpoints without jobs
+            ne(jobs.status, "archived"), // Exclude endpoints from archived jobs
+          ),
+        ),
+      );
 
     return result[0]?.count ?? 0;
   }
@@ -566,6 +596,7 @@ export class DrizzleJobsRepo implements JobsRepo {
       .where(and(
         eq(jobs.userId, userId),
         eq(jobs.status, "active"),
+        isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
       ));
 
     const row = result[0];
@@ -615,11 +646,21 @@ export class DrizzleJobsRepo implements JobsRepo {
     const { maxEndpoints: endpointsLimit } = getExecutionLimits(tier);
     const totalRunsLimit = getRunsLimit(tier);
 
-    // Count endpoints for this user
+    // Count endpoints for this user (excluding archived endpoints and endpoints from archived jobs)
     const endpointsResult = await this.tx
       .select({ count: sql<number>`COUNT(*)::int` })
       .from(jobEndpoints)
-      .where(eq(jobEndpoints.tenantId, userId));
+      .leftJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(
+        and(
+          eq(jobEndpoints.tenantId, userId),
+          isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
+          or(
+            isNull(jobEndpoints.jobId), // Backwards compat: endpoints without jobs
+            ne(jobs.status, "archived"), // Exclude endpoints from archived jobs
+          ),
+        ),
+      );
     const endpointsUsed = endpointsResult[0]?.count ?? 0;
 
     // Sum token usage since specified date

@@ -53,6 +53,7 @@ export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
     lastRunAt: endpoint.lastRunAt?.toISOString(),
     failureCount: endpoint.failureCount,
     pausedUntil: endpoint.pausedUntil?.toISOString(),
+    archivedAt: endpoint.archivedAt?.toISOString(),
     url: endpoint.url,
     method: endpoint.method,
     headersJson: endpoint.headersJson,

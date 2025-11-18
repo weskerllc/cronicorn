@@ -114,7 +114,7 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
             {endpointStats.length === 0 ? (null) : (<>
                 <ChartStyle id="endpoint-table" config={chartConfig} />
                 <div data-chart="endpoint-table" className="w-full h-full">
-                    <ScrollArea className="w-full h-full  [&>[data-radix-scroll-area-viewport]]:h-full">
+                    <ScrollArea className="w-full h-full  [&>[data-radix-scroll-area-viewport]]:h-full p-2">
 
                         <Table>
                             <TableHeader>
@@ -127,7 +127,9 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
                             </TableHeader>
                             <TableBody>
                                 {paginatedStats.map((stat) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                                     if (!stat || !stat.name) return null;
+                                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                                     const mapping = colorMappings.find(m => m && m.name === stat.name);
                                     if (!mapping || !mapping.sanitizedKey) return null;
                                     const { sanitizedKey } = mapping;
