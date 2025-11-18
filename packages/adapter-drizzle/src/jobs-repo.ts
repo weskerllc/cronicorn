@@ -596,6 +596,7 @@ export class DrizzleJobsRepo implements JobsRepo {
       .where(and(
         eq(jobs.userId, userId),
         eq(jobs.status, "active"),
+        isNull(jobEndpoints.archivedAt), // Exclude archived endpoints
       ));
 
     const row = result[0];
