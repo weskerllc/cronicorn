@@ -90,34 +90,71 @@ export class SubscriptionsManager {
   /**
    * Handle webhook event from Stripe.
    * This is called after signature verification.
+   *
+   * **Idempotency**: Checks if event has already been processed to prevent duplicate operations.
+   * Stripe may retry delivery of the same event multiple times.
    */
   // eslint-disable-next-line ts/no-explicit-any
-  async handleWebhookEvent(event: { type: string; data: any }): Promise<void> {
-    switch (event.type) {
-      case "checkout.session.completed":
-        await this.handleCheckoutCompleted(event.data);
-        break;
+  async handleWebhookEvent(event: { id: string; type: string; data: any }): Promise<void> {
+    // Check if we've already processed this event (idempotency)
+    const existingEvent = await this.deps.webhookEventsRepo.getEvent(event.id);
 
-      case "customer.subscription.updated":
-        await this.handleSubscriptionUpdated(event.data);
-        break;
+    if (existingEvent?.processed) {
+      // eslint-disable-next-line no-console
+      console.log(`[SubscriptionsManager] Webhook event already processed: ${event.id} (${event.type})`);
+      return; // Already processed, skip
+    }
 
-      case "customer.subscription.deleted":
-        await this.handleSubscriptionDeleted(event.data);
-        break;
+    // Record this event (if not already recorded)
+    if (!existingEvent) {
+      await this.deps.webhookEventsRepo.recordEvent({
+        id: event.id,
+        type: event.type,
+        data: event.data,
+      });
+    }
 
-      case "invoice.payment_succeeded":
-        await this.handlePaymentSucceeded(event.data);
-        break;
+    try {
+      // Process the event
+      switch (event.type) {
+        case "checkout.session.completed":
+          await this.handleCheckoutCompleted(event.data);
+          break;
 
-      case "invoice.payment_failed":
-        await this.handlePaymentFailed(event.data);
-        break;
+        case "customer.subscription.updated":
+          await this.handleSubscriptionUpdated(event.data);
+          break;
 
-      default:
-        // Ignore unhandled events (product.created, plan.created, etc.)
-        // eslint-disable-next-line no-console
-        console.log(`[SubscriptionsManager] Ignoring unhandled webhook event: ${event.type}`);
+        case "customer.subscription.deleted":
+          await this.handleSubscriptionDeleted(event.data);
+          break;
+
+        case "invoice.payment_succeeded":
+          await this.handlePaymentSucceeded(event.data);
+          break;
+
+        case "invoice.payment_failed":
+          await this.handlePaymentFailed(event.data);
+          break;
+
+        default:
+          // Ignore unhandled events (product.created, plan.created, etc.)
+          // eslint-disable-next-line no-console
+          console.log(`[SubscriptionsManager] Ignoring unhandled webhook event: ${event.type}`);
+      }
+
+      // Mark as successfully processed
+      await this.deps.webhookEventsRepo.markProcessed(event.id);
+    }
+    catch (error) {
+      // Log the error and mark as failed
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error(`[SubscriptionsManager] Error processing webhook event ${event.id}: ${errorMessage}`);
+
+      await this.deps.webhookEventsRepo.markFailed(event.id, errorMessage);
+
+      // Re-throw so Stripe knows to retry
+      throw error;
     }
   }
 
