@@ -1,21 +1,15 @@
 import { useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { Archive, Edit, Plus } from "lucide-react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@cronicorn/ui-library/components/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
-import { IconDotsVertical } from "@tabler/icons-react";
-import { EmptyCTA } from "../../components/empty-cta";
-import { PageHeader } from "../../components/page-header";
+import { EmptyCTA } from "../../components/cards/empty-cta";
+import { PageHeader } from "../../components/composed/page-header";
+import { PageSection } from "@/components/primitives/page-section";
+;
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { GetJobsResponse } from "@/lib/api-client/queries/jobs.queries";
@@ -25,7 +19,7 @@ import {
   jobsQueryOptions,
 } from "@/lib/api-client/queries/jobs.queries";
 import { DASHBOARD_QUERY_KEY } from "@/lib/api-client/queries/dashboard.queries";
-import { DataTable } from "@/components/data-table";
+import { DataTable } from "@/components/composed/data-table";
 
 type JobRow = GetJobsResponse["jobs"][number];
 
@@ -39,7 +33,7 @@ export const Route = createFileRoute("/_authed/jobs/")({
 });
 
 function JobsListPage() {
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
 
   // Query with status filter
@@ -50,39 +44,14 @@ function JobsListPage() {
   // Since we're filtering at the API level now, use all jobs returned
   const jobs = jobsData.jobs;
 
-  const archiveMutation = useMutation({
-    mutationFn: archiveJob,
-    onSuccess: () => {
-      // Invalidate both jobs and dashboard queries to update all views
-      queryClient.invalidateQueries({ queryKey: JOBS_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
-    },
-  });
-
-  const handleArchive = (jobId: string, jobName: string, isArchived: boolean) => {
-    if (
-      confirm(
-        isArchived
-          ? `Are you sure you want to unarchive "${jobName}"?`
-          : `Are you sure you want to archive "${jobName}"? This will archive all associated endpoints.`,
-      )
-    ) {
-      archiveMutation.mutate(jobId);
-    }
-  };
-
   const columns: Array<ColumnDef<JobRow>> = [
     {
       accessorKey: "name",
       header: "Job Name",
       cell: ({ row }) => (
-        <Link
-          to="/jobs/$id"
-          params={{ id: row.original.id }}
-          className="font-medium hover:underline"
-        >
+        <span className="font-medium">
           {row.original.name}
-        </Link>
+        </span>
       ),
     },
     {
@@ -118,45 +87,6 @@ function JobsListPage() {
         </Badge>
       ),
     },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-            >
-              <IconDotsVertical className="size-4" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link to="/jobs/$id" params={{ id: row.original.id }}>
-                View Details
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/jobs/$id/edit" params={{ id: row.original.id }}>
-                <Edit className="size-4" />
-                Edit
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => handleArchive(row.original.id, row.original.name, row.original.status === "archived")}
-              disabled={archiveMutation.isPending}
-              className={row.original.status === "archived" ? "" : "text-destructive"}
-            >
-              <Archive className={`size-4 ${row.original.status === "archived" ? "" : "text-destructive"}`} />
-              {row.original.status === "archived" ? "Unarchive" : "Archive"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
   ];
 
   return (
@@ -188,14 +118,13 @@ function JobsListPage() {
         }
       />
 
-      {jobs.length === 0 ? (
-        <EmptyCTA
-          title="No Jobs Yet"
-          description="Create your first job to start scheduling"
-
-        />
-      ) : (
-        <>
+      <PageSection>
+        {jobs.length === 0 ? (
+          <EmptyCTA
+            title="No Jobs Yet"
+            description="Create your first job to start scheduling"
+          />
+        ) : (
           <DataTable
             columns={columns}
             data={jobs}
@@ -204,9 +133,10 @@ function JobsListPage() {
             emptyMessage="No jobs found."
             enablePagination={true}
             defaultPageSize={10}
+            onRowClick={(job) => navigate({ to: "/jobs/$id", params: { id: job.id } })}
           />
-        </>
-      )}
+        )}
+      </PageSection>
     </>
   );
 }

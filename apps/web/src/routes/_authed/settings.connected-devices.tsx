@@ -17,10 +17,12 @@ import {
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
 import { Skeleton } from "@cronicorn/ui-library/components/skeleton";
+import { EmptyCTA } from "../../components/cards/empty-cta";
+import { InlineBadge } from "../../components/primitives/inline-badge";
+import { ListCard } from "../../components/cards/list-card";
 
 import type { ListDevicesResponse } from "@/lib/api-client/queries/devices.queries";
 import { devicesQueryOptions, revokeDevice } from "@/lib/api-client/queries/devices.queries";
-import { PageHeader } from "@/components/page-header";
 
 export const Route = createFileRoute("/_authed/settings/connected-devices")({
     component: ConnectedDevices,
@@ -83,11 +85,6 @@ function ConnectedDevices() {
 
     return (
         <>
-            <PageHeader
-                text="Connected Devices"
-                description="Manage devices and applications that have access to your account"
-            />
-
             {error && (
                 <Alert variant="destructive" className="mb-6">
                     <AlertCircle className="h-4 w-4" />
@@ -157,57 +154,44 @@ function ConnectedDevices() {
                     ) : tokens.length ? (
                         <div className="space-y-4">
                             {tokens.map((token) => (
-                                <div
+                                <ListCard
                                     key={token.id}
-                                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                                >
-                                    <div className="flex items-start gap-4 flex-1">
-                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                            <Smartphone className="h-5 w-5 text-primary" />
+                                    icon={Smartphone}
+                                    title={
+                                        <div className="flex items-center gap-2">
+                                            <span>{token.userAgent || "Unknown Device"}</span>
+                                            {token.ipAddress && (
+                                                <InlineBadge variant="code" size="sm">
+                                                    {token.ipAddress}
+                                                </InlineBadge>
+                                            )}
                                         </div>
-                                        <div className="space-y-1 flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-medium">
-                                                    {token.userAgent || "Unknown Device"}
-                                                </p>
-                                                {token.ipAddress && (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono bg-muted">
-                                                        {token.ipAddress}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                                                <span>
-                                                    Connected {formatRelativeTime(token.createdAt)}
-                                                </span>
-                                                <span>
-                                                    {formatExpiresIn(token.expiresAt)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleRevokeClick(token)}
-                                        disabled={revokeMutation.isPending}
-                                        className="ml-4 shrink-0"
-                                    >
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Revoke
-                                    </Button>
-                                </div>
+                                    }
+                                    metadata={[
+                                        `Connected ${formatRelativeTime(token.createdAt)}`,
+                                        formatExpiresIn(token.expiresAt),
+                                    ]}
+                                    actions={
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleRevokeClick(token)}
+                                            disabled={revokeMutation.isPending}
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            Revoke
+                                        </Button>
+                                    }
+                                />
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-12">
-                            <Smartphone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold mb-2">No connected devices</h3>
-                            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                                You haven't connected any devices or applications yet. When you authorize a device using
-                                a user code, it will appear here.
-                            </p>
-                        </div>
+                        <EmptyCTA
+                            icon={Smartphone}
+                            variant="centered"
+                            title="No connected devices"
+                            description="You haven't connected any devices or applications yet. When you authorize a device using a user code, it will appear here."
+                        />
                     )}
                 </CardContent>
             </Card>

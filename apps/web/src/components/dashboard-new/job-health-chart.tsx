@@ -164,7 +164,7 @@ export function JobHealthChart({
                     margin={{
                         top: 16,
                         left: 12,
-                        right: 18,
+                        right: 36,
                     }}
                     barCategoryGap="25%"
                 >

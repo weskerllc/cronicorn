@@ -3,11 +3,14 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useMemo } from "react";
 
+import { ErrorState } from "../../components/composed/error-state";
+import { LoadingState } from "../../components/composed/loading-state";
+import { GridLayout } from "../../components/primitives/grid-layout";
 import { ExecutionTimelineChart } from "../../components/dashboard-new/execution-timeline-chart";
 import { FilterBar } from "../../components/dashboard-new/filter-bar";
 import { JobHealthChart } from "../../components/dashboard-new/job-health-chart";
 import { SchedulingIntelligenceChart } from "../../components/dashboard-new/scheduling-intelligence-chart";
-import { PageHeader } from "../../components/page-header";
+import { PageHeader } from "../../components/composed/page-header";
 import { AISessionsChart } from "../../components/dashboard-new/ai-sessions-chart";
 import { EndpointTable } from "../../components/dashboard-new/endpoint-table";
 import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
@@ -48,20 +51,13 @@ export const Route = createFileRoute("/_authed/dashboard")({
   },
   component: DashboardPage,
   errorComponent: ({ error }) => (
-    <div className="flex items-center justify-center min-h-[400px] p-4">
-      <div className="text-center space-y-4">
-        <h2 className="text-xl font-semibold text-destructive">Failed to load dashboard</h2>
-        <p className="text-sm text-muted-foreground">{error.message}</p>
-      </div>
-    </div>
+    <ErrorState
+      title="Failed to load dashboard"
+      message={error.message}
+    />
   ),
   pendingComponent: () => (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="text-center space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-        <p className="text-sm text-muted-foreground">Loading dashboard...</p>
-      </div>
-    </div>
+    <LoadingState message="Loading dashboard..." />
   ),
 });
 
@@ -133,7 +129,7 @@ function DashboardPage() {
       <div className="space-y-6" style={{ opacity: isPlaceholderData ? 0.7 : 1 }}>
         {/* Overview Section */}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <GridLayout cols={1} lg={2}>
           <JobHealthChart
             data={dashboardData?.jobHealth || []}
             onJobClick={(handleJobId) => {
@@ -144,7 +140,7 @@ function DashboardPage() {
           <SchedulingIntelligenceChart
             data={dashboardData?.sourceDistribution || []}
           />
-        </div>
+        </GridLayout>
       </div>
 
 
@@ -156,7 +152,7 @@ function DashboardPage() {
       />
 
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <GridLayout cols={1} lg={2}>
         <ExecutionTimelineChart
           data={dashboardData?.endpointTimeSeries || []}
           chartConfig={endpointChartConfig}
@@ -165,7 +161,7 @@ function DashboardPage() {
           data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
         />
-      </div>
+      </GridLayout>
     </>
   );
 }
