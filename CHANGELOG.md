@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/weskerllc/cronicorn/compare/v1.12.0...v1.12.1) (2025-11-19)
+
+
+### Bug Fixes
+
+* Add shared layout to public pages ([#48](https://github.com/weskerllc/cronicorn/issues/48)) ([e527481](https://github.com/weskerllc/cronicorn/commit/e527481ac62f57fe44ad635d67f4dea104100300))
+
 # [1.12.0](https://github.com/weskerllc/cronicorn/compare/v1.11.1...v1.12.0) (2025-11-19)
 
 
