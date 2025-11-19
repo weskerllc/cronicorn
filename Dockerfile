@@ -51,17 +51,18 @@ RUN pnpm deploy --filter=@cronicorn/ai-planner-app --prod --legacy /prod/ai-plan
 FROM build AS deploy-web
 # Pass build-time environment variables for Vite
 ARG VITE_SITE_URL
+ARG VITE_API_URL
 ARG NODE_ENV=production
 ENV VITE_SITE_URL=$VITE_SITE_URL
+ENV VITE_API_URL=$VITE_API_URL
 ENV NODE_ENV=$NODE_ENV
 # Build API first (web depends on @cronicorn/api/client)
 RUN pnpm --filter @cronicorn/api run build
-# Now build web
+# Now build web (TanStack Start SSR build with Nitro)
 RUN pnpm --filter @cronicorn/web run build
 RUN pnpm deploy --filter=@cronicorn/web --prod --legacy /prod/web
-# Copy built web assets
-RUN cp -r /app/apps/web/dist /prod/web/
-RUN cp -r /app/apps/web/nginx/nginx.conf /prod/web/
+# Copy Nitro .output directory (contains server and client)
+RUN cp -r /app/apps/web/.output /prod/web/
 
 FROM build AS deploy-docs
 ARG NODE_ENV=production
@@ -115,12 +116,17 @@ WORKDIR /app
 COPY --from=deploy-ai-planner --chown=node:node /prod/ai-planner .
 CMD ["node", "dist/index.js"]
 
-# Web Runtime (nginx)
-FROM nginx:alpine AS web
-COPY --from=deploy-web /prod/web/dist /usr/share/nginx/html
-# Copy custom nginx configuration
-COPY --from=deploy-web /prod/web/nginx/nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+# Web Runtime (Node.js with TanStack Start SSR + Nitro)
+FROM node:${NODE_VERSION}-alpine AS web
+ENV NODE_ENV=production
+ENV PORT=5173
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini", "--"]
+USER node
+WORKDIR /app
+COPY --from=deploy-web --chown=node:node /prod/web .
+EXPOSE 5173
+CMD ["node", ".output/server/index.mjs"]
 
 # Docs Runtime (nginx)
 FROM nginx:alpine AS docs

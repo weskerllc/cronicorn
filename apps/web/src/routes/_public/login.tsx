@@ -1,33 +1,64 @@
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
 import { Input } from "@cronicorn/ui-library/components/input";
 import { Label } from "@cronicorn/ui-library/components/label";
-import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Separator } from "@cronicorn/ui-library/components/separator";
+import { useQuery } from "@tanstack/react-query";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Github, Mail } from "lucide-react";
+import React, { useEffect, useState } from "react";
 
 import { brand, metaDescriptions, pageTitles, structuredData } from "@cronicorn/content";
-import { signIn } from "@/lib/auth-client";
-import { SEO } from "@/components/SEO";
 import { APP_URL } from "@/config";
 import { authConfigQueryOptions } from "@/lib/api-client/queries/auth-config.queries";
+import { signIn, useSession } from "@/lib/auth-client";
+import { createSEOHead } from "@/lib/seo";
 
 type LoginSearch = {
   redirect?: string;
 };
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/_public/login")({
+  ssr: false,
+  head: () => {
+    const loginStructuredData = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Login",
+      description: structuredData.login.description,
+      url: `${APP_URL}/login`,
+      mainEntity: {
+        "@type": "LoginAction",
+        name: "User Login",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${APP_URL}/login`,
+          actionPlatform: [
+            "https://schema.org/DesktopWebPlatform",
+            "https://schema.org/MobileWebPlatform"
+          ]
+        }
+      },
+      object: {
+        "@type": "DigitalDocument",
+        name: "User Account",
+        description: structuredData.login.accountDescription
+      }
+    };
+
+    return createSEOHead({
+      title: pageTitles.login,
+      description: metaDescriptions.login,
+      url: "/login",
+      noindex: true,
+      structuredData: loginStructuredData,
+    });
+  },
   validateSearch: (search: Record<string, unknown>): LoginSearch => {
     return {
       redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
     };
-  },
-  loader: async ({ context }) => {
-    // Load auth configuration to know which methods are available
-    await context.queryClient.ensureQueryData(authConfigQueryOptions());
   },
   component: RouteComponent,
 });
@@ -37,23 +68,38 @@ function RouteComponent() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isClient, setIsClient] = useState(false);
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
 
-  // Get available authentication methods
-  const { data: authConfig } = useSuspenseQuery(authConfigQueryOptions());
+  const { data: session } = useSession();
 
-  // Determine where to redirect after login
+  useEffect(() => {
+    // auto route to dashboard if logged in
+    if (session) {
+      navigate({ to: '/dashboard' });
+    }
+  }, [session, navigate]);
+
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const { data: authConfig } = useQuery({
+    ...authConfigQueryOptions(),
+    enabled: isClient,
+    placeholderData: { hasEmailPassword: true, hasGitHubOAuth: true },
+  });
+
   const getRedirectPath = () => {
     if (redirect) {
       try {
         const url = new URL(redirect);
-        // Only allow redirects to the same origin for security
         if (url.origin === window.location.origin) {
           return url.pathname + url.search;
         }
       } catch {
-        // If redirect is not a full URL, assume it's a path
         return redirect;
       }
     }
@@ -76,16 +122,16 @@ function RouteComponent() {
         },
         {
           onSuccess: () => {
-            navigate({ to: redirectPath as any });
+            navigate({ to: redirectPath });
           },
           onError: (ctx) => {
             setError(ctx.error.message || "Failed to sign in. Please check your credentials.");
             setIsLoading(false);
           },
-        },
+        }
       );
     } catch (err) {
-      setError("Failed to sign in. Please try again.");
+      setError(`Failed to sign in: ${err instanceof Error ? err.message : 'Please try again'}`);
       setIsLoading(false);
     }
   };
@@ -105,7 +151,7 @@ function RouteComponent() {
       },
       {
         onSuccess: () => {
-          navigate({ to: redirectPath as any });
+          navigate({ to: redirectPath });
         },
         onError: () => {
           setError("Failed to sign in with GitHub. Please try again.");
@@ -115,48 +161,9 @@ function RouteComponent() {
     );
   };
 
-  // Structured data for login page
-  const loginStructuredData = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: structuredData.login.pageName,
-    description: structuredData.login.description,
-    url: `${APP_URL}/login`,
-    isPartOf: {
-      "@type": "WebSite",
-      name: brand.name,
-      url: APP_URL
-    },
-    potentialAction: {
-      "@type": "LoginAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${APP_URL}/login`,
-        actionPlatform: [
-          "http://schema.org/DesktopWebPlatform",
-          "http://schema.org/MobileWebPlatform"
-        ]
-      },
-      object: {
-        "@type": "DigitalDocument",
-        name: "User Account",
-        description: structuredData.login.accountDescription
-      }
-    }
-  };
-
   return (
     <>
-      <SEO
-        title={pageTitles.login}
-        description={metaDescriptions.login}
-        keywords={["login", "sign in", "authentication", "user account", "dashboard access"]}
-        url="/login"
-        noindex={true}
-        structuredData={loginStructuredData}
-      />
-
-      <main className="flex min-h-screen items-center justify-center p-4" role="main">
+      <div className="flex items-center justify-center p-4 min-h-[calc(100vh-400px)]">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Welcome to {brand.name}</CardTitle>
@@ -173,7 +180,7 @@ function RouteComponent() {
             )}
 
             {/* Email/Password Login Form - only show if enabled */}
-            {authConfig.hasEmailPassword && (
+            {authConfig?.hasEmailPassword && (
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -215,7 +222,7 @@ function RouteComponent() {
             )}
 
             {/* Show separator only if both methods are enabled */}
-            {authConfig.hasEmailPassword && authConfig.hasGitHubOAuth && (
+            {authConfig?.hasEmailPassword && authConfig.hasGitHubOAuth && (
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <Separator />
@@ -229,7 +236,7 @@ function RouteComponent() {
             )}
 
             {/* GitHub OAuth Login - only show if enabled */}
-            {authConfig.hasGitHubOAuth && (
+            {authConfig?.hasGitHubOAuth && (
               <Button
                 onClick={handleGithubLogin}
                 disabled={isLoading}
@@ -259,7 +266,7 @@ function RouteComponent() {
             </div>
           </CardFooter>
         </Card>
-      </main>
+      </div>
     </>
   );
 }

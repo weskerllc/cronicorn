@@ -105,10 +105,17 @@ services:
     networks:
       - cronicorn
     # ports:
-    #   - "5173:80"
+    #   - "5173:5173"
     depends_on:
       - api
     restart: unless-stopped
+    environment:
+      PORT: "5173"
+      NODE_ENV: ${NODE_ENV:-production}
+      # Server-side API URL (internal Docker network)
+      API_URL: http://cronicorn-api:3333
+      # Client-side API URL (external, from .env)
+      VITE_API_URL: ${API_URL:-http://localhost:3333}
 
   docs:
     image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/docs:${IMAGE_TAG:-latest}

@@ -62,5 +62,10 @@ export default antfu({
     "**/apps/web/**",
     "**/apps/docs/.docusaurus/**",
     "**/apps/docs/build/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/node_modules/**",
+    "**/.output/**",
+
   ],
 });
