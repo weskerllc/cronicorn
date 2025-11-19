@@ -18,7 +18,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { EmptyCTA } from "@/components/cards/empty-cta";
 import { DataTable } from "@/components/composed/data-table";
 import { endpointsQueryOptions } from "@/lib/api-client/queries/jobs.queries";
-import { archiveEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import { getEndpointStatus } from "@/lib/endpoint-utils";
 
 export const Route = createFileRoute("/_authed/jobs/$id/endpoints")({

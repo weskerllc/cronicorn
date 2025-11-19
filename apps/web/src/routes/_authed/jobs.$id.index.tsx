@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, getRouteApi, useNavigate } from "@tanstack/react-router";
-import { Archive, Pause, Play, Plus } from "lucide-react";
+import { Archive, Pause, Play } from "lucide-react";
 
+import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
-import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { ActionsGroup } from "../../components/primitives/actions-group";
 
-import { InfoField, InfoGrid } from "../../components/cards/info-grid";
 import { DetailSection } from "../../components/cards/detail-section";
+import { InfoField, InfoGrid } from "../../components/cards/info-grid";
 import { PageSection } from "../../components/primitives/page-section";
 import {
   JOBS_QUERY_KEY,

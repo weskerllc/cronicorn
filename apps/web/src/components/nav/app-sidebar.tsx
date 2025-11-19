@@ -1,15 +1,15 @@
 "use client";
 
-import * as React from "react";
 import {
   IconBriefcase,
-  IconChartBar,
   IconDashboard,
   IconHelp,
   IconKey,
-  IconSettings,
+  IconSettings
 } from "@tabler/icons-react";
+import * as React from "react";
 
+import { brand, urls } from "@cronicorn/content";
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +19,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cronicorn/ui-library/components/sidebar";
-import { brand, urls } from "@cronicorn/content";
 // import AppLogo from "../../../../public/logo.svg?react";
 import AppLogo from "../../../public/logo.svg?react";
 
