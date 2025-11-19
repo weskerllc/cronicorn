@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { brand, urls } from "@cronicorn/content";
 
 import BackgroundEffects from "../components/splash-page/components/background-effects";
@@ -34,10 +34,10 @@ function PublicLayout(
       <div className="w-full   px-4 md:px-8    border-t border-border/40  ">
         <Footer2
           tagline={brand.title}
-          logoSlot={<a href={urls.product.home} className="flex items-center space-x-2">
+          logoSlot={<Link to="/" className="flex items-center space-x-2">
             <AppLogo className="size-12! fill-foreground" />
             <span className="font-medium text-2xl text-muted-foreground">{brand.name}</span>
-          </a>}
+          </Link>}
           menuItems={[
             {
               title: "Product",
