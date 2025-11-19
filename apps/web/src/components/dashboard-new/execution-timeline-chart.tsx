@@ -116,7 +116,7 @@ export function ExecutionTimelineChart({
                                     return (
                                         <linearGradient
                                             key={endpoint.id}
-                                            id={`fill-${sanitizedKey}`}
+                                            id={`fill-${endpoint.id}`}
                                             x1="0"
                                             y1="0"
                                             x2="0"
@@ -215,7 +215,7 @@ export function ExecutionTimelineChart({
                                         key={endpoint.id}
                                         dataKey={endpointName}
                                         type="natural"
-                                        fill={`url(#fill${sanitizedKey})`}
+                                        fill={`url(#fill-${endpoint.id})`}
                                         stroke={`var(--color-${sanitizedKey})`}
                                         stackId="a"
                                     />
