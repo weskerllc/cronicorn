@@ -1,25 +1,23 @@
-import { useState } from "react";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
+import { useState } from "react";
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
 import { EmptyCTA } from "../../components/cards/empty-cta";
 import { PageHeader } from "../../components/composed/page-header";
-import { PageSection } from "@/components/primitives/page-section";
-;
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { GetJobsResponse } from "@/lib/api-client/queries/jobs.queries";
-import {
-  JOBS_QUERY_KEY,
-  archiveJob,
-  jobsQueryOptions,
-} from "@/lib/api-client/queries/jobs.queries";
-import { DASHBOARD_QUERY_KEY } from "@/lib/api-client/queries/dashboard.queries";
 import { DataTable } from "@/components/composed/data-table";
+import { PageSection } from "@/components/primitives/page-section";
+import {
+  jobsQueryOptions
+} from "@/lib/api-client/queries/jobs.queries";
+
+;
 
 type JobRow = GetJobsResponse["jobs"][number];
 
