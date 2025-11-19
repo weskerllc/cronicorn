@@ -33,17 +33,23 @@ export function NavMain({ items }: NavMainProps) {
             <SidebarMenuButton
               tooltip="Quick Create"
               className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+              asChild
             >
-              <IconCirclePlusFilled />
-              <span>Quick Create</span>
+              <Link to="/jobs/new">
+                <IconCirclePlusFilled />
+                <span>Quick Create</span>
+              </Link>
             </SidebarMenuButton>
             <Button
               size="icon"
               className="size-8 group-data-[collapsible=icon]:opacity-0"
               variant="outline"
+              asChild
             >
-              <IconMail />
-              <span className="sr-only">Inbox</span>
+              <a href="https://github.com/weskerllc/cronicorn/discussions" target="_blank" rel="noopener noreferrer">
+                <IconMail />
+                <span className="sr-only">Get Help</span>
+              </a>
             </Button>
           </SidebarMenuItem>
         </SidebarMenu>

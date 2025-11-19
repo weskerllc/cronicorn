@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
@@ -10,24 +10,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@cronicorn/ui-library/components/select";
-import { Button } from "@cronicorn/ui-library/components/button";
 
-import { ListRunsQuerySchema } from "@cronicorn/api-contracts/jobs";
-import { PageHeader } from "../../components/page-header";
-import { DataTable } from "../../components/data-table";
+import { FilterGroup } from "../../components/primitives/filter-group";
+import { DataTable } from "../../components/composed/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
+import { PageSection } from "@/components/primitives/page-section";
 import { runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
 
-// Extend API contract schema for UI-specific needs (like "all" option)
-const runsSearchSchema = ListRunsQuerySchema.extend({
+
+// Extend API contract schema for UI-specific needs (like "all" option and pagination)
+const runsSearchSchema = z.object({
   status: z.enum(["all", "success", "failed"]).optional().default("all"),
-}).omit({ endpointId: true, limit: true, offset: true });
+  page: z.coerce.number().int().positive().optional().default(1),
+  pageSize: z.coerce.number().int().positive().optional().default(20),
+});
 
 export const Route = createFileRoute("/_authed/endpoints/$id/runs")({
   validateSearch: runsSearchSchema,
   loaderDeps: ({ search }) => ({ search }),
   loader: async ({ params, context, deps }) => {
-    const filters = deps.search.status !== "all" ? { status: deps.search.status } : undefined;
+    // Calculate limit/offset from page/pageSize
+    const limit = deps.search.pageSize;
+    const offset = (deps.search.page - 1) * deps.search.pageSize;
+
+    // Build filters object
+    const filters: { status?: "success" | "failed"; limit: number; offset: number } = {
+      limit,
+      offset,
+    };
+
+    // Add status filter if not "all"
+    if (deps.search.status !== "all") {
+      filters.status = deps.search.status;
+    }
+
     await context.queryClient.ensureQueryData(runsQueryOptions(params.id, filters));
   },
   component: RunsListPage,
@@ -44,8 +60,22 @@ function RunsListPage() {
   const { id } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const filters = search.status !== "all" ? { status: search.status } : undefined;
+
+  // Build filters object with pagination
+  const limit = search.pageSize;
+  const offset = (search.page - 1) * search.pageSize;
+  const filters: { status?: "success" | "failed"; limit: number; offset: number } = {
+    limit,
+    offset,
+  };
+  if (search.status !== "all") {
+    filters.status = search.status;
+  }
+
   const { data } = useSuspenseQuery(runsQueryOptions(id, filters));
+
+  // Calculate total pages for pagination
+  const pageCount = Math.ceil(data.total / search.pageSize);
 
   const columns: Array<ColumnDef<RunRow>> = [
     {
@@ -91,31 +121,12 @@ function RunsListPage() {
         </span>
       ),
     },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <Button variant="link" size="sm" asChild>
-          <Link to="/runs/$id" params={{ id: row.original.runId }}>
-            View Details
-          </Link>
-        </Button>
-      ),
-    },
   ];
 
   return (
-    <>
-      <PageHeader
-        text="Run History"
-        description="View execution history for this endpoint"
-      />
-
-      <div className="mb-6 flex gap-4 items-end">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="status" className="text-sm font-medium">
-            Status
-          </label>
+    <PageSection>
+      <FilterGroup>
+        <FilterGroup.Field label="Status">
           <Select
             value={search.status}
             onValueChange={(value) => {
@@ -133,12 +144,9 @@ function RunsListPage() {
               <SelectItem value="failure">Failure</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </FilterGroup.Field>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="dateRange" className="text-sm font-medium">
-            Date Range
-          </label>
+        <FilterGroup.Field label="Date Range">
           <Select defaultValue="all">
             <SelectTrigger id="dateRange" className="w-[180px]">
               <SelectValue placeholder="Select date range" />
@@ -150,8 +158,8 @@ function RunsListPage() {
               <SelectItem value="all">All time</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        </FilterGroup.Field>
+      </FilterGroup>
 
       <DataTable
         columns={columns}
@@ -160,12 +168,27 @@ function RunsListPage() {
           status: run.status as "success" | "failure" | "timeout" | "cancelled",
           startedAt: new Date(run.startedAt),
         }))}
-        searchKey="runId"
-        searchPlaceholder="Search run ID..."
+        // TODO: Implement backend searching for runs
+        // searchKey="runId"
+        // searchPlaceholder="Search run ID..."
         emptyMessage="No runs found for the selected filters."
         enablePagination={true}
-        defaultPageSize={50}
+        defaultPageSize={search.pageSize}
+        manualPagination={true}
+        pageCount={pageCount}
+        pageIndex={search.page - 1} // Convert 1-indexed URL param to 0-indexed
+        onPaginationChange={(pagination) => {
+          navigate({
+            search: (prev) => ({
+              ...prev,
+              page: pagination.pageIndex + 1, // Convert 0-indexed to 1-indexed
+              pageSize: pagination.pageSize,
+            }),
+            resetScroll: false,
+          });
+        }}
+        onRowClick={(run) => navigate({ to: "/runs/$id", params: { id: run.runId } })}
       />
-    </>
+    </PageSection>
   );
 }

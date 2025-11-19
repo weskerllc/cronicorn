@@ -6,6 +6,9 @@ import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert"
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
 import { Skeleton } from "@cronicorn/ui-library/components/skeleton";
+import { IconContainer } from "../../components/primitives/icon-container";
+import { ActionsGroup } from "../../components/primitives/actions-group";
+import { InlineBadge } from "../../components/primitives/inline-badge";
 
 import { authClient } from "@/lib/auth-client";
 
@@ -142,9 +145,7 @@ function DeviceApproval() {
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                                <IconCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
-                            </div>
+                            <IconContainer icon={IconCheck} variant="success" size="lg" />
                             <CardTitle>Device Authorized</CardTitle>
                         </div>
                         <CardDescription>
@@ -175,9 +176,7 @@ function DeviceApproval() {
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-                                <IconX className="h-6 w-6 text-red-600 dark:text-red-400" />
-                            </div>
+                            <IconContainer icon={IconX} variant="error" size="lg" />
                             <CardTitle>Access Denied</CardTitle>
                         </div>
                         <CardDescription>
@@ -207,13 +206,11 @@ function DeviceApproval() {
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                            <IconDeviceDesktop className="h-6 w-6 text-primary" />
-                        </div>
+                        <IconContainer icon={IconDeviceDesktop} variant="primary" size="lg" />
                         <div>
                             <CardTitle>Authorize AI Agent</CardTitle>
                             <CardDescription>
-                                Code: <span className="font-mono font-semibold">{userCode}</span>
+                                Code: <InlineBadge variant="code" size="md">{userCode}</InlineBadge>
                             </CardDescription>
                         </div>
                     </div>
@@ -251,7 +248,7 @@ function DeviceApproval() {
                         </AlertDescription>
                     </Alert>
 
-                    <div className="flex gap-3">
+                    <ActionsGroup gap="3">
                         <Button
                             variant="outline"
                             className="flex-1"
@@ -269,7 +266,7 @@ function DeviceApproval() {
                             <IconCheck className="mr-2 h-4 w-4" />
                             Approve
                         </Button>
-                    </div>
+                    </ActionsGroup>
 
                     {(approveMutation.error || denyMutation.error) && (
                         <Alert variant="destructive">

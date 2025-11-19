@@ -1,6 +1,6 @@
 import { brand, faq, keywords, metaDescriptions, urls } from "@cronicorn/content";
-import { createFileRoute } from "@tanstack/react-router";
-import { Suspense, lazy } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Suspense, lazy, useEffect } from "react";
 import HeaderSection from "../components/splash-page/components/header-section";
 import HeroSection from "../components/splash-page/components/hero-section";
 import { monitoringScenarios } from "../components/splash-page/timeline/timeline-scenario-data";
@@ -10,6 +10,7 @@ import { TimelineSkeleton } from "@/components/skeletons/timeline-skeleton";
 import { FeatureCardsSkeleton } from "@/components/skeletons/feature-cards-skeleton";
 import { LogoGridSkeleton } from "@/components/skeletons/logo-grid-skeleton";
 import { FooterSkeleton } from "@/components/skeletons/footer-skeleton";
+import { useAuth } from "@/lib/auth-context";
 
 // Lazy load heavy components for better initial page load
 // Use prefetch for critical above-the-fold components
@@ -17,7 +18,7 @@ const BackgroundEffects = lazy(() => import("../components/splash-page/component
 const TimelineSection = lazy(() => import("../components/splash-page/components/timeline-section"));
 const DynamicScheduleTimeline = lazy(() => import("../components/splash-page/timeline/timeline"));
 const LogoGrid = lazy(() => import("../components/splash-page/components/logo-grid"));
-const FeatureCardsSection = lazy(() => import("@/components/sections/feature-cards-section").then(m => ({ default: m.FeatureCardsSection })));
+const FeatureCardsSection = lazy(() => import("@/components/composed/feature-cards-section").then(m => ({ default: m.FeatureCardsSection })));
 const Footer2 = lazy(() => import("../components/nav/footer").then(m => ({ default: m.Footer2 })));
 
 // Prefetch critical components on mount for instant loading
@@ -33,6 +34,16 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate({ to: '/dashboard' });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
   // Timeline data from splash page
   const tabData = monitoringScenarios.map(scenario => ({
     id: scenario.id,

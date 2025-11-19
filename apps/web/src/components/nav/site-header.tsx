@@ -2,6 +2,7 @@ import { Button } from "@cronicorn/ui-library/components/button";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { SidebarTrigger } from "@cronicorn/ui-library/components/sidebar";
 import { urls } from "@cronicorn/content";
+import { IconBrandGithub } from "@tabler/icons-react";
 
 export function SiteHeader() {
   return (
@@ -13,13 +14,14 @@ export function SiteHeader() {
           className="mx-2 data-[orientation=vertical]:h-4"
         />
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
+          <Button variant="ghost" asChild size="sm" className="flex">
             <a
               href={urls.github.repo}
               rel="noopener noreferrer"
               target="_blank"
               className="dark:text-foreground"
             >
+              <IconBrandGithub />
               GitHub
             </a>
           </Button>

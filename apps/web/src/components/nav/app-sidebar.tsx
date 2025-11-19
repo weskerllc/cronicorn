@@ -6,7 +6,6 @@ import {
   IconChartBar,
   IconDashboard,
   IconHelp,
-  IconInnerShadowTop,
   IconKey,
   IconSettings,
 } from "@tabler/icons-react";
@@ -21,6 +20,9 @@ import {
   SidebarMenuItem,
 } from "@cronicorn/ui-library/components/sidebar";
 import { brand, urls } from "@cronicorn/content";
+// import AppLogo from "../../../../public/logo.svg?react";
+import AppLogo from "../../../public/logo.svg?react";
+
 import { NavMain } from "@/components/nav/nav-main";
 import { NavSecondary } from "@/components/nav/nav-secondary";
 import { NavUser } from "@/components/nav/nav-user";
@@ -41,16 +43,6 @@ const data = {
       title: "API Keys",
       url: "/api-keys",
       icon: IconKey,
-    },
-    {
-      title: "Usage",
-      url: "/usage",
-      icon: IconChartBar,
-    },
-    {
-      title: "Plan",
-      url: "/plan",
-      icon: IconChartBar,
     },
   ],
   navSecondary: [
@@ -86,7 +78,8 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <a href="/dashboard">
-                <IconInnerShadowTop className="size-5!" />
+                <AppLogo className="size-5! fill-foreground" />
+
                 <span className="text-base font-semibold">{brand.name}</span>
               </a>
             </SidebarMenuButton>
