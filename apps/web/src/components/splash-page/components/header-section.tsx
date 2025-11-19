@@ -16,7 +16,7 @@ const PRIMARY_NAV_LINKS = [
 // Secondary links - desktop only, moved to mobile menu
 const SECONDARY_NAV_LINKS = [
     { href: urls.docs.apiReference, label: "API Playground" },
-    { href: urls.github.discussions, label: "Discussions" },
+    { href: urls.github.discussions, label: "Get Help" },
 ] as const;
 
 export default function HeaderSection() {

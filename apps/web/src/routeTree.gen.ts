@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthedRouteImport } from './routes/_authed'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicTermsRouteImport } from './routes/_public/terms'
 import { Route as PublicPrivacyRouteImport } from './routes/_public/privacy'
 import { Route as PublicPricingRouteImport } from './routes/_public/pricing'
@@ -46,10 +46,10 @@ const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicRoute,
 } as any)
 const PublicTermsRoute = PublicTermsRouteImport.update({
   id: '/terms',
@@ -180,7 +180,6 @@ const AuthedJobsJobIdEndpointsNewRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
@@ -191,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PublicPricingRoute
   '/privacy': typeof PublicPrivacyRoute
   '/terms': typeof PublicTermsRoute
+  '/': typeof PublicIndexRoute
   '/device/approve': typeof AuthedDeviceApproveRoute
   '/endpoints/$id': typeof AuthedEndpointsIdRouteWithChildren
   '/jobs/$id': typeof AuthedJobsIdRouteWithChildren
@@ -208,7 +208,6 @@ export interface FileRoutesByFullPath {
   '/jobs/$jobId/endpoints/new': typeof AuthedJobsJobIdEndpointsNewRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
@@ -218,6 +217,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PublicPricingRoute
   '/privacy': typeof PublicPrivacyRoute
   '/terms': typeof PublicTermsRoute
+  '/': typeof PublicIndexRoute
   '/device/approve': typeof AuthedDeviceApproveRoute
   '/jobs/new': typeof AuthedJobsNewRoute
   '/runs/$id': typeof AuthedRunsIdRoute
@@ -234,7 +234,6 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/_authed/api-keys': typeof AuthedApiKeysRoute
@@ -247,6 +246,7 @@ export interface FileRoutesById {
   '/_public/pricing': typeof PublicPricingRoute
   '/_public/privacy': typeof PublicPrivacyRoute
   '/_public/terms': typeof PublicTermsRoute
+  '/_public/': typeof PublicIndexRoute
   '/_authed/device/approve': typeof AuthedDeviceApproveRoute
   '/_authed/endpoints/$id': typeof AuthedEndpointsIdRouteWithChildren
   '/_authed/jobs/$id': typeof AuthedJobsIdRouteWithChildren
@@ -266,7 +266,6 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/api-keys'
     | '/dashboard'
     | '/plan'
@@ -277,6 +276,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/terms'
+    | '/'
     | '/device/approve'
     | '/endpoints/$id'
     | '/jobs/$id'
@@ -294,7 +294,6 @@ export interface FileRouteTypes {
     | '/jobs/$jobId/endpoints/new'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/api-keys'
     | '/dashboard'
     | '/plan'
@@ -304,6 +303,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/terms'
+    | '/'
     | '/device/approve'
     | '/jobs/new'
     | '/runs/$id'
@@ -319,7 +319,6 @@ export interface FileRouteTypes {
     | '/jobs/$jobId/endpoints/new'
   id:
     | '__root__'
-    | '/'
     | '/_authed'
     | '/_public'
     | '/_authed/api-keys'
@@ -332,6 +331,7 @@ export interface FileRouteTypes {
     | '/_public/pricing'
     | '/_public/privacy'
     | '/_public/terms'
+    | '/_public/'
     | '/_authed/device/approve'
     | '/_authed/endpoints/$id'
     | '/_authed/jobs/$id'
@@ -350,7 +350,6 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   PublicRoute: typeof PublicRouteWithChildren
 }
@@ -371,12 +370,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_public/': {
+      id: '/_public/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRoute
     }
     '/_public/terms': {
       id: '/_public/terms'
@@ -640,6 +639,7 @@ interface PublicRouteChildren {
   PublicPricingRoute: typeof PublicPricingRoute
   PublicPrivacyRoute: typeof PublicPrivacyRoute
   PublicTermsRoute: typeof PublicTermsRoute
+  PublicIndexRoute: typeof PublicIndexRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
@@ -648,13 +648,13 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicPricingRoute: PublicPricingRoute,
   PublicPrivacyRoute: PublicPrivacyRoute,
   PublicTermsRoute: PublicTermsRoute,
+  PublicIndexRoute: PublicIndexRoute,
 }
 
 const PublicRouteWithChildren =
   PublicRoute._addFileChildren(PublicRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   PublicRoute: PublicRouteWithChildren,
 }
