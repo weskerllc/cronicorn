@@ -65,8 +65,8 @@ export function StatCard({
   };
 
   return (
-    <Card className={cn(variantStyles[variant], className)}>
-      <CardHeader>
+    <Card className={cn(variantStyles[variant], "py-4", className)}>
+      <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           {Icon && <Icon className="size-4 text-muted-foreground" />}
           <CardTitle className="text-sm font-medium">{title}</CardTitle>

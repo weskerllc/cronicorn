@@ -14,9 +14,10 @@ import {
 } from "@cronicorn/ui-library/components/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
 import { IconDotsVertical } from "@tabler/icons-react";
-import { EmptyCTA } from "../../components/empty-cta";
-import { PageHeader } from "../../components/page-header";
-import { PageSection } from "@/components/sections";
+import { EmptyCTA } from "../../components/cards/empty-cta";
+import { PageHeader } from "../../components/composed/page-header";
+import { PageSection } from "@/components/primitives/page-section";
+;
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { GetJobsResponse } from "@/lib/api-client/queries/jobs.queries";
@@ -26,7 +27,7 @@ import {
   jobsQueryOptions,
 } from "@/lib/api-client/queries/jobs.queries";
 import { DASHBOARD_QUERY_KEY } from "@/lib/api-client/queries/dashboard.queries";
-import { DataTable } from "@/components/data-table";
+import { DataTable } from "@/components/composed/data-table";
 
 type JobRow = GetJobsResponse["jobs"][number];
 

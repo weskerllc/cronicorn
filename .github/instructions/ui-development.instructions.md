@@ -119,32 +119,102 @@ export const Route = createFileRoute('/users/$id')({
 
 ## UI Components
 
-Always prefer Shadcn/ui components over custom ones:
+### Component Hierarchy (Always Follow)
+
+1. **Shadcn/ui components first** - Use existing Shadcn components (Button, Card, Input, etc.)
+2. **Project components second** - Use existing custom components from `@/components/`
+3. **Create new shared components only when pattern repeats 3+ times**
+4. **NEVER write inline custom styles** - Always extract to reusable components
+
+### Reusable Component Requirements
+
+**CRITICAL**: Before writing any custom layout or styling, check if a reusable component exists:
 
 ```typescript
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+// ✅ CORRECT: Use shared layout components
+import { GridLayout } from '@/components/layouts/grid-layout';
+import { ActionsGroup } from '@/components/ui/actions-group';
 
-<Card>
-  <CardHeader>
-    <CardTitle>User Details</CardTitle>
-  </CardHeader>
-  <CardContent>
-    <Button onClick={handleSave}>Save</Button>
-  </CardContent>
-</Card>
-```
+<GridLayout cols={1} md={2} lg={4}>
+  <StatCard />
+  <StatCard />
+</GridLayout>
 
-Use Tailwind for styling with responsive design:
+<ActionsGroup gap="2">
+  <Button>Save</Button>
+  <Button variant="outline">Cancel</Button>
+</ActionsGroup>
 
-```typescript
-<div className="flex flex-col gap-4 p-6 md:flex-row md:gap-6">
-  <Button className="w-full md:w-auto">Action</Button>
+// ❌ WRONG: Custom inline layout
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+  <StatCard />
+  <StatCard />
+</div>
+
+<div className="flex gap-2">
+  <Button>Save</Button>
+  <Button variant="outline">Cancel</Button>
 </div>
 ```
 
+**Available Shared Components:**
+- `GridLayout` - Responsive grid layouts (replaces manual grid classes)
+- `ActionsGroup` - Button groups with consistent spacing
+- `FormFieldRow` - Horizontal form field layouts
+- `AlertCard` - Status alerts and notifications
+- `StatCard` - Metric display cards
+- `DetailSection` - Card-based detail sections
+- `InfoGrid` / `InfoField` - Key-value pair displays
+- `PageSection` - Page content sections
+- `EmptyCTA` - Empty state displays
+- `LoadingState` - Loading spinners
+- `ErrorState` - Error displays
+- `CodeDisplay` - Code blocks with copy button
+- `InlineBadge` - Small inline status indicators
+- `IconContainer` - Consistent icon backgrounds
+
+### When to Create New Components
+
+**Create a new shared component when:**
+- Same pattern appears 3+ times across different files
+- Complex layout/styling that should be standardized
+- Business logic that should be centralized
+
+**Process:**
+1. Extract pattern to new component file
+2. Update all existing usages
+3. Document props and usage examples
+4. Add to shared components directory
+
+```typescript
+// Good: Extracted reusable pattern
+// components/ui/status-indicator.tsx
+interface StatusIndicatorProps {
+  status: 'active' | 'paused' | 'archived';
+  label: string;
+}
+
+export function StatusIndicator({ status, label }: StatusIndicatorProps) {
+  return (
+    <Badge variant={statusVariants[status]}>
+      <Icon className="h-3 w-3 mr-1" />
+      {label}
+    </Badge>
+  );
+}
+```
+
+### Styling Rules
+
 NEVER use custom colors or styles that deviate from the design system.
 Use theme vars from Tailwind config (e.g. `text-primary`, `bg-secondary`).
+
+**Prohibited patterns:**
+- ❌ `className="flex gap-2"` (use `<ActionsGroup>`)
+- ❌ `className="grid grid-cols-* gap-*"` (use `<GridLayout>`)
+- ❌ `className="flex gap-2 items-end"` (use `<FormFieldRow>`)
+- ❌ Custom spacing values outside theme
+- ❌ Arbitrary color values (use theme variables)
 
 KEEP IT SIMPLE. This is a developer-focused web app. We need things to be maintainable, usable, and functional over flashy.
 
@@ -180,11 +250,38 @@ Use semantic HTML first. Only add ARIA when no semantic equivalent exists:
 
 ```
 src/
-├── components/ui/    # Shadcn/ui components
+├── components/
+│   ├── ui/           # Shadcn/ui base components + small UI primitives
+│   │   ├── button.tsx, card.tsx, etc. (Shadcn)
+│   │   ├── actions-group.tsx
+│   │   ├── form-field-row.tsx
+│   │   ├── inline-badge.tsx
+│   │   └── icon-container.tsx
+│   ├── layouts/      # Layout components
+│   │   └── grid-layout.tsx
+│   ├── sections/     # Card-based section components
+│   │   ├── alert-card.tsx
+│   │   ├── stat-card.tsx
+│   │   ├── detail-section.tsx
+│   │   ├── info-grid.tsx
+│   │   ├── page-section.tsx
+│   │   └── empty-cta.tsx
+│   ├── page-header.tsx
+│   ├── data-table.tsx
+│   ├── loading-state.tsx
+│   ├── error-state.tsx
+│   └── code-display.tsx
 ├── lib/schemas.ts    # Zod schemas
 ├── routes/          # File-based routes
 └── routes/api/      # Server routes (.ts)
 ```
+
+**Component Selection Guide:**
+- Need a button/input/card? → Use Shadcn from `@/components/ui/`
+- Need a grid layout? → Use `<GridLayout>` from `@/components/layouts/`
+- Need button group? → Use `<ActionsGroup>` from `@/components/ui/`
+- Need a card section? → Use components from `@/components/sections/`
+- Writing custom `className` with layout? → Extract to reusable component
 
 ## Import Standards
 

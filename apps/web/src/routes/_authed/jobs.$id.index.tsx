@@ -13,8 +13,6 @@ import {
 } from "@cronicorn/ui-library/components/dropdown-menu";
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { IconDotsVertical } from "@tabler/icons-react";
-import { PageSection, DetailSection, InfoGrid, InfoField } from "@/components/sections";
-
 import {
   Select,
   SelectContent,
@@ -22,10 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@cronicorn/ui-library/components/select";
+import { ActionsGroup } from "../../components/primitives/actions-group";
+
+import { InfoField, InfoGrid } from "../../components/cards/info-grid";
+import { DetailSection } from "../../components/cards/detail-section";
+import { PageSection } from "../../components/primitives/page-section";
 import type { ColumnDef } from "@tanstack/react-table";
-import { PageHeader } from "@/components/page-header";
-import { EmptyCTA } from "@/components/empty-cta";
-import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/composed/page-header";
+import { EmptyCTA } from "@/components/cards/empty-cta";
+import { DataTable } from "@/components/composed/data-table";
 import {
   JOBS_QUERY_KEY,
   archiveJob,
@@ -262,7 +265,7 @@ function JobDetailsPage() {
         text={job.name}
         description="Job Details"
         slotRight={
-          <div className="flex gap-2">
+          <ActionsGroup gap="2">
             <Button variant="outline" asChild>
               <Link to="/jobs/$id/edit" params={{ id }}>
                 Edit Job
@@ -274,7 +277,7 @@ function JobDetailsPage() {
                 Add Endpoint
               </Link>
             </Button>
-          </div>
+          </ActionsGroup>
         }
       />
 
@@ -312,7 +315,7 @@ function JobDetailsPage() {
             <InfoField label="Description" value={job.description} fullWidth />
           )}
 
-          <div className="flex gap-2 border-t pt-4">
+          <ActionsGroup gap="2" className="border-t pt-4">
             {job.status === "paused" ? (
               <Button
                 variant="default"
@@ -343,7 +346,7 @@ function JobDetailsPage() {
                 Archive Job
               </Button>
             )}
-          </div>
+          </ActionsGroup>
         </DetailSection>
 
         {endpointsData.endpoints.length === 0 ? (

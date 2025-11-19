@@ -8,7 +8,7 @@ import {
 
 interface DetailSectionProps {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   /**
@@ -17,9 +17,9 @@ interface DetailSectionProps {
   headerActions?: React.ReactNode;
 }
 
-export function DetailSection({ 
-  title, 
-  description, 
+export function DetailSection({
+  title,
+  description,
   children,
   className,
   headerActions

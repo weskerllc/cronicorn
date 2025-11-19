@@ -4,9 +4,10 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { Alert, AlertDescription } from '@cronicorn/ui-library/components/alert';
 import { Badge } from '@cronicorn/ui-library/components/badge';
 import { Button } from '@cronicorn/ui-library/components/button';
-import { PageHeader } from '../../components/page-header';
-import { PageSection, DetailSection } from '@/components/sections';
+import { PageHeader } from '../../components/composed/page-header';
 import { subscriptionStatusQueryOptions } from '../../lib/api-client/queries/subscriptions.queries';
+import { DetailSection } from '../../components/cards/detail-section';
+import { PageSection } from '@/components/primitives/page-section';
 
 export const Route = createFileRoute('/_authed/plan')({
   loader: async ({ context }) => {

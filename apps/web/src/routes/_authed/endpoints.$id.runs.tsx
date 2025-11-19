@@ -13,11 +13,14 @@ import {
 import { Button } from "@cronicorn/ui-library/components/button";
 
 import { ListRunsQuerySchema } from "@cronicorn/api-contracts/jobs";
-import { PageHeader } from "../../components/page-header";
-import { PageSection } from "@/components/sections";
-import { DataTable } from "../../components/data-table";
+import { FilterGroup } from "../../components/primitives/filter-group";
+import { PageHeader } from "../../components/composed/page-header";
+import { DataTable } from "../../components/composed/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
+import { PageSection } from "@/components/primitives/page-section";
 import { runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
+
+;
 
 // Extend API contract schema for UI-specific needs (like "all" option)
 const runsSearchSchema = ListRunsQuerySchema.extend({
@@ -113,11 +116,8 @@ function RunsListPage() {
       />
 
       <PageSection>
-        <div className="flex gap-4 items-end">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="status" className="text-sm font-medium">
-              Status
-            </label>
+        <FilterGroup>
+          <FilterGroup.Field label="Status">
             <Select
               value={search.status}
               onValueChange={(value) => {
@@ -135,12 +135,9 @@ function RunsListPage() {
                 <SelectItem value="failure">Failure</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </FilterGroup.Field>
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="dateRange" className="text-sm font-medium">
-              Date Range
-            </label>
+          <FilterGroup.Field label="Date Range">
             <Select defaultValue="all">
               <SelectTrigger id="dateRange" className="w-[180px]">
                 <SelectValue placeholder="Select date range" />
@@ -152,8 +149,8 @@ function RunsListPage() {
                 <SelectItem value="all">All time</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </div>
+          </FilterGroup.Field>
+        </FilterGroup>
 
         <DataTable
           columns={columns}

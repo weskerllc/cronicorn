@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 
+import { ActionsGroup } from "../../components/primitives/actions-group";
 import { Button } from "@cronicorn/ui-library/components/button";
 import {
   Form,
@@ -20,7 +21,7 @@ import { Separator } from "@cronicorn/ui-library/components/separator";
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 
 import { UpdateJobRequestSchema } from "@cronicorn/api-contracts/jobs";
-import { PageHeader } from "../../components/page-header";
+import { PageHeader } from "../../components/composed/page-header";
 import type { UpdateJobRequest } from "@cronicorn/api-contracts/jobs";
 import { JOBS_QUERY_KEY, jobQueryOptions, updateJob } from "@/lib/api-client/queries/jobs.queries";
 
@@ -114,7 +115,7 @@ function EditJobPage() {
 
           <Separator />
 
-          <div className="flex items-center justify-end gap-2">
+          <ActionsGroup className="justify-end" gap="2">
             <Button variant="outline" disabled={isPending} onClick={onCancel}>
               <X className="size-4" />
               Cancel
@@ -123,7 +124,7 @@ function EditJobPage() {
               <Save className="size-4" />
               {isPending ? "Saving..." : "Save Changes"}
             </Button>
-          </div>
+          </ActionsGroup>
         </form>
       </Form>
     </>
