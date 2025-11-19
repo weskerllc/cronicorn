@@ -867,4 +867,94 @@ describe("dashboardManager", () => {
       expect(oneHourAgoSession?.totalTokens).toBe(0);
     });
   });
+
+  // ==================== Zero Filtering Tests ====================
+
+  describe("zero value filtering", () => {
+    it("should filter out job health items with zero runs", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      // Return job health with some zero-run jobs
+      vi.mocked(mockRunsRepo.getJobHealthDistribution).mockResolvedValue([
+        { jobId: "job-1", jobName: "Job 1", successCount: 10, failureCount: 5 },
+        { jobId: "job-2", jobName: "Job 2", successCount: 0, failureCount: 0 },
+        { jobId: "job-3", jobName: "Job 3", successCount: 3, failureCount: 1 },
+      ]);
+
+      const result = await manager.getDashboardStats("user-1");
+
+      // Should only include jobs with runs > 0
+      expect(result.jobHealth).toHaveLength(2);
+      expect(result.jobHealth.map(j => j.jobId)).toEqual(["job-1", "job-3"]);
+    });
+
+    it("should filter out source distribution items with zero count", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      // Return source distribution with some zero counts
+      vi.mocked(mockRunsRepo.getSourceDistribution).mockResolvedValue([
+        { source: "baseline-cron", count: 100 },
+        { source: "ai-interval", count: 0 },
+        { source: "baseline-interval", count: 50 },
+      ]);
+
+      const result = await manager.getDashboardStats("user-1");
+
+      // Should only include sources with count > 0
+      expect(result.sourceDistribution).toHaveLength(2);
+      expect(result.sourceDistribution.map(s => s.source)).toEqual(["baseline-cron", "baseline-interval"]);
+    });
+
+    it("should filter out endpoints with zero total runs across all time periods", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      // ep-1 has activity, ep-2 has zero across all periods
+      vi.mocked(mockRunsRepo.getEndpointTimeSeries).mockResolvedValue([
+        { date: "2025-10-20", endpointId: "ep-1", endpointName: "Endpoint 1", success: 5, failure: 2 },
+        { date: "2025-10-20", endpointId: "ep-2", endpointName: "Endpoint 2", success: 0, failure: 0 },
+      ]);
+
+      const result = await manager.getDashboardStats("user-1");
+
+      // Should include data for ep-1 only (manager will fill in zero points for all 7 days)
+      // ep-2 should be completely excluded
+      const uniqueEndpoints = new Set(result.endpointTimeSeries.map(p => p.endpointId));
+      expect(uniqueEndpoints.has("ep-1")).toBe(true);
+      expect(uniqueEndpoints.has("ep-2")).toBe(false);
+      
+      // Verify ep-1 has data for all days (7 days default)
+      const ep1Points = result.endpointTimeSeries.filter(p => p.endpointId === "ep-1");
+      expect(ep1Points.length).toBe(7);
+    });
+
+    it("should filter out endpoints with zero total sessions across all time periods", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      // ep-1 has activity, ep-2 has zero across all periods
+      vi.mocked(mockSessionsRepo.getAISessionTimeSeries).mockResolvedValue([
+        { date: "2025-10-20", endpointId: "ep-1", endpointName: "Endpoint 1", sessionCount: 3, totalTokens: 1500 },
+        { date: "2025-10-20", endpointId: "ep-2", endpointName: "Endpoint 2", sessionCount: 0, totalTokens: 0 },
+      ]);
+
+      const result = await manager.getDashboardStats("user-1");
+
+      // Should include data for ep-1 only (manager will fill in zero points for all 7 days)
+      // ep-2 should be completely excluded
+      const uniqueEndpoints = new Set(result.aiSessionTimeSeries.map(p => p.endpointId));
+      expect(uniqueEndpoints.has("ep-1")).toBe(true);
+      expect(uniqueEndpoints.has("ep-2")).toBe(false);
+      
+      // Verify ep-1 has data for all days (7 days default)
+      const ep1Points = result.aiSessionTimeSeries.filter(p => p.endpointId === "ep-1");
+      expect(ep1Points.length).toBe(7);
+    });
+  });
 });
