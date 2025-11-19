@@ -1,12 +1,11 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import {
   Activity,
   AlertCircle,
   Archive,
   CheckCircle2,
   Clock,
-  Edit,
   ExternalLink,
   Pause,
   Play,
@@ -16,62 +15,34 @@ import {
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
-import { Separator } from "@cronicorn/ui-library/components/separator";
 import { toast } from "sonner";
 import { ActionsGroup } from "../../components/primitives/actions-group";
 import { GridLayout } from "../../components/primitives/grid-layout";
-import { PageHeader } from "../../components/composed/page-header";
-import { DataTable } from "../../components/composed/data-table";
 import { AlertCard } from "../../components/cards/alert-card";
 import { StatCard } from "../../components/cards/stat-card";
 import { PageSection } from "../../components/primitives/page-section";
 import { DetailSection } from "../../components/cards/detail-section";
 import { InfoField, InfoGrid } from "../../components/cards/info-grid";
-import type { ColumnDef } from "@tanstack/react-table";
 import { isEndpointPaused } from "@/lib/endpoint-utils";
 import {
   archiveEndpoint,
-  endpointByIdQueryOptions,
   pauseEndpoint,
   resetFailures,
   scheduleOneShot
 } from "@/lib/api-client/queries/endpoints.queries";
-import { healthQueryOptions, runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
-import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
-
+import { healthQueryOptions } from "@/lib/api-client/queries/runs.queries";
 
 export const Route = createFileRoute("/_authed/endpoints/$id/")({
-  loader: async ({ params, context }) => {
-    // Load endpoint by ID
-    const endpoint = await context.queryClient.ensureQueryData(
-      endpointByIdQueryOptions(params.id),
-    );
-    // Load health and recent runs
-    await Promise.all([
-      context.queryClient.ensureQueryData(healthQueryOptions(params.id)),
-      context.queryClient.ensureQueryData(runsQueryOptions(params.id, { limit: 10 })),
-    ]);
-    // Load job for breadcrumb context (if jobId exists)
-    if (endpoint.jobId) {
-      await context.queryClient.ensureQueryData(jobQueryOptions(endpoint.jobId));
-    }
-  },
   component: ViewEndpointPage,
 });
-
-type RunRow = {
-  runId: string;
-  status: "success" | "failure" | "timeout" | "cancelled";
-  durationMs?: number;
-  startedAt: Date;
-};
 
 function ViewEndpointPage() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
-  const { data: endpoint } = useSuspenseQuery(endpointByIdQueryOptions(id));
+  // Access parent route's loader data
+  const parentRouteApi = getRouteApi("/_authed/endpoints/$id");
+  const { endpoint } = parentRouteApi.useLoaderData();
   const { data: health } = useSuspenseQuery(healthQueryOptions(id));
-  const { data: runsData } = useSuspenseQuery(runsQueryOptions(id, { limit: 10 }));
 
   const { mutateAsync: pauseMutate, isPending: pausePending } = useMutation({
     mutationFn: async (pausedUntil: string | null) => pauseEndpoint(id, { pausedUntil }),
@@ -148,80 +119,8 @@ function ViewEndpointPage() {
     ? ((health.successCount / totalRuns) * 100).toFixed(1)
     : null;
 
-  const columns: Array<ColumnDef<RunRow>> = [
-    {
-      accessorKey: "runId",
-      header: "Run ID",
-      cell: ({ row }) => (
-        <code className="text-xs font-mono">{row.original.runId.substring(0, 8)}</code>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const variant =
-          status === "success"
-            ? "default"
-            : status === "failure"
-              ? "destructive"
-              : "secondary";
-        return (
-          <Badge variant={variant} className="capitalize">
-            {status}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "durationMs",
-      header: "Duration",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {row.original.durationMs ? `${row.original.durationMs}ms` : "—"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "startedAt",
-      header: "Started At",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {new Date(row.original.startedAt).toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <Button variant="link" size="sm" asChild>
-          <Link to="/runs/$id" params={{ id: row.original.runId }}>
-            View Details
-          </Link>
-        </Button>
-      ),
-    },
-  ];
-
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <PageHeader
-          text={endpoint.name}
-          description={endpoint.description || "Endpoint details and execution history"}
-        />
-        <ActionsGroup gap="2">
-          <Button variant="default" asChild>
-            <Link to="/endpoints/$id/edit" params={{ id }}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Endpoint
-            </Link>
-          </Button>
-        </ActionsGroup>
-      </div>
-
       {/* Status Alerts */}
       {endpoint.archivedAt && (
         <AlertCard variant="destructive" className="mb-6">
@@ -448,6 +347,26 @@ function ViewEndpointPage() {
               />
             </InfoGrid>
           </DetailSection>
+
+          <DetailSection
+            title="Advanced Configuration"
+            description="Timeout and execution limits"
+          >
+            <InfoGrid columns={1}>
+              <InfoField
+                label="Request Timeout"
+                value={<code className="text-xs">{endpoint.timeoutMs ? `${endpoint.timeoutMs}ms` : "Default"}</code>}
+              />
+              <InfoField
+                label="Max Execution Time"
+                value={<code className="text-xs">{endpoint.maxExecutionTimeMs ? `${endpoint.maxExecutionTimeMs}ms` : "Default (60s)"}</code>}
+              />
+              <InfoField
+                label="Max Response Size"
+                value={<code className="text-xs">{endpoint.maxResponseSizeKb ? `${endpoint.maxResponseSizeKb}KB` : "Unlimited"}</code>}
+              />
+            </InfoGrid>
+          </DetailSection>
         </GridLayout>
 
         {/* Action Buttons */}
@@ -484,40 +403,8 @@ function ViewEndpointPage() {
               {archivePending ? "Archiving..." : "Archive Endpoint"}
             </Button>
           )}
-          <Button variant="outline" asChild>
-            <Link to="/endpoints/$id/health" params={{ id }}>
-              View Full Health Report
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/endpoints/$id/runs" params={{ id }}>
-              View All Runs
-            </Link>
-          </Button>
+
         </ActionsGroup>
-
-        <Separator />
-
-        {/* Recent Runs Table */}
-        <DataTable
-          tableTitle="Recent Runs"
-          columns={columns}
-          data={runsData.runs.map(run => ({
-            ...run,
-            status: run.status as "success" | "failure" | "timeout" | "cancelled",
-            startedAt: new Date(run.startedAt),
-          }))}
-          emptyMessage="No runs found for this endpoint."
-        />
-        {runsData.runs.length >= 10 && (
-          <div className="mt-4 text-center">
-            <Button variant="link" asChild>
-              <Link to="/endpoints/$id/runs" params={{ id }}>
-                View All Runs →
-              </Link>
-            </Button>
-          </div>
-        )}
       </PageSection>
     </>
   );

@@ -17,6 +17,7 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedUsageRouteImport } from './routes/_authed/usage'
+import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedPlanRouteImport } from './routes/_authed/plan'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedApiKeysRouteImport } from './routes/_authed/api-keys'
@@ -25,12 +26,14 @@ import { Route as AuthedJobsIndexRouteImport } from './routes/_authed/jobs.index
 import { Route as AuthedSettingsConnectedDevicesRouteImport } from './routes/_authed/settings.connected-devices'
 import { Route as AuthedRunsIdRouteImport } from './routes/_authed/runs.$id'
 import { Route as AuthedJobsNewRouteImport } from './routes/_authed/jobs.new'
+import { Route as AuthedJobsIdRouteImport } from './routes/_authed/jobs.$id'
+import { Route as AuthedEndpointsIdRouteImport } from './routes/_authed/endpoints.$id'
 import { Route as AuthedDeviceApproveRouteImport } from './routes/_authed/device.approve'
 import { Route as AuthedJobsIdIndexRouteImport } from './routes/_authed/jobs.$id.index'
 import { Route as AuthedEndpointsIdIndexRouteImport } from './routes/_authed/endpoints.$id.index'
+import { Route as AuthedJobsIdEndpointsRouteImport } from './routes/_authed/jobs.$id.endpoints'
 import { Route as AuthedJobsIdEditRouteImport } from './routes/_authed/jobs.$id.edit'
 import { Route as AuthedEndpointsIdRunsRouteImport } from './routes/_authed/endpoints.$id.runs'
-import { Route as AuthedEndpointsIdHealthRouteImport } from './routes/_authed/endpoints.$id.health'
 import { Route as AuthedEndpointsIdEditRouteImport } from './routes/_authed/endpoints.$id.edit'
 import { Route as AuthedJobsJobIdEndpointsNewRouteImport } from './routes/_authed/jobs.$jobId.endpoints.new'
 
@@ -73,6 +76,11 @@ const AuthedUsageRoute = AuthedUsageRouteImport.update({
   path: '/usage',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedPlanRoute = AuthedPlanRouteImport.update({
   id: '/plan',
   path: '/plan',
@@ -89,9 +97,9 @@ const AuthedApiKeysRoute = AuthedApiKeysRouteImport.update({
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedSettingsIndexRoute = AuthedSettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
-  getParentRoute: () => AuthedRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedSettingsRoute,
 } as any)
 const AuthedJobsIndexRoute = AuthedJobsIndexRouteImport.update({
   id: '/jobs/',
@@ -100,9 +108,9 @@ const AuthedJobsIndexRoute = AuthedJobsIndexRouteImport.update({
 } as any)
 const AuthedSettingsConnectedDevicesRoute =
   AuthedSettingsConnectedDevicesRouteImport.update({
-    id: '/settings/connected-devices',
-    path: '/settings/connected-devices',
-    getParentRoute: () => AuthedRoute,
+    id: '/connected-devices',
+    path: '/connected-devices',
+    getParentRoute: () => AuthedSettingsRoute,
   } as any)
 const AuthedRunsIdRoute = AuthedRunsIdRouteImport.update({
   id: '/runs/$id',
@@ -114,40 +122,50 @@ const AuthedJobsNewRoute = AuthedJobsNewRouteImport.update({
   path: '/jobs/new',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedJobsIdRoute = AuthedJobsIdRouteImport.update({
+  id: '/jobs/$id',
+  path: '/jobs/$id',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedEndpointsIdRoute = AuthedEndpointsIdRouteImport.update({
+  id: '/endpoints/$id',
+  path: '/endpoints/$id',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedDeviceApproveRoute = AuthedDeviceApproveRouteImport.update({
   id: '/device/approve',
   path: '/device/approve',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedJobsIdIndexRoute = AuthedJobsIdIndexRouteImport.update({
-  id: '/jobs/$id/',
-  path: '/jobs/$id/',
-  getParentRoute: () => AuthedRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedJobsIdRoute,
 } as any)
 const AuthedEndpointsIdIndexRoute = AuthedEndpointsIdIndexRouteImport.update({
-  id: '/endpoints/$id/',
-  path: '/endpoints/$id/',
-  getParentRoute: () => AuthedRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedEndpointsIdRoute,
+} as any)
+const AuthedJobsIdEndpointsRoute = AuthedJobsIdEndpointsRouteImport.update({
+  id: '/endpoints',
+  path: '/endpoints',
+  getParentRoute: () => AuthedJobsIdRoute,
 } as any)
 const AuthedJobsIdEditRoute = AuthedJobsIdEditRouteImport.update({
-  id: '/jobs/$id/edit',
-  path: '/jobs/$id/edit',
-  getParentRoute: () => AuthedRoute,
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AuthedJobsIdRoute,
 } as any)
 const AuthedEndpointsIdRunsRoute = AuthedEndpointsIdRunsRouteImport.update({
-  id: '/endpoints/$id/runs',
-  path: '/endpoints/$id/runs',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedEndpointsIdHealthRoute = AuthedEndpointsIdHealthRouteImport.update({
-  id: '/endpoints/$id/health',
-  path: '/endpoints/$id/health',
-  getParentRoute: () => AuthedRoute,
+  id: '/runs',
+  path: '/runs',
+  getParentRoute: () => AuthedEndpointsIdRoute,
 } as any)
 const AuthedEndpointsIdEditRoute = AuthedEndpointsIdEditRouteImport.update({
-  id: '/endpoints/$id/edit',
-  path: '/endpoints/$id/edit',
-  getParentRoute: () => AuthedRoute,
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AuthedEndpointsIdRoute,
 } as any)
 const AuthedJobsJobIdEndpointsNewRoute =
   AuthedJobsJobIdEndpointsNewRouteImport.update({
@@ -166,19 +184,22 @@ export interface FileRoutesByFullPath {
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
+  '/settings': typeof AuthedSettingsRouteWithChildren
   '/usage': typeof AuthedUsageRoute
   '/device/approve': typeof AuthedDeviceApproveRoute
+  '/endpoints/$id': typeof AuthedEndpointsIdRouteWithChildren
+  '/jobs/$id': typeof AuthedJobsIdRouteWithChildren
   '/jobs/new': typeof AuthedJobsNewRoute
   '/runs/$id': typeof AuthedRunsIdRoute
   '/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/jobs': typeof AuthedJobsIndexRoute
-  '/settings': typeof AuthedSettingsIndexRoute
+  '/settings/': typeof AuthedSettingsIndexRoute
   '/endpoints/$id/edit': typeof AuthedEndpointsIdEditRoute
-  '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/jobs/$id/edit': typeof AuthedJobsIdEditRoute
-  '/endpoints/$id': typeof AuthedEndpointsIdIndexRoute
-  '/jobs/$id': typeof AuthedJobsIdIndexRoute
+  '/jobs/$id/endpoints': typeof AuthedJobsIdEndpointsRoute
+  '/endpoints/$id/': typeof AuthedEndpointsIdIndexRoute
+  '/jobs/$id/': typeof AuthedJobsIdIndexRoute
   '/jobs/$jobId/endpoints/new': typeof AuthedJobsJobIdEndpointsNewRoute
 }
 export interface FileRoutesByTo {
@@ -199,9 +220,9 @@ export interface FileRoutesByTo {
   '/jobs': typeof AuthedJobsIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
   '/endpoints/$id/edit': typeof AuthedEndpointsIdEditRoute
-  '/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/jobs/$id/edit': typeof AuthedJobsIdEditRoute
+  '/jobs/$id/endpoints': typeof AuthedJobsIdEndpointsRoute
   '/endpoints/$id': typeof AuthedEndpointsIdIndexRoute
   '/jobs/$id': typeof AuthedJobsIdIndexRoute
   '/jobs/$jobId/endpoints/new': typeof AuthedJobsJobIdEndpointsNewRoute
@@ -218,17 +239,20 @@ export interface FileRoutesById {
   '/_authed/api-keys': typeof AuthedApiKeysRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/plan': typeof AuthedPlanRoute
+  '/_authed/settings': typeof AuthedSettingsRouteWithChildren
   '/_authed/usage': typeof AuthedUsageRoute
   '/_authed/device/approve': typeof AuthedDeviceApproveRoute
+  '/_authed/endpoints/$id': typeof AuthedEndpointsIdRouteWithChildren
+  '/_authed/jobs/$id': typeof AuthedJobsIdRouteWithChildren
   '/_authed/jobs/new': typeof AuthedJobsNewRoute
   '/_authed/runs/$id': typeof AuthedRunsIdRoute
   '/_authed/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/_authed/jobs/': typeof AuthedJobsIndexRoute
   '/_authed/settings/': typeof AuthedSettingsIndexRoute
   '/_authed/endpoints/$id/edit': typeof AuthedEndpointsIdEditRoute
-  '/_authed/endpoints/$id/health': typeof AuthedEndpointsIdHealthRoute
   '/_authed/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/_authed/jobs/$id/edit': typeof AuthedJobsIdEditRoute
+  '/_authed/jobs/$id/endpoints': typeof AuthedJobsIdEndpointsRoute
   '/_authed/endpoints/$id/': typeof AuthedEndpointsIdIndexRoute
   '/_authed/jobs/$id/': typeof AuthedJobsIdIndexRoute
   '/_authed/jobs/$jobId/endpoints/new': typeof AuthedJobsJobIdEndpointsNewRoute
@@ -245,19 +269,22 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/dashboard'
     | '/plan'
+    | '/settings'
     | '/usage'
     | '/device/approve'
+    | '/endpoints/$id'
+    | '/jobs/$id'
     | '/jobs/new'
     | '/runs/$id'
     | '/settings/connected-devices'
     | '/jobs'
-    | '/settings'
+    | '/settings/'
     | '/endpoints/$id/edit'
-    | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
     | '/jobs/$id/edit'
-    | '/endpoints/$id'
-    | '/jobs/$id'
+    | '/jobs/$id/endpoints'
+    | '/endpoints/$id/'
+    | '/jobs/$id/'
     | '/jobs/$jobId/endpoints/new'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -278,9 +305,9 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/settings'
     | '/endpoints/$id/edit'
-    | '/endpoints/$id/health'
     | '/endpoints/$id/runs'
     | '/jobs/$id/edit'
+    | '/jobs/$id/endpoints'
     | '/endpoints/$id'
     | '/jobs/$id'
     | '/jobs/$jobId/endpoints/new'
@@ -296,17 +323,20 @@ export interface FileRouteTypes {
     | '/_authed/api-keys'
     | '/_authed/dashboard'
     | '/_authed/plan'
+    | '/_authed/settings'
     | '/_authed/usage'
     | '/_authed/device/approve'
+    | '/_authed/endpoints/$id'
+    | '/_authed/jobs/$id'
     | '/_authed/jobs/new'
     | '/_authed/runs/$id'
     | '/_authed/settings/connected-devices'
     | '/_authed/jobs/'
     | '/_authed/settings/'
     | '/_authed/endpoints/$id/edit'
-    | '/_authed/endpoints/$id/health'
     | '/_authed/endpoints/$id/runs'
     | '/_authed/jobs/$id/edit'
+    | '/_authed/jobs/$id/endpoints'
     | '/_authed/endpoints/$id/'
     | '/_authed/jobs/$id/'
     | '/_authed/jobs/$jobId/endpoints/new'
@@ -380,6 +410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedUsageRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/plan': {
       id: '/_authed/plan'
       path: '/plan'
@@ -403,10 +440,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authed/settings/': {
       id: '/_authed/settings/'
-      path: '/settings'
-      fullPath: '/settings'
+      path: '/'
+      fullPath: '/settings/'
       preLoaderRoute: typeof AuthedSettingsIndexRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedSettingsRoute
     }
     '/_authed/jobs/': {
       id: '/_authed/jobs/'
@@ -417,10 +454,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authed/settings/connected-devices': {
       id: '/_authed/settings/connected-devices'
-      path: '/settings/connected-devices'
+      path: '/connected-devices'
       fullPath: '/settings/connected-devices'
       preLoaderRoute: typeof AuthedSettingsConnectedDevicesRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedSettingsRoute
     }
     '/_authed/runs/$id': {
       id: '/_authed/runs/$id'
@@ -436,6 +473,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedJobsNewRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/jobs/$id': {
+      id: '/_authed/jobs/$id'
+      path: '/jobs/$id'
+      fullPath: '/jobs/$id'
+      preLoaderRoute: typeof AuthedJobsIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/endpoints/$id': {
+      id: '/_authed/endpoints/$id'
+      path: '/endpoints/$id'
+      fullPath: '/endpoints/$id'
+      preLoaderRoute: typeof AuthedEndpointsIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/device/approve': {
       id: '/_authed/device/approve'
       path: '/device/approve'
@@ -445,45 +496,45 @@ declare module '@tanstack/react-router' {
     }
     '/_authed/jobs/$id/': {
       id: '/_authed/jobs/$id/'
-      path: '/jobs/$id'
-      fullPath: '/jobs/$id'
+      path: '/'
+      fullPath: '/jobs/$id/'
       preLoaderRoute: typeof AuthedJobsIdIndexRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedJobsIdRoute
     }
     '/_authed/endpoints/$id/': {
       id: '/_authed/endpoints/$id/'
-      path: '/endpoints/$id'
-      fullPath: '/endpoints/$id'
+      path: '/'
+      fullPath: '/endpoints/$id/'
       preLoaderRoute: typeof AuthedEndpointsIdIndexRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedEndpointsIdRoute
+    }
+    '/_authed/jobs/$id/endpoints': {
+      id: '/_authed/jobs/$id/endpoints'
+      path: '/endpoints'
+      fullPath: '/jobs/$id/endpoints'
+      preLoaderRoute: typeof AuthedJobsIdEndpointsRouteImport
+      parentRoute: typeof AuthedJobsIdRoute
     }
     '/_authed/jobs/$id/edit': {
       id: '/_authed/jobs/$id/edit'
-      path: '/jobs/$id/edit'
+      path: '/edit'
       fullPath: '/jobs/$id/edit'
       preLoaderRoute: typeof AuthedJobsIdEditRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedJobsIdRoute
     }
     '/_authed/endpoints/$id/runs': {
       id: '/_authed/endpoints/$id/runs'
-      path: '/endpoints/$id/runs'
+      path: '/runs'
       fullPath: '/endpoints/$id/runs'
       preLoaderRoute: typeof AuthedEndpointsIdRunsRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/endpoints/$id/health': {
-      id: '/_authed/endpoints/$id/health'
-      path: '/endpoints/$id/health'
-      fullPath: '/endpoints/$id/health'
-      preLoaderRoute: typeof AuthedEndpointsIdHealthRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedEndpointsIdRoute
     }
     '/_authed/endpoints/$id/edit': {
       id: '/_authed/endpoints/$id/edit'
-      path: '/endpoints/$id/edit'
+      path: '/edit'
       fullPath: '/endpoints/$id/edit'
       preLoaderRoute: typeof AuthedEndpointsIdEditRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedEndpointsIdRoute
     }
     '/_authed/jobs/$jobId/endpoints/new': {
       id: '/_authed/jobs/$jobId/endpoints/new'
@@ -495,23 +546,63 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthedSettingsRouteChildren {
+  AuthedSettingsConnectedDevicesRoute: typeof AuthedSettingsConnectedDevicesRoute
+  AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
+}
+
+const AuthedSettingsRouteChildren: AuthedSettingsRouteChildren = {
+  AuthedSettingsConnectedDevicesRoute: AuthedSettingsConnectedDevicesRoute,
+  AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
+}
+
+const AuthedSettingsRouteWithChildren = AuthedSettingsRoute._addFileChildren(
+  AuthedSettingsRouteChildren,
+)
+
+interface AuthedEndpointsIdRouteChildren {
+  AuthedEndpointsIdEditRoute: typeof AuthedEndpointsIdEditRoute
+  AuthedEndpointsIdRunsRoute: typeof AuthedEndpointsIdRunsRoute
+  AuthedEndpointsIdIndexRoute: typeof AuthedEndpointsIdIndexRoute
+}
+
+const AuthedEndpointsIdRouteChildren: AuthedEndpointsIdRouteChildren = {
+  AuthedEndpointsIdEditRoute: AuthedEndpointsIdEditRoute,
+  AuthedEndpointsIdRunsRoute: AuthedEndpointsIdRunsRoute,
+  AuthedEndpointsIdIndexRoute: AuthedEndpointsIdIndexRoute,
+}
+
+const AuthedEndpointsIdRouteWithChildren =
+  AuthedEndpointsIdRoute._addFileChildren(AuthedEndpointsIdRouteChildren)
+
+interface AuthedJobsIdRouteChildren {
+  AuthedJobsIdEditRoute: typeof AuthedJobsIdEditRoute
+  AuthedJobsIdEndpointsRoute: typeof AuthedJobsIdEndpointsRoute
+  AuthedJobsIdIndexRoute: typeof AuthedJobsIdIndexRoute
+}
+
+const AuthedJobsIdRouteChildren: AuthedJobsIdRouteChildren = {
+  AuthedJobsIdEditRoute: AuthedJobsIdEditRoute,
+  AuthedJobsIdEndpointsRoute: AuthedJobsIdEndpointsRoute,
+  AuthedJobsIdIndexRoute: AuthedJobsIdIndexRoute,
+}
+
+const AuthedJobsIdRouteWithChildren = AuthedJobsIdRoute._addFileChildren(
+  AuthedJobsIdRouteChildren,
+)
+
 interface AuthedRouteChildren {
   AuthedApiKeysRoute: typeof AuthedApiKeysRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedPlanRoute: typeof AuthedPlanRoute
+  AuthedSettingsRoute: typeof AuthedSettingsRouteWithChildren
   AuthedUsageRoute: typeof AuthedUsageRoute
   AuthedDeviceApproveRoute: typeof AuthedDeviceApproveRoute
+  AuthedEndpointsIdRoute: typeof AuthedEndpointsIdRouteWithChildren
+  AuthedJobsIdRoute: typeof AuthedJobsIdRouteWithChildren
   AuthedJobsNewRoute: typeof AuthedJobsNewRoute
   AuthedRunsIdRoute: typeof AuthedRunsIdRoute
-  AuthedSettingsConnectedDevicesRoute: typeof AuthedSettingsConnectedDevicesRoute
   AuthedJobsIndexRoute: typeof AuthedJobsIndexRoute
-  AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
-  AuthedEndpointsIdEditRoute: typeof AuthedEndpointsIdEditRoute
-  AuthedEndpointsIdHealthRoute: typeof AuthedEndpointsIdHealthRoute
-  AuthedEndpointsIdRunsRoute: typeof AuthedEndpointsIdRunsRoute
-  AuthedJobsIdEditRoute: typeof AuthedJobsIdEditRoute
-  AuthedEndpointsIdIndexRoute: typeof AuthedEndpointsIdIndexRoute
-  AuthedJobsIdIndexRoute: typeof AuthedJobsIdIndexRoute
   AuthedJobsJobIdEndpointsNewRoute: typeof AuthedJobsJobIdEndpointsNewRoute
 }
 
@@ -519,19 +610,14 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedApiKeysRoute: AuthedApiKeysRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedPlanRoute: AuthedPlanRoute,
+  AuthedSettingsRoute: AuthedSettingsRouteWithChildren,
   AuthedUsageRoute: AuthedUsageRoute,
   AuthedDeviceApproveRoute: AuthedDeviceApproveRoute,
+  AuthedEndpointsIdRoute: AuthedEndpointsIdRouteWithChildren,
+  AuthedJobsIdRoute: AuthedJobsIdRouteWithChildren,
   AuthedJobsNewRoute: AuthedJobsNewRoute,
   AuthedRunsIdRoute: AuthedRunsIdRoute,
-  AuthedSettingsConnectedDevicesRoute: AuthedSettingsConnectedDevicesRoute,
   AuthedJobsIndexRoute: AuthedJobsIndexRoute,
-  AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
-  AuthedEndpointsIdEditRoute: AuthedEndpointsIdEditRoute,
-  AuthedEndpointsIdHealthRoute: AuthedEndpointsIdHealthRoute,
-  AuthedEndpointsIdRunsRoute: AuthedEndpointsIdRunsRoute,
-  AuthedJobsIdEditRoute: AuthedJobsIdEditRoute,
-  AuthedEndpointsIdIndexRoute: AuthedEndpointsIdIndexRoute,
-  AuthedJobsIdIndexRoute: AuthedJobsIdIndexRoute,
   AuthedJobsJobIdEndpointsNewRoute: AuthedJobsJobIdEndpointsNewRoute,
 }
 

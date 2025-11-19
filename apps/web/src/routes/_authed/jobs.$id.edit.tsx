@@ -1,10 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, getRouteApi, useNavigate, useRouter } from "@tanstack/react-router";
 import { Save, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { ActionsGroup } from "../../components/primitives/actions-group";
 import { Button } from "@cronicorn/ui-library/components/button";
 import {
   Form,
@@ -21,14 +20,11 @@ import { Separator } from "@cronicorn/ui-library/components/separator";
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 
 import { UpdateJobRequestSchema } from "@cronicorn/api-contracts/jobs";
-import { PageHeader } from "../../components/composed/page-header";
+import { ActionsGroup } from "../../components/primitives/actions-group";
 import type { UpdateJobRequest } from "@cronicorn/api-contracts/jobs";
-import { JOBS_QUERY_KEY, jobQueryOptions, updateJob } from "@/lib/api-client/queries/jobs.queries";
+import { JOBS_QUERY_KEY, updateJob } from "@/lib/api-client/queries/jobs.queries";
 
 export const Route = createFileRoute("/_authed/jobs/$id/edit")({
-  loader: async ({ params, context }) => {
-    await context.queryClient.ensureQueryData(jobQueryOptions(params.id));
-  },
   component: EditJobPage,
 });
 
@@ -37,7 +33,8 @@ function EditJobPage() {
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: job } = useSuspenseQuery(jobQueryOptions(id));
+  const parentRouteApi = getRouteApi("/_authed/jobs/$id");
+  const { job } = parentRouteApi.useLoaderData();
 
   const form = useForm<UpdateJobRequest>({
     resolver: zodResolver(UpdateJobRequestSchema),
@@ -66,8 +63,6 @@ function EditJobPage() {
 
   return (
     <>
-      <PageHeader text="Edit Job" description={`Update details for ${job.name}`} />
-
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>
