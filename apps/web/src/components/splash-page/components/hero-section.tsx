@@ -35,7 +35,7 @@ export default function HeroSection() {
                     {/* AI Assistant Callout - Optimized for mobile performance */}
                     <a
                         href={urls.docs.mcpServer}
-                        className="group relative flex text-left items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-purple-500/10 hover:from-purple-500/20 hover:via-indigo-500/20 hover:to-purple-500/20 dark:from-purple-500/20 dark:via-indigo-500/20 dark:to-purple-500/20 dark:hover:from-purple-500/30 dark:hover:via-indigo-500/30 dark:hover:to-purple-500/30 rounded-2xl border-2 border-purple-500/30 hover:border-purple-500/50 transition-all duration-300 will-change-[border-color,background]"
+                        className="group relative flex text-left items-center gap-2 px-4 py-2 rounded-2xl border-2 bg-blue-300 border-blue-300 hover:border-blue-400 dark:bg-indigo-900 dark:border-indigo-700/50 dark:hover:border-indigo-500/70 transition-all duration-200 max-w-sm"
                     >
                         <span className="text-2xl"><IconSparkles /></span>
                         <div className="flex flex-col">
