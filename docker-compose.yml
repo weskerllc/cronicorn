@@ -1,41 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.2
-    container_name: cronicorn-traefik
-    restart: unless-stopped
-    networks:
-      - cronicorn
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${LETSENCRYPT_EMAIL:-admin@example.com}
-    command:
-      # Enable Docker provider
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      
-      # HTTP entrypoint (redirect to HTTPS)
-      - --entrypoints.web.address=:80
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
-      - --entrypoints.web.http.redirections.entrypoint.scheme=https
-      
-      # HTTPS entrypoint
-      - --entrypoints.websecure.address=:443
-      - --entrypoints.websecure.http.tls.certresolver=letsencrypt
-      
-      # Let's Encrypt (automatic HTTPS)
-      - --certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL:-admin@example.com}
-      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
-      
-      # Logging
-      - --log.level=INFO
-      - --accesslog=false
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik-certs:/letsencrypt
-
   db:
     image: postgres:17
     container_name: cronicorn-db
@@ -59,7 +22,6 @@ services:
   migrator:
     image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/migrator:${IMAGE_TAG:-latest}
     container_name: ${COMPOSE_PROJECT_NAME:-cronicorn}-migrator
-    platform: linux/amd64
     restart: no
     networks:
       - cronicorn
@@ -73,7 +35,6 @@ services:
   api:
     image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/api:${IMAGE_TAG:-latest}
     container_name: cronicorn-api
-    platform: linux/amd64
     restart: unless-stopped
     networks:
       - cronicorn
@@ -82,19 +43,6 @@ services:
         condition: service_healthy
       migrator:
         condition: service_completed_successfully
-    labels:
-      - traefik.enable=true
-      # Route /api/* requests to API service
-      - traefik.http.routers.api.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`)
-      - traefik.http.routers.api.entrypoints=websecure
-      - traefik.http.routers.api.tls.certresolver=letsencrypt
-      - traefik.http.routers.api.priority=10
-      - traefik.http.services.api.loadbalancer.server.port=3333
-      # HTTP to HTTPS redirect
-      - traefik.http.routers.api-http.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`)
-      - traefik.http.routers.api-http.entrypoints=web
-      - traefik.http.routers.api-http.middlewares=redirect-to-https
-      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-db:5432/${POSTGRES_DB:-db}
       PORT: ${PORT:-3333}
@@ -110,11 +58,12 @@ services:
       STRIPE_PRICE_PRO: ${STRIPE_PRICE_PRO}
       STRIPE_PRICE_ENTERPRISE: ${STRIPE_PRICE_ENTERPRISE}
       BASE_URL: ${BASE_URL}
+    ports:
+      - "${PORT:-3333}:3333"
 
   scheduler:
     image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/scheduler:${IMAGE_TAG:-latest}
     container_name: cronicorn-scheduler
-    platform: linux/amd64
     restart: unless-stopped
     networks:
       - cronicorn
@@ -132,7 +81,6 @@ services:
   ai-planner:
     image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/ai-planner:${IMAGE_TAG:-latest}
     container_name: cronicorn-ai-planner
-    platform: linux/amd64
     restart: unless-stopped
     networks:
       - cronicorn
@@ -154,23 +102,13 @@ services:
   web:
     image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/web:${IMAGE_TAG:-latest}
     container_name: cronicorn-web
-    platform: linux/amd64
     networks:
       - cronicorn
+    # ports:
+    #   - "5173:5173"
     depends_on:
       - api
     restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      # Route all other requests to web service
-      - traefik.http.routers.web.rule=Host(`${DOMAIN:-localhost}`)
-      - traefik.http.routers.web.entrypoints=websecure
-      - traefik.http.routers.web.tls.certresolver=letsencrypt
-      - traefik.http.routers.web.priority=1
-      - traefik.http.services.web.loadbalancer.server.port=5173
-      # HTTP to HTTPS redirect
-      - traefik.http.routers.web-http.rule=Host(`${DOMAIN:-localhost}`)
-      - traefik.http.routers.web-http.entrypoints=web
     environment:
       PORT: "5173"
       NODE_ENV: ${NODE_ENV:-production}
@@ -182,25 +120,12 @@ services:
   docs:
     image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/docs:${IMAGE_TAG:-latest}
     container_name: cronicorn-docs
-    platform: linux/amd64
     networks:
       - cronicorn
+    # ports:
+    #   - "3000:80"
     restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      # Route docs subdomain to docs service
-      - traefik.http.routers.docs.rule=Host(`docs.${DOMAIN:-localhost}`)
-      - traefik.http.routers.docs.entrypoints=websecure
-      - traefik.http.routers.docs.tls.certresolver=letsencrypt
-      - traefik.http.services.docs.loadbalancer.server.port=80
-      # HTTP to HTTPS redirect
-      - traefik.http.routers.docs-http.rule=Host(`docs.${DOMAIN:-localhost}`)
-      - traefik.http.routers.docs-http.entrypoints=web
 
 networks:
   cronicorn:
     driver: bridge
-
-volumes:
-  traefik-certs:
-    driver: local
