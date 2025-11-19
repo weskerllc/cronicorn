@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/weskerllc/cronicorn/compare/v1.11.0...v1.11.1) (2025-11-19)
+
+
+### Bug Fixes
+
+* chart fixes ([#46](https://github.com/weskerllc/cronicorn/issues/46)) ([e4e27b9](https://github.com/weskerllc/cronicorn/commit/e4e27b9a2539622adf8b2f86330d9ae7741e1c5a))
+
 # [1.11.0](https://github.com/weskerllc/cronicorn/compare/v1.10.1...v1.11.0) (2025-11-18)
 
 
