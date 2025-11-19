@@ -16,7 +16,7 @@ export function useDashboardFilters() {
     const updateFilter = useCallback(
         (key: keyof DashboardSearch, value: string | undefined) => {
             navigate({
-                search: (prev) => ({
+                search: (prev: DashboardSearch) => ({
                     ...prev,
                     [key]: value || undefined,
                 }),
@@ -32,7 +32,7 @@ export function useDashboardFilters() {
     const updateFilters = useCallback(
         (updates: Partial<DashboardSearch>) => {
             navigate({
-                search: (prev) => ({
+                search: (prev: DashboardSearch) => ({
                     ...prev,
                     ...updates,
                 }),
@@ -48,7 +48,7 @@ export function useDashboardFilters() {
     const clearFilter = useCallback(
         (key: keyof DashboardSearch) => {
             navigate({
-                search: (prev) => ({
+                search: (prev: DashboardSearch) => ({
                     ...prev,
                     [key]: undefined,
                 }),
@@ -77,7 +77,7 @@ export function useDashboardFilters() {
         (key: keyof DashboardSearch, value: string) => {
             const currentValue = search[key];
             navigate({
-                search: (prev) => ({
+                search: (prev: DashboardSearch) => ({
                     ...prev,
                     [key]: currentValue === value ? undefined : value,
                 }),

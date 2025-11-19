@@ -1,9 +1,8 @@
-import { useHead } from '@unhead/react';
-import { brand, business, structuredData as contentStructuredData, keywords, openGraph, seoDefaults, twitter } from '@cronicorn/content';
+import { brand, business, keywords, openGraph, seoDefaults, twitter } from '@cronicorn/content';
 import type { PricingTier } from '@cronicorn/content';
 import { APP_URL } from '@/config';
 
-interface SEOProps {
+interface SEOOptions {
     title?: string;
     description?: string;
     keywords?: Array<string>;
@@ -15,7 +14,10 @@ interface SEOProps {
     structuredData?: Record<string, any> | Array<Record<string, any>>;
 }
 
-export function SEO({
+/**
+ * Generate head configuration for TanStack Router from SEO options
+ */
+export function createSEOHead({
     title,
     description = brand.description,
     keywords: additionalKeywords = [],
@@ -25,34 +27,30 @@ export function SEO({
     noindex = false,
     canonical,
     structuredData
-}: SEOProps) {
+}: SEOOptions) {
     // Format title
     const pageTitle = title
         ? seoDefaults.titleTemplate.replace('%s', title)
         : seoDefaults.defaultTitle;
 
-    // Combine keywords - use tier1 and tier2 from shared package
+    // Combine keywords
     const allKeywords = [...keywords.tier1, ...keywords.tier2, ...additionalKeywords];
 
     // Default image
     const ogImage = image || openGraph.images[0].url;
-
-    // Twitter-specific image (separate from OG image)
     const twitterImage = image || twitter.image;
 
     // Full URL
     const fullUrl = url ? `${APP_URL}${url}` : APP_URL;
 
     // Canonical URL - ensure it's absolute
-    const canonicalUrl = canonical 
+    const canonicalUrl = canonical
         ? (canonical.startsWith('http') ? canonical : `${APP_URL}${canonical}`)
         : fullUrl;
 
-    // Use Unhead to inject meta tags
-    useHead({
-        title: pageTitle,
+    return {
         meta: [
-            { name: 'title', content: pageTitle },
+            { title: pageTitle },
             { name: 'description', content: description },
             { name: 'keywords', content: allKeywords.join(', ') },
             { name: 'robots', content: noindex ? 'noindex, nofollow' : 'index, follow' },
@@ -78,18 +76,16 @@ export function SEO({
             { name: 'twitter:description', content: description },
             { name: 'twitter:image', content: twitterImage },
         ],
-        link: [
+        links: [
             { rel: 'canonical', href: canonicalUrl },
         ],
-        script: structuredData ? [
+        scripts: structuredData ? [
             {
                 type: 'application/ld+json',
-                innerHTML: JSON.stringify(structuredData),
+                children: JSON.stringify(structuredData),
             },
         ] : [],
-    });
-
-    return null;
+    };
 }
 
 // Utility functions for generating structured data
@@ -145,8 +141,13 @@ export const createSoftwareApplicationSchema = () => ({
     description: brand.description,
     url: APP_URL,
     softwareVersion: "1.0",
-    releaseNotes: contentStructuredData.software.releaseNotes,
-    featureList: contentStructuredData.software.featureList,
+    featureList: [
+        "AI-powered adaptive scheduling",
+        "Cron expression support",
+        "REST API endpoints",
+        "Real-time monitoring",
+        "Intelligent failure handling"
+    ],
     offers: {
         "@type": "Offer",
         price: "0",
@@ -167,16 +168,7 @@ export const createSoftwareApplicationSchema = () => ({
         "@type": "Organization",
         name: business.name,
         url: APP_URL
-    },
-    creator: {
-        "@type": "Organization",
-        name: business.name,
-        url: APP_URL
-    },
-    downloadUrl: APP_URL,
-    installUrl: `${APP_URL}/login`,
-    screenshot: `${APP_URL}/og-image.png`,
-    video: `${APP_URL}/demo.mp4`
+    }
 });
 
 export const createProductSchema = (tier: PricingTier) => ({
@@ -233,5 +225,3 @@ export const createFAQSchema = (faqs: Array<{ question: string; answer: string }
         }
     }))
 });
-
-export default SEO;

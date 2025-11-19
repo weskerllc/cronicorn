@@ -9,7 +9,7 @@ import { AlertCircle, Check, Clock, Shield, Star, Zap } from "lucide-react";
 
 import { business, metaDescriptions, pageTitles, pricing, pricingFAQs, pricingFeatures, pricingText } from "@cronicorn/content";
 import { useSession } from "@/lib/auth-client";
-import { SEO, createFAQSchema, createProductSchema } from "@/components/SEO";
+import { createFAQSchema, createProductSchema, createSEOHead } from "@/lib/seo";
 
 // Icon map for pricing features
 const featureIconMap: Record<string, React.ReactNode> = {
@@ -19,6 +19,23 @@ const featureIconMap: Record<string, React.ReactNode> = {
 };
 
 export const Route = createFileRoute("/_public/pricing")({
+  head: () => {
+    // Structured data combining product tiers and FAQs
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@graph": [
+        ...pricing.map((tier) => createProductSchema(tier)),
+        createFAQSchema(pricingFAQs)
+      ]
+    };
+
+    return createSEOHead({
+      title: pageTitles.pricing,
+      description: metaDescriptions.pricing,
+      url: "/pricing",
+      structuredData,
+    });
+  },
   component: Pricing,
 });
 
@@ -62,30 +79,11 @@ function Pricing() {
     }
   };
 
-  // FAQ data for structured data
-  const faqs = pricingFAQs;
-
-  // Structured data for each pricing tier
-  const tierStructuredData = {
-    "@context": "https://schema.org",
-    "@graph": [
-      ...pricing.map((tier) => createProductSchema(tier)),
-      createFAQSchema(faqs)
-    ]
-  };
-
   const features = pricingFeatures;
+  const faqs = pricingFAQs;
 
   return (
     <>
-      <SEO
-        title={pageTitles.pricing}
-        description={metaDescriptions.pricing}
-        keywords={["pricing", "plans", "subscription", "AI scheduling cost", "cron job pricing", "enterprise scheduling"]}
-        url="/pricing"
-        structuredData={tierStructuredData}
-      />
-
       <main className="max-w-7xl mx-auto space-y-16 p-8" role="main">
         {/* Hero Section */}
         <section className="text-center space-y-6">
