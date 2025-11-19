@@ -1,3 +1,15 @@
+# [1.12.0](https://github.com/weskerllc/cronicorn/compare/v1.11.1...v1.12.0) (2025-11-19)
+
+
+### Bug Fixes
+
+* Remove lazy loading on splash page ([bc2040e](https://github.com/weskerllc/cronicorn/commit/bc2040e610e53498ccba79e7d4ee149d193a90db))
+
+
+### Features
+
+* Complete UI consistency with reusable section components across all pages ([#45](https://github.com/weskerllc/cronicorn/issues/45)) ([b149fc9](https://github.com/weskerllc/cronicorn/commit/b149fc9250ca1ee9b022c907c89b132a05f13186))
+
 ## [1.11.1](https://github.com/weskerllc/cronicorn/compare/v1.11.0...v1.11.1) (2025-11-19)
 
 
