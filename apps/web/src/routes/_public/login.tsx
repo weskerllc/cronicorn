@@ -19,7 +19,7 @@ type LoginSearch = {
   redirect?: string;
 };
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/_public/login")({
   validateSearch: (search: Record<string, unknown>): LoginSearch => {
     return {
       redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
@@ -156,7 +156,7 @@ function RouteComponent() {
         structuredData={loginStructuredData}
       />
 
-      <main className="flex min-h-screen items-center justify-center p-4" role="main">
+      <div className="flex items-center justify-center p-4 min-h-[calc(100vh-400px)]">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Welcome to {brand.name}</CardTitle>
@@ -259,7 +259,7 @@ function RouteComponent() {
             </div>
           </CardFooter>
         </Card>
-      </main>
+      </div>
     </>
   );
 }
