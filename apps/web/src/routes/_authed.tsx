@@ -1,37 +1,38 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useRouter } from "@tanstack/react-router";
 import React from "react";
 
 import { SidebarInset, SidebarProvider } from "@cronicorn/ui-library/components/sidebar";
 import { AppSidebar } from "../components/nav/app-sidebar";
 import { SiteHeader } from "../components/nav/site-header";
+import { useSession } from "../lib/auth-client";
 
 export const Route = createFileRoute("/_authed")({
-  beforeLoad: async ({ context }) => {
-    const auth = await context.auth;
-    if (!auth.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: {
-          redirect: location.href,
-        },
-      })
-    }
-  },
-  async loader({ context }) {
-    const auth = await context.auth;
-    if (!auth.user) {
-      throw redirect({ to: "/login", search: { redirect: location.href } });
-    }
-    return auth;
-  },
   component: AuthenticatedLayout,
+  ssr: false,
 });
 
 function AuthenticatedLayout() {
-  const { user } = Route.useLoaderData();
+  const router = useRouter();
+  const { data: session, isPending } = useSession();
 
-  if (!user) {
-    throw redirect({ to: "/login", search: { redirect: location.href } });
+  React.useEffect(() => {
+    if (!isPending && !session) {
+      router.navigate({ to: "/login" });
+    }
+  }, [session, isPending, router]);
+  if (isPending) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
   }
 
   return (
@@ -44,9 +45,9 @@ function AuthenticatedLayout() {
       }
     >
       <AppSidebar user={{
-        name: user.name,
-        email: user.email,
-        avatar: user.image || undefined,
+        name: session.user.name,
+        email: session.user.email,
+        avatar: session.user.image || undefined,
       }} variant="inset" />
       <SidebarInset>
         <SiteHeader />
