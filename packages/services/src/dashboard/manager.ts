@@ -178,7 +178,7 @@ export class DashboardManager {
     // For time series data, filter out endpoints that have ZERO activity across ALL time periods
     // but keep zero-filled time points for active endpoints (needed for chart continuity)
     const endpointTotals = new Map<string, number>();
-    endpointTimeSeries.forEach(item => {
+    endpointTimeSeries.forEach((item) => {
       const existing = endpointTotals.get(item.endpointId) || 0;
       endpointTotals.set(item.endpointId, existing + item.success + item.failure);
     });
@@ -187,7 +187,7 @@ export class DashboardManager {
     );
 
     const sessionTotals = new Map<string, number>();
-    aiSessionTimeSeries.forEach(item => {
+    aiSessionTimeSeries.forEach((item) => {
       const existing = sessionTotals.get(item.endpointId) || 0;
       sessionTotals.set(item.endpointId, existing + item.sessionCount);
     });
