@@ -18,155 +18,100 @@ Run Cronicorn on your own infrastructure using Docker Compose.
 
 ## Quick Start
 
-Create a `docker-compose.yml` file with the following configuration:
+1. **Download the compose file**
+   
+   Get [`docker-compose.yml`](https://github.com/weskerllc/cronicorn/blob/main/docker-compose.yml) from the repo. This file pulls pre-built images from our registry—no building required.
 
-```yaml
-services:
-  db:
-    image: postgres:17
-    container_name: cronicorn-db
-    restart: unless-stopped
-    networks:
-      - cronicorn
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: cronicorn
-      POSTGRES_PASSWORD: your_secure_password_here
-      POSTGRES_DB: cronicorn
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cronicorn"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - cronicorn-db:/var/lib/postgresql/data
+2. **Create environment file**
 
-  migrator:
-    image: ghcr.io/weskerllc/cronicorn/migrator:latest
-    container_name: cronicorn-migrator
-    restart: no
-    networks:
-      - cronicorn
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://cronicorn:your_secure_password_here@db:5432/cronicorn
+   Create a `.env` file in the same directory. See [`.env.example`](https://github.com/weskerllc/cronicorn/blob/main/.env.example) for all options. At minimum, set:
 
-  api:
-    image: ghcr.io/weskerllc/cronicorn/api:latest
-    container_name: cronicorn-api
-    restart: unless-stopped
-    networks:
-      - cronicorn
-    depends_on:
-      db:
-        condition: service_healthy
-      migrator:
-        condition: service_completed_successfully
-    environment:
-      DATABASE_URL: postgresql://cronicorn:your_secure_password_here@db:5432/cronicorn
-      PORT: 3333
-      BETTER_AUTH_SECRET: generate_random_secret_here
-      BETTER_AUTH_URL: http://localhost:3333
-      WEB_URL: http://localhost:5173
-      API_URL: http://localhost:3333
-      GITHUB_CLIENT_ID: your_github_client_id
-      GITHUB_CLIENT_SECRET: your_github_client_secret
-      NODE_ENV: production
-    ports:
-      - "3333:3333"
+   ```bash
+   # Generate with: openssl rand -base64 32
+   BETTER_AUTH_SECRET=your-random-32-character-secret-here
+   ```
 
-  scheduler:
-    image: ghcr.io/weskerllc/cronicorn/scheduler:latest
-    container_name: cronicorn-scheduler
-    restart: unless-stopped
-    networks:
-      - cronicorn
-    depends_on:
-      db:
-        condition: service_healthy
-      migrator:
-        condition: service_completed_successfully
-    environment:
-      DATABASE_URL: postgresql://cronicorn:your_secure_password_here@db:5432/cronicorn
-      NODE_ENV: production
+   Everything else has sensible defaults that work out of the box.
 
-  ai-planner:
-    image: ghcr.io/weskerllc/cronicorn/ai-planner:latest
-    container_name: cronicorn-ai-planner
-    restart: unless-stopped
-    networks:
-      - cronicorn
-    depends_on:
-      db:
-        condition: service_healthy
-      migrator:
-        condition: service_completed_successfully
-    environment:
-      DATABASE_URL: postgresql://cronicorn:your_secure_password_here@db:5432/cronicorn
-      OPENAI_API_KEY: your_openai_api_key  # Optional - required for AI features
-      AI_MODEL: gpt-4o-mini
-      NODE_ENV: production
+3. **Start services**
 
-  web:
-    image: ghcr.io/weskerllc/cronicorn/web:latest
-    container_name: cronicorn-web
-    restart: unless-stopped
-    networks:
-      - cronicorn
-    depends_on:
-      - api
-    ports:
-      - "5173:80"
+   ```bash
+   docker compose up -d
+   ```
 
-volumes:
-  cronicorn-db:
+4. **Access the app**
 
-networks:
-  cronicorn:
-    driver: bridge
+   - **Dashboard**: http://localhost:5173
+   - **API**: http://localhost:3333
+   - **Login**: Use default admin credentials from `.env.example`
+
+## Optional Features
+
+### GitHub OAuth
+
+Add to your `.env`:
+```bash
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
 
-## Start Cronicorn
+Create an OAuth app at [github.com/settings/developers](https://github.com/settings/developers) with callback URL: `http://localhost:3333/api/auth/callback/github`
+
+### AI Scheduling
+
+Add to your `.env`:
+```bash
+OPENAI_API_KEY=sk-your-key-here
+AI_MODEL=gpt-4o-mini
+```
+
+### Stripe Payments
+
+See `.env.example` for required Stripe configuration.
+
+## Custom Domain
+
+To use a custom domain, update these in your `.env`:
 
 ```bash
-# Start all services
-docker compose up -d
+# Public URLs (accessed by browsers)
+BETTER_AUTH_URL=https://cronicorn.yourdomain.com
+WEB_URL=https://cronicorn.yourdomain.com
+VITE_API_URL=https://cronicorn.yourdomain.com  # Used at build time for client-side requests
+BASE_URL=https://cronicorn.yourdomain.com
 
-# Check logs
+# Internal URLs (Docker network, used by web SSR to call API)
+API_URL=http://cronicorn-api:3333  # Keep this as internal Docker hostname
+```
+
+**Important**: The web app makes requests to the API from two places:
+- **Client-side** (browser): Uses `VITE_API_URL` - must be your public domain
+- **Server-side** (SSR): Uses `API_URL` - should be internal Docker network URL (`http://cronicorn-api:3333`)
+
+You'll need a reverse proxy (Traefik, Caddy, nginx) to handle SSL and route requests:
+- `yourdomain.com/` → Web container (port 5173)
+- `yourdomain.com/api/*` → API container (port 3333)
+
+## Useful Commands
+
+```bash
+# View logs
 docker compose logs -f
 
-# Stop services
+# Restart services
+docker compose restart
+
+# Stop everything
 docker compose down
+
+# Update to latest version
+docker compose pull
+docker compose up -d
 ```
 
-## Access Points
+## Troubleshooting
 
-- **Web Dashboard**: http://localhost:5173
-- **API Server**: http://localhost:3333
-- **API Documentation**: http://localhost:3333/reference
-
-## Required Configuration
-
-Update these values in your `docker-compose.yml`:
-
-1. **Database Password**: Replace `your_secure_password_here`
-2. **Auth Secret**: Replace `generate_random_secret_here` with a random string
-3. **GitHub OAuth**: Add your `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
-4. **OpenAI API Key**: Add `OPENAI_API_KEY` if using AI features
-
-## Optional: Custom Domain
-
-To use a custom domain, update these environment variables:
-
-```yaml
-BETTER_AUTH_URL: https://your-domain.com
-WEB_URL: https://your-domain.com
-API_URL: https://api.your-domain.com
-```
-
----
-
-**More detailed documentation coming soon**, including production deployment, scaling, and monitoring.
+- **Connection refused**: Wait 30 seconds for all services to start
+- **Auth errors**: Ensure `BETTER_AUTH_SECRET` is at least 32 characters
+- **API not accessible**: Check that port 3333 isn't already in use
+- **Database issues**: Check logs with `docker compose logs db`
