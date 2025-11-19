@@ -1,3 +1,10 @@
+## [1.12.2](https://github.com/weskerllc/cronicorn/compare/v1.12.1...v1.12.2) (2025-11-19)
+
+
+### Bug Fixes
+
+* Vite build var in workflow ([#49](https://github.com/weskerllc/cronicorn/issues/49)) ([5cec6bd](https://github.com/weskerllc/cronicorn/commit/5cec6bd55f29816a12f3b5ba81ee895892c7a026))
+
 ## [1.12.1](https://github.com/weskerllc/cronicorn/compare/v1.12.0...v1.12.1) (2025-11-19)
 
 
