@@ -1,4 +1,4 @@
-import { Link, useMatchRoute } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@cronicorn/ui-library/lib/utils";
 
 export interface TabItem {
@@ -14,17 +14,22 @@ interface TabNavigationProps {
 }
 
 export function TabNavigation({ tabs, params, ariaLabel = "Navigation tabs" }: TabNavigationProps) {
-    const matchRoute = useMatchRoute();
+    const location = useLocation();
 
     return (
         <div className="border-b border-border mb-6">
             <nav className="flex space-x-4" aria-label={ariaLabel}>
                 {tabs.map((tab) => {
-                    const isActive = matchRoute({
-                        to: tab.to,
-                        params,
-                        ...(tab.exact ? { exact: true } : { fuzzy: true }),
-                    });
+                    // Build the actual path by replacing params in the route template
+                    const tabPath = Object.entries(params).reduce(
+                        (path, [key, value]) => path.replace(`$${key}`, value),
+                        tab.to
+                    );
+
+                    // Check if current location matches this tab
+                    const isActive = tab.exact
+                        ? location.pathname === tabPath
+                        : location.pathname.startsWith(tabPath);
 
                     return (
                         <Link
