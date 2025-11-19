@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 import React from "react";
 
 import { SidebarInset, SidebarProvider } from "@cronicorn/ui-library/components/sidebar";
@@ -37,12 +37,11 @@ function AuthenticatedLayout() {
 
   return (
     <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
+      style={{
+        // @ts-ignore - CSS custom properties conflict between csstype versions
+        "--sidebar-width": "calc(var(--spacing) * 72)",
+        "--header-height": "calc(var(--spacing) * 12)",
+      }}
     >
       <AppSidebar user={{
         name: session.user.name,
