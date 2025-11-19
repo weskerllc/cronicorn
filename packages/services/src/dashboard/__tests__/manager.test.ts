@@ -927,7 +927,7 @@ describe("dashboardManager", () => {
       const uniqueEndpoints = new Set(result.endpointTimeSeries.map(p => p.endpointId));
       expect(uniqueEndpoints.has("ep-1")).toBe(true);
       expect(uniqueEndpoints.has("ep-2")).toBe(false);
-      
+
       // Verify ep-1 has data for all days (7 days default)
       const ep1Points = result.endpointTimeSeries.filter(p => p.endpointId === "ep-1");
       expect(ep1Points.length).toBe(7);
@@ -951,7 +951,7 @@ describe("dashboardManager", () => {
       const uniqueEndpoints = new Set(result.aiSessionTimeSeries.map(p => p.endpointId));
       expect(uniqueEndpoints.has("ep-1")).toBe(true);
       expect(uniqueEndpoints.has("ep-2")).toBe(false);
-      
+
       // Verify ep-1 has data for all days (7 days default)
       const ep1Points = result.aiSessionTimeSeries.filter(p => p.endpointId === "ep-1");
       expect(ep1Points.length).toBe(7);
