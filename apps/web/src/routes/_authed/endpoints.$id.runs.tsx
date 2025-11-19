@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
@@ -11,8 +11,8 @@ import {
   SelectValue,
 } from "@cronicorn/ui-library/components/select";
 
-import { FilterGroup } from "../../components/primitives/filter-group";
 import { DataTable } from "../../components/composed/data-table";
+import { FilterGroup } from "../../components/primitives/filter-group";
 import type { ColumnDef } from "@tanstack/react-table";
 import { PageSection } from "@/components/primitives/page-section";
 import { runsQueryOptions } from "@/lib/api-client/queries/runs.queries";

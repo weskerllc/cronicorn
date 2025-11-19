@@ -1,8 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { IconDotsVertical } from "@tabler/icons-react";
-import { CheckCircle2, Copy, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Copy, Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -29,12 +28,6 @@ import {
   DialogTitle,
 } from "@cronicorn/ui-library/components/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@cronicorn/ui-library/components/dropdown-menu";
-import {
   Form,
   FormControl,
   FormDescription,
@@ -53,19 +46,19 @@ import {
 } from "@cronicorn/ui-library/components/select";
 import { toast } from "@cronicorn/ui-library/lib/utils";
 
-import { CodeDisplay } from "../../components/composed/code-display";
-import { InlineBadge } from "../../components/primitives/inline-badge";
-import { DataTable } from "../../components/composed/data-table";
 import { EmptyCTA } from "../../components/cards/empty-cta";
+import { CodeDisplay } from "../../components/composed/code-display";
+import { DataTable } from "../../components/composed/data-table";
 import { PageHeader } from "../../components/composed/page-header";
+import { InlineBadge } from "../../components/primitives/inline-badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { CreateApiKeyInput } from "@/lib/api-client/queries/api-keys.queries";
-import { PageSection } from "@/components/primitives/page-section";
 import {
   apiKeysQueryOptions,
   createApiKey,
   deleteApiKey,
 } from "@/lib/api-client/queries/api-keys.queries";
+import { PageSection } from "@/components/primitives/page-section";
 
 const createApiKeySchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
