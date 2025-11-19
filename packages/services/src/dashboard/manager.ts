@@ -168,17 +168,44 @@ export class DashboardManager {
       this.getAISessionTimeSeries(userId, days, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
     ]);
 
+    // Filter out zero-value items from chart data to reduce clutter
+    // For aggregate data (jobHealth, sourceDistribution), filter individual items with zero counts
+    const filteredJobHealth = jobHealth.filter(
+      item => item.successCount > 0 || item.failureCount > 0,
+    );
+    const filteredSourceDistribution = sourceDistribution.filter(item => item.count > 0);
+
+    // For time series data, filter out endpoints that have ZERO activity across ALL time periods
+    // but keep zero-filled time points for active endpoints (needed for chart continuity)
+    const endpointTotals = new Map<string, number>();
+    endpointTimeSeries.forEach(item => {
+      const existing = endpointTotals.get(item.endpointId) || 0;
+      endpointTotals.set(item.endpointId, existing + item.success + item.failure);
+    });
+    const filteredEndpointTimeSeries = endpointTimeSeries.filter(
+      item => (endpointTotals.get(item.endpointId) || 0) > 0,
+    );
+
+    const sessionTotals = new Map<string, number>();
+    aiSessionTimeSeries.forEach(item => {
+      const existing = sessionTotals.get(item.endpointId) || 0;
+      sessionTotals.set(item.endpointId, existing + item.sessionCount);
+    });
+    const filteredAISessionTimeSeries = aiSessionTimeSeries.filter(
+      item => (sessionTotals.get(item.endpointId) || 0) > 0,
+    );
+
     return {
       jobs,
       endpoints,
       successRate,
       recentActivity,
-      jobHealth,
+      jobHealth: filteredJobHealth,
       filteredMetrics,
-      sourceDistribution,
+      sourceDistribution: filteredSourceDistribution,
       runTimeSeries,
-      endpointTimeSeries,
-      aiSessionTimeSeries,
+      endpointTimeSeries: filteredEndpointTimeSeries,
+      aiSessionTimeSeries: filteredAISessionTimeSeries,
     };
   }
 
