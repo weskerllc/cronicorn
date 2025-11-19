@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cronicorn/ui-library/components/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@cronicorn/ui-library/components/pagination";
 import { ChartStyle } from "@cronicorn/ui-library/components/chart";
@@ -19,6 +20,7 @@ interface EndpointTableProps {
 }
 
 export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMappings, chartConfig, onEndpointClick }: EndpointTableProps) {
+    const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
 
@@ -45,7 +47,8 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
     const endIndex = startIndex + itemsPerPage;
     const paginatedStats = endpointStats.slice(startIndex, endIndex);
 
-    const handleRowClick = (endpointName: string) => {
+    const handleRowClick = (endpointId: string, endpointName: string) => {
+        navigate({ to: "/endpoints/$id", params: { id: endpointId } });
         onEndpointClick?.(endpointName);
     };
 
@@ -136,7 +139,7 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
                                     return (
                                         <TableRow
                                             key={stat.id}
-                                            onClick={() => handleRowClick(stat.name)}
+                                            onClick={() => handleRowClick(stat.id, stat.name)}
                                             className="cursor-pointer hover:bg-muted/50"
                                         >
                                             <TableCell>

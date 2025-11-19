@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageSection } from "../../components/primitives/page-section";
 import { DetailSection } from "../../components/cards/detail-section";
 import { InfoField, InfoGrid } from "../../components/cards/info-grid";
-import { PageHeader } from "@/components/composed/page-header";
 import { subscriptionStatusQueryOptions, usageQueryOptions } from "@/lib/api-client/queries/subscriptions.queries";
 import { useSession } from "@/lib/auth-client.js";
 
@@ -28,23 +27,16 @@ function Settings() {
   }
 
   return (
-    <>
-      <PageHeader
-        text="Account Settings"
-        description="Manage your profile and preferences"
-      />
-
-      <PageSection>
-        <DetailSection
-          title="Profile"
-          description="Your account information"
-        >
-          <InfoGrid columns={1}>
-            <InfoField label="Name" value={session.user.name} />
-            <InfoField label="Email" value={session.user.email} />
-          </InfoGrid>
-        </DetailSection>
-      </PageSection>
-    </>
+    <PageSection>
+      <DetailSection
+        title="Profile"
+        description="Your account information"
+      >
+        <InfoGrid columns={1}>
+          <InfoField label="Name" value={session.user.name} />
+          <InfoField label="Email" value={session.user.email} />
+        </InfoGrid>
+      </DetailSection>
+    </PageSection>
   );
 }

@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { AlertCircle, ChevronDown, ChevronUp, Clock, Play, Plus, Save, X, Zap } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, getRouteApi, useRouter } from "@tanstack/react-router";
+import { AlertCircle, ChevronDown, ChevronUp, Plus, Save, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
@@ -9,15 +9,6 @@ import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert"
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@cronicorn/ui-library/components/dialog";
 import {
     Form,
     FormControl,
@@ -34,16 +25,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { Textarea } from "@cronicorn/ui-library/components/textarea";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { ActionsGroup } from "../../components/primitives/actions-group";
 import { FormFieldRow } from "../../components/primitives/form-field-row";
 import { GridLayout } from "../../components/primitives/grid-layout";
-import { PageHeader } from "../../components/composed/page-header";
 import type { UpdateEndpointForm } from "@/lib/endpoint-forms";
 import { AlertCard } from "@/components/cards/alert-card";
-import { applyIntervalHint, clearHints, endpointByIdQueryOptions, pauseEndpoint, resetFailures, scheduleOneShot, updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
-import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
+import { updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import {
     endpointToFormData,
     transformUpdatePayload,
@@ -51,48 +39,20 @@ import {
 } from "@/lib/endpoint-forms";
 
 export const Route = createFileRoute("/_authed/endpoints/$id/edit")({
-    loader: async ({ params, context }) => {
-        // Load endpoint by ID only
-        const endpoint = await context.queryClient.ensureQueryData(
-            endpointByIdQueryOptions(params.id),
-        );
-        // Then load the job for breadcrumb context (if jobId exists)
-        if (endpoint.jobId) {
-            await context.queryClient.ensureQueryData(jobQueryOptions(endpoint.jobId));
-        }
-    },
     component: EditEndpointPage,
 });
-
-// Schema for interval hint dialog
-const intervalHintSchema = z.object({
-    intervalMinutes: z.number().min(1, "Must be at least 1 minute"),
-    ttlMinutes: z.number().min(1, "Must be at least 1 minute").optional(),
-    reason: z.string().optional(),
-});
-
-type IntervalHintForm = z.infer<typeof intervalHintSchema>;
 
 function EditEndpointPage() {
     const { id } = Route.useParams();
     const router = useRouter();
     const queryClient = useQueryClient();
-    const { data: endpoint } = useSuspenseQuery(endpointByIdQueryOptions(id));
+    const parentRouteApi = getRouteApi("/_authed/endpoints/$id");
+    const { endpoint } = parentRouteApi.useLoaderData();
     const [showAdvanced, setShowAdvanced] = useState(false);
-    const [intervalHintDialogOpen, setIntervalHintDialogOpen] = useState(false);
 
     const form = useForm<UpdateEndpointForm>({
         resolver: zodResolver(updateEndpointSchema),
         defaultValues: endpointToFormData(endpoint) as UpdateEndpointForm,
-    });
-
-    const intervalHintForm = useForm<IntervalHintForm>({
-        resolver: zodResolver(intervalHintSchema),
-        defaultValues: {
-            intervalMinutes: 15,
-            ttlMinutes: 60,
-            reason: "",
-        },
     });
 
     const { fields: headerFields, append: appendHeader, remove: removeHeader } = useFieldArray({
@@ -121,116 +81,20 @@ function EditEndpointPage() {
             toast.success("Endpoint updated successfully");
         },
     });
-    const { mutateAsync: pauseMutate, isPending: pausePending } = useMutation({
-        mutationFn: async (pausedUntil: string | null) => pauseEndpoint(id, { pausedUntil }),
-        onSuccess: async (_, pausedUntil) => {
-            await queryClient.invalidateQueries({ queryKey: ["endpoints", id] });
-            if (endpoint.jobId) {
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints"] });
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints", id] });
-            }
-            toast.success(pausedUntil ? "Endpoint paused for 24 hours" : "Endpoint resumed");
-        },
-    });
-
-    const { mutateAsync: resetMutate, isPending: resetPending } = useMutation({
-        mutationFn: async () => resetFailures(id),
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ["endpoints", id] });
-            if (endpoint.jobId) {
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints"] });
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints", id] });
-            }
-            toast.success("Failure count reset");
-        },
-    });
-
-    const { mutateAsync: clearMutate, isPending: clearPending } = useMutation({
-        mutationFn: async () => clearHints(id),
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ["endpoints", id] });
-            if (endpoint.jobId) {
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints"] });
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints", id] });
-            }
-            toast.success("AI hints cleared");
-        },
-    });
-
-    const { mutateAsync: runNowMutate, isPending: runNowPending } = useMutation({
-        mutationFn: async () => scheduleOneShot(id, { nextRunInMs: 0, reason: "Manual trigger via UI" }),
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ["endpoints", id] });
-            if (endpoint.jobId) {
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints"] });
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints", id] });
-            }
-            toast.success("Endpoint scheduled to run immediately");
-        },
-    });
-
-    const { mutateAsync: applyHintMutate, isPending: applyHintPending } = useMutation({
-        mutationFn: async (data: IntervalHintForm) => {
-            await applyIntervalHint(id, {
-                intervalMs: data.intervalMinutes * 60 * 1000,
-                ttlMinutes: data.ttlMinutes,
-                reason: data.reason,
-            });
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ["endpoints", id] });
-            if (endpoint.jobId) {
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints"] });
-                await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints", id] });
-            }
-            toast.success("Interval hint applied");
-            setIntervalHintDialogOpen(false);
-            intervalHintForm.reset();
-        },
-    });
 
     const handleFormSubmit = async (data: UpdateEndpointForm) => {
         await updateMutate(data);
-    };
-
-    const handlePause = async () => {
-        const isPaused = endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date();
-        const pausedUntil = isPaused ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        await pauseMutate(pausedUntil);
-    };
-
-    const handleResetFailures = async () => {
-        await resetMutate();
-    };
-
-    const handleClearHints = async () => {
-        await clearMutate();
-    };
-
-    const handleRunNow = async () => {
-        await runNowMutate();
-    };
-
-    const handleApplyHint = async (data: IntervalHintForm) => {
-        await applyHintMutate(data);
     };
 
     const onCancel = () => {
         router.history.back();
     };
 
-    const isPaused = !!(endpoint.pausedUntil && new Date(endpoint.pausedUntil) > new Date());
     const hasAIHints = !!(endpoint.aiHintIntervalMs || endpoint.aiHintNextRunAt || endpoint.aiHintReason);
     const isHintExpired = endpoint.aiHintExpiresAt && new Date(endpoint.aiHintExpiresAt) < new Date();
 
     return (
         <>
-
-            <PageHeader
-                text="Edit Endpoint"
-                description={`Update configuration for ${endpoint.name}`}
-            />
-
             {hasAIHints && (
                 <AlertCard variant="info" className="mb-6">
                     <div className="flex items-center gap-2 mb-4">
@@ -751,218 +615,20 @@ function EditEndpointPage() {
                         )}
                     </Card>
 
-                    <ActionsGroup gap="4">
-                        <Button type="submit" disabled={updatePending}>
-                            <Save className="size-4 mr-2" />
-                            {updatePending ? "Saving..." : "Save Changes"}
-                        </Button>
-                        <Button type="button" variant="outline" onClick={onCancel}>
-                            <X className="size-4 mr-2" />
+                    <Separator />
+
+                    <ActionsGroup className="justify-end" gap="2">
+                        <Button type="button" variant="outline" disabled={updatePending} onClick={onCancel}>
+                            <X className="size-4" />
                             Cancel
+                        </Button>
+                        <Button type="submit" disabled={updatePending}>
+                            <Save className="size-4" />
+                            {updatePending ? "Saving..." : "Save Changes"}
                         </Button>
                     </ActionsGroup>
                 </form>
             </Form>
-
-            <Separator className="my-8" />
-
-            <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Endpoint Actions</h2>
-
-                <ActionsGroup gap="2" wrap>
-                    <Button
-                        variant="default"
-                        onClick={handleRunNow}
-                        disabled={runNowPending || isPaused}
-                    >
-                        <Play className="h-4 w-4 mr-2" />
-                        {runNowPending ? "Scheduling..." : "Run Now"}
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        onClick={handlePause}
-                        disabled={pausePending}
-                    >
-                        {pausePending ? "Loading..." : isPaused ? "Resume Endpoint" : "Pause Endpoint"}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={handleResetFailures}
-                        disabled={resetPending}
-                    >
-                        {resetPending ? "Loading..." : "Reset Failure Count"}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={handleClearHints}
-                        disabled={clearPending}
-                    >
-                        {clearPending ? "Loading..." : "Clear AI Hints"}
-                    </Button>
-
-                    <Dialog open={intervalHintDialogOpen} onOpenChange={setIntervalHintDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline">
-                                <Clock className="h-4 w-4 mr-2" />
-                                Set Interval Hint
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Apply Interval Hint</DialogTitle>
-                                <DialogDescription>
-                                    Manually override the scheduling interval for this endpoint. The hint will expire after the specified TTL.
-                                </DialogDescription>
-                            </DialogHeader>
-
-                            <Form {...intervalHintForm}>
-                                <form onSubmit={intervalHintForm.handleSubmit(handleApplyHint)} className="space-y-4">
-                                    <FormField
-                                        control={intervalHintForm.control}
-                                        name="intervalMinutes"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Interval (minutes)</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        min="1"
-                                                        placeholder="15"
-                                                        {...field}
-                                                        value={field.value || ""}
-                                                        onChange={(e) => {
-                                                            field.onChange(
-                                                                e.target.value
-                                                                    ? Number(e.target.value)
-                                                                    : undefined,
-                                                            );
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormDescription>How often should the endpoint run?</FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={intervalHintForm.control}
-                                        name="ttlMinutes"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Time to Live (minutes)</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        min="1"
-                                                        placeholder="60"
-                                                        {...field}
-                                                        value={field.value ?? ""}
-                                                        onChange={(e) => {
-                                                            field.onChange(
-                                                                e.target.value
-                                                                    ? Number(e.target.value)
-                                                                    : undefined,
-                                                            );
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormDescription>How long should this hint remain active?</FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={intervalHintForm.control}
-                                        name="reason"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Reason (optional)</FormLabel>
-                                                <FormControl>
-                                                    <Textarea
-                                                        placeholder="Why are you changing the interval?"
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <FormDescription>Provide context for this manual override</FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <DialogFooter>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => setIntervalHintDialogOpen(false)}
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button type="submit" disabled={applyHintPending}>
-                                            {applyHintPending ? "Applying..." : "Apply Hint"}
-                                        </Button>
-                                    </DialogFooter>
-                                </form>
-                            </Form>
-                        </DialogContent>
-                    </Dialog>
-                </ActionsGroup>
-
-                <GridLayout cols={1} md={2}>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm">Endpoint State</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Paused Until:</span>
-                                <span className="font-mono">{endpoint.pausedUntil || "—"}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Failure Count:</span>
-                                <span className="font-mono">{endpoint.failureCount}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Last Run:</span>
-                                <span className="font-mono text-xs">{endpoint.lastRunAt || "—"}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Next Run:</span>
-                                <span className="font-mono text-xs">{endpoint.nextRunAt}</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm">Advanced Configuration</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Timeout:</span>
-                                <span className="font-mono">{endpoint.timeoutMs ? `${endpoint.timeoutMs}ms` : "Default"}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Max Execution Time:</span>
-                                <span className="font-mono">{endpoint.maxExecutionTimeMs ? `${endpoint.maxExecutionTimeMs}ms` : "Default"}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Max Response Size:</span>
-                                <span className="font-mono">{endpoint.maxResponseSizeKb ? `${endpoint.maxResponseSizeKb}KB` : "Default"}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Min Interval:</span>
-                                <span className="font-mono">{endpoint.minIntervalMs ? `${Math.round(endpoint.minIntervalMs / 60000)}min` : "—"}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Max Interval:</span>
-                                <span className="font-mono">{endpoint.maxIntervalMs ? `${Math.round(endpoint.maxIntervalMs / 60000)}min` : "—"}</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </GridLayout>
-            </div>
         </>
     );
 }

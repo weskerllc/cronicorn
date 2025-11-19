@@ -23,7 +23,6 @@ import { ListCard } from "../../components/cards/list-card";
 
 import type { ListDevicesResponse } from "@/lib/api-client/queries/devices.queries";
 import { devicesQueryOptions, revokeDevice } from "@/lib/api-client/queries/devices.queries";
-import { PageHeader } from "@/components/composed/page-header";
 
 export const Route = createFileRoute("/_authed/settings/connected-devices")({
     component: ConnectedDevices,
@@ -86,11 +85,6 @@ function ConnectedDevices() {
 
     return (
         <>
-            <PageHeader
-                text="Connected Devices"
-                description="Manage devices and applications that have access to your account"
-            />
-
             {error && (
                 <Alert variant="destructive" className="mb-6">
                     <AlertCircle className="h-4 w-4" />
