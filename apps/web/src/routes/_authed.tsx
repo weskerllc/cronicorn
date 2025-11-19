@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute, useRouter } from "@tanstack/react-router";
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import React from "react";
 
 import { SidebarInset, SidebarProvider } from "@cronicorn/ui-library/components/sidebar";
@@ -7,19 +7,16 @@ import { SiteHeader } from "../components/nav/site-header";
 import { useSession } from "../lib/auth-client";
 
 export const Route = createFileRoute("/_authed")({
-  component: AuthenticatedLayout,
+  // Disable SSR for authenticated routes since we need client-side session
+  // This prevents the "Unauthorized" error during SSR while keeping layout persistent during client navigation
   ssr: false,
+  component: AuthenticatedLayout,
 });
 
 function AuthenticatedLayout() {
-  const router = useRouter();
   const { data: session, isPending } = useSession();
 
-  React.useEffect(() => {
-    if (!isPending && !session) {
-      router.navigate({ to: "/login" });
-    }
-  }, [session, isPending, router]);
+  // Show loading state while checking auth
   if (isPending) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -31,7 +28,10 @@ function AuthenticatedLayout() {
     );
   }
 
+  // Redirect to login if not authenticated
   if (!session) {
+    // Use window.location for a full redirect to ensure clean state
+    window.location.href = '/login';
     return null;
   }
 
@@ -52,7 +52,15 @@ function AuthenticatedLayout() {
       <SidebarInset>
         <SiteHeader />
         <div className="@container/main flex flex-1 flex-col gap-4 p-4 sm:p-6 sm:gap-6">
-          <Outlet />
+          <React.Suspense
+            fallback={
+              <div className="flex items-center justify-center py-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </div>
+            }
+          >
+            <Outlet />
+          </React.Suspense>
         </div>
       </SidebarInset>
     </SidebarProvider>

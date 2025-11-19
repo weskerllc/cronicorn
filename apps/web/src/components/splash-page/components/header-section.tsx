@@ -46,10 +46,10 @@ export default function HeaderSection() {
 
             <nav className="flex items-center   px-4 md:px-8 justify-between max-w-7xl mx-auto  py-4">
                 {/* Logo/Brand */}
-                <a href={urls.product.home} className="flex items-center space-x-2">
+                <Link to="/" className="flex items-center space-x-2">
                     <AppLogo className="size-6 fill-foreground" aria-label="Cronicorn intelligent cron job scheduling platform logo" />
                     <span className="font-semibold text-lg text-foreground">{brand.name}</span>
-                </a>
+                </Link>
 
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center gap-6">
