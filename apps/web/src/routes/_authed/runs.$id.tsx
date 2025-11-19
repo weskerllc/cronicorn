@@ -4,8 +4,8 @@ import { AlertCircle } from "lucide-react";
 
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Badge } from "@cronicorn/ui-library/components/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
 import { PageHeader } from "@/components/page-header";
+import { PageSection, DetailSection, InfoGrid, InfoField } from "@/components/sections";
 import { runQueryOptions } from "@/lib/api-client/queries/runs.queries";
 
 export const Route = createFileRoute("/_authed/runs/$id")({
@@ -32,137 +32,116 @@ function RunDetailsPage() {
         description={`Run #${id}`}
       />
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Status</p>
-                <Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Duration</p>
-                <p className="font-medium">{run.durationMs}ms</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Started At</p>
-                <p className="font-medium">{new Date(run.startedAt).toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Finished At</p>
-                <p className="font-medium">
-                  {run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "N/A"}
-                </p>
-              </div>
-              {run.source && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Triggered By</p>
+      <PageSection>
+        <DetailSection title="Summary">
+          <InfoGrid columns={2}>
+            <InfoField 
+              label="Status" 
+              value={<Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>} 
+            />
+            <InfoField label="Duration" value={`${run.durationMs}ms`} />
+            <InfoField 
+              label="Started At" 
+              value={new Date(run.startedAt).toLocaleString()} 
+            />
+            <InfoField 
+              label="Finished At" 
+              value={run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "N/A"} 
+            />
+            {run.source && (
+              <InfoField 
+                label="Triggered By" 
+                value={
                   <Badge variant="outline" className="capitalize">
                     {run.source.replace(/-/g, " ")}
                   </Badge>
-                </div>
-              )}
-              {typeof run.attempt === "number" && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Attempt</p>
-                  <p className="font-medium">
-                    {run.attempt === 0 ? "First run" : `Retry #${run.attempt}`}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                } 
+              />
+            )}
+            {typeof run.attempt === "number" && (
+              <InfoField 
+                label="Attempt" 
+                value={run.attempt === 0 ? "First run" : `Retry #${run.attempt}`} 
+              />
+            )}
+          </InfoGrid>
+        </DetailSection>
 
         {run.endpoint && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Endpoint Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div>
-                <span className="text-sm text-muted-foreground">Name:</span>
-                <span className="ml-2 font-medium">{run.endpoint.name}</span>
-              </div>
+          <DetailSection title="Endpoint Details">
+            <InfoGrid columns={1}>
+              <InfoField label="Name" value={run.endpoint.name} />
               {run.endpoint.url && (
-                <div>
-                  <span className="text-sm text-muted-foreground">URL:</span>
-                  <span className="ml-2 font-mono text-sm">{run.endpoint.url}</span>
-                </div>
+                <InfoField 
+                  label="URL" 
+                  value={<code className="text-sm">{run.endpoint.url}</code>} 
+                />
               )}
               {run.endpoint.method && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Method:</span>
-                  <Badge variant="outline" className="ml-2">{run.endpoint.method}</Badge>
-                </div>
+                <InfoField 
+                  label="Method" 
+                  value={<Badge variant="outline">{run.endpoint.method}</Badge>} 
+                />
               )}
-            </CardContent>
-          </Card>
+            </InfoGrid>
+          </DetailSection>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Request Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <span className="text-muted-foreground">Endpoint ID:</span>
-              <span className="ml-2 font-mono text-sm">{run.endpointId}</span>
-            </div>
-          </CardContent>
-        </Card>
+        <DetailSection title="Request Details">
+          <InfoGrid columns={1}>
+            <InfoField 
+              label="Endpoint ID" 
+              value={<code className="text-sm">{run.endpointId}</code>} 
+            />
+          </InfoGrid>
+        </DetailSection>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Response Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {run.statusCode && (
-              <div className="mb-4">
-                <span className="text-sm text-muted-foreground">Status Code:</span>
-                <Badge
-                  variant={
-                    run.statusCode >= 200 && run.statusCode < 300
-                      ? "default"
-                      : run.statusCode >= 400
-                        ? "destructive"
-                        : "secondary"
-                  }
-                  className="ml-2"
-                >
-                  {run.statusCode}
-                </Badge>
-              </div>
-            )}
+        <DetailSection title="Response Details">
+          {run.statusCode && (
+            <InfoGrid columns={1}>
+              <InfoField 
+                label="Status Code" 
+                value={
+                  <Badge
+                    variant={
+                      run.statusCode >= 200 && run.statusCode < 300
+                        ? "default"
+                        : run.statusCode >= 400
+                          ? "destructive"
+                          : "secondary"
+                    }
+                  >
+                    {run.statusCode}
+                  </Badge>
+                } 
+              />
+            </InfoGrid>
+          )}
 
-            {run.errorMessage
+          {run.errorMessage
+            ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-medium mb-2">Error</p>
+                  <pre className="text-sm whitespace-pre-wrap">{run.errorMessage}</pre>
+                </AlertDescription>
+              </Alert>
+            )
+            : run.responseBody
               ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <p className="font-medium mb-2">Error</p>
-                    <pre className="text-sm whitespace-pre-wrap">{run.errorMessage}</pre>
-                  </AlertDescription>
-                </Alert>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Response Body:</p>
+                  <pre className="bg-muted p-4 rounded text-xs overflow-x-auto max-h-96">
+                    {JSON.stringify(run.responseBody, null, 2)}
+                  </pre>
+                </div>
               )
-              : run.responseBody
-                ? (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Response Body:</p>
-                    <pre className="bg-muted p-4 rounded text-xs overflow-x-auto max-h-96">
-                      {JSON.stringify(run.responseBody, null, 2)}
-                    </pre>
-                  </div>
-                )
-                : (
-                  <p className="text-sm text-muted-foreground italic">No response body captured</p>
-                )}
-          </CardContent>
-        </Card>
-      </div>
+              : (
+                <p className="text-sm text-muted-foreground italic">No response body captured</p>
+              )}
+        </DetailSection>
+      </PageSection>
     </>
   );
 }
