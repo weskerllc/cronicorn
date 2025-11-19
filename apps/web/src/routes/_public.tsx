@@ -3,7 +3,7 @@ import { brand, urls } from "@cronicorn/content";
 
 import BackgroundEffects from "../components/splash-page/components/background-effects";
 import HeaderSection from "../components/splash-page/components/header-section";
-import appLogoUrl from "../logo.svg";
+import AppLogo from "../../public/logo.svg?react";
 import { Footer2 } from "@/components/nav/footer";
 
 export const Route = createFileRoute("/_public")({
@@ -35,7 +35,7 @@ function PublicLayout(
         <Footer2
           tagline={brand.title}
           logoSlot={<a href={urls.product.home} className="flex items-center space-x-2">
-            <img src={appLogoUrl} className="size-12" alt="Cronicorn intelligent cron job scheduling platform logo" />
+            <AppLogo className="size-12! fill-foreground" />
             <span className="font-medium text-2xl text-muted-foreground">{brand.name}</span>
           </a>}
           menuItems={[
