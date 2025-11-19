@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { brand, business } from "@cronicorn/content";
 import { SEO } from "@/components/SEO";
 
-export const Route = createFileRoute("/terms")({
+export const Route = createFileRoute("/_public/terms")({
   component: TermsOfService,
 });
 
@@ -18,8 +18,7 @@ function TermsOfService() {
         noindex={false}
       />
 
-      <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-4 py-16 md:py-24">
+      <div className="max-w-4xl mx-auto px-4 py-16 md:py-24">
           <div className="space-y-8">
             {/* Header */}
             <div className="space-y-4">
@@ -410,7 +409,6 @@ function TermsOfService() {
             </section>
           </div>
         </div>
-      </div>
     </>
   );
 }

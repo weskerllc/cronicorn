@@ -18,7 +18,7 @@ const featureIconMap: Record<string, React.ReactNode> = {
   "99.9% Uptime": <Clock className="w-5 h-5 text-primary" />,
 };
 
-export const Route = createFileRoute("/pricing")({
+export const Route = createFileRoute("/_public/pricing")({
   component: Pricing,
 });
 
