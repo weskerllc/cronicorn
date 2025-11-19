@@ -154,6 +154,7 @@ export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
                             }}
                         />
                         <YAxis
+                            domain={[0, 'auto']}
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
@@ -163,11 +164,35 @@ export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
                             cursor={false}
                             content={({ active, payload }) => {
                                 if (!active || !payload || payload.length === 0) return null;
+
+                                // Filter out zero values from tooltip
+                                const filteredPayload = payload.filter(item => {
+                                    const value = typeof item.value === 'number' ? item.value : 0;
+                                    return value > 0;
+                                });
+
                                 const date = new Date(Number(payload[0]?.payload?.date));
+
+                                // If all values are zero, show "No activity" message
+                                if (filteredPayload.length === 0) {
+                                    return (
+                                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                            <div className="text-muted-foreground text-xs">
+                                                {date.toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric",
+                                                })}
+                                            </div>
+                                            <div className="text-muted-foreground mt-1 text-xs">No activity</div>
+                                        </div>
+                                    );
+                                }
+
                                 return (
                                     <ChartTooltipContent
                                         active={active}
-                                        payload={payload}
+                                        payload={filteredPayload}
                                         label={date.toLocaleDateString("en-US", {
                                             month: "short",
                                             day: "numeric",
