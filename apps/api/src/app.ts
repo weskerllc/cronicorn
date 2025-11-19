@@ -52,15 +52,15 @@ export async function createApp(
   // eslint-disable-next-line ts/consistent-type-assertions
   const app = createRouter().basePath("/api") as AppOpenAPI;
 
-  // Configure CORS for Better Auth (must come before auth routes)
+  // Configure CORS globally to allow direct requests from web app (no proxy)
   app.use(
-    "/auth/**",
+    "*",
     cors({
       origin: config.WEB_URL,
       credentials: true, // Allow cookies
-      allowHeaders: ["Content-Type", "Authorization"],
-      allowMethods: ["POST", "GET", "OPTIONS"],
-      exposeHeaders: ["Content-Length"],
+      allowHeaders: ["Content-Type", "Authorization", "Cookie"],
+      allowMethods: ["POST", "GET", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      exposeHeaders: ["Content-Length", "Set-Cookie"],
       maxAge: 600,
     }),
   );

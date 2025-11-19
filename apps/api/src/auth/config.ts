@@ -24,6 +24,9 @@ export function createAuth(config: Env, db: Database) {
   // Detect if we're in an HTTPS environment (production or staging)
   const isHttps = config.BETTER_AUTH_URL.startsWith("https://");
 
+  // Check if we're in local development (different ports = cross-origin)
+  const isLocalDev = config.BETTER_AUTH_URL.includes("localhost") || config.BETTER_AUTH_URL.includes("127.0.0.1");
+
   // Extract domain from BETTER_AUTH_URL for cookie configuration
   // This ensures cookies work correctly through Cloudflare proxy
   const getDomainFromUrl = (url: string): string | undefined => {
@@ -68,11 +71,15 @@ export function createAuth(config: Env, db: Database) {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
       updateAge: 60 * 60 * 24 * 7, // Refresh session weekly
     },
-    // Advanced cookie configuration for production HTTPS
+    // Advanced cookie configuration for production HTTPS and local dev
     advanced: {
       defaultCookieAttributes: {
-        sameSite: "lax", // Same-origin cookies (web and API on same domain)
-        secure: isHttps, // Only send cookies over HTTPS in production
+        // For local dev with different ports, use "none" to allow cross-origin cookies
+        // For production with same domain, use "lax" for better security
+        sameSite: isLocalDev ? "none" : "lax",
+        // secure must be true when sameSite is "none" (browsers require this)
+        // For local dev, we'll use secure=true but browser will accept it over HTTP for localhost
+        secure: isLocalDev ? true : isHttps,
         httpOnly: true, // Prevent JavaScript access for security
         path: "/",
         // Explicitly set domain for production to ensure Cloudflare compatibility

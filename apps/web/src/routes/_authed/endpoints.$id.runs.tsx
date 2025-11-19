@@ -131,7 +131,7 @@ function RunsListPage() {
             value={search.status}
             onValueChange={(value) => {
               navigate({
-                search: (prev) => ({ ...prev, status: value as typeof search.status }),
+                search: (prev: typeof search) => ({ ...prev, status: value as typeof search.status }),
               });
             }}
           >
@@ -179,7 +179,7 @@ function RunsListPage() {
         pageIndex={search.page - 1} // Convert 1-indexed URL param to 0-indexed
         onPaginationChange={(pagination) => {
           navigate({
-            search: (prev) => ({
+            search: (prev: typeof search) => ({
               ...prev,
               page: pagination.pageIndex + 1, // Convert 0-indexed to 1-indexed
               pageSize: pagination.pageSize,

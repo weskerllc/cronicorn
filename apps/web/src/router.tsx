@@ -1,22 +1,39 @@
-import { createRouter } from '@tanstack/react-router'
+import { QueryClient } from "@tanstack/react-query";
+import { createRouter } from "@tanstack/react-router";
+import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import { routeTree } from "./routeTree.gen";
+import NotFoundComponent from "./components/not-found";
+import { DefaultCatchBoundary } from "./components/catch-boundary";
 
-import { routeTree } from './routeTree.gen'
-import type { AuthContextValue } from './lib/auth-context';
+export function getRouter() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 2, // 2 minutes
+      },
+    },
+  });
 
-declare module "@tanstack/react-router" {
-  interface Register {
-    router: typeof router;
-  }
-}
-
-
-export const router = createRouter({
+  const router = createRouter({
+    routeTree,
+    context: { queryClient },
     defaultPreload: "intent",
+    // react-query will handle data fetching & caching
+    // https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#passing-all-loader-events-to-an-external-cache
+    defaultPreloadStaleTime: 0,
+    defaultErrorComponent: DefaultCatchBoundary,
+    defaultNotFoundComponent: NotFoundComponent,
     scrollRestoration: true,
     defaultStructuralSharing: true,
-    defaultPreloadStaleTime: 0,
-  routeTree,
-  context: {
-    auth: undefined! as Promise<AuthContextValue>,
-  },
-})
+  });
+
+  setupRouterSsrQueryIntegration({
+    router,
+    queryClient,
+    handleRedirects: true,
+    wrapQueryClient: true,
+  });
+
+  return router;
+}
