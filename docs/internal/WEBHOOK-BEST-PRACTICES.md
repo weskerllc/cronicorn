@@ -133,6 +133,12 @@ const event = await paymentProvider.verifyWebhook(body, signature, webhookSecret
 // Throws if signature is invalid
 ```
 
+✅ **Replay Attack Prevention**: Events older than 5 minutes are automatically rejected
+
+This follows Stripe's best practice to prevent replay attacks. If an attacker somehow obtains a valid webhook payload and signature, they can only replay it within 5 minutes of the original event creation.
+
+✅ **Event Ordering**: The system is designed for eventual consistency and handles out-of-order event delivery. Stripe does not guarantee events arrive in order.
+
 ## Maintenance
 
 ### Cleaning Up Old Events

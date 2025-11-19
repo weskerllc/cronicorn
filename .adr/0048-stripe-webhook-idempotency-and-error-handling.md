@@ -105,17 +105,21 @@ The webhook endpoint already returns:
 3. **Debugging support**: All webhook events are stored with full data and error messages
 4. **Monitoring**: Can track retry counts and identify problematic events
 5. **Data loss prevention**: Even if initial processing fails, subscription changes eventually succeed via retry
+6. **Replay attack prevention**: Events older than 5 minutes are rejected
 
 ### Tradeoffs
 1. **Database storage**: Webhook events accumulate over time (mitigated by `deleteOldEvents`)
 2. **Extra DB queries**: Every webhook requires 2-3 extra DB operations (acceptable overhead)
 3. **Eventually consistent**: There may be a delay between payment and account upgrade if initial webhook fails (acceptable - Stripe retries quickly)
+4. **Out-of-order events**: Stripe doesn't guarantee delivery order - design for eventual consistency
 
 ### Implementation Notes
 - Event IDs are globally unique (Stripe guarantees this)
+- Events older than 5 minutes are rejected to prevent replay attacks (Stripe best practice)
 - Stripe recommends keeping events for at least 24 hours before cleanup
 - Events should be cleaned up periodically via a maintenance job
 - The webhook handler completes quickly (< 10s) to avoid Stripe timeouts
+- **Future scalability**: If processing becomes slow, consider async processing with job queues while maintaining quick 200 response
 
 ## References
 - [Stripe Best Practices](https://stripe.dev/blog/building-solid-stripe-integrations-developers-guide-success)

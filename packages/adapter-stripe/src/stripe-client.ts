@@ -107,10 +107,22 @@ export class StripePaymentProvider implements PaymentProvider {
    * Verify webhook signature and parse event.
    *
    * SECURITY: Validates that webhook came from Stripe.
-   * Throws if signature verification fails.
+   * - Verifies signature using Stripe's library
+   * - Rejects events older than 5 minutes to prevent replay attacks (per Stripe best practices)
+   *
+   * Throws if signature verification fails or event is too old.
    */
   async verifyWebhook(payload: string, signature: string, secret: string): Promise<WebhookEvent> {
     const event = this.stripe.webhooks.constructEvent(payload, signature, secret);
+
+    // Reject events older than 5 minutes to prevent replay attacks
+    // This is a Stripe best practice recommendation
+    const eventAge = Date.now() - event.created * 1000;
+    const MAX_EVENT_AGE_MS = 5 * 60 * 1000; // 5 minutes
+
+    if (eventAge > MAX_EVENT_AGE_MS) {
+      throw new Error(`Webhook event too old: ${Math.floor(eventAge / 1000)}s (max 300s)`);
+    }
 
     return {
       id: event.id,
