@@ -189,6 +189,7 @@ describe("stripePaymentProvider", () => {
       const mockEvent = {
         id: "evt_test_123",
         type: "checkout.session.completed",
+        created: Math.floor(Date.now() / 1000), // Current timestamp
         data: {
           object: {
             id: "cs_test_123",
@@ -230,6 +231,56 @@ describe("stripePaymentProvider", () => {
       await expect(
         provider.verifyWebhook(payload, signature, secret),
       ).rejects.toThrow("Invalid signature");
+    });
+
+    it("should reject events older than 5 minutes (replay attack prevention)", async () => {
+      const sixMinutesAgo = Math.floor(Date.now() / 1000) - (6 * 60); // 6 minutes ago
+      const mockEvent = {
+        id: "evt_test_old",
+        type: "checkout.session.completed",
+        created: sixMinutesAgo, // Old timestamp
+        data: {
+          object: {
+            id: "cs_test_123",
+            customer: "cus_123",
+          },
+        },
+      };
+
+      mockStripe.webhooks.constructEvent.mockReturnValue(mockEvent);
+
+      const payload = JSON.stringify({ test: "payload" });
+      const signature = "t=123,v1=signature";
+      const secret = "whsec_test_secret";
+
+      await expect(
+        provider.verifyWebhook(payload, signature, secret),
+      ).rejects.toThrow("Webhook event too old");
+    });
+
+    it("should accept events within 5 minute window", async () => {
+      const fourMinutesAgo = Math.floor(Date.now() / 1000) - (4 * 60); // 4 minutes ago
+      const mockEvent = {
+        id: "evt_test_recent",
+        type: "checkout.session.completed",
+        created: fourMinutesAgo, // Recent timestamp
+        data: {
+          object: {
+            id: "cs_test_123",
+            customer: "cus_123",
+          },
+        },
+      };
+
+      mockStripe.webhooks.constructEvent.mockReturnValue(mockEvent);
+
+      const payload = JSON.stringify({ test: "payload" });
+      const signature = "t=123,v1=signature";
+      const secret = "whsec_test_secret";
+
+      const result = await provider.verifyWebhook(payload, signature, secret);
+
+      expect(result.id).toBe("evt_test_recent");
     });
   });
 

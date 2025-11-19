@@ -93,6 +93,9 @@ export class SubscriptionsManager {
    *
    * **Idempotency**: Checks if event has already been processed to prevent duplicate operations.
    * Stripe may retry delivery of the same event multiple times.
+   *
+   * **Event Ordering**: Stripe does not guarantee events arrive in order. Design for eventual
+   * consistency rather than strict sequence. Use timestamps and idempotency to handle out-of-order events.
    */
   // eslint-disable-next-line ts/no-explicit-any
   async handleWebhookEvent(event: { id: string; type: string; data: any }): Promise<void> {

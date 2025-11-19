@@ -39,7 +39,7 @@ router.post("/webhooks/stripe", async (c: Context) => {
     const errorMessage = error instanceof Error ? error.message : "Internal server error";
     console.error(`[Webhooks] Stripe webhook error: ${errorMessage}`);
 
-    // Return 400 for signature verification failures (so Stripe retries)
+    // Return 400 for signature verification failures (Stripe will NOT retry)
     if (error instanceof Error && error.message.includes("signature")) {
       return c.json({ error: "Invalid signature" }, 400);
     }
