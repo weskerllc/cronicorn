@@ -4,9 +4,12 @@ import { AlertCircle } from "lucide-react";
 
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Badge } from "@cronicorn/ui-library/components/badge";
-import { PageHeader } from "@/components/page-header";
-import { PageSection, DetailSection, InfoGrid, InfoField } from "@/components/sections";
+import { CodeDisplay } from "../../components/composed/code-display";
+import { PageSection } from "../../components/primitives/page-section";
+import { DetailSection } from "../../components/cards/detail-section";
+import { InfoField, InfoGrid } from "../../components/cards/info-grid";
 import { runQueryOptions } from "@/lib/api-client/queries/runs.queries";
+import { PageHeader } from "@/components/composed/page-header";
 
 export const Route = createFileRoute("/_authed/runs/$id")({
   loader: async ({ params, context }) => {
@@ -35,33 +38,33 @@ function RunDetailsPage() {
       <PageSection>
         <DetailSection title="Summary">
           <InfoGrid columns={2}>
-            <InfoField 
-              label="Status" 
-              value={<Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>} 
+            <InfoField
+              label="Status"
+              value={<Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>}
             />
             <InfoField label="Duration" value={`${run.durationMs}ms`} />
-            <InfoField 
-              label="Started At" 
-              value={new Date(run.startedAt).toLocaleString()} 
+            <InfoField
+              label="Started At"
+              value={new Date(run.startedAt).toLocaleString()}
             />
-            <InfoField 
-              label="Finished At" 
-              value={run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "N/A"} 
+            <InfoField
+              label="Finished At"
+              value={run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "N/A"}
             />
             {run.source && (
-              <InfoField 
-                label="Triggered By" 
+              <InfoField
+                label="Triggered By"
                 value={
                   <Badge variant="outline" className="capitalize">
                     {run.source.replace(/-/g, " ")}
                   </Badge>
-                } 
+                }
               />
             )}
             {typeof run.attempt === "number" && (
-              <InfoField 
-                label="Attempt" 
-                value={run.attempt === 0 ? "First run" : `Retry #${run.attempt}`} 
+              <InfoField
+                label="Attempt"
+                value={run.attempt === 0 ? "First run" : `Retry #${run.attempt}`}
               />
             )}
           </InfoGrid>
@@ -72,15 +75,15 @@ function RunDetailsPage() {
             <InfoGrid columns={1}>
               <InfoField label="Name" value={run.endpoint.name} />
               {run.endpoint.url && (
-                <InfoField 
-                  label="URL" 
-                  value={<code className="text-sm">{run.endpoint.url}</code>} 
+                <InfoField
+                  label="URL"
+                  value={<code className="text-sm">{run.endpoint.url}</code>}
                 />
               )}
               {run.endpoint.method && (
-                <InfoField 
-                  label="Method" 
-                  value={<Badge variant="outline">{run.endpoint.method}</Badge>} 
+                <InfoField
+                  label="Method"
+                  value={<Badge variant="outline">{run.endpoint.method}</Badge>}
                 />
               )}
             </InfoGrid>
@@ -89,9 +92,9 @@ function RunDetailsPage() {
 
         <DetailSection title="Request Details">
           <InfoGrid columns={1}>
-            <InfoField 
-              label="Endpoint ID" 
-              value={<code className="text-sm">{run.endpointId}</code>} 
+            <InfoField
+              label="Endpoint ID"
+              value={<code className="text-sm">{run.endpointId}</code>}
             />
           </InfoGrid>
         </DetailSection>
@@ -99,8 +102,8 @@ function RunDetailsPage() {
         <DetailSection title="Response Details">
           {run.statusCode && (
             <InfoGrid columns={1}>
-              <InfoField 
-                label="Status Code" 
+              <InfoField
+                label="Status Code"
                 value={
                   <Badge
                     variant={
@@ -113,7 +116,7 @@ function RunDetailsPage() {
                   >
                     {run.statusCode}
                   </Badge>
-                } 
+                }
               />
             </InfoGrid>
           )}
@@ -124,7 +127,12 @@ function RunDetailsPage() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   <p className="font-medium mb-2">Error</p>
-                  <pre className="text-sm whitespace-pre-wrap">{run.errorMessage}</pre>
+                  <CodeDisplay
+                    code={run.errorMessage}
+                    maxHeight="200px"
+                    enableCopy={true}
+                    className="mt-2 border-destructive/20"
+                  />
                 </AlertDescription>
               </Alert>
             )
@@ -132,9 +140,12 @@ function RunDetailsPage() {
               ? (
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Response Body:</p>
-                  <pre className="bg-muted p-4 rounded text-xs overflow-x-auto max-h-96">
-                    {JSON.stringify(run.responseBody, null, 2)}
-                  </pre>
+                  <CodeDisplay
+                    code={JSON.stringify(run.responseBody, null, 2)}
+                    language="json"
+                    maxHeight="400px"
+                    enableCopy={true}
+                  />
                 </div>
               )
               : (

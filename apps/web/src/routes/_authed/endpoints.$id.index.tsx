@@ -18,9 +18,15 @@ import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { toast } from "sonner";
-import { PageHeader } from "../../components/page-header";
-import { PageSection, DetailSection, StatCard, InfoGrid, InfoField } from "@/components/sections";
-import { DataTable } from "../../components/data-table";
+import { ActionsGroup } from "../../components/primitives/actions-group";
+import { GridLayout } from "../../components/primitives/grid-layout";
+import { PageHeader } from "../../components/composed/page-header";
+import { DataTable } from "../../components/composed/data-table";
+import { AlertCard } from "../../components/cards/alert-card";
+import { StatCard } from "../../components/cards/stat-card";
+import { PageSection } from "../../components/primitives/page-section";
+import { DetailSection } from "../../components/cards/detail-section";
+import { InfoField, InfoGrid } from "../../components/cards/info-grid";
 import type { ColumnDef } from "@tanstack/react-table";
 import { isEndpointPaused } from "@/lib/endpoint-utils";
 import {
@@ -32,6 +38,7 @@ import {
 } from "@/lib/api-client/queries/endpoints.queries";
 import { healthQueryOptions, runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
+
 
 export const Route = createFileRoute("/_authed/endpoints/$id/")({
   loader: async ({ params, context }) => {
@@ -205,89 +212,83 @@ function ViewEndpointPage() {
           text={endpoint.name}
           description={endpoint.description || "Endpoint details and execution history"}
         />
-        <div className="flex gap-2">
+        <ActionsGroup gap="2">
           <Button variant="default" asChild>
             <Link to="/endpoints/$id/edit" params={{ id }}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Endpoint
             </Link>
           </Button>
-        </div>
+        </ActionsGroup>
       </div>
 
       {/* Status Alerts */}
       {endpoint.archivedAt && (
-        <Card className="mb-6 border-destructive">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-destructive">
-              <Archive className="h-5 w-5" />
-              <span className="font-semibold">This endpoint is archived</span>
-              <span className="text-sm">
-                on {new Date(endpoint.archivedAt).toLocaleString()}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        <AlertCard variant="destructive" className="mb-6">
+          <div className="flex items-center gap-2 text-destructive">
+            <Archive className="h-5 w-5" />
+            <span className="font-semibold">This endpoint is archived</span>
+            <span className="text-sm">
+              on {new Date(endpoint.archivedAt).toLocaleString()}
+            </span>
+          </div>
+        </AlertCard>
       )}
 
       {!endpoint.archivedAt && isPaused && (
-        <Card className="mb-6 border-yellow-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-500">
-              <Pause className="h-5 w-5" />
-              <span className="font-semibold">This endpoint is currently paused</span>
-              {endpoint.pausedUntil && (
-                <span className="text-sm">
-                  until {new Date(endpoint.pausedUntil).toLocaleString()}
-                </span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <AlertCard variant="warning" className="mb-6">
+          <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-500">
+            <Pause className="h-5 w-5" />
+            <span className="font-semibold">This endpoint is currently paused</span>
+            {endpoint.pausedUntil && (
+              <span className="text-sm">
+                until {new Date(endpoint.pausedUntil).toLocaleString()}
+              </span>
+            )}
+          </div>
+        </AlertCard>
       )}
 
       {hasAIHints && (
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold">AI Scheduling Hint Active</h3>
-              {isHintExpired && (
-                <Badge variant="destructive">Expired</Badge>
-              )}
-            </div>
+        <AlertCard variant="info" className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Zap className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold">AI Scheduling Hint Active</h3>
+            {isHintExpired && (
+              <Badge variant="destructive">Expired</Badge>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              {endpoint.aiHintIntervalMs && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Suggested Interval:</span>
-                  <span className="font-medium">
-                    {Math.round(endpoint.aiHintIntervalMs / 60000)} minutes
-                  </span>
-                </div>
-              )}
-              {endpoint.aiHintNextRunAt && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Suggested Next Run:</span>
-                  <span className="font-medium">
-                    {new Date(endpoint.aiHintNextRunAt).toLocaleString()}
-                  </span>
-                </div>
-              )}
-              {endpoint.aiHintReason && (
-                <div className="text-sm">
-                  <span className="text-muted-foreground">Reason: </span>
-                  <span className="italic">{endpoint.aiHintReason}</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          <div className="space-y-2">
+            {endpoint.aiHintIntervalMs && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Suggested Interval:</span>
+                <span className="font-medium">
+                  {Math.round(endpoint.aiHintIntervalMs / 60000)} minutes
+                </span>
+              </div>
+            )}
+            {endpoint.aiHintNextRunAt && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Suggested Next Run:</span>
+                <span className="font-medium">
+                  {new Date(endpoint.aiHintNextRunAt).toLocaleString()}
+                </span>
+              </div>
+            )}
+            {endpoint.aiHintReason && (
+              <div className="text-sm">
+                <span className="text-muted-foreground">Reason: </span>
+                <span className="italic">{endpoint.aiHintReason}</span>
+              </div>
+            )}
+          </div>
+        </AlertCard>
       )}
 
       <PageSection>
         {/* Health Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <GridLayout cols={1} md={2} lg={4}>
           <StatCard
             icon={TrendingUp}
             title="Success Rate"
@@ -338,10 +339,10 @@ function ViewEndpointPage() {
               )}
             </div>
           </StatCard>
-        </div>
+        </GridLayout>
 
         {/* Endpoint Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GridLayout cols={1} lg={2}>
           <DetailSection
             title="Configuration"
             description="Endpoint settings and schedule"
@@ -379,14 +380,6 @@ function ViewEndpointPage() {
                         "Not configured")}
                   </code>
                 }
-            </div>
-            {endpoint.minIntervalMs && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Min Interval:</span>
-                <span className="font-mono text-xs">
-                  {Math.round(endpoint.minIntervalMs / 60000)}min
-                </span>
-              </div>
               />
               {endpoint.minIntervalMs && (
                 <InfoField
@@ -455,53 +448,53 @@ function ViewEndpointPage() {
               />
             </InfoGrid>
           </DetailSection>
-        </div>
+        </GridLayout>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        <Button
-          variant="default"
-          onClick={handleRunNow}
-          disabled={runNowPending || isPaused || !!endpoint.archivedAt}
-        >
-          <Play className="h-4 w-4 mr-2" />
-          {runNowPending ? "Scheduling..." : "Run Now"}
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={handlePause}
-          disabled={pausePending || !!endpoint.archivedAt}
-        >
-          {pausePending ? "Loading..." : isPaused ? "Resume Endpoint" : "Pause Endpoint"}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={handleResetFailures}
-          disabled={resetPending || !!endpoint.archivedAt}
-        >
-          {resetPending ? "Loading..." : "Reset Failure Count"}
-        </Button>
-        {!endpoint.archivedAt && (
+        {/* Action Buttons */}
+        <ActionsGroup wrap gap="2" className="mb-8">
           <Button
-            variant="destructive"
-            onClick={handleArchive}
-            disabled={archivePending}
+            variant="default"
+            onClick={handleRunNow}
+            disabled={runNowPending || isPaused || !!endpoint.archivedAt}
           >
-            <Archive className="h-4 w-4 mr-2" />
-            {archivePending ? "Archiving..." : "Archive Endpoint"}
+            <Play className="h-4 w-4 mr-2" />
+            {runNowPending ? "Scheduling..." : "Run Now"}
           </Button>
-        )}
-        <Button variant="outline" asChild>
-          <Link to="/endpoints/$id/health" params={{ id }}>
-            View Full Health Report
-          </Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link to="/endpoints/$id/runs" params={{ id }}>
-            View All Runs
-          </Link>
-        </Button>
-      </div>
+          <Button
+            variant="secondary"
+            onClick={handlePause}
+            disabled={pausePending || !!endpoint.archivedAt}
+          >
+            {pausePending ? "Loading..." : isPaused ? "Resume Endpoint" : "Pause Endpoint"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleResetFailures}
+            disabled={resetPending || !!endpoint.archivedAt}
+          >
+            {resetPending ? "Loading..." : "Reset Failure Count"}
+          </Button>
+          {!endpoint.archivedAt && (
+            <Button
+              variant="destructive"
+              onClick={handleArchive}
+              disabled={archivePending}
+            >
+              <Archive className="h-4 w-4 mr-2" />
+              {archivePending ? "Archiving..." : "Archive Endpoint"}
+            </Button>
+          )}
+          <Button variant="outline" asChild>
+            <Link to="/endpoints/$id/health" params={{ id }}>
+              View Full Health Report
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/endpoints/$id/runs" params={{ id }}>
+              View All Runs
+            </Link>
+          </Button>
+        </ActionsGroup>
 
         <Separator />
 

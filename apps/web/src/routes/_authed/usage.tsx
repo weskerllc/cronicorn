@@ -1,9 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Progress } from '@cronicorn/ui-library/components/progress';
-import { PageHeader } from '../../components/page-header';
-import { PageSection, StatCard } from '@/components/sections';
+import { GridLayout } from '../../components/primitives/grid-layout';
+import { PageHeader } from '../../components/composed/page-header';
 import { usageQueryOptions } from '../../lib/api-client/queries/subscriptions.queries';
+import { PageSection } from '../../components/primitives/page-section';
+import { StatCard } from '../../components/cards/stat-card';
 
 export const Route = createFileRoute('/_authed/usage')({
   loader: async ({ context }) => {
@@ -44,7 +46,8 @@ function RouteComponent() {
       />
 
       <PageSection>
-        <div className="grid gap-4 md:grid-cols-3">
+        <h2 className="text-lg font-semibold mb-4">Current Usage</h2>
+        <GridLayout cols={1} md={3}>
           {metrics.map((metric) => (
             <StatCard
               key={metric.title}
@@ -67,7 +70,7 @@ function RouteComponent() {
               </div>
             </StatCard>
           ))}
-        </div>
+        </GridLayout>
       </PageSection>
     </>
   );

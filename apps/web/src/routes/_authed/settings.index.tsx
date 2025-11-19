@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PageHeader } from "@/components/page-header";
-import { PageSection, DetailSection, InfoGrid, InfoField } from "@/components/sections";
+import { PageSection } from "../../components/primitives/page-section";
+import { DetailSection } from "../../components/cards/detail-section";
+import { InfoField, InfoGrid } from "../../components/cards/info-grid";
+import { PageHeader } from "@/components/composed/page-header";
 import { subscriptionStatusQueryOptions, usageQueryOptions } from "@/lib/api-client/queries/subscriptions.queries";
 import { useSession } from "@/lib/auth-client.js";
 
@@ -33,8 +35,8 @@ function Settings() {
       />
 
       <PageSection>
-        <DetailSection 
-          title="Profile" 
+        <DetailSection
+          title="Profile"
           description="Your account information"
         >
           <InfoGrid columns={1}>

@@ -2,7 +2,7 @@ import { faq, metaDescriptions, pageTitles } from "@cronicorn/content";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@cronicorn/ui-library/components/accordion";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { PageHeader } from "../components/page-header";
+import { PageHeader } from "../components/composed/page-header";
 import { SEO, createFAQSchema } from "@/components/SEO";
 
 export const Route = createFileRoute("/faq")({

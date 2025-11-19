@@ -36,8 +36,12 @@ import { Textarea } from "@cronicorn/ui-library/components/textarea";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { PageHeader } from "../../components/page-header";
+import { ActionsGroup } from "../../components/primitives/actions-group";
+import { FormFieldRow } from "../../components/primitives/form-field-row";
+import { GridLayout } from "../../components/primitives/grid-layout";
+import { PageHeader } from "../../components/composed/page-header";
 import type { UpdateEndpointForm } from "@/lib/endpoint-forms";
+import { AlertCard } from "@/components/cards/alert-card";
 import { applyIntervalHint, clearHints, endpointByIdQueryOptions, pauseEndpoint, resetFailures, scheduleOneShot, updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
 import {
@@ -228,7 +232,7 @@ function EditEndpointPage() {
             />
 
             {hasAIHints && (
-                <Card className="mb-6">
+                <AlertCard variant="info" className="mb-6">
                     <div className="flex items-center gap-2 mb-4">
                         <Zap className="h-5 w-5 text-primary" />
                         <h2 className="text-xl font-semibold">AI Scheduling Hint Active</h2>
@@ -276,7 +280,7 @@ function EditEndpointPage() {
                             </div>
                         )}
                     </div>
-                </Card>
+                </AlertCard>
             )}
 
             {updateError && (
@@ -468,7 +472,7 @@ function EditEndpointPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {headerFields.map((headerField, index) => (
-                                <div key={headerField.id} className="flex gap-2 items-end">
+                                <FormFieldRow key={headerField.id}>
                                     <FormField
                                         control={form.control}
                                         name={`headers.${index}.key`}
@@ -512,7 +516,7 @@ function EditEndpointPage() {
                                     >
                                         <X className="size-4" />
                                     </Button>
-                                </div>
+                                </FormFieldRow>
                             ))}
 
                             <Button
@@ -601,7 +605,7 @@ function EditEndpointPage() {
                         </CardHeader>
                         {showAdvanced && (
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <GridLayout cols={1} md={2}>
                                     <FormField
                                         control={form.control}
                                         name="timeoutMs"
@@ -683,11 +687,11 @@ function EditEndpointPage() {
                                             </FormItem>
                                         )}
                                     />
-                                </div>
+                                </GridLayout>
 
                                 <div className="pt-4 border-t">
                                     <h4 className="text-sm font-medium mb-3">AI Scheduling Constraints</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <GridLayout cols={1} md={2}>
                                         <FormField
                                             control={form.control}
                                             name="minIntervalMinutes"
@@ -741,13 +745,13 @@ function EditEndpointPage() {
                                                 </FormItem>
                                             )}
                                         />
-                                    </div>
+                                    </GridLayout>
                                 </div>
                             </CardContent>
                         )}
                     </Card>
 
-                    <div className="flex gap-4">
+                    <ActionsGroup gap="4">
                         <Button type="submit" disabled={updatePending}>
                             <Save className="size-4 mr-2" />
                             {updatePending ? "Saving..." : "Save Changes"}
@@ -756,7 +760,7 @@ function EditEndpointPage() {
                             <X className="size-4 mr-2" />
                             Cancel
                         </Button>
-                    </div>
+                    </ActionsGroup>
                 </form>
             </Form>
 
@@ -765,7 +769,7 @@ function EditEndpointPage() {
             <div className="space-y-4">
                 <h2 className="text-lg font-semibold">Endpoint Actions</h2>
 
-                <div className="flex flex-wrap gap-2">
+                <ActionsGroup gap="2" wrap>
                     <Button
                         variant="default"
                         onClick={handleRunNow}
@@ -903,9 +907,9 @@ function EditEndpointPage() {
                             </Form>
                         </DialogContent>
                     </Dialog>
-                </div>
+                </ActionsGroup>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <GridLayout cols={1} md={2}>
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm">Endpoint State</CardTitle>
@@ -957,7 +961,7 @@ function EditEndpointPage() {
                             </div>
                         </CardContent>
                     </Card>
-                </div>
+                </GridLayout>
             </div>
         </>
     );

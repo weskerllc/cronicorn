@@ -1,7 +1,7 @@
 import { Button } from "@cronicorn/ui-library/components/button";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { urls } from "@cronicorn/content";
-import SectionContainer from "@/components/ui/section-container";
+import SectionContainer from "@/components/primitives/section-container";
 
 /**
  * Call-to-action section with primary and secondary actions
