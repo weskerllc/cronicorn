@@ -1,7 +1,7 @@
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Link } from "@tanstack/react-router";
-import type { LucideIcon } from "lucide-react";
 import { cn } from "@cronicorn/ui-library/lib/utils";
+import type { LucideIcon } from "lucide-react";
 
 interface EmptyCTAProps {
   /**

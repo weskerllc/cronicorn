@@ -173,13 +173,15 @@ function APIKeysPage() {
         text="API Keys"
         description="Manage API keys for programmatic access to your scheduled jobs"
         slotRight={
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            disabled={createMutation.isPending}
-          >
-            <Plus className="size-4" />
-            Generate New Key
-          </Button>
+          <div className="flex gap-2 items-center">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              disabled={createMutation.isPending}
+            >
+              <Plus className="size-4" />
+              Generate New Key
+            </Button>
+          </div>
         }
       />
 
