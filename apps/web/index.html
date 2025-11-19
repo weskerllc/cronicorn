@@ -49,8 +49,54 @@
     <meta name="description" content="Cronicorn - AI-powered job scheduling made simple" />
     
     <title>Cronicorn - AI-Powered Job Scheduling</title>
+    
+    <!-- Critical CSS for loading indicator - inline to show immediately -->
+    <style>
+      /* Loading indicator shown before React hydrates */
+      #initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: inherit; /* Uses background color from inline script */
+        z-index: 9999;
+      }
+      
+      #initial-loader .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid;
+        border-color: currentColor transparent transparent transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        color: oklch(0.45 0 0); /* Muted color for light mode */
+      }
+      
+      .dark #initial-loader .spinner {
+        color: oklch(0.71 0 0); /* Muted color for dark mode */
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Hide loader once React takes over */
+      .react-loaded #initial-loader {
+        display: none;
+      }
+    </style>
   </head>
   <body>
+    <!-- Loading indicator visible immediately, before React loads -->
+    <div id="initial-loader" aria-label="Loading">
+      <div class="spinner"></div>
+    </div>
+    
     <div id="app"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

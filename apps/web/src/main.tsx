@@ -15,6 +15,9 @@ if (rootElement && !rootElement.innerHTML) {
       <App />
     </StrictMode>,
   );
+  
+  // Hide initial loader once React has rendered
+  document.body.classList.add('react-loaded');
 }
 
 // If you want to start measuring performance in your app, pass a function
