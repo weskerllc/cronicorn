@@ -1,11 +1,10 @@
 "use client";
 
 import {
+  IconChartBar,
   IconCreditCard,
   IconDotsVertical,
   IconLogout,
-  IconNotification,
-  IconUserCircle,
 } from "@tabler/icons-react";
 
 import {
@@ -23,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@cronicorn/ui-library/components/dropdown-menu";
+import { Link } from "@tanstack/react-router";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -99,17 +99,17 @@ export function NavUser({ user }: NavUserProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <IconUserCircle />
-                Account
+              <DropdownMenuItem asChild>
+                <Link to="/usage">
+                  <IconChartBar />
+                  Usage
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
+              <DropdownMenuItem asChild>
+                <Link to="/plan">
+                  <IconCreditCard />
+                  Billing
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <ThemeSwitcher value={theme} onChange={(v) => setTheme(v)} />

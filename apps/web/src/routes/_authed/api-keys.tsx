@@ -53,11 +53,14 @@ import {
 } from "@cronicorn/ui-library/components/select";
 import { toast } from "@cronicorn/ui-library/lib/utils";
 
-import { DataTable } from "../../components/data-table";
-import { EmptyCTA } from "../../components/empty-cta";
-import { PageHeader } from "../../components/page-header";
+import { CodeDisplay } from "../../components/composed/code-display";
+import { InlineBadge } from "../../components/primitives/inline-badge";
+import { DataTable } from "../../components/composed/data-table";
+import { EmptyCTA } from "../../components/cards/empty-cta";
+import { PageHeader } from "../../components/composed/page-header";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { CreateApiKeyInput } from "@/lib/api-client/queries/api-keys.queries";
+import { PageSection } from "@/components/primitives/page-section";
 import {
   apiKeysQueryOptions,
   createApiKey,
@@ -133,13 +136,13 @@ function APIKeysPage() {
       accessorKey: "start",
       header: "Key Preview",
       cell: ({ row }) => (
-        <code className="text-xs bg-muted px-2 py-1 rounded">
+        <InlineBadge variant="code">
           {row.original.prefix && row.original.start
             ? `${row.original.prefix}${row.original.start}...`
             : row.original.start
               ? `${row.original.start}...`
               : "••••••••"}
-        </code>
+        </InlineBadge>
       ),
     },
     {
@@ -169,28 +172,6 @@ function APIKeysPage() {
         );
       },
     },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-8">
-              <IconDotsVertical className="size-4" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => setDeleteKeyId(row.original.id)}
-              className="text-destructive"
-            >
-              <Trash2 className="size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
   ];
 
   return (
@@ -209,31 +190,33 @@ function APIKeysPage() {
         }
       />
 
-      {apiKeys.length === 0 ? (
-        <EmptyCTA
-          title="No API Keys Yet"
-          description="Create your first API key to get started"
-        />
-      ) : (
-        <>
-          <DataTable
-            columns={columns}
-            data={apiKeys}
-            searchKey="name"
-            searchPlaceholder="Search API keys..."
-            emptyMessage="No API keys found."
-            enablePagination={true}
-            defaultPageSize={10}
+      <PageSection>
+        {apiKeys.length === 0 ? (
+          <EmptyCTA
+            title="No API Keys Yet"
+            description="Create your first API key to get started"
           />
+        ) : (
+          <>
+            <DataTable
+              columns={columns}
+              data={apiKeys}
+              searchKey="name"
+              searchPlaceholder="Search API keys..."
+              emptyMessage="No API keys found."
+              enablePagination={true}
+              defaultPageSize={10}
+            />
 
-          <Alert className="mt-6">
-            <AlertDescription>
-              <strong>Important:</strong> API keys are only shown once upon creation. Make
-              sure to copy and save them securely.
-            </AlertDescription>
-          </Alert>
-        </>
-      )}
+            <Alert>
+              <AlertDescription>
+                <strong>Important:</strong> API keys are only shown once upon creation. Make
+                sure to copy and save them securely.
+              </AlertDescription>
+            </Alert>
+          </>
+        )}
+      </PageSection>
 
       {/* Create API Key Dialog */}
       <CreateApiKeyDialog
@@ -412,9 +395,11 @@ function GeneratedKeyDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="bg-muted border rounded p-3">
-            <code className="text-sm break-all block">{apiKey}</code>
-          </div>
+          <CodeDisplay
+            code={apiKey}
+            maxHeight="100px"
+            enableCopy={true}
+          />
 
           <Button onClick={onCopy} className="w-full">
             <Copy className="size-4" />

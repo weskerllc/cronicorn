@@ -22,8 +22,11 @@ import { Label } from "@cronicorn/ui-library/components/label";
 import { RadioGroup, RadioGroupItem } from "@cronicorn/ui-library/components/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
 import { Textarea } from "@cronicorn/ui-library/components/textarea";
+import { GridLayout } from "../../components/primitives/grid-layout";
+import { FormFieldRow } from "../../components/primitives/form-field-row";
+import { ActionsGroup } from "../../components/primitives/actions-group";
 
-import { PageHeader } from "../../components/page-header";
+import { PageHeader } from "../../components/composed/page-header";
 import type { CreateEndpointForm } from "@/lib/endpoint-forms";
 import { createEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
@@ -304,7 +307,7 @@ function CreateEndpointPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {headerFields.map((headerField, index) => (
-                <div key={headerField.id} className="flex gap-2 items-end">
+                <FormFieldRow key={headerField.id}>
                   <FormField
                     control={form.control}
                     name={`headers.${index}.key`}
@@ -349,7 +352,7 @@ function CreateEndpointPage() {
                   >
                     <X className="size-4" />
                   </Button>
-                </div>
+                </FormFieldRow>
               ))}
               <Button
                 type="button"
@@ -431,7 +434,7 @@ function CreateEndpointPage() {
             </CardHeader>
             {showAdvanced && (
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <GridLayout cols={1} md={2}>
                   <FormField
                     control={form.control}
                     name="timeoutMs"
@@ -513,11 +516,11 @@ function CreateEndpointPage() {
                       </FormItem>
                     )}
                   />
-                </div>
+                </GridLayout>
 
                 <div className="pt-4 border-t">
                   <h4 className="text-sm font-medium mb-3">AI Scheduling Constraints</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <GridLayout cols={1} md={2}>
                     <FormField
                       control={form.control}
                       name="minIntervalMinutes"
@@ -571,13 +574,13 @@ function CreateEndpointPage() {
                         </FormItem>
                       )}
                     />
-                  </div>
+                  </GridLayout>
                 </div>
               </CardContent>
             )}
           </Card>
 
-          <div className="flex items-center justify-end gap-2">
+          <ActionsGroup className="justify-end" gap="2">
             <Button variant="outline" disabled={isPending} onClick={onCancel}>
               <X className="size-4" />
               Cancel
@@ -586,7 +589,7 @@ function CreateEndpointPage() {
               <Save className="size-4" />
               {isPending ? "Creating..." : "Create Endpoint"}
             </Button>
-          </div>
+          </ActionsGroup>
         </form>
       </Form>
     </>
