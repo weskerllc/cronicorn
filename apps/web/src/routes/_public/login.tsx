@@ -8,12 +8,12 @@ import { Skeleton } from "@cronicorn/ui-library/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Github, Mail } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import { brand, metaDescriptions, pageTitles, structuredData } from "@cronicorn/content";
 import { APP_URL } from "@/config";
 import { authConfigQueryOptions } from "@/lib/api-client/queries/auth-config.queries";
-import { signIn, useSession } from "@/lib/auth-client";
+import { signIn } from "@/lib/auth-client";
 import { createSEOHead } from "@/lib/seo";
 
 type LoginSearch = {
@@ -73,14 +73,6 @@ function RouteComponent() {
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
 
-  const { data: session } = useSession();
-
-  useEffect(() => {
-    // auto route to dashboard if logged in
-    if (session) {
-      navigate({ to: '/dashboard' });
-    }
-  }, [session, navigate]);
 
 
   React.useEffect(() => {
