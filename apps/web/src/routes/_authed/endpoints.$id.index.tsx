@@ -16,16 +16,10 @@ import {
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@cronicorn/ui-library/components/card";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { toast } from "sonner";
 import { PageHeader } from "../../components/page-header";
+import { PageSection, DetailSection, StatCard, InfoGrid, InfoField } from "@/components/sections";
 import { DataTable } from "../../components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { isEndpointPaused } from "@/lib/endpoint-utils";

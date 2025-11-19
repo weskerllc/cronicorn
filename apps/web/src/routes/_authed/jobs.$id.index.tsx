@@ -6,13 +6,6 @@ import { useState } from "react";
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@cronicorn/ui-library/components/card";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -20,6 +13,7 @@ import {
 } from "@cronicorn/ui-library/components/dropdown-menu";
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { IconDotsVertical } from "@tabler/icons-react";
+import { PageSection, DetailSection, InfoGrid, InfoField } from "@/components/sections";
 
 import {
   Select,
@@ -284,49 +278,38 @@ function JobDetailsPage() {
         }
       />
 
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertDescription>
-            {error instanceof Error ? error.message : "An error occurred"}
-          </AlertDescription>
-        </Alert>
-      )}
+      <PageSection>
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {error instanceof Error ? error.message : "An error occurred"}
+            </AlertDescription>
+          </Alert>
+        )}
 
-      {/* Job Details Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Job Information</CardTitle>
-          <CardDescription>
-            View and manage this job's configuration
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Status</div>
-              <Badge variant={getStatusVariant(job.status)} className="mt-1 capitalize">
-                {job.status}
-              </Badge>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Endpoints</div>
-              <div className="mt-1 text-sm">{endpointsData.endpoints.length} endpoint(s)</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Created</div>
-              <div className="mt-1 text-sm">{formatDate(job.createdAt)}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Last Updated</div>
-              <div className="mt-1 text-sm">{formatDate(job.updatedAt)}</div>
-            </div>
-          </div>
+        <DetailSection
+          title="Job Information"
+          description="View and manage this job's configuration"
+        >
+          <InfoGrid columns={2}>
+            <InfoField
+              label="Status"
+              value={
+                <Badge variant={getStatusVariant(job.status)} className="capitalize">
+                  {job.status}
+                </Badge>
+              }
+            />
+            <InfoField
+              label="Endpoints"
+              value={`${endpointsData.endpoints.length} endpoint(s)`}
+            />
+            <InfoField label="Created" value={formatDate(job.createdAt)} />
+            <InfoField label="Last Updated" value={formatDate(job.updatedAt)} />
+          </InfoGrid>
 
           {job.description && (
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Description</div>
-              <div className="mt-1 text-sm">{job.description}</div>
-            </div>
+            <InfoField label="Description" value={job.description} fullWidth />
           )}
 
           <div className="flex gap-2 border-t pt-4">
@@ -361,58 +344,58 @@ function JobDetailsPage() {
               </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </DetailSection>
 
-      {endpointsData.endpoints.length === 0 ? (
-        <EmptyCTA
-          title="No Endpoints Yet"
-          description="Add your first endpoint to start scheduling jobs"
-          action={
-            <Button asChild>
-              <Link to="/jobs/$jobId/endpoints/new" params={{ jobId: id }}>
-                <Plus className="size-4" />
-                Add First Endpoint
-              </Link>
-            </Button>
-          }
-        />
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Endpoints</SelectItem>
-                <SelectItem value="active">Active Only</SelectItem>
-                <SelectItem value="paused">Paused Only</SelectItem>
-                <SelectItem value="archived">Archived Only</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <DataTable
-            tableTitle="Endpoints"
-            columns={columns}
-            data={endpointsData.endpoints
-              .map(ep => ({
-                id: ep.id,
-                name: ep.name,
-                url: ep.url || '',
-                method: ep.method || 'GET',
-                status: getEndpointStatus(ep.pausedUntil, ep.archivedAt),
-                pausedUntil: ep.pausedUntil,
-              }))
-              .filter(ep => statusFilter === "all" || ep.status === statusFilter)}
-            searchKey="name"
-            searchPlaceholder="Search endpoints..."
-            emptyMessage="No endpoints found."
-            enablePagination={true}
-            defaultPageSize={10}
+        {endpointsData.endpoints.length === 0 ? (
+          <EmptyCTA
+            title="No Endpoints Yet"
+            description="Add your first endpoint to start scheduling jobs"
+            action={
+              <Button asChild>
+                <Link to="/jobs/$jobId/endpoints/new" params={{ jobId: id }}>
+                  <Plus className="size-4" />
+                  Add First Endpoint
+                </Link>
+              </Button>
+            }
           />
-        </div>
-      )}
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Endpoints</SelectItem>
+                  <SelectItem value="active">Active Only</SelectItem>
+                  <SelectItem value="paused">Paused Only</SelectItem>
+                  <SelectItem value="archived">Archived Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DataTable
+              tableTitle="Endpoints"
+              columns={columns}
+              data={endpointsData.endpoints
+                .map(ep => ({
+                  id: ep.id,
+                  name: ep.name,
+                  url: ep.url || '',
+                  method: ep.method || 'GET',
+                  status: getEndpointStatus(ep.pausedUntil, ep.archivedAt),
+                  pausedUntil: ep.pausedUntil,
+                }))
+                .filter(ep => statusFilter === "all" || ep.status === statusFilter)}
+              searchKey="name"
+              searchPlaceholder="Search endpoints..."
+              emptyMessage="No endpoints found."
+              enablePagination={true}
+              defaultPageSize={10}
+            />
+          </div>
+        )}
+      </PageSection>
     </>
   );
 }
