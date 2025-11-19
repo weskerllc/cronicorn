@@ -2,38 +2,34 @@ import { faq, metaDescriptions, pageTitles } from "@cronicorn/content";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@cronicorn/ui-library/components/accordion";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { PageHeader } from "../components/composed/page-header";
-import { SEO, createFAQSchema } from "@/components/SEO";
+import { PageHeader } from "../../components/composed/page-header";
+import { createFAQSchema, createSEOHead } from "@/lib/seo";
 
-export const Route = createFileRoute("/faq")({
+export const Route = createFileRoute("/_public/faq")({
+    head: () => {
+        const faqStructuredData = {
+            "@context": "https://schema.org",
+            "@graph": [createFAQSchema(faq)]
+        };
+
+        return createSEOHead({
+            title: pageTitles.faq,
+            description: metaDescriptions.faq,
+            keywords: ["faq", "questions", "AI scheduling help", "intelligent cron questions", "adaptive monitoring faq"],
+            url: "/faq",
+            structuredData: faqStructuredData,
+        });
+    },
     component: Faq,
 });
 
 
 
 function Faq() {
-
-
     const faqs = faq;
-
-    // Structured data for FAQ page
-    const faqStructuredData = {
-        "@context": "https://schema.org",
-        "@graph": [
-            createFAQSchema(faqs)
-        ]
-    };
 
     return (
         <>
-            <SEO
-                title={pageTitles.faq}
-                description={metaDescriptions.faq}
-                keywords={["faq", "questions", "AI scheduling help", "intelligent cron questions", "adaptive monitoring faq"]}
-                url="/faq"
-                structuredData={faqStructuredData}
-            />
-
             <main className="max-w-7xl mx-auto space-y-16 p-8" role="main">
                 <PageHeader
                     text="Frequently Asked Questions"

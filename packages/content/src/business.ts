@@ -4,9 +4,9 @@
  */
 
 export const business = {
-  name: "Cronicorn",
-  legalName: "Cronicorn Technologies Inc.",
-  description: "Adaptive job scheduling and automation platform",
+  name: "Wesker",
+  legalName: "Wesker LLC",
+  description: "Software development collective",
   foundingDate: "2024",
   industry: "Software Technology",
   address: {
@@ -22,9 +22,8 @@ export const business = {
     email: "support@cronicorn.com",
   },
   sameAs: [
-    "https://twitter.com/cronicorn",
-    "https://linkedin.com/company/cronicorn",
-    "https://github.com/weskerllc/cronicorn",
+    "https://www.wesker.dev/",
+    "https://github.com/weskerllc",
   ],
 } as const;
 

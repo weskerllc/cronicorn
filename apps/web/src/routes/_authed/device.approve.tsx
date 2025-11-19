@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { IconAlertCircle, IconCheck, IconDeviceDesktop, IconX } from "@tabler/icons-react";
@@ -22,23 +22,10 @@ export const Route = createFileRoute("/_authed/device/approve")({
         return {
             user_code: (search.user_code as string) || undefined,
         };
-    },
-    async loader({ context }) {
-        const auth = await context.auth;
-        if (!auth.user) {
-            throw redirect({ to: "/login", search: { redirect: location.href } });
-        }
-        return auth;
-    },
+    }
 });
 
 function DeviceApproval() {
-    const { user } = Route.useLoaderData();
-    if (!user) {
-        throw redirect({ to: "/login", search: { redirect: location.href } });
-    }
-
-
     const navigate = useNavigate();
     const search = Route.useSearch();
     const userCode = search.user_code;

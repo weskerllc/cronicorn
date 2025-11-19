@@ -34,6 +34,7 @@
     "build:mcp-server": "pnpm --filter @cronicorn/mcp-server run build",
     "🚀 ---------- SERVER ----------": "",
     "start": "dotenv -e .env -- pnpm run -r --parallel start",
+    "start:web": "dotenv -e .env -- pnpm --filter @cronicorn/web run start",
     "🚀 ---------- QUALITY ----------": "",
     "test": "vitest run",
     "test:coverage": "dotenv -e .env vitest run --coverage",

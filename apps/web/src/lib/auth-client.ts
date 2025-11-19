@@ -1,19 +1,20 @@
 import { apiKeyClient, deviceAuthorizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
-// API is proxied at /api, no need for full URL
-const siteUrl = import.meta.env.VITE_SITE_URL || "http://localhost:5173";
+const getAPIURL = () => {
+  return import.meta.env.VITE_API_URL || "http://localhost:3333";
+};
 
-const authUrl = `${siteUrl}/api/auth`;
+const authUrl = `${getAPIURL()}/api/auth`;
 
 export const authClient = createAuthClient({
   baseURL: authUrl,
   fetchOptions: {
-    credentials: "include", // Important: ensures cookies are sent cross-origin
+    credentials: "include",
   },
   plugins: [
     apiKeyClient(),
-    deviceAuthorizationClient(), // OAuth Device Flow for AI agents
+    deviceAuthorizationClient(),
   ],
 });
 
