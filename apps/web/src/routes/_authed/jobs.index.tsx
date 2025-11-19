@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { IconDotsVertical } from "@tabler/icons-react";
 import { EmptyCTA } from "../../components/empty-cta";
 import { PageHeader } from "../../components/page-header";
+import { PageSection } from "@/components/sections";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { GetJobsResponse } from "@/lib/api-client/queries/jobs.queries";
@@ -188,14 +189,13 @@ function JobsListPage() {
         }
       />
 
-      {jobs.length === 0 ? (
-        <EmptyCTA
-          title="No Jobs Yet"
-          description="Create your first job to start scheduling"
-
-        />
-      ) : (
-        <>
+      <PageSection>
+        {jobs.length === 0 ? (
+          <EmptyCTA
+            title="No Jobs Yet"
+            description="Create your first job to start scheduling"
+          />
+        ) : (
           <DataTable
             columns={columns}
             data={jobs}
@@ -205,8 +205,8 @@ function JobsListPage() {
             enablePagination={true}
             defaultPageSize={10}
           />
-        </>
-      )}
+        )}
+      </PageSection>
     </>
   );
 }

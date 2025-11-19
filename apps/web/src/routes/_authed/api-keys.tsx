@@ -56,6 +56,7 @@ import { toast } from "@cronicorn/ui-library/lib/utils";
 import { DataTable } from "../../components/data-table";
 import { EmptyCTA } from "../../components/empty-cta";
 import { PageHeader } from "../../components/page-header";
+import { PageSection } from "@/components/sections";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { CreateApiKeyInput } from "@/lib/api-client/queries/api-keys.queries";
 import {
@@ -209,31 +210,33 @@ function APIKeysPage() {
         }
       />
 
-      {apiKeys.length === 0 ? (
-        <EmptyCTA
-          title="No API Keys Yet"
-          description="Create your first API key to get started"
-        />
-      ) : (
-        <>
-          <DataTable
-            columns={columns}
-            data={apiKeys}
-            searchKey="name"
-            searchPlaceholder="Search API keys..."
-            emptyMessage="No API keys found."
-            enablePagination={true}
-            defaultPageSize={10}
+      <PageSection>
+        {apiKeys.length === 0 ? (
+          <EmptyCTA
+            title="No API Keys Yet"
+            description="Create your first API key to get started"
           />
+        ) : (
+          <>
+            <DataTable
+              columns={columns}
+              data={apiKeys}
+              searchKey="name"
+              searchPlaceholder="Search API keys..."
+              emptyMessage="No API keys found."
+              enablePagination={true}
+              defaultPageSize={10}
+            />
 
-          <Alert className="mt-6">
-            <AlertDescription>
-              <strong>Important:</strong> API keys are only shown once upon creation. Make
-              sure to copy and save them securely.
-            </AlertDescription>
-          </Alert>
-        </>
-      )}
+            <Alert>
+              <AlertDescription>
+                <strong>Important:</strong> API keys are only shown once upon creation. Make
+                sure to copy and save them securely.
+              </AlertDescription>
+            </Alert>
+          </>
+        )}
+      </PageSection>
 
       {/* Create API Key Dialog */}
       <CreateApiKeyDialog

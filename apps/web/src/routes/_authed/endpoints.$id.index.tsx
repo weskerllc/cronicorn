@@ -285,109 +285,100 @@ function ViewEndpointPage() {
         </Card>
       )}
 
-      {/* Health Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <TrendingUp className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {successRate ? `${successRate}%` : "N/A"}
-            </div>
+      <PageSection>
+        {/* Health Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            icon={TrendingUp}
+            title="Success Rate"
+            value={successRate ? `${successRate}%` : "N/A"}
+            variant={successRate && Number.parseFloat(successRate) >= 90 ? "success" : "danger"}
+          >
             {successRate && (
-              <Badge
-                variant={Number.parseFloat(successRate) >= 90 ? "default" : "destructive"}
-                className="mt-2"
-              >
-                {Number.parseFloat(successRate) >= 90 ? "Healthy" : "Needs Attention"}
-              </Badge>
+              <div className="space-y-1">
+                <p className="text-2xl font-bold">
+                  {successRate}%
+                </p>
+                <Badge
+                  variant={Number.parseFloat(successRate) >= 90 ? "default" : "destructive"}
+                >
+                  {Number.parseFloat(successRate) >= 90 ? "Healthy" : "Needs Attention"}
+                </Badge>
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </StatCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Runs</CardTitle>
-            <Activity className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalRuns}</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {health.successCount} success / {health.failureCount} failed
-            </p>
-          </CardContent>
-        </Card>
+          <StatCard
+            icon={Activity}
+            title="Total Runs"
+            value={totalRuns}
+            subtext={`${health.successCount} success / ${health.failureCount} failed`}
+          />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Duration</CardTitle>
-            <Clock className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {health.avgDurationMs ? `${health.avgDurationMs.toFixed(0)}ms` : "N/A"}
-            </div>
-          </CardContent>
-        </Card>
+          <StatCard
+            icon={Clock}
+            title="Avg Duration"
+            value={health.avgDurationMs ? `${health.avgDurationMs.toFixed(0)}ms` : "N/A"}
+          />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failures</CardTitle>
-            <AlertCircle className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {health.failureCount || 0}
+          <StatCard
+            icon={AlertCircle}
+            title="Failures"
+            value={health.failureCount || 0}
+            variant={health.failureCount > 0 ? "danger" : "default"}
+          >
+            <div className="space-y-1">
+              <p className="text-2xl font-bold text-destructive">
+                {health.failureCount || 0}
+              </p>
+              {health.failureStreak > 0 && (
+                <Badge variant="destructive">
+                  {health.failureStreak} consecutive
+                </Badge>
+              )}
             </div>
-            {health.failureStreak > 0 && (
-              <Badge variant="destructive" className="mt-2">
-                {health.failureStreak} consecutive
-              </Badge>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          </StatCard>
+        </div>
 
-      {/* Endpoint Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Configuration</CardTitle>
-            <CardDescription>Endpoint settings and schedule</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">URL:</span>
-              <a
-                href={endpoint.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-xs hover:underline flex items-center gap-1 max-w-xs truncate"
-              >
-                {endpoint.url}
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Method:</span>
-              <Badge variant="outline">{endpoint.method}</Badge>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Schedule Type:</span>
-              <span className="font-medium">
-                {endpoint.baselineCron ? "Cron" : "Interval"}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Schedule:</span>
-              <span className="font-mono text-xs">
-                {endpoint.baselineCron ||
-                  (endpoint.baselineIntervalMs ?
-                    `Every ${Math.round(endpoint.baselineIntervalMs / 60000)}min` :
-                    "Not configured")}
-              </span>
+        {/* Endpoint Details */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <DetailSection
+            title="Configuration"
+            description="Endpoint settings and schedule"
+          >
+            <InfoGrid columns={1}>
+              <InfoField
+                label="URL"
+                value={
+                  <a
+                    href={endpoint.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs hover:underline flex items-center gap-1"
+                  >
+                    {endpoint.url}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                }
+              />
+              <InfoField
+                label="Method"
+                value={<Badge variant="outline">{endpoint.method}</Badge>}
+              />
+              <InfoField
+                label="Schedule Type"
+                value={endpoint.baselineCron ? "Cron" : "Interval"}
+              />
+              <InfoField
+                label="Schedule"
+                value={
+                  <code className="text-xs">
+                    {endpoint.baselineCron ||
+                      (endpoint.baselineIntervalMs ?
+                        `Every ${Math.round(endpoint.baselineIntervalMs / 60000)}min` :
+                        "Not configured")}
+                  </code>
+                }
             </div>
             {endpoint.minIntervalMs && (
               <div className="flex justify-between text-sm">
@@ -396,68 +387,75 @@ function ViewEndpointPage() {
                   {Math.round(endpoint.minIntervalMs / 60000)}min
                 </span>
               </div>
-            )}
-            {endpoint.maxIntervalMs && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Max Interval:</span>
-                <span className="font-mono text-xs">
-                  {Math.round(endpoint.maxIntervalMs / 60000)}min
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              />
+              {endpoint.minIntervalMs && (
+                <InfoField
+                  label="Min Interval"
+                  value={<code className="text-xs">{Math.round(endpoint.minIntervalMs / 60000)}min</code>}
+                />
+              )}
+              {endpoint.maxIntervalMs && (
+                <InfoField
+                  label="Max Interval"
+                  value={<code className="text-xs">{Math.round(endpoint.maxIntervalMs / 60000)}min</code>}
+                />
+              )}
+            </InfoGrid>
+          </DetailSection>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Execution State</CardTitle>
-            <CardDescription>Current scheduling and run status</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Status:</span>
-              <Badge variant={endpoint.archivedAt ? "destructive" : isPaused ? "secondary" : "default"}>
-                {endpoint.archivedAt ? (
-                  <>
-                    <Archive className="h-3 w-3 mr-1" />
-                    Archived
-                  </>
-                ) : isPaused ? (
-                  <>
-                    <Pause className="h-3 w-3 mr-1" />
-                    Paused
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Active
-                  </>
-                )}
-              </Badge>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Last Run:</span>
-              <span className="font-mono text-xs">
-                {endpoint.lastRunAt
-                  ? new Date(endpoint.lastRunAt).toLocaleString()
-                  : "Never"}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Next Run:</span>
-              <span className="font-mono text-xs">
-                {new Date(endpoint.nextRunAt).toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Failure Count:</span>
-              <Badge variant={endpoint.failureCount > 0 ? "destructive" : "outline"}>
-                {endpoint.failureCount}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <DetailSection
+            title="Execution State"
+            description="Current scheduling and run status"
+          >
+            <InfoGrid columns={1}>
+              <InfoField
+                label="Status"
+                value={
+                  <Badge variant={endpoint.archivedAt ? "destructive" : isPaused ? "secondary" : "default"}>
+                    {endpoint.archivedAt ? (
+                      <>
+                        <Archive className="h-3 w-3 mr-1" />
+                        Archived
+                      </>
+                    ) : isPaused ? (
+                      <>
+                        <Pause className="h-3 w-3 mr-1" />
+                        Paused
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Active
+                      </>
+                    )}
+                  </Badge>
+                }
+              />
+              <InfoField
+                label="Last Run"
+                value={
+                  <code className="text-xs">
+                    {endpoint.lastRunAt
+                      ? new Date(endpoint.lastRunAt).toLocaleString()
+                      : "Never"}
+                  </code>
+                }
+              />
+              <InfoField
+                label="Next Run"
+                value={<code className="text-xs">{new Date(endpoint.nextRunAt).toLocaleString()}</code>}
+              />
+              <InfoField
+                label="Failure Count"
+                value={
+                  <Badge variant={endpoint.failureCount > 0 ? "destructive" : "outline"}>
+                    {endpoint.failureCount}
+                  </Badge>
+                }
+              />
+            </InfoGrid>
+          </DetailSection>
+        </div>
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2 mb-8">
@@ -505,28 +503,29 @@ function ViewEndpointPage() {
         </Button>
       </div>
 
-      <Separator className="my-2" />
+        <Separator />
 
-      {/* Recent Runs Table */}
-      <DataTable
-        tableTitle="Recent Runs"
-        columns={columns}
-        data={runsData.runs.map(run => ({
-          ...run,
-          status: run.status as "success" | "failure" | "timeout" | "cancelled",
-          startedAt: new Date(run.startedAt),
-        }))}
-        emptyMessage="No runs found for this endpoint."
-      />
-      {runsData.runs.length >= 10 && (
-        <div className="mt-4 text-center">
-          <Button variant="link" asChild>
-            <Link to="/endpoints/$id/runs" params={{ id }}>
-              View All Runs →
-            </Link>
-          </Button>
-        </div>
-      )}
+        {/* Recent Runs Table */}
+        <DataTable
+          tableTitle="Recent Runs"
+          columns={columns}
+          data={runsData.runs.map(run => ({
+            ...run,
+            status: run.status as "success" | "failure" | "timeout" | "cancelled",
+            startedAt: new Date(run.startedAt),
+          }))}
+          emptyMessage="No runs found for this endpoint."
+        />
+        {runsData.runs.length >= 10 && (
+          <div className="mt-4 text-center">
+            <Button variant="link" asChild>
+              <Link to="/endpoints/$id/runs" params={{ id }}>
+                View All Runs →
+              </Link>
+            </Button>
+          </div>
+        )}
+      </PageSection>
     </>
   );
 }

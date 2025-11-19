@@ -14,6 +14,7 @@ import { Button } from "@cronicorn/ui-library/components/button";
 
 import { ListRunsQuerySchema } from "@cronicorn/api-contracts/jobs";
 import { PageHeader } from "../../components/page-header";
+import { PageSection } from "@/components/sections";
 import { DataTable } from "../../components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
@@ -111,61 +112,63 @@ function RunsListPage() {
         description="View execution history for this endpoint"
       />
 
-      <div className="mb-6 flex gap-4 items-end">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="status" className="text-sm font-medium">
-            Status
-          </label>
-          <Select
-            value={search.status}
-            onValueChange={(value) => {
-              navigate({
-                search: (prev) => ({ ...prev, status: value as typeof search.status }),
-              });
-            }}
-          >
-            <SelectTrigger id="status" className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="success">Success</SelectItem>
-              <SelectItem value="failure">Failure</SelectItem>
-            </SelectContent>
-          </Select>
+      <PageSection>
+        <div className="flex gap-4 items-end">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="status" className="text-sm font-medium">
+              Status
+            </label>
+            <Select
+              value={search.status}
+              onValueChange={(value) => {
+                navigate({
+                  search: (prev) => ({ ...prev, status: value as typeof search.status }),
+                });
+              }}
+            >
+              <SelectTrigger id="status" className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="success">Success</SelectItem>
+                <SelectItem value="failure">Failure</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="dateRange" className="text-sm font-medium">
+              Date Range
+            </label>
+            <Select defaultValue="all">
+              <SelectTrigger id="dateRange" className="w-[180px]">
+                <SelectValue placeholder="Select date range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="24h">Last 24 hours</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="all">All time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="dateRange" className="text-sm font-medium">
-            Date Range
-          </label>
-          <Select defaultValue="all">
-            <SelectTrigger id="dateRange" className="w-[180px]">
-              <SelectValue placeholder="Select date range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="24h">Last 24 hours</SelectItem>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="all">All time</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={data.runs.map(run => ({
-          ...run,
-          status: run.status as "success" | "failure" | "timeout" | "cancelled",
-          startedAt: new Date(run.startedAt),
-        }))}
-        searchKey="runId"
-        searchPlaceholder="Search run ID..."
-        emptyMessage="No runs found for the selected filters."
-        enablePagination={true}
-        defaultPageSize={50}
-      />
+        <DataTable
+          columns={columns}
+          data={data.runs.map(run => ({
+            ...run,
+            status: run.status as "success" | "failure" | "timeout" | "cancelled",
+            startedAt: new Date(run.startedAt),
+          }))}
+          searchKey="runId"
+          searchPlaceholder="Search run ID..."
+          emptyMessage="No runs found for the selected filters."
+          enablePagination={true}
+          defaultPageSize={50}
+        />
+      </PageSection>
     </>
   );
 }
