@@ -4,6 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
+    <!-- Prevent FOUC: Apply theme before any content renders -->
+    <script>
+      (function() {
+        // Read theme from localStorage (matches ThemeProvider's storageKey)
+        const storageKey = 'cronicorn-ui-theme';
+        const theme = localStorage.getItem(storageKey);
+        
+        // Determine which theme to apply
+        let appliedTheme = theme;
+        if (!theme || theme === 'system') {
+          // Match system preference
+          appliedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        
+        // Apply theme class immediately to prevent flash
+        document.documentElement.classList.add(appliedTheme);
+        
+        // Set background color inline as backup
+        if (appliedTheme === 'dark') {
+          document.documentElement.style.backgroundColor = 'oklch(0.14 0 0)'; // --background for dark
+        } else {
+          document.documentElement.style.backgroundColor = 'oklch(1.00 0 0)'; // --background for light
+        }
+      })();
+    </script>
+    
     <!-- Preconnect to external domains for faster resource loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
@@ -15,8 +41,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#000000" />
+    <!-- Theme Color - Dynamic based on color scheme -->
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#242424" media="(prefers-color-scheme: dark)" />
     
     <!-- Primary Meta Tags -->
     <meta name="description" content="Cronicorn - AI-powered job scheduling made simple" />
