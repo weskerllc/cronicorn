@@ -44,16 +44,6 @@ const data = {
       url: "/api-keys",
       icon: IconKey,
     },
-    {
-      title: "Usage",
-      url: "/usage",
-      icon: IconChartBar,
-    },
-    {
-      title: "Plan",
-      url: "/plan",
-      icon: IconChartBar,
-    },
   ],
   navSecondary: [
     {
