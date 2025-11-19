@@ -36,8 +36,10 @@ export function ExecutionTimelineChart({
         });
 
         // Sort endpoints by total runs DESC and take top 10 for display
+        // Filter out endpoints with 0 runs
         const MAX_ENDPOINTS = 10;
         const sortedEndpoints = Array.from(endpointTotals.values())
+            .filter(ep => ep.total > 0)
             .sort((a, b) => b.total - a.total)
             .slice(0, MAX_ENDPOINTS)
             .map(ep => ({ id: ep.id, name: ep.name }));
@@ -164,10 +166,15 @@ export function ExecutionTimelineChart({
                             content={({ active, payload }) => {
                                 if (!active || !payload || payload.length === 0) return null;
                                 const date = new Date(Number(payload[0]?.payload?.date));
+                                // Filter out items with 0 or undefined values
+                                const filteredPayload = payload.filter(item => 
+                                    item.value != null && Number(item.value) > 0
+                                );
+                                if (filteredPayload.length === 0) return null;
                                 return (
                                     <ChartTooltipContent
                                         active={active}
-                                        payload={payload}
+                                        payload={filteredPayload}
                                         label={date.toLocaleDateString("en-US", {
                                             month: "short",
                                             day: "numeric",

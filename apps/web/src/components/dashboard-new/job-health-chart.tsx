@@ -67,14 +67,17 @@ export function JobHealthChart({
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
-    const { paginatedData, totalPages } = useMemo(() => {
-        const total = Math.ceil(data.length / itemsPerPage);
+    const { paginatedData, totalPages, filteredData } = useMemo(() => {
+        // Filter out jobs with 0 total runs (both success and failure = 0)
+        const filtered = data.filter(item => item.successCount > 0 || item.failureCount > 0);
+        const total = Math.ceil(filtered.length / itemsPerPage);
         const start = (currentPage - 1) * itemsPerPage;
         const end = start + itemsPerPage;
-        const paginated = data.slice(start, end);
+        const paginated = filtered.slice(start, end);
         return {
             paginatedData: paginated,
             totalPages: total,
+            filteredData: filtered,
         };
     }, [data, currentPage]);
 
@@ -84,11 +87,11 @@ export function JobHealthChart({
     );
 
 
-    const hasData = data.length > 0;
+    const hasData = filteredData.length > 0;
 
     const description = hasData ? (
         <>
-            <p>Active Jobs: <span className="text-foreground font-medium">{data.length}</span></p>
+            <p>Active Jobs: <span className="text-foreground font-medium">{filteredData.length}</span></p>
         </>
     ) : (
         "No data to display"
@@ -179,7 +182,18 @@ export function JobHealthChart({
                         tickFormatter={(value) => value.slice(0, 5)}
                         hide
                     />
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                    <ChartTooltip 
+                        cursor={false} 
+                        content={({ active, payload }) => {
+                            if (!active || !payload || payload.length === 0) return null;
+                            // Filter out items with 0 values
+                            const filteredPayload = payload.filter(item => 
+                                item.value != null && Number(item.value) > 0
+                            );
+                            if (filteredPayload.length === 0) return null;
+                            return <ChartTooltipContent active={active} payload={filteredPayload} />;
+                        }}
+                    />
                     <ChartLegend content={<ChartLegendContent className="pb-2" />} />
 
                     <Bar
