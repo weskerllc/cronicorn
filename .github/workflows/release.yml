@@ -209,10 +209,11 @@ jobs:
             type=gha,scope=${{ matrix.service.name }}
           cache-to: |
             type=gha,mode=max,scope=${{ matrix.service.name }}
-          # Build arguments - hardcode VITE_SITE_URL for web service
+          # Build arguments - hardcode VITE_SITE_URL and VITE_API_URL for web service
           build-args: |
             BUILDKIT_INLINE_CACHE=1
             ${{ matrix.service.name == 'web' && 'VITE_SITE_URL=https://cronicorn.com' || '' }}
+            ${{ matrix.service.name == 'web' && 'VITE_API_URL=https://cronicorn.com' || '' }}
           # Enable provenance and SBOM for security
           provenance: true
           sbom: true
