@@ -1,9 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@cronicorn/ui-library/components/card';
 import { Progress } from '@cronicorn/ui-library/components/progress';
-import { PageHeader } from '../../components/page-header';
+import { GridLayout } from '../../components/primitives/grid-layout';
+import { PageHeader } from '../../components/composed/page-header';
 import { usageQueryOptions } from '../../lib/api-client/queries/subscriptions.queries';
+import { PageSection } from '../../components/primitives/page-section';
+import { StatCard } from '../../components/cards/stat-card';
 
 export const Route = createFileRoute('/_authed/usage')({
   loader: async ({ context }) => {
@@ -43,14 +45,16 @@ function RouteComponent() {
         description="View your current usage and limits"
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {metrics.map((metric) => (
-          <Card key={metric.title}>
-            <CardHeader>
-              <CardTitle>{metric.title}</CardTitle>
-              <CardDescription>{metric.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+      <PageSection>
+        <h2 className="text-lg font-semibold mb-4">Current Usage</h2>
+        <GridLayout cols={1} md={3}>
+          {metrics.map((metric) => (
+            <StatCard
+              key={metric.title}
+              title={metric.title}
+              description={metric.description}
+              value={`${metric.used} / ${metric.limit || 'unlimited'}`}
+            >
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Used</span>
@@ -64,10 +68,10 @@ function RouteComponent() {
                   />
                 )}
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </StatCard>
+          ))}
+        </GridLayout>
+      </PageSection>
     </>
   );
 }

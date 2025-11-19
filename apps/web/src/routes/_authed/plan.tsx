@@ -4,9 +4,10 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { Alert, AlertDescription } from '@cronicorn/ui-library/components/alert';
 import { Badge } from '@cronicorn/ui-library/components/badge';
 import { Button } from '@cronicorn/ui-library/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@cronicorn/ui-library/components/card';
-import { PageHeader } from '../../components/page-header';
+import { PageHeader } from '../../components/composed/page-header';
 import { subscriptionStatusQueryOptions } from '../../lib/api-client/queries/subscriptions.queries';
+import { DetailSection } from '../../components/cards/detail-section';
+import { PageSection } from '@/components/primitives/page-section';
 
 export const Route = createFileRoute('/_authed/plan')({
   loader: async ({ context }) => {
@@ -52,14 +53,15 @@ function RouteComponent() {
         description="Manage your subscription and billing"
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Current Plan</CardTitle>
-          <CardDescription>
-            You are currently on the <Badge variant="secondary" className="capitalize">{subscription.tier}</Badge> plan
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <PageSection>
+        <DetailSection
+          title="Current Plan"
+          description={
+            <>
+              You are currently on the <Badge variant="secondary" className="capitalize">{subscription.tier}</Badge> plan
+            </>
+          }
+        >
           {subscription.tier !== "free" && (
             <>
               {error && (
@@ -92,8 +94,8 @@ function RouteComponent() {
               </p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </DetailSection>
+      </PageSection>
     </>
   );
 }

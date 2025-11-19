@@ -62,6 +62,13 @@ interface DataTableProps<TData, TValue> {
   onRefresh?: () => void;
   isRefreshing?: boolean;
   getRowId?: (row: TData) => string;
+  // Server-side pagination props
+  manualPagination?: boolean;
+  pageCount?: number;
+  pageIndex?: number; // For controlled pagination state (0-indexed)
+  onPaginationChange?: (pagination: PaginationState) => void;
+  // Row click handler
+  onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -78,6 +85,11 @@ export function DataTable<TData, TValue>({
   onRefresh,
   isRefreshing = false,
   getRowId,
+  manualPagination = false,
+  pageCount,
+  pageIndex: controlledPageIndex,
+  onPaginationChange: externalOnPaginationChange,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const tableRef = React.useRef<HTMLDivElement>(null);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
@@ -85,9 +97,31 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
+    pageIndex: controlledPageIndex ?? 0,
     pageSize: defaultPageSize,
   });
+
+  // Sync controlled pagination state from props
+  React.useEffect(() => {
+    if (controlledPageIndex !== undefined) {
+      setPagination(prev => ({ ...prev, pageIndex: controlledPageIndex }));
+    }
+  }, [controlledPageIndex]);
+
+  const handlePaginationChange = React.useCallback(
+    (updaterOrValue: PaginationState | ((old: PaginationState) => PaginationState)) => {
+      const newPagination = typeof updaterOrValue === "function"
+        ? updaterOrValue(pagination)
+        : updaterOrValue;
+
+      setPagination(newPagination);
+
+      if (manualPagination && externalOnPaginationChange) {
+        externalOnPaginationChange(newPagination);
+      }
+    },
+    [pagination, manualPagination, externalOnPaginationChange]
+  );
 
   const table = useReactTable({
     data,
@@ -99,13 +133,15 @@ export function DataTable<TData, TValue>({
       columnFilters,
       pagination,
     },
+    pageCount: manualPagination ? pageCount : undefined,
+    manualPagination,
     enableRowSelection,
     getRowId,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
+    onPaginationChange: handlePaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
@@ -113,23 +149,6 @@ export function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
-
-  // Scroll to table when pagination changes (but not on initial mount)
-  const isInitialMount = React.useRef(true);
-  React.useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    if (tableRef.current && enablePagination) {
-      // Respect user's motion preferences
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      tableRef.current.scrollIntoView({
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
-        block: 'start'
-      });
-    }
-  }, [pagination.pageIndex]);
 
   return (
     <div ref={tableRef} className="flex flex-col gap-4">
@@ -193,6 +212,8 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                  className={onRowClick ? "cursor-pointer hover:bg-muted/50" : undefined}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
