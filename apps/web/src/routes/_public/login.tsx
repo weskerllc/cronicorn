@@ -261,22 +261,6 @@ function RouteComponent() {
               </Button>
             )}
 
-            <Button
-              onClick={handleGithubLogin}
-              disabled={false}
-              className="w-full"
-              size="lg"
-              variant="outline"
-              aria-label="Sign in with GitHub"
-            >
-              {false ? (
-                <div className="mr-2 size-5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
-              ) : (
-                <Github className="mr-2 size-5" aria-hidden="true" />
-              )}
-              Sign in with GitHub
-            </Button>
-
             <p className="text-xs text-center text-muted-foreground">
               By signing in, you agree to our terms of service and privacy policy
             </p>
