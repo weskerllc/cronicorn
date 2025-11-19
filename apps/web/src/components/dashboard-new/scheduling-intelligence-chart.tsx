@@ -66,12 +66,7 @@ function buildChartConfig(data: Array<SourceDistributionItem>): ChartConfig {
     };
 
     data.forEach((item, index) => {
-        // Ensure item and item.source are valid
-        if (!item || !item.source || typeof item.source !== "string") {
-            return;
-        }
-        
-        if (SOURCE_CONFIG[item.source]) {
+        if (item.source in SOURCE_CONFIG) {
             // Use predefined config for known sources
             config[item.source] = SOURCE_CONFIG[item.source];
         } else {
@@ -103,9 +98,10 @@ export function SchedulingIntelligenceChart({
     const chartConfig = React.useMemo(() => buildChartConfig(data), [data]);
 
     // Transform data to add fill property for each source
+    // Filter out items with 0 count
     const chartData = React.useMemo(
         () => data
-            .filter(item => item && item.source && typeof item.source === "string")
+            .filter(item => item.count > 0)
             .map(item => ({
                 ...item,
                 fill: `var(--color-${item.source})`
@@ -113,10 +109,10 @@ export function SchedulingIntelligenceChart({
         [data]
     );
 
-    // Calculate AI-driven percentage from backend data
-    const totalRuns = data.reduce((sum, item) => sum + item.count, 0);
+    // Calculate AI-driven percentage from backend data (only non-zero counts)
+    const totalRuns = data.filter(item => item.count > 0).reduce((sum, item) => sum + item.count, 0);
     const aiRuns = data
-        .filter(item => item.source.startsWith('ai-'))
+        .filter(item => item.source.startsWith('ai-') && item.count > 0)
         .reduce((sum, item) => sum + item.count, 0);
     const aiDrivenPct = totalRuns > 0 ? (aiRuns / totalRuns) * 100 : 0;
 
@@ -135,7 +131,18 @@ export function SchedulingIntelligenceChart({
                     className="aspect-square h-full max-h-full"
                 >
                     <PieChart>
-                        {hasData && <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />}
+                        {hasData && <ChartTooltip 
+                            cursor={false} 
+                            content={({ active, payload }) => {
+                                if (!active || !payload || payload.length === 0) return null;
+                                // Filter out items with 0 count
+                                const filteredPayload = payload.filter(item => 
+                                    item.value != null && Number(item.value) > 0
+                                );
+                                if (filteredPayload.length === 0) return null;
+                                return <ChartTooltipContent hideLabel active={active} payload={filteredPayload} />;
+                            }}
+                        />}
                         <Pie
                             data={hasData ? chartData : []}
                             dataKey="count"
@@ -178,11 +185,11 @@ export function SchedulingIntelligenceChart({
             </div>
             <div className="flex flex-col flex-1 items-center gap-2 justify-center flex-wrap">
                 {hasData ? data
-                    .filter(item => item && item.source && typeof item.source === "string")
+                    .filter(item => item.count > 0)
                     .map((item) => {
-                        const config = chartConfig[item.source as keyof typeof chartConfig];
-                        // Skip if config doesn't have a color (shouldn't happen with dynamic config)
-                        if (!config || typeof config !== 'object' || !('color' in config) || !config.color) return null;
+                        const config = chartConfig[item.source];
+                        // Type system guarantees config exists from buildChartConfig
+                        if (typeof config !== 'object' || !('color' in config)) return null;
                         return (
                             <div key={item.source} className="flex items-center gap-1.5 text-xs">
                                 <div

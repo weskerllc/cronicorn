@@ -37,7 +37,8 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
             stats.set(point.endpointId, existing);
         });
 
-        return Array.from(stats.values());
+        // Filter out endpoints with 0 runs and 0 sessions
+        return Array.from(stats.values()).filter(stat => stat.runs > 0 || stat.sessions > 0);
     }, [endpointTimeSeries, aiSessionTimeSeries]);
 
     const totalPages = Math.ceil(endpointStats.length / itemsPerPage);

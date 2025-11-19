@@ -39,10 +39,6 @@ export function buildChartConfigFromMappings(
 ): ChartConfig {
     const config: ChartConfig = {};
     for (const mapping of mappings) {
-        // Ensure we only add valid mappings
-        if (!mapping || !mapping.sanitizedKey || !mapping.name) {
-            continue;
-        }
         config[mapping.sanitizedKey] = {
             label: mapping.name,
             color: `var(--chart-${mapping.colorIndex})`,
