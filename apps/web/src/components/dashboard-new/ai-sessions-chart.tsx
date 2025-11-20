@@ -118,7 +118,7 @@ export function AISessionsChart({
                 Sessions: <span className="text-foreground font-medium">{totalSessions.toLocaleString()}</span>
                 {totalEndpoints > endpoints.length && (
                     <span className="text-muted-foreground text-xs ml-2">
-                        (Showing top {endpoints.length} of {totalEndpoints} endpoints)
+                        (Showing top {endpoints.length} of {totalEndpoints})
                     </span>
                 )}
             </p>

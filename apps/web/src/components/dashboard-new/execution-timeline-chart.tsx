@@ -115,7 +115,7 @@ export function ExecutionTimelineChart({
                 Invocations: <span className="text-foreground font-medium">{totalInvocations.toLocaleString()}</span>
                 {totalEndpoints > endpoints.length && (
                     <span className="text-muted-foreground text-xs ml-2">
-                        (Showing top {endpoints.length} of {totalEndpoints} endpoints)
+                        (Showing top {endpoints.length} of {totalEndpoints})
                     </span>
                 )}
             </p>
@@ -126,7 +126,7 @@ export function ExecutionTimelineChart({
 
     return (
         <DashboardCard
-            title="Execution Timeline by Endpoint"
+            title="Endpoint Activity"
             description={description}
             contentClassName="p-3"
         >
