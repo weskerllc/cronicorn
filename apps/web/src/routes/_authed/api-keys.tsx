@@ -173,13 +173,15 @@ function APIKeysPage() {
         text="API Keys"
         description="Manage API keys for programmatic access to your scheduled jobs"
         slotRight={
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            disabled={createMutation.isPending}
-          >
-            <Plus className="size-4" />
-            Generate New Key
-          </Button>
+          <div className="flex gap-2 items-center">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              disabled={createMutation.isPending}
+            >
+              <Plus className="size-4" />
+              Generate New Key
+            </Button>
+          </div>
         }
       />
 
@@ -376,8 +378,8 @@ function GeneratedKeyDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="flex flex-col max-h-[90vh]">
+        <DialogHeader className="flex-shrink-0">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="size-6 text-primary" />
             <DialogTitle>API Key Created</DialogTitle>
@@ -387,7 +389,7 @@ function GeneratedKeyDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-4">
           <CodeDisplay
             code={apiKey}
             maxHeight="100px"
@@ -407,7 +409,7 @@ function GeneratedKeyDialog({
           </Alert>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button onClick={() => onOpenChange(false)}>I&apos;ve Saved My Key</Button>
         </DialogFooter>
       </DialogContent>

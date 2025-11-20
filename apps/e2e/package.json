@@ -10,6 +10,9 @@
     "test:report": "playwright show-report",
     "kill-servers": "./kill-servers.sh"
   },
+  "dependencies": {
+    "@cronicorn/config-defaults": "workspace:*"
+  },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "dotenv": "^17.2.3"
