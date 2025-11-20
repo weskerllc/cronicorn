@@ -10,7 +10,7 @@ import { DrizzleJobsRepo, DrizzleRunsRepo, schema } from "@cronicorn/adapter-dri
 import { HttpDispatcher } from "@cronicorn/adapter-http";
 import { PinoLoggerAdapter } from "@cronicorn/adapter-pino";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
-import { DEV_DATABASE, DEV_ENV } from "@cronicorn/config-defaults";
+import { DEV_AUTH, DEV_DATABASE, DEV_ENV } from "@cronicorn/config-defaults";
 import { Scheduler } from "@cronicorn/worker-scheduler";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -22,6 +22,7 @@ import { z } from "zod";
  */
 const configSchema = z.object({
   DATABASE_URL: z.string().url().default(DEV_DATABASE.URL),
+  BETTER_AUTH_SECRET: z.string().min(32).default(DEV_AUTH.SECRET),
   BATCH_SIZE: z.coerce.number().int().positive().default(10),
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
   CLAIM_HORIZON_MS: z.coerce.number().int().positive().default(10000),
@@ -50,7 +51,7 @@ async function main() {
   const clock = new SystemClock();
   const cron = new CronParserAdapter();
   const dispatcher = new HttpDispatcher();
-  const jobsRepo = new DrizzleJobsRepo(db);
+  const jobsRepo = new DrizzleJobsRepo(db, clock.now, config.BETTER_AUTH_SECRET);
   const runsRepo = new DrizzleRunsRepo(db);
 
   // Configure pino logger
