@@ -1,8 +1,10 @@
 "use client";
 
 import {
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
+  IconChevronUp,
   IconChevronsLeft,
   IconChevronsRight,
   IconLoader,
@@ -206,9 +208,8 @@ export function DataTable<TData, TValue>({
 
                     return (
                       <TableHead key={header.id} colSpan={header.colSpan}>
-                        {/* {header.isPlaceholder ? null : canSort ? (
-                          <Button
-                            variant="ghost"
+                        {header.isPlaceholder ? null : canSort ? (
+                          <button
                             onClick={() => {
                               if (sorted === "asc") {
                                 header.column.toggleSorting(true);
@@ -218,18 +219,17 @@ export function DataTable<TData, TValue>({
                                 header.column.toggleSorting(false);
                               }
                             }}
-                            className="h-8 px-2 -ml-2"
+                            className="flex items-center"
                           >
                             {flexRender(header.column.columnDef.header, header.getContext())}
                             {sorted === "asc" && <IconChevronUp className="ml-2 h-4 w-4" />}
                             {sorted === "desc" && <IconChevronDown className="ml-2 h-4 w-4" />}
                             {!sorted && <IconChevronUp className="ml-2 h-4 w-4 opacity-0" />}
-                          </Button>
+                          </button>
                         ) : (
                           flexRender(header.column.columnDef.header, header.getContext())
-                        )} */}
-                        {flexRender(header.column.columnDef.header, header.getContext())
-                        }
+                        )}
+
                       </TableHead>
                     );
                   })}
