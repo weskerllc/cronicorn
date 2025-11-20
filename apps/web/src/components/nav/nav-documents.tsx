@@ -1,12 +1,13 @@
 "use client"
 
 import {
-  
+
   IconDots,
   IconFolder,
   IconShare3,
   IconTrash
 } from "@tabler/icons-react"
+import { Link } from "@tanstack/react-router"
 
 import {
   DropdownMenu,
@@ -24,7 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@cronicorn/ui-library/components/sidebar"
-import type {Icon} from "@tabler/icons-react";
+import type { Icon } from "@tabler/icons-react";
 
 export function NavDocuments({
   items,
@@ -44,10 +45,10 @@ export function NavDocuments({
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
-              <a href={item.url}>
+              <Link to={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
