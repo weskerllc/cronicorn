@@ -1,6 +1,6 @@
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo } from "@cronicorn/domain";
+import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo, type JsonValue } from "@cronicorn/domain";
 import { and, eq, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 
 import { type JobEndpointRow, jobEndpoints, type JobRow, jobs, runs, user } from "./schema.js";
@@ -253,6 +253,27 @@ export class DrizzleJobsRepo implements JobsRepo {
         aiHintIntervalMs: hint.intervalMs,
         aiHintExpiresAt: hint.expiresAt,
         aiHintReason: hint.reason,
+      })
+      .where(eq(jobEndpoints.id, id));
+
+    // Note: Drizzle doesn't return rowCount, optimistically assume success
+    // getEndpoint will throw if row doesn't exist
+  }
+
+  async writeAIBodyHint(
+    id: string,
+    hint: {
+      resolvedBody: JsonValue;
+      expiresAt: Date;
+      reason?: string;
+    },
+  ): Promise<void> {
+    await this.tx
+      .update(jobEndpoints)
+      .set({
+        aiHintBodyResolved: hint.resolvedBody,
+        aiHintBodyExpiresAt: hint.expiresAt,
+        aiHintBodyReason: hint.reason,
       })
       .where(eq(jobEndpoints.id, id));
 

@@ -1,5 +1,5 @@
 // packages/scheduler/src/scheduler.ts
-import { planNextRun } from "@cronicorn/domain";
+import { planNextRun, resolveEndpointBody } from "@cronicorn/domain";
 
 import type { SchedulerDeps } from "./deps.js";
 
@@ -52,7 +52,12 @@ export class Scheduler implements IScheduler {
     });
 
     const runLogger = epLogger.child({ runId, attempt: ep.failureCount + 1 });
-    const result = await dispatcher.execute(ep);
+
+    // Resolve dynamic body values (AI hint > template > static)
+    const resolvedBody = await resolveEndpointBody(ep, runs, now);
+    const epWithResolvedBody = { ...ep, bodyJson: resolvedBody };
+
+    const result = await dispatcher.execute(epWithResolvedBody);
 
     if (result.status === "success") {
       runLogger.info({ durationMs: result.durationMs, statusCode: result.statusCode }, "Execution succeeded");

@@ -11,6 +11,33 @@ export type JsonValue =
   | { [key: string]: JsonValue };
 
 /**
+ * Template expression for dynamic body values.
+ * Uses JSONPath-like syntax to reference data from response bodies.
+ *
+ * Examples:
+ * - "{{$.self.latestResponse.status}}" - Latest response from this endpoint
+ * - "{{$.sibling['monitoring'].latestResponse.priority}}" - Sibling endpoint response
+ * - "{{$.now}}" - Current timestamp
+ */
+export type TemplateExpression = string;
+
+/**
+ * Body template with placeholders for dynamic values.
+ * Placeholders are resolved at execution time using response data.
+ */
+export type BodyTemplate = JsonValue;
+
+/**
+ * AI hint for dynamic body values.
+ * Contains resolved values for template placeholders with TTL.
+ */
+export type AIBodyHint = {
+  resolvedBody: JsonValue; // Fully resolved body ready for execution
+  expiresAt: Date; // When this hint expires
+  reason?: string; // Why these values were chosen
+};
+
+/**
  * Core job endpoint entity.
  * Pure domain type with no adapter-specific fields.
  */
@@ -51,8 +78,15 @@ export type JobEndpoint = {
   url?: string;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   headersJson?: Record<string, string>;
-  bodyJson?: JsonValue;
+  bodyJson?: JsonValue; // Static body (backward compatible)
+  bodyTemplate?: BodyTemplate; // Dynamic body with template expressions (new)
+  bodyTemplateSchema?: JsonValue; // JSON Schema for validating resolved body values
   timeoutMs?: number;
   maxExecutionTimeMs?: number; // Expected max execution time for lock duration (default: 60000ms / 1 min)
   maxResponseSizeKb?: number; // Max response body size to store (default: 100 KB)
+
+  // AI hints for dynamic body values (TTL-scoped)
+  aiHintBodyResolved?: JsonValue; // Resolved body from AI (overrides template evaluation)
+  aiHintBodyExpiresAt?: Date; // When the AI body hint expires
+  aiHintBodyReason?: string; // Why AI chose these values
 };

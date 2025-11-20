@@ -68,6 +68,11 @@ export type JobsRepo = {
     expiresAt: Date;
     reason?: string;
   }) => Promise<void>;
+  writeAIBodyHint: (id: string, hint: {
+    resolvedBody: JsonValue;
+    expiresAt: Date;
+    reason?: string;
+  }) => Promise<void>;
   setPausedUntil: (id: string, until: Date | null) => Promise<void>;
   clearAIHints: (id: string) => Promise<void>;
   resetFailureCount: (id: string) => Promise<void>;
