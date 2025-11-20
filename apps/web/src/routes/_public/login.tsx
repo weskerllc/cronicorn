@@ -4,15 +4,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@cronicorn/ui-library/components/input";
 import { Label } from "@cronicorn/ui-library/components/label";
 import { Separator } from "@cronicorn/ui-library/components/separator";
+import { Skeleton } from "@cronicorn/ui-library/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Github, Mail } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import { brand, metaDescriptions, pageTitles, structuredData } from "@cronicorn/content";
 import { APP_URL } from "@/config";
 import { authConfigQueryOptions } from "@/lib/api-client/queries/auth-config.queries";
-import { signIn, useSession } from "@/lib/auth-client";
+import { signIn } from "@/lib/auth-client";
 import { createSEOHead } from "@/lib/seo";
 
 type LoginSearch = {
@@ -72,24 +73,15 @@ function RouteComponent() {
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
 
-  const { data: session } = useSession();
-
-  useEffect(() => {
-    // auto route to dashboard if logged in
-    if (session) {
-      navigate({ to: '/dashboard' });
-    }
-  }, [session, navigate]);
 
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const { data: authConfig } = useQuery({
+  const { data: authConfig, isLoading: isLoadingConfig } = useQuery({
     ...authConfigQueryOptions(),
     enabled: isClient,
-    placeholderData: { hasEmailPassword: true, hasGitHubOAuth: true },
   });
 
   const getRedirectPath = () => {
@@ -179,8 +171,15 @@ function RouteComponent() {
               </Alert>
             )}
 
+            {/* Show skeleton while config is being fetched - optimized for GitHub-only (prod default) */}
+            {isLoadingConfig && (
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+              </div>
+            )}
+
             {/* Email/Password Login Form - only show if enabled */}
-            {authConfig?.hasEmailPassword && (
+            {!isLoadingConfig && authConfig?.hasEmailPassword && (
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -222,7 +221,7 @@ function RouteComponent() {
             )}
 
             {/* Show separator only if both methods are enabled */}
-            {authConfig?.hasEmailPassword && authConfig.hasGitHubOAuth && (
+            {!isLoadingConfig && authConfig?.hasEmailPassword && authConfig.hasGitHubOAuth && (
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <Separator />
@@ -236,7 +235,7 @@ function RouteComponent() {
             )}
 
             {/* GitHub OAuth Login - only show if enabled */}
-            {authConfig?.hasGitHubOAuth && (
+            {!isLoadingConfig && authConfig?.hasGitHubOAuth && (
               <Button
                 onClick={handleGithubLogin}
                 disabled={isLoading}
@@ -245,8 +244,12 @@ function RouteComponent() {
                 variant="outline"
                 aria-label="Sign in with GitHub"
               >
-                <Github className="mr-2 size-5" aria-hidden="true" />
-                {isLoading ? "Signing in..." : "Sign in with GitHub"}
+                {isLoading ? (
+                  <div className="mr-2 size-5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
+                ) : (
+                  <Github className="mr-2 size-5" aria-hidden="true" />
+                )}
+                Sign in with GitHub
               </Button>
             )}
 
