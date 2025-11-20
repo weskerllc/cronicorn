@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Alert, AlertDescription } from '@cronicorn/ui-library/components/alert';

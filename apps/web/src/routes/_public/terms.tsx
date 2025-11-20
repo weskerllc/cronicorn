@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { brand, business } from "@cronicorn/content";
 import { createSEOHead } from "@/lib/seo";
 
