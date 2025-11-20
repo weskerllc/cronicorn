@@ -16,7 +16,7 @@ import {
   useFormState,
 } from "react-hook-form";
 
-const Form = FormProvider;
+const Form: typeof FormProvider = FormProvider;
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
