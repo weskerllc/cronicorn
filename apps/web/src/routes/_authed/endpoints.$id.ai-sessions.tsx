@@ -1,24 +1,27 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@cronicorn/ui-library/components/pagination";
+
 import { Brain } from "lucide-react";
-import { PageSection } from "@/components/primitives/page-section";
-import { EmptyCTA } from "@/components/cards/empty-cta";
-import { sessionsQueryOptions } from "@/lib/api-client/queries/sessions.queries";
 import { AISessionItem } from "@/components/ai/session-item";
+import { EmptyCTA } from "@/components/cards/empty-cta";
+import { PageSection } from "@/components/primitives/page-section";
+import { sessionsQueryOptions } from "@/lib/api-client/queries/sessions.queries";
 import { formatDuration } from "@/lib/endpoint-utils";
 
-const sessionsSearchSchema = z.object({
-  limit: z.coerce.number().int().positive().optional().default(20),
-  offset: z.coerce.number().int().nonnegative().optional().default(0),
-});
-
 export const Route = createFileRoute("/_authed/endpoints/$id/ai-sessions")({
-  validateSearch: sessionsSearchSchema,
-  loaderDeps: ({ search }) => ({ search }),
-  loader: async ({ params, context, deps }) => {
+  loader: async ({ params, context }) => {
     await context.queryClient.ensureQueryData(
-      sessionsQueryOptions(params.id, { limit: deps.search.limit })
+      sessionsQueryOptions(params.id, { limit: 100 }) // Fetch more upfront for client-side pagination
     );
   },
   component: AISessionsPage,
@@ -26,11 +29,23 @@ export const Route = createFileRoute("/_authed/endpoints/$id/ai-sessions")({
 
 function AISessionsPage() {
   const { id } = Route.useParams();
-  const search = Route.useSearch();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   const { data } = useSuspenseQuery(
-    sessionsQueryOptions(id, { limit: search.limit ?? 20, offset: search.offset ?? 0 })
+    sessionsQueryOptions(id, { limit: 100 })
   );
+
+  const { paginatedSessions, totalPages } = useMemo(() => {
+    const total = Math.ceil(data.sessions.length / itemsPerPage);
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paginated = data.sessions.slice(start, end);
+    return {
+      paginatedSessions: paginated,
+      totalPages: total,
+    };
+  }, [data.sessions, currentPage]);
 
   if (data.sessions.length === 0) {
     return (
@@ -44,15 +59,16 @@ function AISessionsPage() {
     );
   }
 
-  // Group sessions by date for optional date headers
-  const sessionsByDate = data.sessions.reduce((acc, session) => {
+  // Group paginated sessions by date for optional date headers
+  type SessionType = (typeof data.sessions)[number];
+  const sessionsByDate = paginatedSessions.reduce<Record<string, Array<SessionType>>>((acc, session) => {
     const date = new Date(session.analyzedAt).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(session);
+    const existing = acc[date] ?? [];
+    acc[date] = [...existing, session];
     return acc;
   }, {});
 
@@ -77,37 +93,59 @@ function AISessionsPage() {
         ))}
 
         {/* Pagination controls */}
-        <div className="flex items-center justify-between pt-4 text-xs text-muted-foreground">
-          <div>
-            {data.sessions.length > 0 && (
-              <span>
-                Showing {(search.offset ?? 0) + 1}–{(search.offset ?? 0) + data.sessions.length} of {data.total}
-              </span>
-            )}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-4">
+            <div className="text-xs text-muted-foreground whitespace-nowrap">
+              Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, data.sessions.length)} of {data.sessions.length}
+            </div>
+
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        isActive={currentPage === pageNum}
+                        className="cursor-pointer"
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+
+                <PaginationItem>
+                  <PaginationNext
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              resetScroll={false}
-              search={(s: any) => ({ ...s, offset: Math.max(0, (s?.offset ?? 0) - (s?.limit ?? 20)) })}
-              className={`px-3 py-1 rounded-md border border-border/20 transition-colors ${(search.offset ?? 0) === 0
-                ? 'opacity-50 pointer-events-none'
-                : 'hover:bg-muted/30'
-                }`}
-            >
-              Previous
-            </Link>
-            <Link
-              resetScroll={false}
-              search={(s: any) => ({ ...s, offset: (s?.offset ?? 0) + (s?.limit ?? 20) })}
-              className={`px-3 py-1 rounded-md border border-border/20 transition-colors ${data.sessions.length < (search.limit ?? 20)
-                ? 'opacity-50 pointer-events-none'
-                : 'hover:bg-muted/30'
-                }`}
-            >
-              Next
-            </Link>
-          </div>
-        </div>
+        )}
       </div>
     </PageSection>
   );
