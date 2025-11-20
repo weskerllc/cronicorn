@@ -15,31 +15,31 @@ import type { SourceDistributionItem } from "@cronicorn/api-contracts/dashboard"
 const SOURCE_CONFIG: Record<string, { label: string; color: string }> = {
     "baseline-cron": {
         label: "Baseline (Cron)",
-        color: "var(--chart-3)",
+        color: "var(--source-baseline-cron)",
     },
     "baseline-interval": {
         label: "Baseline (Interval)",
-        color: "var(--chart-5)",
+        color: "var(--source-baseline-interval)",
     },
     "ai-interval": {
         label: "AI Interval",
-        color: "var(--chart-2)",
+        color: "var(--source-ai-interval)",
     },
     "ai-oneshot": {
         label: "AI One-Shot",
-        color: "var(--chart-1)",
+        color: "var(--source-ai-oneshot)",
     },
     "clamped-min": {
         label: "Clamped (Min)",
-        color: "var(--chart-4)",
+        color: "var(--source-clamped-min)",
     },
     "clamped-max": {
         label: "Clamped (Max)",
-        color: "var(--chart-4)",
+        color: "var(--source-clamped-max)",
     },
     paused: {
         label: "Paused",
-        color: "var(--muted-foreground)",
+        color: "var(--source-paused)",
     },
     unknown: {
         label: "Unknown",
@@ -67,10 +67,11 @@ function buildChartConfig(data: Array<SourceDistributionItem>): ChartConfig {
 
     data.forEach((item, index) => {
         // Ensure item and item.source are valid
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!item || !item.source || typeof item.source !== "string") {
             return;
         }
-        
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (SOURCE_CONFIG[item.source]) {
             // Use predefined config for known sources
             config[item.source] = SOURCE_CONFIG[item.source];
@@ -105,6 +106,7 @@ export function SchedulingIntelligenceChart({
     // Transform data to add fill property for each source
     const chartData = React.useMemo(
         () => data
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             .filter(item => item && item.source && typeof item.source === "string")
             .map(item => ({
                 ...item,
@@ -178,10 +180,12 @@ export function SchedulingIntelligenceChart({
             </div>
             <div className="flex flex-col flex-1 items-center gap-2 justify-center flex-wrap">
                 {hasData ? data
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                     .filter(item => item && item.source && typeof item.source === "string")
                     .map((item) => {
                         const config = chartConfig[item.source];
                         // Skip if config doesn't have a color (shouldn't happen with dynamic config)
+                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                         if (!config || typeof config !== 'object' || !('color' in config) || !config.color) return null;
                         return (
                             <div key={item.source} className="flex items-center gap-1.5 text-xs">
