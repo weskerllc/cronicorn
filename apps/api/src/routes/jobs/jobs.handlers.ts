@@ -400,3 +400,25 @@ export const getHealthSummary: AppRouteHandler<routes.GetHealthSummaryRoute> = a
     }
   });
 };
+
+// ==================== AI Analysis Sessions Handlers ====================
+
+export const listSessions: AppRouteHandler<routes.ListSessionsRoute> = async (c) => {
+  const { id: endpointId } = c.req.valid("param");
+  const query = c.req.valid("query");
+  const { userId } = getAuthContext(c);
+
+  return c.get("withJobsManager")(async (manager) => {
+    try {
+      const result = await manager.listSessions(userId, endpointId, query.limit, query.offset);
+      return c.json(result, HTTPStatusCodes.OK);
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to list sessions";
+      if (message.includes("not found") || message.includes("unauthorized")) {
+        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
+      }
+      throw error;
+    }
+  });
+};

@@ -45,6 +45,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
   async getRecentSessions(
     endpointId: string,
     limit = 10,
+    offset = 0,
   ): Promise<Array<{
       id: string;
       analyzedAt: Date;
@@ -65,7 +66,8 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       .from(aiAnalysisSessions)
       .where(eq(aiAnalysisSessions.endpointId, endpointId))
       .orderBy(desc(aiAnalysisSessions.analyzedAt))
-      .limit(Math.min(limit, 100)); // Cap at 100 for safety
+      .limit(Math.min(limit, 100)) // Cap at 100 for safety
+      .offset(offset);
 
     return results.map(r => ({
       id: r.id,
@@ -75,6 +77,17 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       tokenUsage: r.tokenUsage,
       durationMs: r.durationMs,
     }));
+  }
+
+  async getTotalSessionCount(endpointId: string): Promise<number> {
+    const result = await this.tx
+      .select({
+        count: count(),
+      })
+      .from(aiAnalysisSessions)
+      .where(eq(aiAnalysisSessions.endpointId, endpointId));
+
+    return Number(result[0]?.count ?? 0);
   }
 
   async getTotalTokenUsage(endpointId: string, since: Date): Promise<number> {
