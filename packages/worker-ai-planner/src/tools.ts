@@ -158,11 +158,11 @@ export function createToolsForEndpoint(
     }),
 
     propose_body_values: tool({
-      description: "Set dynamic body values for the next endpoint execution based on response data from this or sibling endpoints. Use this when the endpoint's bodyTemplate requires dynamic values (e.g., status updates based on system state, data-driven API calls).",
+      description: "Generate a request body for the next endpoint execution based on observations. The endpoint has a bodySchema (JSON Schema) that describes the expected structure and field meanings. Observe response data from this endpoint and siblings, then generate a body that conforms to the schema.",
       schema: z.object({
-        bodyValues: z.any().describe("Object containing the resolved body values to send. Must match the endpoint's bodyTemplate structure."),
+        bodyValues: z.any().describe("Generated request body object. Must conform to the endpoint's bodySchema (JSON Schema). Use field descriptions in the schema to determine appropriate values based on your observations."),
         ttlMinutes: z.number().positive().default(30).describe("How long these body values are valid (minutes)"),
-        reason: z.string().optional().describe("Explanation for these specific body values"),
+        reason: z.string().optional().describe("Explanation for the generated values - what you observed and why you chose these values"),
       }),
       execute: async (args) => {
         const now = clock.now();
@@ -176,7 +176,7 @@ export function createToolsForEndpoint(
           reason: args.reason,
         });
 
-        return `Set body values (expires in ${args.ttlMinutes} minutes)${args.reason ? `: ${args.reason}` : ""}`;
+        return `Generated body (expires in ${args.ttlMinutes} minutes)${args.reason ? `: ${args.reason}` : ""}`;
       },
     }),
 
