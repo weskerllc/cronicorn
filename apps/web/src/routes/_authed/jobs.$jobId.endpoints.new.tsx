@@ -27,6 +27,7 @@ import { FormFieldRow } from "../../components/primitives/form-field-row";
 import { ActionsGroup } from "../../components/primitives/actions-group";
 
 import { PageHeader } from "../../components/composed/page-header";
+import { SecureHeaderInput } from "../../components/composed/secure-header-input";
 import type { CreateEndpointForm } from "@/lib/endpoint-forms";
 import { createEndpoint } from "@/lib/api-client/queries/endpoints.queries";
 import { jobQueryOptions } from "@/lib/api-client/queries/jobs.queries";
@@ -332,10 +333,12 @@ function CreateEndpointPage() {
                       <FormItem className="flex-1">
                         {index === 0 && <FormLabel>Header Value</FormLabel>}
                         <FormControl>
-                          <Input
+                          <SecureHeaderInput
+                            value={field.value}
+                            onChange={field.onChange}
                             placeholder="e.g., Bearer your-token"
-                            {...field}
                             disabled={isPending}
+                            headerName={form.watch(`headers.${index}.key`)}
                           />
                         </FormControl>
                         <FormMessage />

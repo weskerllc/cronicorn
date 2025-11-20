@@ -18,7 +18,7 @@ import { DashboardManager } from "@cronicorn/services";
  * **Usage** (in route handlers):
  * ```typescript
  * return db.transaction(async (tx) => {
- *   const manager = createDashboardManager(tx, clock);
+ *   const manager = createDashboardManager(tx, clock, encryptionSecret);
  *   const stats = await manager.getDashboardStats(userId, { days: 7 });
  *   return c.json(mapDashboardStatsToResponse(stats));
  * });
@@ -26,16 +26,18 @@ import { DashboardManager } from "@cronicorn/services";
  *
  * @param tx - Drizzle transaction context
  * @param clock - Clock implementation (singleton, stateless)
+ * @param encryptionSecret - Secret for encrypting sensitive headers (optional)
  * @returns Fully-wired DashboardManager instance
  */
 export function createDashboardManager(
   // eslint-disable-next-line ts/no-explicit-any
   tx: NodePgDatabase<any> | NodePgTransaction<any, any>,
   clock: Clock,
+  encryptionSecret?: string,
 ): DashboardManager {
   // Instantiate transaction-bound repositories
   // @ts-expect-error - Drizzle type mismatch between pnpm versions
-  const jobsRepo = new DrizzleJobsRepo(tx);
+  const jobsRepo = new DrizzleJobsRepo(tx, clock.now, encryptionSecret);
   // @ts-expect-error - Drizzle type mismatch between pnpm versions
   const runsRepo = new DrizzleRunsRepo(tx);
   // @ts-expect-error - Drizzle type mismatch between pnpm versions

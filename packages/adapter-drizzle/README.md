@@ -141,3 +141,21 @@ docker-compose -f docker-compose-prod.yml up
 ```
 
 See `apps/migrator/README.md` for complete documentation.
+
+### Special Migration: Headers Encryption (0018)
+
+**⚠️ Important:** Migration 0018 removes the `headers_json` column and replaces it with `headers_encrypted`.
+
+The migration automatically encrypts existing header data when `BETTER_AUTH_SECRET` is set:
+
+```bash
+# Ensure BETTER_AUTH_SECRET is set before running migrations
+DATABASE_URL="postgresql://..." BETTER_AUTH_SECRET="your-secret" tsx apps/migrator/src/index.ts
+```
+
+The migration will:
+1. Add `headers_encrypted` column
+2. Automatically migrate existing plaintext headers to encrypted format
+3. Drop old `headers_json` column
+
+If `BETTER_AUTH_SECRET` is not set, the migration will warn you and skip data migration (safe for new deployments).

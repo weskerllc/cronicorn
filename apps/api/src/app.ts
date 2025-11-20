@@ -83,13 +83,13 @@ export async function createApp(
       if (shouldCreateTransactions) {
         // Production: create a new transaction per request
         return db.transaction(async (tx) => {
-          const manager = createJobsManager(tx, clock, cron);
+          const manager = createJobsManager(tx, clock, cron, config.BETTER_AUTH_SECRET);
           return fn(manager);
         });
       }
       else {
         // Tests: use the existing transaction passed as db
-        const manager = createJobsManager(db, clock, cron);
+        const manager = createJobsManager(db, clock, cron, config.BETTER_AUTH_SECRET);
         return fn(manager);
       }
     });
@@ -98,12 +98,12 @@ export async function createApp(
     c.set("withDashboardManager", (fn) => {
       if (shouldCreateTransactions) {
         return db.transaction(async (tx) => {
-          const manager = createDashboardManager(tx, clock);
+          const manager = createDashboardManager(tx, clock, config.BETTER_AUTH_SECRET);
           return fn(manager);
         });
       }
       else {
-        const manager = createDashboardManager(db, clock);
+        const manager = createDashboardManager(db, clock, config.BETTER_AUTH_SECRET);
         return fn(manager);
       }
     });

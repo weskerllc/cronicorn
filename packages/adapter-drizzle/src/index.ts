@@ -4,6 +4,7 @@
  * PostgreSQL adapter for Cronicorn scheduler using Drizzle ORM.
  */
 
+export * from "./crypto.js";
 export * from "./jobs-repo.js";
 export * from "./migrate.js";
 export * from "./quota-guard.js";

@@ -33,6 +33,7 @@ function logger(level: "info" | "warn" | "error" | "fatal", message: string, met
  */
 const configSchema = z.object({
   DATABASE_URL: z.string().url().default(DEV_DATABASE.URL),
+  BETTER_AUTH_SECRET: z.string().min(32).default("dev-secret-DO-NOT-USE-IN-PRODUCTION-min32chars"),
   OPENAI_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default("gpt-4o-mini"), // Cost-effective for MVP
   AI_ANALYSIS_INTERVAL_MS: z.coerce.number().int().positive().default(5 * 60 * 1000), // 5 minutes
@@ -64,7 +65,7 @@ async function main() {
 
   // Instantiate adapters
   const clock = new SystemClock();
-  const jobsRepo = new DrizzleJobsRepo(db);
+  const jobsRepo = new DrizzleJobsRepo(db, clock.now, config.BETTER_AUTH_SECRET);
   const runsRepo = new DrizzleRunsRepo(db);
   const sessionsRepo = new DrizzleSessionsRepo(db);
   const quotaGuard = new DrizzleQuotaGuard(db);
