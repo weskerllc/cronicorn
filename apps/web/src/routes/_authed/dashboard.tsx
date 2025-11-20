@@ -157,11 +157,13 @@ function DashboardPage() {
           data={dashboardData?.endpointTimeSeries || []}
           chartConfig={endpointChartConfig}
           timeRange={filters.timeRange}
+          maxStackedValue={dashboardData?.endpointTimeSeriesMaxStacked}
         />
         <AISessionsChart
           data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
           timeRange={filters.timeRange}
+          maxStackedValue={dashboardData?.aiSessionTimeSeriesMaxStacked}
         />
       </GridLayout>
     </>

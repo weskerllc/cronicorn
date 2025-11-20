@@ -172,6 +172,11 @@ export const DashboardStatsResponseSchema = z.object({
     description: "Time-series data for run activity grouped by endpoint (filtered by query params)",
   }),
 
+  endpointTimeSeriesMaxStacked: z.number().nonnegative().openapi({
+    description: "Pre-calculated maximum stacked value for endpointTimeSeries chart Y-axis domain. Includes 10% padding.",
+    example: 110,
+  }),
+
   aiSessionTimeSeries: z.array(
     z.object({
       date: z.string().openapi({
@@ -197,6 +202,11 @@ export const DashboardStatsResponseSchema = z.object({
     }),
   ).openapi({
     description: "Time-series data for AI session activity grouped by endpoint (filtered by query params)",
+  }),
+
+  aiSessionTimeSeriesMaxStacked: z.number().nonnegative().openapi({
+    description: "Pre-calculated maximum stacked value for aiSessionTimeSeries chart Y-axis domain. Includes 10% padding.",
+    example: 55,
   }),
 }).openapi({
   description: "Aggregated dashboard statistics for the authenticated user",
