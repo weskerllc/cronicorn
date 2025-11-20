@@ -15,11 +15,11 @@ const TestLoginResponseSchema = z.object({
 
 /**
  * Test-only authentication endpoint
- * 
+ *
  * This endpoint creates a real authenticated session for the admin user
  * without requiring password verification. It's only available in non-production
  * environments to facilitate automated testing (e.g., Playwright E2E tests).
- * 
+ *
  * Security: Disabled in production via middleware check
  */
 export const testLogin = createRoute({
