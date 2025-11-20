@@ -14,7 +14,8 @@ const baseEndpointFields = {
     url: z.string().min(1, "URL is required"),
     method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
     headers: z.array(headerSchema).optional(),
-    bodyJson: z.string().optional(), // JSON string, validated on transform
+    bodyJson: z.string().optional(), // JSON string (static body), validated on transform
+    bodySchema: z.string().optional(), // JSON Schema string (for AI-generated bodies), validated on transform
     // Advanced configuration (optional)
     minIntervalMinutes: z.number().positive().optional(),
     maxIntervalMinutes: z.number().positive().optional(),

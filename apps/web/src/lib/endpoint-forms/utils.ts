@@ -34,12 +34,21 @@ export function transformCreatePayload(data: CreateEndpointForm): AddEndpointReq
         }, {} as Record<string, string>);
     }
 
-    // Parse and validate bodyJson if provided
+    // Parse and validate bodyJson if provided (static body)
     if (data.bodyJson && data.bodyJson.trim()) {
         try {
             payload.bodyJson = JSON.parse(data.bodyJson);
         } catch (error) {
-            throw new Error(`Invalid JSON in request body: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw new Error(`Invalid JSON in static request body: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    // Parse and validate bodySchema if provided (JSON Schema for AI-generated bodies)
+    if (data.bodySchema && data.bodySchema.trim()) {
+        try {
+            payload.bodySchema = JSON.parse(data.bodySchema);
+        } catch (error) {
+            throw new Error(`Invalid JSON Schema: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
@@ -96,16 +105,29 @@ export function transformUpdatePayload(data: UpdateEndpointForm): UpdateEndpoint
         payload.headersJson = {}; // Clear headers if none provided
     }
 
-    // Parse and validate bodyJson if provided
+    // Parse and validate bodyJson if provided (static body)
     if (data.bodyJson !== undefined) {
         if (data.bodyJson && data.bodyJson.trim()) {
             try {
                 payload.bodyJson = JSON.parse(data.bodyJson);
             } catch (error) {
-                throw new Error(`Invalid JSON in request body: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                throw new Error(`Invalid JSON in static request body: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         } else {
             payload.bodyJson = undefined; // Clear body if empty
+        }
+    }
+
+    // Parse and validate bodySchema if provided (JSON Schema for AI-generated bodies)
+    if (data.bodySchema !== undefined) {
+        if (data.bodySchema && data.bodySchema.trim()) {
+            try {
+                payload.bodySchema = JSON.parse(data.bodySchema);
+            } catch (error) {
+                throw new Error(`Invalid JSON Schema: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        } else {
+            payload.bodySchema = undefined; // Clear schema if empty
         }
     }
 
@@ -142,8 +164,11 @@ export function endpointToFormData(endpoint: any) {
     // Determine schedule type based on existing data
     const scheduleType = endpoint.baselineCron ? "cron" : "interval";
 
-    // Convert bodyJson to string for form
+    // Convert bodyJson to string for form (static body)
     const bodyJson = endpoint.bodyJson ? JSON.stringify(endpoint.bodyJson, null, 2) : "";
+
+    // Convert bodySchema to string for form (JSON Schema for AI)
+    const bodySchema = endpoint.bodySchema ? JSON.stringify(endpoint.bodySchema, null, 2) : "";
 
     return {
         scheduleType,
@@ -157,6 +182,7 @@ export function endpointToFormData(endpoint: any) {
         baselineCron: endpoint.baselineCron || "",
         headers: headersArray,
         bodyJson,
+        bodySchema,
         // Advanced configuration (convert milliseconds to minutes)
         minIntervalMinutes: endpoint.minIntervalMs
             ? Math.round(endpoint.minIntervalMs / 60000)

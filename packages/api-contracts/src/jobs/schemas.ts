@@ -194,7 +194,8 @@ export const EndpointResponseSchema = z.object({
   url: z.string().optional().describe("HTTP endpoint URL"),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).optional().describe("HTTP method"),
   headersJson: z.record(z.string(), z.string()).optional().describe("HTTP headers"),
-  bodyJson: z.any().optional().describe("Request body"),
+  bodyJson: z.any().optional().describe("Static request body"),
+  bodySchema: z.any().optional().describe("JSON Schema for AI-generated request bodies"),
   timeoutMs: z.number().optional().describe("Request timeout in milliseconds"),
   maxExecutionTimeMs: z.number().optional().describe("Maximum execution time in milliseconds"),
   maxResponseSizeKb: z.number().optional().describe("Maximum response size in kilobytes"),
@@ -229,6 +230,28 @@ export const EndpointResponseSchema = z.object({
       description: "Reason for AI hint",
     })
     .describe("Reason for AI hint"),
+  aiHintBodyResolved: z
+    .any()
+    .optional()
+    .openapi({
+      description: "AI-generated request body (active if not expired)",
+    })
+    .describe("AI-generated request body (active if not expired)"),
+  aiHintBodyExpiresAt: z
+    .string()
+    .datetime()
+    .optional()
+    .openapi({
+      description: "When the AI-generated body hint expires",
+    })
+    .describe("When the AI-generated body hint expires"),
+  aiHintBodyReason: z
+    .string()
+    .optional()
+    .openapi({
+      description: "AI's reasoning for the generated body values",
+    })
+    .describe("AI's reasoning for the generated body values"),
 });
 
 // ==================== Adaptive Scheduling Descriptions ====================

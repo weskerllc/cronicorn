@@ -58,6 +58,7 @@ function CreateEndpointPage() {
       method: "GET",
       headers: [],
       bodyJson: "",
+      bodySchema: "",
     },
   });
 
@@ -375,24 +376,47 @@ function CreateEndpointPage() {
                   JSON payload to send with {form.watch("method")} requests
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 <FormField
                   control={form.control}
                   name="bodyJson"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>JSON Body (Optional)</FormLabel>
+                      <FormLabel>Static JSON Body (Optional)</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder={'{\n  "key": "value"\n}'}
-                          rows={8}
+                          rows={6}
                           className="font-mono text-sm"
                           {...field}
                           disabled={isPending}
                         />
                       </FormControl>
                       <FormDescription>
-                        Enter valid JSON. Will be parsed and validated before submission.
+                        Static request body. Enter valid JSON. Use this for fixed request bodies.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="bodySchema"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>AI Body Schema (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={'{\n  "type": "object",\n  "properties": {\n    "status": {\n      "type": "string",\n      "description": "Status based on error_rate..."\n    }\n  }\n}'}
+                          rows={10}
+                          className="font-mono text-sm"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        JSON Schema for AI-generated bodies. AI observes responses and generates values conforming to this schema. Include descriptions to guide AI decisions.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
