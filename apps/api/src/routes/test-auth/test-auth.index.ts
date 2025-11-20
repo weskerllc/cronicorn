@@ -7,7 +7,7 @@ import * as routes from "./test-auth.routes.js";
 
 /**
  * Test authentication router
- * 
+ *
  * Provides test-only endpoints for automated testing.
  * All routes are protected by a middleware that blocks access in production.
  */
@@ -17,9 +17,8 @@ const router = createRouter();
 // This middleware runs before any test-auth route handlers
 router.use("/test/*", async (c, next) => {
   const config = c.get("config");
-  
+
   if (config.NODE_ENV === "production") {
-    // eslint-disable-next-line no-console
     console.warn(JSON.stringify({
       timestamp: new Date().toISOString(),
       level: "warn",

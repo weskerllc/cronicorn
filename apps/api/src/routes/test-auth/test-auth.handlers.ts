@@ -5,16 +5,16 @@ import type * as routes from "./test-auth.routes.js";
 
 /**
  * POST /test/auth/login
- * 
+ *
  * Creates an authenticated session for the default admin user without password verification.
  * This endpoint is only available when NODE_ENV !== 'production' (checked by middleware).
- * 
+ *
  * How it works:
  * 1. Verifies admin user is configured (ADMIN_USER_EMAIL exists)
  * 2. Creates a POST request body with admin credentials
  * 3. Forwards the request to Better Auth's signInEmail handler
  * 4. Better Auth handles session creation and cookie setting
- * 
+ *
  * Usage in Playwright tests:
  * ```typescript
  * // Setup authentication before tests
