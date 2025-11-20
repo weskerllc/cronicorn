@@ -23,6 +23,7 @@ import { StatCard } from "../../components/cards/stat-card";
 import { PageSection } from "../../components/primitives/page-section";
 import { DetailSection } from "../../components/cards/detail-section";
 import { InfoField, InfoGrid } from "../../components/cards/info-grid";
+import { RelativeTime } from "../../components/composed/relative-time";
 import { isEndpointPaused } from "@/lib/endpoint-utils";
 import {
   archiveEndpoint,
@@ -128,7 +129,7 @@ function ViewEndpointPage() {
             <Archive className="h-5 w-5" />
             <span className="font-semibold">This endpoint is archived</span>
             <span className="text-sm">
-              on {new Date(endpoint.archivedAt).toLocaleString()}
+              on <RelativeTime date={endpoint.archivedAt} showTooltip={false} />
             </span>
           </div>
         </AlertCard>
@@ -141,7 +142,7 @@ function ViewEndpointPage() {
             <span className="font-semibold">This endpoint is currently paused</span>
             {endpoint.pausedUntil && (
               <span className="text-sm">
-                until {new Date(endpoint.pausedUntil).toLocaleString()}
+                until <RelativeTime date={endpoint.pausedUntil} showTooltip={false} />
               </span>
             )}
           </div>
@@ -171,7 +172,7 @@ function ViewEndpointPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Suggested Next Run:</span>
                 <span className="font-medium">
-                  {new Date(endpoint.aiHintNextRunAt).toLocaleString()}
+                  <RelativeTime date={endpoint.aiHintNextRunAt} showTooltip={false} />
                 </span>
               </div>
             )}
@@ -326,16 +327,14 @@ function ViewEndpointPage() {
               <InfoField
                 label="Last Run"
                 value={
-                  <code className="text-xs">
-                    {endpoint.lastRunAt
-                      ? new Date(endpoint.lastRunAt).toLocaleString()
-                      : "Never"}
-                  </code>
+                  endpoint.lastRunAt
+                    ? <RelativeTime date={endpoint.lastRunAt} liveUpdate />
+                    : "Never"
                 }
               />
               <InfoField
                 label="Next Run"
-                value={<code className="text-xs">{new Date(endpoint.nextRunAt).toLocaleString()}</code>}
+                value={<RelativeTime date={endpoint.nextRunAt} liveUpdate />}
               />
               <InfoField
                 label="Failure Count"
