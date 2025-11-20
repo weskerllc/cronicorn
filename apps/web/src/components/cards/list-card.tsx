@@ -59,13 +59,13 @@ export function ListCard({
     return (
         <div
             className={cn(
-                "flex items-center justify-between p-4 border rounded-lg transition-colors",
+                "flex items-center justify-between p-3 sm:p-4 border rounded-lg transition-colors",
                 hover && "hover:bg-accent/50 cursor-pointer",
                 className,
             )}
             onClick={onClick}
         >
-            <div className="flex items-start gap-4 flex-1 min-w-0">
+            <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
                 {/* Icon */}
                 {(Icon || iconSlot) && (
                     <div className="shrink-0">
@@ -83,13 +83,13 @@ export function ListCard({
                 <div className="space-y-2 flex-1 min-w-0">
                     {/* Title & Subtitle */}
                     <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-base font-semibold leading-tight">{title}</p>
-                        {subtitle && <span className="text-sm text-muted-foreground">{subtitle}</span>}
+                        <p className="text-sm sm:text-base font-semibold leading-tight">{title}</p>
+                        {subtitle && <span className="text-xs sm:text-sm text-muted-foreground">{subtitle}</span>}
                     </div>
 
                     {/* Metadata */}
                     {metadata && metadata.length > 0 && (
-                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1.5 sm:gap-y-2 text-xs sm:text-sm text-muted-foreground">
                             {metadata.map((item, index) => (
                                 <span key={index}>{item}</span>
                             ))}
@@ -99,7 +99,7 @@ export function ListCard({
             </div>
 
             {/* Actions */}
-            {actions && <div className="ml-4 shrink-0">{actions}</div>}
+            {actions && <div className="ml-2 sm:ml-4 shrink-0">{actions}</div>}
         </div>
     );
 }
