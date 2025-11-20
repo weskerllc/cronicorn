@@ -4,7 +4,7 @@ import { Button } from "@cronicorn/ui-library/components/button";
 import { Input } from "@cronicorn/ui-library/components/input";
 
 interface SecureHeaderInputProps {
-  value: string;
+  value: string | undefined;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
@@ -47,7 +47,7 @@ export function SecureHeaderInput({
     <div className="relative">
       <Input
         type={isVisible ? "text" : "password"}
-        value={value}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
