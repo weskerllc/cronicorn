@@ -157,6 +157,29 @@ export function createToolsForEndpoint(
       },
     }),
 
+    propose_body_values: tool({
+      description: "Set dynamic body values for the next endpoint execution based on response data from this or sibling endpoints. Use this when the endpoint's bodyTemplate requires dynamic values (e.g., status updates based on system state, data-driven API calls).",
+      schema: z.object({
+        bodyValues: z.any().describe("Object containing the resolved body values to send. Must match the endpoint's bodyTemplate structure."),
+        ttlMinutes: z.number().positive().default(30).describe("How long these body values are valid (minutes)"),
+        reason: z.string().optional().describe("Explanation for these specific body values"),
+      }),
+      execute: async (args) => {
+        const now = clock.now();
+        const expiresAt = new Date(now.getTime() + args.ttlMinutes * 60 * 1000);
+
+        // Write AI body hint to database
+        await jobs.writeAIBodyHint(endpointId, {
+
+          resolvedBody: args.bodyValues,
+          expiresAt,
+          reason: args.reason,
+        });
+
+        return `Set body values (expires in ${args.ttlMinutes} minutes)${args.reason ? `: ${args.reason}` : ""}`;
+      },
+    }),
+
     // ============================================================================
     // Query Tools: Response Data Retrieval
     // ============================================================================

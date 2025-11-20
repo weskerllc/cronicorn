@@ -85,10 +85,17 @@ export const jobEndpoints = pgTable("job_endpoints", {
   url: text("url"),
   method: text("method"), // "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   headersJson: jsonb("headers_json").$type<Record<string, string>>(),
-  bodyJson: jsonb("body_json").$type<import("@cronicorn/domain").JsonValue>(),
+  bodyJson: jsonb("body_json").$type<import("@cronicorn/domain").JsonValue>(), // Static body
+  bodyTemplate: jsonb("body_template").$type<import("@cronicorn/domain").JsonValue>(), // Dynamic body template
+  bodyTemplateSchema: jsonb("body_template_schema").$type<import("@cronicorn/domain").JsonValue>(), // JSON Schema for validation
   timeoutMs: integer("timeout_ms"),
   maxExecutionTimeMs: integer("max_execution_time_ms"), // Expected max execution time for lock duration
   maxResponseSizeKb: integer("max_response_size_kb"), // Max response body size to store (default: 100 KB)
+
+  // AI hints for dynamic body values (TTL-scoped)
+  aiHintBodyResolved: jsonb("ai_hint_body_resolved").$type<import("@cronicorn/domain").JsonValue>(),
+  aiHintBodyExpiresAt: timestamp("ai_hint_body_expires_at", { mode: "date" }),
+  aiHintBodyReason: text("ai_hint_body_reason"),
 
   // Adapter-specific (not in domain entity)
   _lockedUntil: timestamp("_locked_until", { mode: "date" }),

@@ -1,4 +1,4 @@
-import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo } from "../index.js";
+import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo, type JsonValue } from "../index.js";
 
 /**
  * Adapter-local storage type with internal locking state and job relationship.
@@ -272,6 +272,15 @@ export class InMemoryJobsRepo implements JobsRepo {
     e.aiHintIntervalMs = h.intervalMs;
     e.aiHintExpiresAt = h.expiresAt;
     e.aiHintReason = h.reason;
+  }
+
+  async writeAIBodyHint(id: string, h: { resolvedBody: JsonValue; expiresAt: Date; reason?: string }) {
+    const e = this.map.get(id);
+    if (!e)
+      throw new Error(`JobsRepo.writeAIBodyHint: not found: ${id}`);
+    e.aiHintBodyResolved = h.resolvedBody;
+    e.aiHintBodyExpiresAt = h.expiresAt;
+    e.aiHintBodyReason = h.reason;
   }
 
   async setPausedUntil(id: string, until: Date | null) {

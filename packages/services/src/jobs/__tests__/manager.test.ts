@@ -35,6 +35,7 @@ describe("jobsManager", () => {
       clearLock: vi.fn(),
       setNextRunAtIfEarlier: vi.fn(),
       writeAIHint: vi.fn(),
+      writeAIBodyHint: vi.fn(),
       setPausedUntil: vi.fn(),
       clearAIHints: vi.fn(),
       resetFailureCount: vi.fn(),
