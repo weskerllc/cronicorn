@@ -10,9 +10,9 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
-import type {TimeRangeValue} from "@/lib/time-range-labels";
+import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import {  getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
+import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
 
 interface AISessionsChartProps {
     data: Array<AISessionTimeSeriesPoint>;
@@ -20,9 +20,16 @@ interface AISessionsChartProps {
     chartConfig: ChartConfig;
     /** Selected time range for label display */
     timeRange?: TimeRangeValue;
+    /** Pre-calculated maximum stacked value from server (includes 10% padding) */
+    maxStackedValue?: number;
 }
 
-export function AISessionsChart({ data, chartConfig, timeRange }: AISessionsChartProps) {
+export function AISessionsChart({
+    data,
+    chartConfig,
+    timeRange,
+    maxStackedValue: serverMaxStackedValue,
+}: AISessionsChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
         // Calculate total sessions per endpoint to find top performers
@@ -82,13 +89,36 @@ export function AISessionsChart({ data, chartConfig, timeRange }: AISessionsChar
         return data.reduce((sum, point) => sum + point.sessionCount, 0);
     }, [data]);
 
+    // Use server-provided max stacked value, or calculate client-side as fallback
+    const maxStackedValue = useMemo(() => {
+        // Prefer server-calculated value for better performance
+        if (serverMaxStackedValue !== undefined && serverMaxStackedValue > 0) {
+            return serverMaxStackedValue;
+        }
+
+        // Fallback: calculate client-side (for backward compatibility)
+        if (chartData.length === 0) return 0;
+
+        // For each data point, sum all endpoint values to get the stacked total
+        const maxValue = chartData.reduce((max, dataPoint) => {
+            const stackedTotal = endpoints.reduce((sum, endpoint) => {
+                const value = dataPoint[endpoint.name];
+                return sum + (typeof value === 'number' ? value : 0);
+            }, 0);
+            return Math.max(max, stackedTotal);
+        }, 0);
+
+        // Add 10% padding to prevent touching the top
+        return maxValue * 1.1;
+    }, [serverMaxStackedValue, chartData, endpoints]);
+
     const description = hasData ? (
         <>
             <p>
                 Sessions: <span className="text-foreground font-medium">{totalSessions.toLocaleString()}</span>
                 {totalEndpoints > endpoints.length && (
                     <span className="text-muted-foreground text-xs ml-2">
-                        (Showing top {endpoints.length} of {totalEndpoints} endpoints)
+                        (Showing top {endpoints.length} of {totalEndpoints})
                     </span>
                 )}
             </p>
@@ -99,7 +129,7 @@ export function AISessionsChart({ data, chartConfig, timeRange }: AISessionsChar
 
     return (
         <DashboardCard
-            title="AI Sessions Timeline"
+            title="AI Activity"
             description={description}
             contentClassName="p-3"
         >
@@ -159,7 +189,7 @@ export function AISessionsChart({ data, chartConfig, timeRange }: AISessionsChar
                             }}
                         />
                         <YAxis
-                            domain={[0, 'auto']}
+                            domain={[0, maxStackedValue || 'auto']}
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
@@ -223,6 +253,7 @@ export function AISessionsChart({ data, chartConfig, timeRange }: AISessionsChar
                                         fill={`url(#fill-${endpoint.id})`}
                                         stroke={`var(--color-${sanitizedKey})`}
                                         stackId="a"
+                                        baseValue={0}
                                     />
                                 );
                             })}
