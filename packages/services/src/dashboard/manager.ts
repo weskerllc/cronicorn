@@ -168,6 +168,16 @@ export class DashboardManager {
       this.getAISessionTimeSeries(userId, days, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
     ]);
 
+    // Calculate max stacked values for chart Y-axis domains
+    const endpointTimeSeriesMaxStacked = this.calculateMaxStackedValue(
+      endpointTimeSeries,
+      point => point.success + point.failure,
+    );
+    const aiSessionTimeSeriesMaxStacked = this.calculateMaxStackedValue(
+      aiSessionTimeSeries,
+      point => point.sessionCount,
+    );
+
     return {
       jobs,
       endpoints,
@@ -178,7 +188,9 @@ export class DashboardManager {
       sourceDistribution,
       runTimeSeries,
       endpointTimeSeries,
+      endpointTimeSeriesMaxStacked,
       aiSessionTimeSeries,
+      aiSessionTimeSeriesMaxStacked,
     };
   }
 
@@ -696,5 +708,39 @@ export class DashboardManager {
     }
 
     return result;
+  }
+
+  /**
+   * Calculate maximum stacked value for Y-axis domain in stacked area charts.
+   *
+   * Groups time-series data by date and sums the values across all endpoints
+   * to find the maximum cumulative value. Adds 10% padding to prevent chart
+   * lines from touching the top axis.
+   *
+   * @param timeSeries - Array of time-series points with date and endpoint data
+   * @param valueExtractor - Function to extract the numeric value from each point
+   * @returns Maximum stacked value with 10% padding, or 0 if no data
+   */
+  private calculateMaxStackedValue<T extends { date: string; endpointId: string }>(
+    timeSeries: T[],
+    valueExtractor: (point: T) => number,
+  ): number {
+    if (timeSeries.length === 0)
+      return 0;
+
+    // Group by date and sum values across all endpoints
+    const dateMap = new Map<string, number>();
+
+    timeSeries.forEach((point) => {
+      const value = valueExtractor(point);
+      const existing = dateMap.get(point.date) ?? 0;
+      dateMap.set(point.date, existing + value);
+    });
+
+    // Find maximum stacked value across all dates
+    const maxValue = Math.max(...dateMap.values());
+
+    // Add 10% padding to prevent touching the top
+    return maxValue * 1.1;
   }
 }
