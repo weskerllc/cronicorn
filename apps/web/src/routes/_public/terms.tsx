@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { brand, business } from "@cronicorn/content";
 import { createSEOHead } from "@/lib/seo";
 
@@ -219,9 +219,9 @@ function TermsOfService() {
             <p className="text-muted-foreground leading-relaxed">
               Our Privacy Policy governs how we collect, use, and protect your personal information. By using
               the Service, you agree to our{" "}
-              <a href="/privacy" className="text-primary hover:underline">
+              <Link to="/privacy" className="text-primary hover:underline">
                 Privacy Policy
-              </a>
+              </Link>
               .
             </p>
           </section>

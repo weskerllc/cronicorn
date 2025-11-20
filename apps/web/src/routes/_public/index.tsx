@@ -1,12 +1,10 @@
 import { faq, keywords, metaDescriptions, urls } from "@cronicorn/content";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import HeroSection from "../../components/splash-page/components/hero-section";
 import LogoGrid from "../../components/splash-page/components/logo-grid";
 import TimelineSection from "../../components/splash-page/components/timeline-section";
 import DynamicScheduleTimeline from "../../components/splash-page/timeline/timeline";
 import { monitoringScenarios } from "../../components/splash-page/timeline/timeline-scenario-data";
-import { useSession } from "@/lib/auth-client";
 import { FeatureCardsSection } from "@/components/composed/feature-cards-section";
 import { createFAQSchema, createOrganizationSchema, createSEOHead, createSoftwareApplicationSchema, createWebsiteSchema } from "@/lib/seo";
 
@@ -35,15 +33,6 @@ export const Route = createFileRoute("/_public/")({
 });
 
 function Index() {
-  const navigate = useNavigate();
-  const { data: session } = useSession();
-
-  useEffect(() => {
-    // auto route to dashboard if logged in
-    if (session) {
-      navigate({ to: '/dashboard' });
-    }
-  }, [session, navigate]);
 
   // Timeline data from splash page
   const tabData = monitoringScenarios.map(scenario => ({

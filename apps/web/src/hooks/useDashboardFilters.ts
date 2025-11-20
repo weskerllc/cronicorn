@@ -75,16 +75,18 @@ export function useDashboardFilters() {
      */
     const toggleFilter = useCallback(
         (key: keyof DashboardSearch, value: string) => {
-            const currentValue = search[key];
             navigate({
-                search: (prev: DashboardSearch) => ({
-                    ...prev,
-                    [key]: currentValue === value ? undefined : value,
-                }),
+                search: (prev: DashboardSearch) => {
+                    const currentValue = prev[key];
+                    return {
+                        ...prev,
+                        [key]: currentValue === value ? undefined : value,
+                    };
+                },
                 resetScroll: false, // Prevent scroll to top when filters change
             });
         },
-        [navigate, search]
+        [navigate]
     );
 
     return {

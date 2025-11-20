@@ -14,35 +14,60 @@ mcp:
 
 # Self-Hosting Guide
 
-Run Cronicorn on your own infrastructure using Docker Compose.
+Run Cronicorn on your own infrastructure using Docker Compose with built-in Traefik reverse proxy for automatic HTTPS.
 
 ## Quick Start
 
 1. **Download the compose file**
    
-   Get [`docker-compose.yml`](https://github.com/weskerllc/cronicorn/blob/main/docker-compose.yml) from the repo. This file pulls pre-built images from our registry—no building required.
+   Get [`docker-compose.yml`](https://github.com/weskerllc/cronicorn/blob/main/docker-compose.yml) from the repo. This file pulls pre-built images from our registry—no building required. It includes Traefik for automatic HTTPS and routing.
 
 2. **Create environment file**
 
-   Create a `.env` file in the same directory. See [`.env.example`](https://github.com/weskerllc/cronicorn/blob/main/.env.example) for all options. At minimum, set:
-
+   Create a `.env` file in the same directory. See [`.env.example`](https://github.com/weskerllc/cronicorn/blob/main/.env.example) for all options. 
+   
+   **For local development** (no domain needed):
    ```bash
    # Generate with: openssl rand -base64 32
    BETTER_AUTH_SECRET=your-random-32-character-secret-here
+   
+   # Optional: Use free .localhost domain (works without DNS)
+   DOMAIN=cronicorn.localhost
    ```
 
-   Everything else has sensible defaults that work out of the box.
+   **For production** (with your own domain):
+   ```bash
+   # Required
+   BETTER_AUTH_SECRET=your-random-32-character-secret-here
+   DOMAIN=yourdomain.com
+   LETSENCRYPT_EMAIL=admin@yourdomain.com
+   
+   # Update URLs to use your domain
+   WEB_URL=https://yourdomain.com
+   API_URL=http://cronicorn-api:3333      # Keep internal
+   BETTER_AUTH_URL=https://yourdomain.com
+   BASE_URL=https://yourdomain.com
+   VITE_API_URL=https://yourdomain.com
+   ```
 
-3. **Start services**
+3. **Point your domain to your server** (production only)
+
+   Add DNS A records:
+   - `yourdomain.com` → Your server IP
+   - `docs.yourdomain.com` → Your server IP
+
+4. **Start services**
 
    ```bash
    docker compose up -d
    ```
 
-4. **Access the app**
+5. **Access the app**
 
-   - **Dashboard**: http://localhost:5173
-   - **API**: http://localhost:3333
+   - **Local**: http://localhost (or http://cronicorn.localhost if using DOMAIN)
+   - **Production**: https://yourdomain.com (Traefik handles HTTPS automatically)
+   - **Docs**: https://docs.yourdomain.com
+   - **API**: https://yourdomain.com/api/*
    - **Login**: Use default admin credentials from `.env.example`
 
 ## Optional Features
@@ -69,28 +94,20 @@ AI_MODEL=gpt-4o-mini
 
 See `.env.example` for required Stripe configuration.
 
-## Custom Domain
+## How It Works
 
-To use a custom domain, update these in your `.env`:
+The included Traefik reverse proxy automatically:
+- Routes `yourdomain.com/` to the web app
+- Routes `yourdomain.com/api/*` to the API
+- Routes `docs.yourdomain.com` to documentation
+- Obtains and renews Let's Encrypt SSL certificates
+- Redirects HTTP to HTTPS
 
-```bash
-# Public URLs (accessed by browsers)
-BETTER_AUTH_URL=https://cronicorn.yourdomain.com
-WEB_URL=https://cronicorn.yourdomain.com
-VITE_API_URL=https://cronicorn.yourdomain.com  # Used at build time for client-side requests
-BASE_URL=https://cronicorn.yourdomain.com
+**Architecture**:
+- **Client-side requests** (browser): `https://yourdomain.com/api/*` → Traefik → API container
+- **Server-side requests** (SSR): `http://cronicorn-api:3333` → Direct internal Docker network call
 
-# Internal URLs (Docker network, used by web SSR to call API)
-API_URL=http://cronicorn-api:3333  # Keep this as internal Docker hostname
-```
-
-**Important**: The web app makes requests to the API from two places:
-- **Client-side** (browser): Uses `VITE_API_URL` - must be your public domain
-- **Server-side** (SSR): Uses `API_URL` - should be internal Docker network URL (`http://cronicorn-api:3333`)
-
-You'll need a reverse proxy (Traefik, Caddy, nginx) to handle SSL and route requests:
-- `yourdomain.com/` → Web container (port 5173)
-- `yourdomain.com/api/*` → API container (port 3333)
+No manual reverse proxy configuration needed!
 
 ## Useful Commands
 
