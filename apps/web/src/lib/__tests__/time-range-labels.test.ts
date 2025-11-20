@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { getTimeRangeStartLabel, getTimeRangeEndLabel } from '../time-range-labels';
+import { describe, expect, it } from 'vitest';
+import { getTimeRangeEndLabel, getTimeRangeStartLabel } from '../time-range-labels';
 
 describe('time-range-labels', () => {
   describe('getTimeRangeStartLabel', () => {

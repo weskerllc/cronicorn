@@ -75,5 +75,7 @@ export type DashboardStats = {
   sourceDistribution: SourceDistributionItem[];
   runTimeSeries: RunTimeSeriesPoint[];
   endpointTimeSeries: EndpointTimeSeriesPoint[];
+  endpointTimeSeriesMaxStacked: number;
   aiSessionTimeSeries: AISessionTimeSeriesPoint[];
+  aiSessionTimeSeriesMaxStacked: number;
 };
