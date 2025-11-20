@@ -43,7 +43,7 @@ interface ListCardProps {
 
 /**
  * ListCard - A reusable card component for list items with icon, title, metadata, and actions.
- * Provides consistent styling for list-based UI patterns.
+ * Displays content in a column layout with actions at the bottom.
  */
 export function ListCard({
     icon: Icon,
@@ -59,47 +59,42 @@ export function ListCard({
     return (
         <div
             className={cn(
-                "flex items-center justify-between p-4 border rounded-lg transition-colors",
+                "flex flex-col p-4 border rounded-lg transition-colors",
                 hover && "hover:bg-accent/50 cursor-pointer",
                 className,
             )}
             onClick={onClick}
         >
-            <div className="flex items-start gap-4 flex-1 min-w-0">
-                {/* Icon */}
-                {(Icon || iconSlot) && (
-                    <div className="shrink-0">
-                        {iconSlot || (
-                            Icon && (
-                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <Icon className="h-5 w-5 text-primary" />
-                                </div>
-                            )
-                        )}
-                    </div>
-                )}
-
-                {/* Content */}
-                <div className="space-y-1 flex-1 min-w-0">
-                    {/* Title & Subtitle */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium">{title}</p>
-                        {subtitle && <span className="text-sm text-muted-foreground">{subtitle}</span>}
-                    </div>
-
-                    {/* Metadata */}
-                    {metadata && metadata.length > 0 && (
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                            {metadata.map((item, index) => (
-                                <span key={index}>{item}</span>
-                            ))}
-                        </div>
+            {/* Icon */}
+            {(Icon || iconSlot) && (
+                <div className="mb-3">
+                    {iconSlot || (
+                        Icon && (
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Icon className="h-5 w-5 text-primary" />
+                            </div>
+                        )
                     )}
                 </div>
+            )}
+
+            {/* Title & Subtitle */}
+            <div className="flex items-center gap-2 flex-wrap mb-3">
+                <p className="font-semibold">{title}</p>
+                {subtitle && <span className="text-sm text-muted-foreground">{subtitle}</span>}
             </div>
 
+            {/* Metadata */}
+            {metadata && metadata.length > 0 && (
+                <div className="flex flex-wrap gap-x-2 gap-y-2 text-sm text-muted-foreground mb-3">
+                    {metadata.map((item, index) => (
+                        <span key={index}>{item}</span>
+                    ))}
+                </div>
+            )}
+
             {/* Actions */}
-            {actions && <div className="ml-4 shrink-0">{actions}</div>}
+            {actions && <div className="mt-auto pt-3 border-t">{actions}</div>}
         </div>
     );
 }
