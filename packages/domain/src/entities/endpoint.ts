@@ -11,30 +11,37 @@ export type JsonValue =
   | { [key: string]: JsonValue };
 
 /**
- * Template expression for dynamic body values.
- * Uses JSONPath-like syntax to reference data from response bodies.
- *
- * Examples:
- * - "{{$.self.latestResponse.status}}" - Latest response from this endpoint
- * - "{{$.sibling['monitoring'].latestResponse.priority}}" - Sibling endpoint response
- * - "{{$.now}}" - Current timestamp
+ * JSON Schema for body structure.
+ * Describes the expected shape of the request body with field descriptions.
+ * AI agents use this schema to generate compliant bodies based on observations.
+ * 
+ * Example:
+ * {
+ *   "type": "object",
+ *   "properties": {
+ *     "status": {
+ *       "type": "string",
+ *       "enum": ["healthy", "degraded", "critical"],
+ *       "description": "Current system health status based on error rate and latency"
+ *     },
+ *     "priority": {
+ *       "type": "string",
+ *       "description": "Alert priority level - should be 'high' if errors > 50, otherwise 'normal'"
+ *     }
+ *   },
+ *   "required": ["status"]
+ * }
  */
-export type TemplateExpression = string;
+export type BodySchema = JsonValue;
 
 /**
- * Body template with placeholders for dynamic values.
- * Placeholders are resolved at execution time using response data.
- */
-export type BodyTemplate = JsonValue;
-
-/**
- * AI hint for dynamic body values.
- * Contains resolved values for template placeholders with TTL.
+ * AI-generated body values with TTL.
+ * AI observes endpoint responses and generates a body that conforms to bodySchema.
  */
 export type AIBodyHint = {
-  resolvedBody: JsonValue; // Fully resolved body ready for execution
+  resolvedBody: JsonValue; // AI-generated body conforming to bodySchema
   expiresAt: Date; // When this hint expires
-  reason?: string; // Why these values were chosen
+  reason?: string; // AI's reasoning for the generated values
 };
 
 /**
@@ -79,14 +86,13 @@ export type JobEndpoint = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   headersJson?: Record<string, string>;
   bodyJson?: JsonValue; // Static body (backward compatible)
-  bodyTemplate?: BodyTemplate; // Dynamic body with template expressions (new)
-  bodyTemplateSchema?: JsonValue; // JSON Schema for validating resolved body values
+  bodySchema?: BodySchema; // JSON Schema describing dynamic body structure (AI uses this to generate bodies)
   timeoutMs?: number;
   maxExecutionTimeMs?: number; // Expected max execution time for lock duration (default: 60000ms / 1 min)
   maxResponseSizeKb?: number; // Max response body size to store (default: 100 KB)
 
   // AI hints for dynamic body values (TTL-scoped)
-  aiHintBodyResolved?: JsonValue; // Resolved body from AI (overrides template evaluation)
+  aiHintBodyResolved?: JsonValue; // AI-generated body conforming to bodySchema
   aiHintBodyExpiresAt?: Date; // When the AI body hint expires
-  aiHintBodyReason?: string; // Why AI chose these values
+  aiHintBodyReason?: string; // AI's reasoning for the generated values
 };
