@@ -32,6 +32,7 @@ function EndpointLayoutPage() {
     const tabs = [
         { to: "/endpoints/$id", label: "Overview", exact: true },
         { to: "/endpoints/$id/runs", label: "Run History" },
+        { to: "/endpoints/$id/ai-sessions", label: "AI Sessions" },
         { to: "/endpoints/$id/edit", label: "Edit" },
     ];
 

@@ -355,6 +355,57 @@ describe("query tools", () => {
       // @ts-expect-error responses exists on result
       expect(result.responses[2].responseBody).toBeNull();
     });
+
+    it("should only show tokenSavingNote when truncation actually occurred", async () => {
+      const tools = createToolsForEndpoint(endpointId, jobId, {
+        // @ts-expect-error Partial mock for testing
+        jobs: mockJobs,
+        // @ts-expect-error Partial mock for testing
+        runs: mockRuns,
+        clock: mockClock,
+      });
+
+      // Test 1: Short response bodies (< 1000 chars) - no truncation
+      const shortHistory = [
+        {
+          responseBody: { status: "ok", count: 10 },
+          timestamp: new Date("2025-01-15T11:50:00Z"),
+          status: "success",
+          durationMs: 150,
+        },
+      ];
+
+      mockRuns.getResponseHistory
+        .mockResolvedValueOnce(shortHistory)
+        .mockResolvedValueOnce([]);
+
+      const result1 = await callTool(tools, "get_response_history", { limit: 1 });
+
+      // @ts-expect-error result is unknown
+      expect(result1.tokenSavingNote).toBeUndefined();
+
+      // Test 2: Long response body (> 1000 chars) - truncation occurs
+      const longBody = "x".repeat(1500); // 1500 character string
+      const longHistory = [
+        {
+          responseBody: longBody,
+          timestamp: new Date("2025-01-15T11:50:00Z"),
+          status: "success",
+          durationMs: 150,
+        },
+      ];
+
+      mockRuns.getResponseHistory
+        .mockResolvedValueOnce(longHistory)
+        .mockResolvedValueOnce([]);
+
+      const result2 = await callTool(tools, "get_response_history", { limit: 1 });
+
+      // @ts-expect-error result is unknown
+      expect(result2.tokenSavingNote).toBe("Response bodies truncated at 1000 chars to prevent token overflow");
+      // @ts-expect-error result is unknown
+      expect(result2.responses[0].responseBody).toContain("...[truncated]");
+    });
   });
 
   describe("get_sibling_latest_responses", () => {

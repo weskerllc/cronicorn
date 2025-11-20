@@ -81,6 +81,7 @@ describe("dashboardManager", () => {
 
     // Mock SessionsRepo with all required methods
     mockSessionsRepo = {
+      getTotalSessionCount: vi.fn(),
       create: vi.fn(),
       getRecentSessions: vi.fn(),
       getTotalTokenUsage: vi.fn(),
