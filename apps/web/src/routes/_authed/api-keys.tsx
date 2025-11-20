@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Copy, Plus } from "lucide-react";
+import { CheckCircle2, Copy, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -106,7 +106,7 @@ function APIKeysPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["api-keys"] });
       setDeleteKeyId(null);
-      toast.success("API key deleted successfully");
+      toast.success("API key revoked successfully");
     },
   });
 
@@ -164,6 +164,26 @@ function APIKeysPage() {
           </div>
         );
       },
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteKeyId(row.original.id);
+            }}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Revoke
+          </Button>
+        </div>
+      ),
     },
   ];
 
@@ -229,14 +249,14 @@ function APIKeysPage() {
         onCopy={handleCopyKey}
       />
 
-      {/* Delete Confirmation Dialog */}
+      {/* Revoke Confirmation Dialog */}
       <AlertDialog open={!!deleteKeyId} onOpenChange={(open) => !open && setDeleteKeyId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>Revoke API Key</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this API key
-              and revoke its access.
+              Are you sure you want to revoke this API key? This action cannot be undone.
+              Any applications using this key will immediately lose access.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -244,8 +264,9 @@ function APIKeysPage() {
             <AlertDialogAction
               onClick={() => deleteKeyId && deleteMutation.mutate(deleteKeyId)}
               disabled={deleteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? "Revoking..." : "Revoke Key"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
