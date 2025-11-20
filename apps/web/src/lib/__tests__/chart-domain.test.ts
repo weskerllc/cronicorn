@@ -60,7 +60,7 @@ describe('chart-domain', () => {
     });
 
     it('handles missing values as 0', () => {
-      const chartData = [
+      const chartData: Array<Record<string, string | number>> = [
         { date: 1000, 'endpoint-1': 10 }, // endpoint-2 missing
         { date: 2000, 'endpoint-1': 20, 'endpoint-2': 15 },
       ];
@@ -75,7 +75,7 @@ describe('chart-domain', () => {
     });
 
     it('ignores non-numeric values', () => {
-      const chartData = [
+      const chartData: Array<Record<string, string | number>> = [
         { date: 1000, 'endpoint-1': 10, 'endpoint-2': 'invalid' },
         { date: 2000, 'endpoint-1': 20, 'endpoint-2': 15 },
       ];
