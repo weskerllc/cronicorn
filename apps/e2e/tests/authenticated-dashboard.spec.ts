@@ -4,7 +4,7 @@ import { authenticateAsAdmin } from "../fixtures/auth.js";
 
 /**
  * E2E test demonstrating authentication helper for protected routes
- * 
+ *
  * This test verifies that:
  * 1. The authenticateAsAdmin helper successfully authenticates
  * 2. Authenticated users can access the dashboard page
