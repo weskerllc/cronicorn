@@ -1,3 +1,4 @@
+import * as sessionsSchemas from "@cronicorn/api-contracts/sessions";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent, jsonContentRequired } from "stoker/openapi/helpers";
@@ -363,6 +364,24 @@ export const getHealthSummary = createRoute({
   },
 });
 
+// ==================== AI Analysis Sessions Routes ====================
+
+export const listSessions = createRoute({
+  path: "/endpoints/:id/sessions",
+  method: "get",
+  tags: ["AI Analysis"],
+  summary: sessionsSchemas.ListSessionsSummary,
+  description: sessionsSchemas.ListSessionsDescription,
+  request: {
+    params: z.object({ id: z.string() }),
+    query: sessionsSchemas.ListSessionsQuerySchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(sessionsSchemas.ListSessionsResponseSchema, "AI analysis sessions"),
+    ...errorResponses,
+  },
+});
+
 // Type exports for handlers
 export type CreateJobRoute = typeof createJob;
 export type GetJobRoute = typeof getJob;
@@ -388,3 +407,5 @@ export type ResetFailuresRoute = typeof resetFailures;
 export type ListRunsRoute = typeof listRuns;
 export type GetRunDetailsRoute = typeof getRunDetails;
 export type GetHealthSummaryRoute = typeof getHealthSummary;
+
+export type ListSessionsRoute = typeof listSessions;

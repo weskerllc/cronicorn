@@ -12,6 +12,10 @@
       "types": "./dist/jobs/index.d.ts",
       "import": "./dist/jobs/index.js"
     },
+    "./sessions": {
+      "types": "./dist/sessions/index.d.ts",
+      "import": "./dist/sessions/index.js"
+    },
     "./subscriptions": {
       "types": "./dist/subscriptions/index.d.ts",
       "import": "./dist/subscriptions/index.js"

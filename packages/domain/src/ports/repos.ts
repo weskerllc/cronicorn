@@ -405,6 +405,14 @@ export type SessionsRepo = {
   }) => Promise<string>;
 
   /**
+   * Get total count of analysis sessions for an endpoint.
+   *
+   * @param endpointId - The endpoint to query
+   * @returns Total number of sessions
+   */
+  getTotalSessionCount: (endpointId: string) => Promise<number>;
+
+  /**
    * Get recent analysis sessions for an endpoint.
    * Useful for debugging AI decision patterns.
    *
@@ -412,7 +420,7 @@ export type SessionsRepo = {
    * @param limit - Maximum number of sessions to return (default: 10)
    * @returns Array of sessions, ordered newest to oldest
    */
-  getRecentSessions: (endpointId: string, limit?: number) => Promise<Array<{
+  getRecentSessions: (endpointId: string, limit?: number, offset?: number) => Promise<Array<{
     id: string;
     analyzedAt: Date;
     toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;

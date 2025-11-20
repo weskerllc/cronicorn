@@ -30,6 +30,9 @@ const router = createRouter()
   // ==================== Execution Visibility Routes ====================
   .openapi(routes.listRuns, handlers.listRuns)
   .openapi(routes.getRunDetails, handlers.getRunDetails)
-  .openapi(routes.getHealthSummary, handlers.getHealthSummary);
+  .openapi(routes.getHealthSummary, handlers.getHealthSummary)
+
+  // ==================== AI Analysis Sessions Routes ====================
+  .openapi(routes.listSessions, handlers.listSessions);
 
 export default router;
