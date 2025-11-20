@@ -2,16 +2,16 @@ import type { Page } from "@playwright/test";
 
 /**
  * Authentication helper for Playwright E2E tests
- *
- * Provides a simple way to authenticate tests using the test-only
- * authentication endpoint. This bypasses the login form and creates
- * a real authenticated session.
- *
+ * 
+ * Provides a simple way to authenticate tests by calling the Better Auth
+ * sign-in endpoint directly. This bypasses the login form and creates
+ * a real authenticated session using the default admin credentials.
+ * 
  * Usage:
  * ```typescript
  * import { test } from "@playwright/test";
- * import { authenticateAsAdmin } from "../fixtures/auth";
- *
+ * import { authenticateAsAdmin } from "../fixtures/auth.js";
+ * 
  * test("my authenticated test", async ({ page }) => {
  *   await authenticateAsAdmin(page);
  *   // Now you can navigate to protected pages
@@ -19,6 +19,13 @@ import type { Page } from "@playwright/test";
  * });
  * ```
  */
+
+/**
+ * Default admin credentials (from config-defaults package)
+ * These are only available in development/test environments
+ */
+const DEFAULT_ADMIN_EMAIL = "admin@example.com";
+const DEFAULT_ADMIN_PASSWORD = "devpassword";
 
 /**
  * Get the API URL from environment or use default
@@ -29,24 +36,30 @@ function getApiUrl(): string {
 }
 
 /**
- * Authenticate as the default admin user using the test-only endpoint
- *
+ * Authenticate as the default admin user by calling Better Auth directly
+ * 
  * This function:
- * 1. Calls the `/api/test/auth/login` endpoint
+ * 1. Calls Better Auth's `/api/auth/sign-in/email` endpoint with default credentials
  * 2. Automatically receives and stores session cookies
  * 3. Makes subsequent requests authenticated
- *
- * Note: This only works when NODE_ENV !== 'production'
- *
+ * 
+ * Note: Uses default dev credentials (admin@example.com / devpassword)
+ * which are only configured in non-production environments
+ * 
  * @param page - Playwright Page object
  * @throws Error if authentication fails
  */
 export async function authenticateAsAdmin(page: Page): Promise<void> {
   const apiUrl = getApiUrl();
-
-  // Call the test auth endpoint
+  
+  // Call Better Auth's sign-in endpoint directly with default credentials
   // Playwright automatically handles cookies - they'll be stored in the page's browser context
-  const response = await page.request.post(`${apiUrl}/api/test/auth/login`);
+  const response = await page.request.post(`${apiUrl}/api/auth/sign-in/email`, {
+    data: {
+      email: DEFAULT_ADMIN_EMAIL,
+      password: DEFAULT_ADMIN_PASSWORD,
+    },
+  });
 
   if (!response.ok()) {
     const body = await response.text();
@@ -55,28 +68,22 @@ export async function authenticateAsAdmin(page: Page): Promise<void> {
     );
   }
 
-  const json = await response.json();
-
-  if (!json.success) {
-    throw new Error(`Authentication failed: ${json.message || "Unknown error"}`);
-  }
-
   // Cookies are automatically stored by Playwright in the page's context
   // All subsequent requests from this page will include the auth cookies
 }
 
 /**
  * Check if a page is currently authenticated
- *
+ * 
  * This is a helper to verify that authentication is working.
  * It tries to access a protected endpoint and checks the response.
- *
+ * 
  * @param page - Playwright Page object
  * @returns true if authenticated, false otherwise
  */
 export async function isAuthenticated(page: Page): Promise<boolean> {
   const apiUrl = getApiUrl();
-
+  
   try {
     const response = await page.request.get(`${apiUrl}/api/dashboard`);
     return response.status() !== 401;
