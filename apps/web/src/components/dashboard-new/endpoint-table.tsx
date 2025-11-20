@@ -2,13 +2,11 @@ import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ChartStyle } from "@cronicorn/ui-library/components/chart";
 import { DashboardCard } from "./dashboard-card";
-import { DataTable } from "@/components/composed/data-table";
 import type { AISessionTimeSeriesPoint, EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import type { EndpointColorMapping } from "@/lib/endpoint-colors";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@cronicorn/ui-library/components/button";
-import { ArrowUpDown } from "lucide-react";
+import { DataTable } from "@/components/composed/data-table";
 
 interface EndpointTableProps {
     endpointTimeSeries: Array<EndpointTimeSeriesPoint>;
@@ -53,7 +51,7 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
             id: "color",
             header: "",
             cell: ({ row }) => {
-                const mapping = colorMappings.find(m => m && m.name === row.original.name);
+                const mapping = colorMappings.find(m => m.name === row.original.name);
                 if (!mapping || !mapping.sanitizedKey) return null;
                 return (
                     <div
@@ -68,57 +66,26 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
         },
         {
             accessorKey: "name",
-            header: ({ column }) => (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                    className="h-8 px-2 -ml-2"
-                >
-                    Name
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            ),
+            header: "Name",
             cell: ({ row }) => (
                 <span className="font-medium text-sm">{row.original.name}</span>
             ),
         },
         {
             accessorKey: "runs",
-            header: ({ column }) => (
-                <div className="flex justify-end">
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="h-8 px-2"
-                    >
-                        Runs
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                </div>
-            ),
+            header: "Runs",
             cell: ({ row }) => (
-                <div className="text-right">
-                    <span className="text-sm font-medium">{row.original.runs.toLocaleString()}</span>
+                <div className=" font-medium">
+                    {row.original.runs.toLocaleString()}
                 </div>
             ),
         },
         {
             accessorKey: "sessions",
-            header: ({ column }) => (
-                <div className="flex justify-end">
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="h-8 px-2"
-                    >
-                        Sessions
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                </div>
-            ),
+            header: "Sessions",
             cell: ({ row }) => (
-                <div className="text-right">
-                    <span className="text-sm text-muted-foreground">{row.original.sessions.toLocaleString()}</span>
+                <div className="text-muted-foreground">
+                    {row.original.sessions.toLocaleString()}
                 </div>
             ),
         },
@@ -153,6 +120,8 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
                             onRowClick={handleRowClick}
                             getRowId={(row) => row.id}
                             initialSorting={[{ id: "runs", desc: true }]}
+                            headerClassName="bg-card sticky top-0 z-10"
+                            containerClassName="h-full flex flex-col"
                         />
                     </div>
                 </>
