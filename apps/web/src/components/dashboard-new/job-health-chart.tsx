@@ -187,9 +187,9 @@ export function JobHealthChart({
                         stackId="a"
                         fill="var(--color-successCount)"
                         radius={[4, 0, 0, 4]}
-
                         onClick={(barData) => onJobClick?.(barData.jobId)}
                         style={{ cursor: "pointer" }}
+                        isAnimationActive={false}
                         activeIndex={activeIndex}
                         activeBar={(props: any) => {
                             return (
@@ -240,6 +240,7 @@ export function JobHealthChart({
                         radius={[0, 4, 4, 0]}
                         onClick={(barData) => onJobClick?.(barData.jobId)}
                         style={{ cursor: "pointer" }}
+                        isAnimationActive={false}
                         activeIndex={activeIndex}
                         activeBar={(props: any) => {
                             return (
