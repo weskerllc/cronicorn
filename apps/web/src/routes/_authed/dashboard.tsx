@@ -156,10 +156,12 @@ function DashboardPage() {
         <ExecutionTimelineChart
           data={dashboardData?.endpointTimeSeries || []}
           chartConfig={endpointChartConfig}
+          timeRange={filters.timeRange}
         />
         <AISessionsChart
           data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
+          timeRange={filters.timeRange}
         />
       </GridLayout>
     </>

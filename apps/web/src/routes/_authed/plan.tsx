@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Alert, AlertDescription } from '@cronicorn/ui-library/components/alert';
@@ -87,7 +87,7 @@ function RouteComponent() {
           {subscription.tier === "free" && (
             <div className="space-y-2">
               <Button asChild>
-                <a href="/pricing">Upgrade Plan</a>
+                <Link to="/pricing">Upgrade Plan</Link>
               </Button>
               <p className="text-sm text-muted-foreground">
                 Unlock more features with a paid plan

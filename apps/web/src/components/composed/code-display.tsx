@@ -82,7 +82,7 @@ export function CodeDisplay({
                 </div>
             )}
             <pre
-                className="overflow-auto p-4 text-sm"
+                className={`overflow-auto p-4 text-sm ${enableCopy ? "pr-12" : ""}`}
                 style={{ maxHeight }}
             >
                 {showLineNumbers && lines ? (
@@ -99,7 +99,7 @@ export function CodeDisplay({
                         </span>
                     </code>
                 ) : (
-                    <code className="block">{code}</code>
+                    <code className="block break-all whitespace-pre-wrap">{code}</code>
                 )}
             </pre>
         </div>
