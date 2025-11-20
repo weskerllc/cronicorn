@@ -12,9 +12,11 @@ export function mapDashboardStatsToResponse(stats: DashboardStats): DashboardSta
     recentActivity: stats.recentActivity,
     runTimeSeries: stats.runTimeSeries,
     endpointTimeSeries: stats.endpointTimeSeries,
+    endpointTimeSeriesMaxStacked: stats.endpointTimeSeriesMaxStacked,
     jobHealth: stats.jobHealth,
     filteredMetrics: stats.filteredMetrics,
     sourceDistribution: stats.sourceDistribution,
     aiSessionTimeSeries: stats.aiSessionTimeSeries,
+    aiSessionTimeSeriesMaxStacked: stats.aiSessionTimeSeriesMaxStacked,
   };
 }
