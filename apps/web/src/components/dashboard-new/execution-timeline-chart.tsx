@@ -83,6 +83,23 @@ export function ExecutionTimelineChart({
         return data.reduce((sum, point) => sum + point.success + point.failure, 0);
     }, [data]);
 
+    // Calculate maximum stacked value for proper Y-axis domain
+    const maxStackedValue = useMemo(() => {
+        if (chartData.length === 0) return 0;
+        
+        // For each data point, sum all endpoint values to get the stacked total
+        const maxValue = chartData.reduce((max, dataPoint) => {
+            const stackedTotal = endpoints.reduce((sum, endpoint) => {
+                const value = dataPoint[endpoint.name];
+                return sum + (typeof value === 'number' ? value : 0);
+            }, 0);
+            return Math.max(max, stackedTotal);
+        }, 0);
+        
+        // Add 10% padding to prevent touching the top
+        return maxValue * 1.1;
+    }, [chartData, endpoints]);
+
     const description = hasData ? (
         <>
             <p>
@@ -160,7 +177,7 @@ export function ExecutionTimelineChart({
                             }}
                         />
                         <YAxis
-                            domain={[0, 'auto']}
+                            domain={[0, maxStackedValue || 'auto']}
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
