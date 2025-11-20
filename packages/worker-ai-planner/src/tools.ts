@@ -11,28 +11,42 @@ import { defineTools, tool } from "@cronicorn/domain";
 import { z } from "zod";
 
 /**
- * Truncate response body to prevent token overflow while preserving key information.
+ * Truncate response body to prevent token overflow in AI context.
+ * Handles both string and object response bodies.
+ * Returns the truncated value and whether truncation occurred.
  */
-function truncateResponseBody(responseBody: unknown, maxLength = 1000): unknown {
+function truncateResponseBody(
+  responseBody: unknown,
+  maxLength = 1000,
+): { value: unknown; wasTruncated: boolean } {
   if (typeof responseBody === "string") {
     if (responseBody.length <= maxLength)
-      return responseBody;
-    return `${responseBody.substring(0, maxLength)}...[truncated]`;
+      return { value: responseBody, wasTruncated: false };
+    return {
+      value: `${responseBody.substring(0, maxLength)}...[truncated]`,
+      wasTruncated: true,
+    };
   }
 
   if (typeof responseBody === "object" && responseBody !== null) {
     const str = JSON.stringify(responseBody);
     if (str.length <= maxLength)
-      return responseBody;
+      return { value: responseBody, wasTruncated: false };
     try {
-      return JSON.parse(str.substring(0, maxLength - 20));
+      return {
+        value: JSON.parse(str.substring(0, maxLength - 20)),
+        wasTruncated: true,
+      };
     }
     catch {
-      return `${str.substring(0, maxLength)}...[truncated]`;
+      return {
+        value: `${str.substring(0, maxLength)}...[truncated]`,
+        wasTruncated: true,
+      };
     }
   }
 
-  return responseBody;
+  return { value: responseBody, wasTruncated: false };
 }
 
 /**
@@ -204,12 +218,18 @@ export function createToolsForEndpoint(
         }
 
         // Truncate response bodies to prevent token overflow
-        const truncatedResponses = history.map(r => ({
-          responseBody: truncateResponseBody(r.responseBody),
-          timestamp: r.timestamp.toISOString(),
-          status: r.status,
-          durationMs: r.durationMs,
-        }));
+        let anyTruncated = false;
+        const truncatedResponses = history.map((r) => {
+          const { value, wasTruncated } = truncateResponseBody(r.responseBody);
+          if (wasTruncated)
+            anyTruncated = true;
+          return {
+            responseBody: value,
+            timestamp: r.timestamp.toISOString(),
+            status: r.status,
+            durationMs: r.durationMs,
+          };
+        });
 
         // Check if there are more results by requesting one extra with next offset
         const hasMoreCheck = await runs.getResponseHistory(endpointId, 1, args.offset + args.limit);
@@ -229,7 +249,9 @@ export function createToolsForEndpoint(
             : args.offset > 0
               ? "Reached end of history"
               : undefined,
-          tokenSavingNote: "Response bodies truncated at 1000 chars to prevent token overflow",
+          tokenSavingNote: anyTruncated
+            ? "Response bodies truncated at 1000 chars to prevent token overflow"
+            : undefined,
         };
       },
     }),

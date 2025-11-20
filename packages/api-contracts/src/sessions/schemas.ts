@@ -19,6 +19,10 @@ export const ListSessionsQuerySchema = z.object({
     description: "Maximum number of sessions to return (max 100, default 10)",
     example: 10,
   }),
+  offset: z.coerce.number().int().nonnegative().optional().default(0).openapi({
+    description: "Number of sessions to skip for pagination (default 0)",
+    example: 0,
+  }),
 });
 
 export const ToolCallSchema = z.object({

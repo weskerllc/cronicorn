@@ -858,12 +858,12 @@ export class JobsManager {
   // ==================== AI Analysis Sessions ====================
 
   /**
-   * List recent AI analysis sessions for an endpoint.
-   * Shows what the AI planner decided and why.
+   * List AI analysis sessions for an endpoint
    *
-   * @param userId - The requesting user (for authorization)
+   * @param userId - The user ID (for authorization)
    * @param endpointId - The endpoint ID
    * @param limit - Maximum number of sessions to return (default: 10, max: 100)
+   * @param offset - Number of sessions to skip for pagination (default: 0)
    * @returns List of AI sessions ordered newest to oldest
    * @throws Error if endpoint not found or user not authorized
    */
@@ -871,20 +871,29 @@ export class JobsManager {
     userId: string,
     endpointId: string,
     limit = 10,
-  ): Promise<Array<{
-      id: string;
-      analyzedAt: Date;
-      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
-      reasoning: string;
-      tokenUsage: number | null;
-      durationMs: number | null;
-    }>> {
+    offset = 0,
+  ): Promise<{
+      sessions: Array<{
+        id: string;
+        analyzedAt: Date;
+        toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+        reasoning: string;
+        tokenUsage: number | null;
+        durationMs: number | null;
+      }>;
+      total: number;
+    }> {
     // Authorization check
     const endpoint = await this.getEndpoint(userId, endpointId);
     if (!endpoint) {
       throw new Error("Endpoint not found or unauthorized");
     }
 
-    return this.sessionsRepo.getRecentSessions(endpointId, limit);
+    const [sessions, total] = await Promise.all([
+      this.sessionsRepo.getRecentSessions(endpointId, limit, offset),
+      this.sessionsRepo.getTotalSessionCount(endpointId),
+    ]);
+
+    return { sessions, total };
   }
 }

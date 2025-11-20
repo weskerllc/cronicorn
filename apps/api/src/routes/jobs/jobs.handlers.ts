@@ -410,8 +410,8 @@ export const listSessions: AppRouteHandler<routes.ListSessionsRoute> = async (c)
 
   return c.get("withJobsManager")(async (manager) => {
     try {
-      const sessions = await manager.listSessions(userId, endpointId, query.limit);
-      return c.json({ sessions, total: sessions.length }, HTTPStatusCodes.OK);
+      const result = await manager.listSessions(userId, endpointId, query.limit, query.offset);
+      return c.json(result, HTTPStatusCodes.OK);
     }
     catch (error) {
       const message = error instanceof Error ? error.message : "Failed to list sessions";
