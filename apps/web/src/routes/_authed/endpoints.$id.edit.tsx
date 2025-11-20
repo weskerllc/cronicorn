@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { ActionsGroup } from "../../components/primitives/actions-group";
 import { FormFieldRow } from "../../components/primitives/form-field-row";
 import { GridLayout } from "../../components/primitives/grid-layout";
+import { RelativeTime } from "../../components/composed/relative-time";
 import type { UpdateEndpointForm } from "@/lib/endpoint-forms";
 import { AlertCard } from "@/components/cards/alert-card";
 import { updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
@@ -122,7 +123,7 @@ function EditEndpointPage() {
                             <div>
                                 <p className="text-sm text-muted-foreground">Suggested Next Run</p>
                                 <p className="font-medium">
-                                    {new Date(endpoint.aiHintNextRunAt).toLocaleString()}
+                                    <RelativeTime date={endpoint.aiHintNextRunAt} showTooltip={false} />
                                 </p>
                             </div>
                         )}
@@ -131,7 +132,7 @@ function EditEndpointPage() {
                             <div>
                                 <p className="text-sm text-muted-foreground">Hint Expires</p>
                                 <p className={`font-medium ${isHintExpired ? "text-destructive" : ""}`}>
-                                    {new Date(endpoint.aiHintExpiresAt).toLocaleString()}
+                                    <RelativeTime date={endpoint.aiHintExpiresAt} showTooltip={false} />
                                     {isHintExpired && <span className="ml-2 text-sm">(Expired)</span>}
                                 </p>
                             </div>

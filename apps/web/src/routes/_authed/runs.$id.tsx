@@ -8,6 +8,7 @@ import { CodeDisplay } from "../../components/composed/code-display";
 import { PageSection } from "../../components/primitives/page-section";
 import { DetailSection } from "../../components/cards/detail-section";
 import { InfoField, InfoGrid } from "../../components/cards/info-grid";
+import { RelativeTime } from "../../components/composed/relative-time";
 import { runQueryOptions } from "@/lib/api-client/queries/runs.queries";
 import { PageHeader } from "@/components/composed/page-header";
 
@@ -45,11 +46,11 @@ function RunDetailsPage() {
             <InfoField label="Duration" value={`${run.durationMs}ms`} />
             <InfoField
               label="Started At"
-              value={new Date(run.startedAt).toLocaleString()}
+              value={<RelativeTime date={run.startedAt} />}
             />
             <InfoField
               label="Finished At"
-              value={run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "N/A"}
+              value={run.finishedAt ? <RelativeTime date={run.finishedAt} /> : "N/A"}
             />
             {run.source && (
               <InfoField

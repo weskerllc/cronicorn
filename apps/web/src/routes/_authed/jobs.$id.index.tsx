@@ -10,6 +10,7 @@ import { ActionsGroup } from "../../components/primitives/actions-group";
 import { DetailSection } from "../../components/cards/detail-section";
 import { InfoField, InfoGrid } from "../../components/cards/info-grid";
 import { PageSection } from "../../components/primitives/page-section";
+import { RelativeTime } from "../../components/composed/relative-time";
 import {
   JOBS_QUERY_KEY,
   archiveJob,
@@ -86,11 +87,6 @@ function JobDetailsPage() {
   const error = pauseError || resumeError || archiveError;
   const isLoading = isPausing || isResuming || isArchiving;
 
-  // Format dates
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-
   // Get status badge variant
   const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
@@ -132,8 +128,8 @@ function JobDetailsPage() {
             label="Endpoints"
             value={`${endpointsData.endpoints.length} endpoint(s)`}
           />
-          <InfoField label="Created" value={formatDate(job.createdAt)} />
-          <InfoField label="Last Updated" value={formatDate(job.updatedAt)} />
+          <InfoField label="Created" value={<RelativeTime date={job.createdAt} />} />
+          <InfoField label="Last Updated" value={<RelativeTime date={job.updatedAt} />} />
         </InfoGrid>
 
         {job.description && (

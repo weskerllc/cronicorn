@@ -13,6 +13,7 @@ import {
 
 import { DataTable } from "../../components/composed/data-table";
 import { FilterGroup } from "../../components/primitives/filter-group";
+import { RelativeTime } from "../../components/composed/relative-time";
 import type { ColumnDef } from "@tanstack/react-table";
 import { PageSection } from "@/components/primitives/page-section";
 import { runsQueryOptions } from "@/lib/api-client/queries/runs.queries";
@@ -117,7 +118,7 @@ function RunsListPage() {
       header: "Started At",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {new Date(row.original.startedAt).toLocaleString()}
+          <RelativeTime date={row.original.startedAt} />
         </span>
       ),
     },

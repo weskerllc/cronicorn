@@ -50,6 +50,7 @@ import { EmptyCTA } from "../../components/cards/empty-cta";
 import { CodeDisplay } from "../../components/composed/code-display";
 import { DataTable } from "../../components/composed/data-table";
 import { PageHeader } from "../../components/composed/page-header";
+import { RelativeTime } from "../../components/composed/relative-time";
 import { InlineBadge } from "../../components/primitives/inline-badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { CreateApiKeyInput } from "@/lib/api-client/queries/api-keys.queries";
@@ -143,7 +144,7 @@ function APIKeysPage() {
       header: "Created",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {new Date(row.original.createdAt).toLocaleDateString()}
+          <RelativeTime date={row.original.createdAt} />
         </span>
       ),
     },
@@ -158,7 +159,7 @@ function APIKeysPage() {
         return (
           <div className="flex items-center gap-2">
             <span className={`text-sm ${isExpired ? "text-destructive" : "text-muted-foreground"}`}>
-              {new Date(row.original.expiresAt).toLocaleDateString()}
+              <RelativeTime date={row.original.expiresAt} />
             </span>
             {isExpired && <Badge variant="destructive">Expired</Badge>}
           </div>
