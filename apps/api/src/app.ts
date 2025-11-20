@@ -19,6 +19,7 @@ import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";
 import jobs from "./routes/jobs/jobs.index.js";
 import subscriptions from "./routes/subscriptions/subscriptions.index.js";
+import testAuth from "./routes/test-auth/test-auth.index.js";
 import webhooks from "./routes/webhooks.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
 
@@ -158,6 +159,9 @@ export async function createApp(
 
   // Mount auth config endpoint FIRST (public - specific route takes precedence)
   app.route("/", authConfig);
+
+  // Mount test-auth routes (only enabled in non-production)
+  app.route("/", testAuth);
 
   // Mount Better Auth routes
   // Better Auth provides: /api/auth/sign-in/social/github, /api/auth/callback/github, etc.
