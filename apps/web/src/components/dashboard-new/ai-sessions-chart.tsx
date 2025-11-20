@@ -10,15 +10,19 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
+import type {TimeRangeValue} from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
+import {  getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
 
 interface AISessionsChartProps {
     data: Array<AISessionTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
+    /** Selected time range for label display */
+    timeRange?: TimeRangeValue;
 }
 
-export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
+export function AISessionsChart({ data, chartConfig, timeRange }: AISessionsChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
         // Calculate total sessions per endpoint to find top performers
@@ -145,12 +149,13 @@ export function AISessionsChart({ data, chartConfig }: AISessionsChartProps) {
                             type="number"
                             scale="time"
                             domain={['dataMin', 'dataMax']}
-                            tickFormatter={(value) => {
-                                const date = new Date(Number(value));
-                                return date.toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                });
+                            ticks={chartData.length >= 2 ? [chartData[0].date as number, chartData[chartData.length - 1].date as number] : undefined}
+                            tickFormatter={(_value, index) => {
+                                // Show start label on left, end label on right
+                                if (index === 0) {
+                                    return getTimeRangeStartLabel(timeRange);
+                                }
+                                return getTimeRangeEndLabel();
                             }}
                         />
                         <YAxis
