@@ -10,9 +10,9 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
-import type {TimeRangeValue} from "@/lib/time-range-labels";
+import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import {  getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
+import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
 
 interface ExecutionTimelineChartProps {
     data: Array<EndpointTimeSeriesPoint>;
@@ -20,12 +20,15 @@ interface ExecutionTimelineChartProps {
     chartConfig: ChartConfig;
     /** Selected time range for label display */
     timeRange?: TimeRangeValue;
+    /** Pre-calculated maximum stacked value from server (includes 10% padding) */
+    maxStackedValue?: number;
 }
 
 export function ExecutionTimelineChart({
     data,
     chartConfig,
     timeRange,
+    maxStackedValue: serverMaxStackedValue,
 }: ExecutionTimelineChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
@@ -83,13 +86,36 @@ export function ExecutionTimelineChart({
         return data.reduce((sum, point) => sum + point.success + point.failure, 0);
     }, [data]);
 
+    // Use server-provided max stacked value, or calculate client-side as fallback
+    const maxStackedValue = useMemo(() => {
+        // Prefer server-calculated value for better performance
+        if (serverMaxStackedValue !== undefined && serverMaxStackedValue > 0) {
+            return serverMaxStackedValue;
+        }
+
+        // Fallback: calculate client-side (for backward compatibility)
+        if (chartData.length === 0) return 0;
+
+        // For each data point, sum all endpoint values to get the stacked total
+        const maxValue = chartData.reduce((max, dataPoint) => {
+            const stackedTotal = endpoints.reduce((sum, endpoint) => {
+                const value = dataPoint[endpoint.name];
+                return sum + (typeof value === 'number' ? value : 0);
+            }, 0);
+            return Math.max(max, stackedTotal);
+        }, 0);
+
+        // Add 10% padding to prevent touching the top
+        return maxValue * 1.1;
+    }, [serverMaxStackedValue, chartData, endpoints]);
+
     const description = hasData ? (
         <>
             <p>
                 Invocations: <span className="text-foreground font-medium">{totalInvocations.toLocaleString()}</span>
                 {totalEndpoints > endpoints.length && (
                     <span className="text-muted-foreground text-xs ml-2">
-                        (Showing top {endpoints.length} of {totalEndpoints} endpoints)
+                        (Showing top {endpoints.length} of {totalEndpoints})
                     </span>
                 )}
             </p>
@@ -100,7 +126,7 @@ export function ExecutionTimelineChart({
 
     return (
         <DashboardCard
-            title="Execution Timeline by Endpoint"
+            title="Endpoint Activity"
             description={description}
             contentClassName="p-3"
         >
@@ -160,7 +186,7 @@ export function ExecutionTimelineChart({
                             }}
                         />
                         <YAxis
-                            domain={[0, 'auto']}
+                            domain={[0, maxStackedValue || 'auto']}
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
@@ -224,6 +250,7 @@ export function ExecutionTimelineChart({
                                         fill={`url(#fill-${endpoint.id})`}
                                         stroke={`var(--color-${sanitizedKey})`}
                                         stackId="a"
+                                        baseValue={0}
                                     />
                                 );
                             })}
