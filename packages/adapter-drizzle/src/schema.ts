@@ -84,7 +84,6 @@ export const jobEndpoints = pgTable("job_endpoints", {
   // Execution config (dispatcher may use these)
   url: text("url"),
   method: text("method"), // "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
-  headersJson: jsonb("headers_json").$type<Record<string, string>>(), // Legacy plaintext (deprecated - use headersEncrypted)
   headersEncrypted: text("headers_encrypted"), // Encrypted headers (AES-256-GCM, format: iv:authTag:encryptedData)
   bodyJson: jsonb("body_json").$type<import("@cronicorn/domain").JsonValue>(),
   timeoutMs: integer("timeout_ms"),

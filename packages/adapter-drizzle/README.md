@@ -141,3 +141,25 @@ docker-compose -f docker-compose-prod.yml up
 ```
 
 See `apps/migrator/README.md` for complete documentation.
+
+### Special Migration: Headers Encryption (0018)
+
+**⚠️ Important:** Migration 0018 removes the `headers_json` column and replaces it with `headers_encrypted`.
+
+If you have existing data with headers, run the data migration script **BEFORE** applying the schema migration:
+
+```bash
+# Step 1: Migrate existing data to encrypted format
+cd packages/adapter-drizzle
+DATABASE_URL="postgresql://..." BETTER_AUTH_SECRET="your-secret" tsx scripts/migrate-headers.ts
+
+# Step 2: Apply schema migration (removes old column)
+cd apps/migrator
+DATABASE_URL="postgresql://..." tsx src/index.ts
+```
+
+The migration script will:
+- Check for endpoints with plaintext headers
+- Encrypt them using your `BETTER_AUTH_SECRET`
+- Write encrypted data to the new column
+- Report success/failure for each endpoint

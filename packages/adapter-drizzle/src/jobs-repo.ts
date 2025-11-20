@@ -34,7 +34,6 @@ export class DrizzleJobsRepo implements JobsRepo {
     // Encrypt headers if present and encryption is enabled
     if (this.encryptionSecret && ep.headersJson && Object.keys(ep.headersJson).length > 0) {
       row.headersEncrypted = encryptHeaders(ep.headersJson, this.encryptionSecret);
-      row.headersJson = null; // Clear plaintext
     }
 
     // Execute insert immediately
@@ -75,10 +74,6 @@ export class DrizzleJobsRepo implements JobsRepo {
       // Encrypt headers if encryption is enabled
       if (this.encryptionSecret && patch.headersJson && Object.keys(patch.headersJson).length > 0) {
         updates.headersEncrypted = encryptHeaders(patch.headersJson, this.encryptionSecret);
-        updates.headersJson = null; // Clear plaintext
-      }
-      else {
-        updates.headersJson = patch.headersJson;
       }
     }
     if (patch.bodyJson !== undefined)
@@ -342,15 +337,15 @@ export class DrizzleJobsRepo implements JobsRepo {
    */
   private rowToEntity(row: JobEndpointRow): JobEndpoint {
     // Decrypt headers if encrypted
-    let headers: Record<string, string> | undefined = row.headersJson ?? undefined;
+    let headers: Record<string, string> | undefined;
     if (this.encryptionSecret && row.headersEncrypted) {
       try {
         headers = decryptHeaders(row.headersEncrypted, this.encryptionSecret);
       }
       catch (error) {
-        // Log error but don't fail - fall back to plaintext if available
+        // Log error but don't fail
         console.error("Failed to decrypt headers:", error);
-        headers = row.headersJson ?? undefined;
+        headers = undefined;
       }
     }
 
