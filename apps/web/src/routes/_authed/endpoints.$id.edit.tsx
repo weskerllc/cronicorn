@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { ActionsGroup } from "../../components/primitives/actions-group";
 import { FormFieldRow } from "../../components/primitives/form-field-row";
 import { GridLayout } from "../../components/primitives/grid-layout";
+import { SecureHeaderInput } from "../../components/composed/secure-header-input";
 import type { UpdateEndpointForm } from "@/lib/endpoint-forms";
 import { AlertCard } from "@/components/cards/alert-card";
 import { updateEndpoint } from "@/lib/api-client/queries/endpoints.queries";
@@ -361,10 +362,12 @@ function EditEndpointPage() {
                                             <FormItem className="flex-1">
                                                 {index === 0 && <FormLabel>Header Value</FormLabel>}
                                                 <FormControl>
-                                                    <Input
+                                                    <SecureHeaderInput
+                                                        value={field.value}
+                                                        onChange={field.onChange}
                                                         placeholder="e.g., Bearer your-token"
-                                                        {...field}
                                                         disabled={updatePending}
+                                                        headerName={form.watch(`headers.${index}.key`)}
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
