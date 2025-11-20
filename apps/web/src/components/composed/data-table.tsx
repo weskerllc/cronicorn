@@ -1,13 +1,14 @@
 "use client";
 
-import * as React from "react";
 import {
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
+  IconChevronUp,
   IconChevronsLeft,
   IconChevronsRight,
   IconLoader,
-  IconRefresh,
+  IconRefresh
 } from "@tabler/icons-react";
 import {
   flexRender,
@@ -19,6 +20,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import * as React from "react";
 
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Input } from "@cronicorn/ui-library/components/input";
@@ -31,12 +33,11 @@ import {
   SelectValue,
 } from "@cronicorn/ui-library/components/select";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@cronicorn/ui-library/components/table";
 
 import type {
@@ -69,6 +70,12 @@ interface DataTableProps<TData, TValue> {
   onPaginationChange?: (pagination: PaginationState) => void;
   // Row click handler
   onRowClick?: (row: TData) => void;
+  // Initial sorting state
+  initialSorting?: SortingState;
+  // Custom header styling
+  headerClassName?: string;
+  // Custom container styling
+  containerClassName?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -90,12 +97,15 @@ export function DataTable<TData, TValue>({
   pageIndex: controlledPageIndex,
   onPaginationChange: externalOnPaginationChange,
   onRowClick,
+  initialSorting = [],
+  headerClassName,
+  containerClassName,
 }: DataTableProps<TData, TValue>) {
   const tableRef = React.useRef<HTMLDivElement>(null);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: controlledPageIndex ?? 0,
     pageSize: defaultPageSize,
@@ -151,7 +161,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div ref={tableRef} className="flex flex-col gap-4">
+    <div ref={tableRef} className="flex flex-col gap-4 h-full">
       {tableTitle && (<p className="text-lg font-medium">{tableTitle}</p>
       )}
       {(searchKey || onRefresh) && (
@@ -186,51 +196,72 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader className="bg-muted sticky top-0 z-10">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
+      <div className={containerClassName ?? "overflow-hidden rounded-md border"}>
+        <div className="overflow-y-auto flex-1 min-h-0 relative">
+          <table className="w-full caption-bottom text-sm">
+            <TableHeader className={headerClassName ?? "bg-muted sticky top-0 z-10"}>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const canSort = header.column.getCanSort();
+                    const sorted = header.column.getIsSorted();
+
+                    return (
+                      <TableHead key={header.id} colSpan={header.colSpan}>
+                        {header.isPlaceholder ? null : canSort ? (
+                          <button
+                            onClick={() => {
+                              if (sorted === "asc") {
+                                header.column.toggleSorting(true);
+                              } else if (sorted === "desc") {
+                                header.column.clearSorting();
+                              } else {
+                                header.column.toggleSorting(false);
+                              }
+                            }}
+                            className="flex items-center"
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {sorted === "asc" && <IconChevronUp className="ml-2 h-4 w-4" />}
+                            {sorted === "desc" && <IconChevronDown className="ml-2 h-4 w-4" />}
+                            {!sorted && <IconChevronUp className="ml-2 h-4 w-4 opacity-0" />}
+                          </button>
+                        ) : (
+                          flexRender(header.column.columnDef.header, header.getContext())
                         )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-                  className={onRowClick ? "cursor-pointer hover:bg-muted/50" : undefined}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {emptyMessage}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                    className={onRowClick ? "cursor-pointer hover:bg-muted/50" : undefined}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    {emptyMessage}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </table>
+        </div>
       </div>
 
       {enablePagination && table.getPageCount() > 0 && (
