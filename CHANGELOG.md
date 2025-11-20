@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/weskerllc/cronicorn/compare/v1.12.4...v1.13.0) (2025-11-20)
+
+
+### Features
+
+* Add AI Sessions UI view for endpoint analysis transparency ([#63](https://github.com/weskerllc/cronicorn/issues/63)) ([12566ef](https://github.com/weskerllc/cronicorn/commit/12566efb3c5844c5b3d1e7cb4688d1fb69b6a08e))
+
 ## [1.12.4](https://github.com/weskerllc/cronicorn/compare/v1.12.3...v1.12.4) (2025-11-20)
 
 
