@@ -3,6 +3,7 @@ import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgre
 import { getExecutionLimits, getRunsLimit, getTierLimit, type Job, type JobEndpoint, type JobsRepo } from "@cronicorn/domain";
 import { and, eq, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 
+import { decryptHeaders, encryptHeaders } from "./crypto.js";
 import { type JobEndpointRow, jobEndpoints, type JobRow, jobs, runs, user } from "./schema.js";
 
 /**
@@ -18,6 +19,7 @@ export class DrizzleJobsRepo implements JobsRepo {
     // eslint-disable-next-line ts/no-explicit-any
     private tx: NodePgDatabase<any> | NodePgTransaction<any, any>,
     private now: () => Date = () => new Date(),
+    private encryptionSecret?: string,
   ) { }
 
   async addEndpoint(ep: JobEndpoint): Promise<void> {
@@ -28,6 +30,12 @@ export class DrizzleJobsRepo implements JobsRepo {
       jobId: ep.jobId && ep.jobId !== "" ? ep.jobId : null,
       _lockedUntil: undefined,
     };
+
+    // Encrypt headers if present and encryption is enabled
+    if (this.encryptionSecret && ep.headersJson && Object.keys(ep.headersJson).length > 0) {
+      row.headersEncrypted = encryptHeaders(ep.headersJson, this.encryptionSecret);
+      row.headersJson = null; // Clear plaintext
+    }
 
     // Execute insert immediately
     await this.tx.insert(jobEndpoints).values(row);
@@ -63,8 +71,16 @@ export class DrizzleJobsRepo implements JobsRepo {
       updates.url = patch.url;
     if (patch.method !== undefined)
       updates.method = patch.method;
-    if (patch.headersJson !== undefined)
-      updates.headersJson = patch.headersJson;
+    if (patch.headersJson !== undefined) {
+      // Encrypt headers if encryption is enabled
+      if (this.encryptionSecret && patch.headersJson && Object.keys(patch.headersJson).length > 0) {
+        updates.headersEncrypted = encryptHeaders(patch.headersJson, this.encryptionSecret);
+        updates.headersJson = null; // Clear plaintext
+      }
+      else {
+        updates.headersJson = patch.headersJson;
+      }
+    }
     if (patch.bodyJson !== undefined)
       updates.bodyJson = patch.bodyJson;
     if (patch.timeoutMs !== undefined)
@@ -325,6 +341,19 @@ export class DrizzleJobsRepo implements JobsRepo {
    * Convert DB row to domain entity (strip adapter fields).
    */
   private rowToEntity(row: JobEndpointRow): JobEndpoint {
+    // Decrypt headers if encrypted
+    let headers: Record<string, string> | undefined = row.headersJson ?? undefined;
+    if (this.encryptionSecret && row.headersEncrypted) {
+      try {
+        headers = decryptHeaders(row.headersEncrypted, this.encryptionSecret);
+      }
+      catch (error) {
+        // Log error but don't fail - fall back to plaintext if available
+        console.error("Failed to decrypt headers:", error);
+        headers = row.headersJson ?? undefined;
+      }
+    }
+
     return {
       id: row.id,
       jobId: row.jobId ?? "", // Nullable for backward compat, default to empty string
@@ -346,7 +375,7 @@ export class DrizzleJobsRepo implements JobsRepo {
       failureCount: row.failureCount,
       url: row.url ?? undefined,
       method: row.method ? (row.method === "GET" || row.method === "POST" || row.method === "PUT" || row.method === "PATCH" || row.method === "DELETE" ? row.method : undefined) : undefined,
-      headersJson: row.headersJson ?? undefined,
+      headersJson: headers,
       bodyJson: row.bodyJson,
       timeoutMs: row.timeoutMs ?? undefined,
       maxExecutionTimeMs: row.maxExecutionTimeMs ?? undefined,
