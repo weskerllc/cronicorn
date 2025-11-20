@@ -241,72 +241,311 @@ function generateRuns(endpoint: typeof ENDPOINTS[0]): Array<schema.RunInsert> {
 function generateAISessions(endpoints: ReturnType<typeof generateEndpoints>): Array<typeof schema.aiAnalysisSessions.$inferInsert> {
   const sessions: Array<typeof schema.aiAnalysisSessions.$inferInsert> = [];
 
-  // Use first half of endpoints for AI sessions (or all if less than 10)
-  const numEndpointsWithAI = Math.min(Math.ceil(endpoints.length / 2), endpoints.length);
-  const endpointsWithAI = endpoints.slice(0, numEndpointsWithAI);
+  // Prefer adaptive endpoints for heavy AI activity; others get light coverage
+  const adaptive = endpoints.filter(e => e.pattern === "adaptive-tight" && !e.archived);
+  const oneshot = endpoints.filter(e => e.pattern === "oneshot" && !e.archived);
+  const steady = endpoints.filter(e => e.pattern === "steady" && !e.archived);
 
-  // Calculate times relative to SALE_START (which is recent)
-  const saleDay = new Date(SALE_START);
+  // Pick subsets for different session intensities:
+  // - Ultra-heavy: 80-150 sessions (1-2 endpoints max)
+  // - Heavy: 30-60 sessions
+  // - Medium: 10-20 sessions
+  // - Light: 2-5 sessions
+  const ultraHeavyAdaptive = adaptive.slice(0, Math.min(2, adaptive.length));
+  const heavyAdaptive = adaptive.slice(ultraHeavyAdaptive.length, ultraHeavyAdaptive.length + Math.max(2, Math.floor(adaptive.length * 0.3)));
+  const mediumAdaptive = adaptive.slice(ultraHeavyAdaptive.length + heavyAdaptive.length, ultraHeavyAdaptive.length + heavyAdaptive.length + Math.floor(adaptive.length * 0.3));
+  const lightAdaptive = adaptive.filter(e => !ultraHeavyAdaptive.includes(e) && !heavyAdaptive.includes(e) && !mediumAdaptive.includes(e));
 
-  // Generate 2-3 sessions per endpoint at different times
-  endpointsWithAI.forEach((endpoint, index) => {
-    // Session 1: Near sale start (9am) - Detect surge, tighten monitoring
-    const session1Time = new Date(saleDay.getTime() + (5 + index * 2) * 60 * 1000); // Stagger by 2 min
+  // Helper: build realistic tool call entries using tool names and schemas in packages/worker-ai-planner/src/tools.ts
+  const tc = {
+    getLatest: () => ({ tool: "get_latest_response", args: {}, result: { found: true, responseBody: { ok: true, errors: 0 }, timestamp: new Date().toISOString(), status: "success" } }),
+    getHistory: (limit: number, offset: number) => ({
+      tool: "get_response_history",
+      args: { limit, offset },
+      result: {
+        count: Math.max(0, limit - (offset % 2)),
+        pagination: {
+          offset,
+          limit,
+          nextOffset: offset + limit,
+        },
+        hasMore: true,
+        responses: Array.from({ length: limit }).map((_, i) => ({
+          responseBody: { ok: true, errors: i + offset },
+          timestamp: new Date(Date.now() - (i + offset + 1) * 300000).toISOString(),
+          status: "success",
+          durationMs: 200 + (i * 15),
+        })),
+        tokenSavingNote: "Response bodies truncated at 1000 chars to prevent token overflow",
+      },
+    }),
+    siblings: () => ({
+      tool: "get_sibling_latest_responses",
+      args: {},
+      result: {
+        count: 2,
+        siblings: [
+          {
+            endpointId: "sib-1",
+            endpointName: "DB",
+            responseBody: { ok: true },
+            timestamp: new Date().toISOString(),
+            status: "success",
+          },
+          {
+            endpointId: "sib-2",
+            endpointName: "Cache",
+            responseBody: { ok: true },
+            timestamp: new Date().toISOString(),
+            status: "success",
+          },
+        ],
+      },
+    }),
+    proposeInterval: (intervalMs: number, ttlMinutes: number, reason?: string) => ({ tool: "propose_interval", args: { intervalMs, ttlMinutes, reason }, result: `Adjusted interval to ${intervalMs}ms (expires in ${ttlMinutes} minutes)${reason ? `: ${reason}` : ""}` }),
+    proposeNext: (date: Date, ttlMinutes: number, reason?: string) => ({ tool: "propose_next_time", args: { nextRunAtIso: date.toISOString(), ttlMinutes, reason }, result: `Scheduled one-shot execution at ${date.toISOString()} (expires in ${ttlMinutes} minutes)${reason ? `: ${reason}` : ""}` }),
+    pauseUntil: (until: Date | null, reason?: string) => ({ tool: "pause_until", args: { untilIso: until ? until.toISOString() : null, reason }, result: until ? `Paused until ${until.toISOString()}${reason ? `: ${reason}` : ""}` : `Resumed execution${reason ? `: ${reason}` : ""}` }),
+    submit: (reasoning: string, actions: string[], confidence: "high" | "medium" | "low" = "high") => ({ tool: "submit_analysis", args: { reasoning, actions_taken: actions, confidence }, result: { status: "analysis_complete", reasoning, actions_taken: actions, confidence } }),
+  } as const;
+
+  // Utility to clamp a time into the sale window vicinity (kept for consistency)
+  // const aroundSale = (minutesOffset: number) => new Date(SALE_START.getTime() + minutesOffset * 60 * 1000);
+
+  // Ultra-heavy sessions: 80-150 per endpoint (simulates highly monitored critical endpoints)
+  ultraHeavyAdaptive.forEach((endpoint, idx) => {
+    const count = 80 + (idx * 35); // 80, 115, 150 etc
+    for (let i = 0; i < count; i++) {
+      // Distribute across all time ranges for realistic coverage
+      const daysAgo = Math.floor((i / count) * 45); // Spread across 45 days
+      const baseTime = new Date(DAYS_AGO_45.getTime() + daysAgo * 24 * 60 * 60 * 1000);
+      const minuteOffset = (i % 60) * 15 + (idx * 7); // Varied times throughout each day
+      const analyzedAt = new Date(baseTime.getTime() + minuteOffset * 60 * 1000);
+
+      const actions: string[] = [];
+      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [];
+
+      // Query patterns vary by position in sequence
+      toolCalls.push(tc.getLatest());
+      if (i % 3 === 0)
+        toolCalls.push(tc.getHistory(2, 0));
+      if (i % 5 === 0)
+        toolCalls.push(tc.getHistory(2, 2));
+      if (i % 7 === 0)
+        toolCalls.push(tc.siblings());
+
+      // Action logic based on position and time
+      const isRecentHour = analyzedAt >= new Date(NOW.getTime() - 2 * 60 * 60 * 1000);
+      const isDuringSale = analyzedAt >= SALE_START && analyzedAt <= SALE_END;
+      const isPeakTime = analyzedAt.getHours() >= 9 && analyzedAt.getHours() <= 11;
+
+      if (isDuringSale && isPeakTime && i % 4 === 0) {
+        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs / 5)), 90, "Peak surge - aggressive monitoring"));
+        actions.push("propose_interval");
+      }
+      else if (isDuringSale && i % 6 === 0) {
+        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs / 2)), 60, "Sale traffic sustained"));
+        actions.push("propose_interval");
+      }
+      else if (isRecentHour && i % 8 === 0) {
+        toolCalls.push(tc.proposeInterval(endpoint.baselineIntervalMs, 30, "Normalizing post-event"));
+        actions.push("propose_interval");
+      }
+      else if (i % 15 === 0) {
+        const soon = new Date(analyzedAt.getTime() + 10 * 60 * 1000);
+        toolCalls.push(tc.proposeNext(soon, 25, "Spot check"));
+        actions.push("propose_next_time");
+      }
+
+      // Occasional pause for maintenance
+      if (i % 50 === 0 && i > 0) {
+        const until = new Date(analyzedAt.getTime() + 15 * 60 * 1000);
+        toolCalls.push(tc.pauseUntil(until, "Scheduled maintenance"));
+        actions.push("pause_until");
+      }
+
+      const reasoning = actions.length > 0
+        ? `Active monitoring with ${actions.join(", ")} adjustment${actions.length > 1 ? "s" : ""}.`
+        : "Routine health check - metrics within expected range.";
+
+      toolCalls.push(tc.submit(reasoning, actions, actions.length ? "high" : "medium"));
+
+      sessions.push({
+        id: `session-${crypto.randomUUID()}`,
+        endpointId: endpoint.id,
+        analyzedAt,
+        toolCalls,
+        reasoning,
+        tokenUsage: 850 + (i % 30) * 15 + idx * 20,
+        durationMs: 230 + (i % 10) * 25,
+      });
+    }
+  });
+
+  // Heavy sessions for selected adaptive endpoints (30-60 per endpoint)
+  heavyAdaptive.forEach((endpoint, idx) => {
+    const count = 30 + (idx % 31); // 30..60
+    for (let i = 0; i < count; i++) {
+      // Distribute more evenly across time ranges
+      const daysAgo = Math.floor((i / count) * 40); // Spread across 40 days
+      const baseTime = new Date(NOW.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+      const minuteOffset = (i % 48) * 20 + (idx * 5); // Throughout day
+      const analyzedAt = new Date(baseTime.getTime() - minuteOffset * 60 * 1000);
+
+      const phase = i % 5;
+
+      const actions: string[] = [];
+      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [];
+
+      // Query patterns
+      toolCalls.push(tc.getLatest());
+      if (i % 2 === 0)
+        toolCalls.push(tc.getHistory(2, 0));
+      if (i % 4 === 0)
+        toolCalls.push(tc.getHistory(2, 2));
+      if (i % 5 === 0)
+        toolCalls.push(tc.siblings());
+
+      // Actions based on phase and conditions
+      const isDuringSale = analyzedAt >= SALE_START && analyzedAt <= SALE_END;
+      const hour = analyzedAt.getHours();
+      const isPeakHours = hour >= 8 && hour <= 18;
+
+      if (phase === 1 || (isDuringSale && isPeakHours && i % 3 === 0)) {
+        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs / 3)), 90, "High activity period"));
+        actions.push("propose_interval");
+      }
+      else if (phase === 2 && i % 3 === 0) {
+        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs / 2)), 60, "Moderate adjustment"));
+        actions.push("propose_interval");
+      }
+      else if (phase === 3 && i % 4 === 0) {
+        toolCalls.push(tc.proposeInterval(endpoint.baselineIntervalMs, 40, "Returning to baseline"));
+        actions.push("propose_interval");
+      }
+      else if (i % 10 === 0) {
+        const soon = new Date(analyzedAt.getTime() + 8 * 60 * 1000);
+        toolCalls.push(tc.proposeNext(soon, 25, "Scheduled check"));
+        actions.push("propose_next_time");
+      }
+
+      if (i % 25 === 0 && i > 0) {
+        const until = new Date(analyzedAt.getTime() + 12 * 60 * 1000);
+        toolCalls.push(tc.pauseUntil(until, "Maintenance window"));
+        actions.push("pause_until");
+      }
+
+      const reasoning = actions.length > 0
+        ? `Adjusted scheduling based on traffic analysis (${actions.join(", ")}).`
+        : "Monitoring - no adjustments needed at this time.";
+      toolCalls.push(tc.submit(reasoning, actions, actions.length ? "high" : "medium"));
+
+      sessions.push({
+        id: `session-${crypto.randomUUID()}`,
+        endpointId: endpoint.id,
+        analyzedAt,
+        toolCalls,
+        reasoning,
+        tokenUsage: 900 + (idx * 17) + i * 25,
+        durationMs: 250 + (i % 5) * 60,
+      });
+    }
+  });
+
+  // Medium sessions for adaptive endpoints (10-20 per)
+  mediumAdaptive.forEach((endpoint, idx) => {
+    const count = 10 + (idx % 11); // 10..20
+    for (let i = 0; i < count; i++) {
+      const daysAgo = Math.floor((i / count) * 30);
+      const baseTime = new Date(NOW.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+      const analyzedAt = new Date(baseTime.getTime() - (i * 90 + idx * 7) * 60 * 1000);
+
+      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [tc.getLatest()];
+      if (i % 2 === 0)
+        toolCalls.push(tc.getHistory(2, 0));
+      if (i % 4 === 0)
+        toolCalls.push(tc.siblings());
+
+      const actions: string[] = [];
+      if (i % 3 === 0) {
+        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs * 0.7)), 50, "Load adjustment"));
+        actions.push("propose_interval");
+      }
+
+      const reasoning = actions.length ? "Regular optimization cycle." : "Metrics stable.";
+      toolCalls.push(tc.submit(reasoning, actions, "medium"));
+
+      sessions.push({
+        id: `session-${crypto.randomUUID()}`,
+        endpointId: endpoint.id,
+        analyzedAt,
+        toolCalls,
+        reasoning,
+        tokenUsage: 650 + idx * 12,
+        durationMs: 210 + i * 15,
+      });
+    }
+  });
+
+  // Light sessions for remaining adaptive endpoints (2-5 per)
+  lightAdaptive.forEach((endpoint, idx) => {
+    const count = 2 + (idx % 4);
+    for (let i = 0; i < count; i++) {
+      const analyzedAt = new Date(NOW.getTime() - (90 + i * 45 + idx * 5) * 60 * 1000);
+      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [tc.getLatest(), tc.getHistory(2, 0)];
+      const reasoning = "Stable with occasional AI interval tuning.";
+      toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs * 0.75)), 45, "Slight increase in load"));
+      toolCalls.push(tc.submit(reasoning, ["propose_interval"], "medium"));
+      sessions.push({
+        id: `session-${crypto.randomUUID()}`,
+        endpointId: endpoint.id,
+        analyzedAt,
+        toolCalls,
+        reasoning,
+        tokenUsage: 600 + idx * 10,
+        durationMs: 220 + i * 40,
+      });
+    }
+  });
+
+  // Oneshoot-focused sessions: prefer propose_next_time during peaks (5-12 per endpoint)
+  oneshot.slice(0, Math.max(2, Math.floor(oneshot.length * 0.5))).forEach((endpoint, idx) => {
+    const count = 5 + (idx % 8); // 5..12
+    for (let i = 0; i < count; i++) {
+      const daysAgo = Math.floor((i / count) * 20);
+      const baseTime = new Date(NOW.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+      const analyzedAt = new Date(baseTime.getTime() - (i * 180 + idx * 13) * 60 * 1000);
+      const soon = new Date(analyzedAt.getTime() + 10 * 60 * 1000);
+      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [
+        tc.getLatest(),
+        tc.getHistory(2, 0),
+        tc.proposeNext(soon, 30, "Investigate spike via one-shot"),
+        tc.submit("One-shot scheduled to inspect spike.", ["propose_next_time"], "medium"),
+      ];
+      sessions.push({
+        id: `session-${crypto.randomUUID()}`,
+        endpointId: endpoint.id,
+        analyzedAt,
+        toolCalls,
+        reasoning: "One-shot scheduled to inspect spike.",
+        tokenUsage: 500 + idx * 12,
+        durationMs: 200 + i * 30,
+      });
+    }
+  });
+
+  // Steady endpoints: rare actions, mostly observation
+  steady.slice(0, Math.min(5, steady.length)).forEach((endpoint, idx) => {
+    const analyzedAt = new Date(NOW.getTime() - (idx * 6 + 2) * 60 * 60 * 1000);
+    const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [tc.getLatest(), tc.getHistory(2, 0), tc.submit("No action needed; metrics steady.", [], "high")];
     sessions.push({
       id: `session-${crypto.randomUUID()}`,
       endpointId: endpoint.id,
-      analyzedAt: session1Time,
-      toolCalls: [
-        {
-          tool: "propose_interval",
-          args: { intervalMs: 30000, ttlMinutes: 120, reason: "Traffic surge detected" },
-          result: { success: true },
-        },
-      ],
-      reasoning: "Traffic increased 5× baseline. Tightening monitoring to 30s for next 2 hours.",
-      tokenUsage: 1234 + index * 10,
-      durationMs: 450,
+      analyzedAt,
+      toolCalls,
+      reasoning: "No action needed; metrics steady.",
+      tokenUsage: 350 + idx * 8,
+      durationMs: 180 + idx * 20,
     });
-
-    // Session 2: Mid-sale - adjustments
-    if (index % 2 === 0) {
-      const session2Time = new Date(saleDay.getTime() + (90 + index * 3) * 60 * 1000);
-      sessions.push({
-        id: `session-${crypto.randomUUID()}`,
-        endpointId: endpoint.id,
-        analyzedAt: session2Time,
-        toolCalls: [
-          {
-            tool: "propose_interval",
-            args: { intervalMs: 60000, ttlMinutes: 60, reason: "Performance adjusting" },
-            result: { success: true },
-          },
-        ],
-        reasoning: "System load increasing. Adjusting monitoring frequency.",
-        tokenUsage: 980 + index * 15,
-        durationMs: 380,
-      });
-    }
-
-    // Session 3: Recent - back to normal
-    if (index % 3 === 0) {
-      const session3Time = new Date(NOW.getTime() - (60 + index * 5) * 60 * 1000);
-      sessions.push({
-        id: `session-${crypto.randomUUID()}`,
-        endpointId: endpoint.id,
-        analyzedAt: session3Time,
-        toolCalls: [
-          {
-            tool: "propose_interval",
-            args: { intervalMs: endpoint.baselineIntervalMs, ttlMinutes: 0, reason: "Normalizing" },
-            result: { success: true },
-          },
-        ],
-        reasoning: "Traffic normalized. Returning to baseline intervals.",
-        tokenUsage: 756 + index * 8,
-        durationMs: 310,
-      });
-    }
   });
 
   return sessions;
@@ -438,6 +677,11 @@ async function seed() {
   console.log("    - Last 7 days (for weekly trends)");
   console.log("    - Last 30 days (for monthly analysis)");
   console.log("    - 30-45 days ago (for historical comparison)");
+  console.log("  • AI sessions range from 2-150 per endpoint:");
+  console.log("    - Ultra-heavy: 80-150 sessions (1-2 critical endpoints)");
+  console.log("    - Heavy: 30-60 sessions (selected adaptive endpoints)");
+  console.log("    - Medium: 10-20 sessions (many adaptive endpoints)");
+  console.log("    - Light: 2-12 sessions (steady/oneshot endpoints)");
 
   console.log("\n📈 Environment Variables:");
   console.log("  • SEED_NUM_JOBS - Number of jobs to create (default: 5)");

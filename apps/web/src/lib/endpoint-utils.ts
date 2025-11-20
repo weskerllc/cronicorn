@@ -27,3 +27,13 @@ export function getEndpointStatus(
   if (archivedAt) return "archived";
   return isEndpointPaused(pausedUntil) ? "paused" : "active";
 }
+
+/**
+ * Format milliseconds as a concise human string (ms or s)
+ */
+export function formatDuration(ms: number | null): string | null {
+  if (ms == null) return null;
+  if (ms < 1000) return `${ms}ms`;
+  const s = ms / 1000;
+  return `${s.toFixed(s >= 10 ? 0 : 1)}s`;
+}

@@ -1,7 +1,7 @@
 import type { Clock, Cron } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { DrizzleJobsRepo, DrizzleRunsRepo } from "@cronicorn/adapter-drizzle";
+import { DrizzleJobsRepo, DrizzleRunsRepo, DrizzleSessionsRepo } from "@cronicorn/adapter-drizzle";
 import { JobsManager } from "@cronicorn/services/jobs";
 
 /**
@@ -40,7 +40,9 @@ export function createJobsManager(
   const jobsRepo = new DrizzleJobsRepo(tx);
   // @ts-expect-error - Drizzle type mismatch between pnpm versions
   const runsRepo = new DrizzleRunsRepo(tx);
+  // @ts-expect-error - Drizzle type mismatch between pnpm versions
+  const sessionsRepo = new DrizzleSessionsRepo(tx);
 
   // Wire everything into the manager (pure DI)
-  return new JobsManager(jobsRepo, runsRepo, clock, cron);
+  return new JobsManager(jobsRepo, runsRepo, sessionsRepo, clock, cron);
 }
