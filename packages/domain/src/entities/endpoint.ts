@@ -14,7 +14,7 @@ export type JsonValue =
  * JSON Schema for body structure.
  * Describes the expected shape of the request body with field descriptions.
  * AI agents use this schema to generate compliant bodies based on observations.
- * 
+ *
  * Example:
  * {
  *   "type": "object",
