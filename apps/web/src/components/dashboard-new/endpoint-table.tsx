@@ -1,13 +1,14 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@cronicorn/ui-library/components/table";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@cronicorn/ui-library/components/pagination";
 import { ChartStyle } from "@cronicorn/ui-library/components/chart";
-import { ScrollArea } from "@cronicorn/ui-library/components/scroll-area";
 import { DashboardCard } from "./dashboard-card";
+import { DataTable } from "@/components/composed/data-table";
 import type { AISessionTimeSeriesPoint, EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import type { EndpointColorMapping } from "@/lib/endpoint-colors";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Button } from "@cronicorn/ui-library/components/button";
+import { ArrowUpDown } from "lucide-react";
 
 interface EndpointTableProps {
     endpointTimeSeries: Array<EndpointTimeSeriesPoint>;
@@ -19,13 +20,18 @@ interface EndpointTableProps {
     onEndpointClick?: (endpointName: string) => void;
 }
 
+type EndpointStat = {
+    id: string;
+    name: string;
+    runs: number;
+    sessions: number;
+};
+
 export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMappings, chartConfig, onEndpointClick }: EndpointTableProps) {
     const navigate = useNavigate();
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 20;
 
     const endpointStats = useMemo(() => {
-        const stats = new Map<string, { id: string; name: string; runs: number; sessions: number }>();
+        const stats = new Map<string, EndpointStat>();
 
         endpointTimeSeries.forEach(point => {
             const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, sessions: 0 };
@@ -42,129 +48,114 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
         return Array.from(stats.values());
     }, [endpointTimeSeries, aiSessionTimeSeries]);
 
-    const totalPages = Math.ceil(endpointStats.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedStats = endpointStats.slice(startIndex, endIndex);
+    const columns: Array<ColumnDef<EndpointStat>> = useMemo(() => [
+        {
+            id: "color",
+            header: "",
+            cell: ({ row }) => {
+                const mapping = colorMappings.find(m => m && m.name === row.original.name);
+                if (!mapping || !mapping.sanitizedKey) return null;
+                return (
+                    <div
+                        className="h-4 w-1"
+                        style={{
+                            backgroundColor: `var(--color-${mapping.sanitizedKey})`,
+                        }}
+                    />
+                );
+            },
+            enableSorting: false,
+        },
+        {
+            accessorKey: "name",
+            header: ({ column }) => (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="h-8 px-2 -ml-2"
+                >
+                    Name
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            ),
+            cell: ({ row }) => (
+                <span className="font-medium text-sm">{row.original.name}</span>
+            ),
+        },
+        {
+            accessorKey: "runs",
+            header: ({ column }) => (
+                <div className="flex justify-end">
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                        className="h-8 px-2"
+                    >
+                        Runs
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-right">
+                    <span className="text-sm font-medium">{row.original.runs.toLocaleString()}</span>
+                </div>
+            ),
+        },
+        {
+            accessorKey: "sessions",
+            header: ({ column }) => (
+                <div className="flex justify-end">
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                        className="h-8 px-2"
+                    >
+                        Sessions
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-right">
+                    <span className="text-sm text-muted-foreground">{row.original.sessions.toLocaleString()}</span>
+                </div>
+            ),
+        },
+    ], [colorMappings]);
 
-    const handleRowClick = (endpointId: string, endpointName: string) => {
-        navigate({ to: "/endpoints/$id", params: { id: endpointId } });
-        onEndpointClick?.(endpointName);
+    const handleRowClick = (row: EndpointStat) => {
+        navigate({ to: "/endpoints/$id", params: { id: row.id } });
+        onEndpointClick?.(row.name);
     };
 
     const description = endpointStats.length === 0 ? (
-        <>
-            <p>No data to display</p>
-        </>
+        <p>No data to display</p>
     ) : (
-        <>
-            <p>Active Endpoints: <span className="text-foreground font-medium">{Object.keys(endpointStats).length}</span></p>
-        </>
+        <p>Active Endpoints: <span className="text-foreground font-medium">{endpointStats.length}</span></p>
     );
-
-
-    const paginationFooter = totalPages > 1 ? (
-        <Pagination>
-            <PaginationContent>
-                <PaginationItem>
-                    <PaginationPrevious
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                </PaginationItem>
-
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum: number;
-                    if (totalPages <= 5) {
-                        pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                    } else {
-                        pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                        <PaginationItem key={pageNum}>
-                            <PaginationLink
-                                onClick={() => setCurrentPage(pageNum)}
-                                isActive={currentPage === pageNum}
-                                className="cursor-pointer"
-                            >
-                                {pageNum}
-                            </PaginationLink>
-                        </PaginationItem>
-                    );
-                })}
-
-                <PaginationItem>
-                    <PaginationNext
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                </PaginationItem>
-            </PaginationContent>
-        </Pagination>
-    ) : undefined;
 
     return (
         <DashboardCard
             title="Endpoints"
             description={description}
-            footerSlot={paginationFooter}
         >
-            {endpointStats.length === 0 ? (null) : (<>
-                <ChartStyle id="endpoint-table" config={chartConfig} />
-                <div data-chart="endpoint-table" className="w-full h-full">
-                    <ScrollArea className="w-full h-full  [&>[data-radix-scroll-area-viewport]]:h-full p-2">
-
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-4"></TableHead>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead className="w-16 text-right">Runs</TableHead>
-                                    <TableHead className="w-20 text-right">Sessions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {paginatedStats.map((stat) => {
-                                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                                    if (!stat || !stat.name) return null;
-                                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                                    const mapping = colorMappings.find(m => m && m.name === stat.name);
-                                    if (!mapping || !mapping.sanitizedKey) return null;
-                                    const { sanitizedKey } = mapping;
-                                    return (
-                                        <TableRow
-                                            key={stat.id}
-                                            onClick={() => handleRowClick(stat.id, stat.name)}
-                                            className="cursor-pointer hover:bg-muted/50"
-                                        >
-                                            <TableCell>
-                                                <div
-                                                    className="h-4 w-1 "
-                                                    style={{
-                                                        backgroundColor: `var(--color-${sanitizedKey})`,
-                                                    }}
-                                                />
-                                            </TableCell>
-                                            <TableCell className="font-medium text-sm">{stat.name}</TableCell>
-                                            <TableCell className="text-right">
-                                                <span className="text-sm font-medium">{stat.runs.toLocaleString()}</span>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <span className="text-sm text-muted-foreground">{stat.sessions.toLocaleString()}</span>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
-                    </ScrollArea>
-                </div>
-            </>
+            {endpointStats.length === 0 ? null : (
+                <>
+                    <ChartStyle id="endpoint-table" config={chartConfig} />
+                    <div data-chart="endpoint-table" className="w-full">
+                        <DataTable
+                            columns={columns}
+                            data={endpointStats}
+                            enablePagination={true}
+                            defaultPageSize={20}
+                            emptyMessage="No endpoints found."
+                            onRowClick={handleRowClick}
+                            getRowId={(row) => row.id}
+                            initialSorting={[{ id: "runs", desc: true }]}
+                        />
+                    </div>
+                </>
             )}
         </DashboardCard>
     );
