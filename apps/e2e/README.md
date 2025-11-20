@@ -21,13 +21,13 @@ pnpm --filter @cronicorn/e2e test:ui
 
 ## Authentication in Tests
 
-The project provides a **test-only auto-login helper** that bypasses the login form. This makes authenticated tests faster and more reliable.
+The project provides an **authentication helper** that simplifies testing protected routes by calling Better Auth's sign-in endpoint directly with default credentials.
 
-### Using Auto-Login
+### Using the Authentication Helper
 
 ```typescript
 import { test, expect } from "@playwright/test";
-import { authenticateAsAdmin } from "../fixtures/auth";
+import { authenticateAsAdmin } from "../fixtures/auth.js";
 
 test("authenticated test", async ({ page }) => {
   // Authenticate as admin user
@@ -42,14 +42,14 @@ test("authenticated test", async ({ page }) => {
 
 ### How It Works
 
-1. The `authenticateAsAdmin()` helper calls `/api/test/auth/login`
-2. The endpoint creates a real authenticated session
+1. The `authenticateAsAdmin()` helper calls Better Auth's `/api/auth/sign-in/email` endpoint
+2. Uses default dev credentials (`admin@example.com` / `devpassword`)
 3. Session cookies are automatically stored by Playwright
 4. All subsequent requests in that test use those cookies
 
 ### Security Note
 
-The auto-login endpoint **only works in non-production environments**. It's automatically disabled when `NODE_ENV=production` for security.
+The helper uses default credentials that are **only configured in development/test environments**. These credentials don't exist in production, so this approach is safe.
 
 ### Example
 
