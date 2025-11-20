@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { DEV_AUTH } from "@cronicorn/config-defaults";
 
 /**
  * Authentication helper for Playwright E2E tests
@@ -21,13 +22,6 @@ import type { Page } from "@playwright/test";
  */
 
 /**
- * Default admin credentials (from config-defaults package)
- * These are only available in development/test environments
- */
-const DEFAULT_ADMIN_EMAIL = "admin@example.com";
-const DEFAULT_ADMIN_PASSWORD = "devpassword";
-
-/**
  * Get the API URL from environment or use default
  */
 function getApiUrl(): string {
@@ -43,7 +37,7 @@ function getApiUrl(): string {
  * 2. Automatically receives and stores session cookies
  * 3. Makes subsequent requests authenticated
  *
- * Note: Uses default dev credentials (admin@example.com / devpassword)
+ * Note: Uses default dev credentials from @cronicorn/config-defaults (DEV_AUTH)
  * which are only configured in non-production environments
  *
  * @param page - Playwright Page object
@@ -56,8 +50,8 @@ export async function authenticateAsAdmin(page: Page): Promise<void> {
   // Playwright automatically handles cookies - they'll be stored in the page's browser context
   const response = await page.request.post(`${apiUrl}/api/auth/sign-in/email`, {
     data: {
-      email: DEFAULT_ADMIN_EMAIL,
-      password: DEFAULT_ADMIN_PASSWORD,
+      email: DEV_AUTH.ADMIN_EMAIL,
+      password: DEV_AUTH.ADMIN_PASSWORD,
     },
   });
 
