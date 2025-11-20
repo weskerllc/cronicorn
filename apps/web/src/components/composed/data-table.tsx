@@ -69,6 +69,8 @@ interface DataTableProps<TData, TValue> {
   onPaginationChange?: (pagination: PaginationState) => void;
   // Row click handler
   onRowClick?: (row: TData) => void;
+  // Initial sorting state
+  initialSorting?: SortingState;
 }
 
 export function DataTable<TData, TValue>({
@@ -90,12 +92,13 @@ export function DataTable<TData, TValue>({
   pageIndex: controlledPageIndex,
   onPaginationChange: externalOnPaginationChange,
   onRowClick,
+  initialSorting = [],
 }: DataTableProps<TData, TValue>) {
   const tableRef = React.useRef<HTMLDivElement>(null);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: controlledPageIndex ?? 0,
     pageSize: defaultPageSize,
