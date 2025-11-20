@@ -4,6 +4,7 @@ import {
   IconBriefcase,
   IconDashboard,
   IconHelp,
+  IconHome,
   IconKey,
   IconSettings
 } from "@tabler/icons-react";
@@ -56,6 +57,11 @@ const data = {
       url: urls.github.issues,
       icon: IconHelp,
     },
+    {
+      title: "Home Page",
+      url: "/",
+      icon: IconHome,
+    }
   ],
 };
 
