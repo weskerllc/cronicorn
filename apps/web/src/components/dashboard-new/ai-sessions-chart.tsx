@@ -129,7 +129,7 @@ export function AISessionsChart({
 
     return (
         <DashboardCard
-            title="AI Sessions Timeline"
+            title="AI Activity"
             description={description}
             contentClassName="p-3"
         >
