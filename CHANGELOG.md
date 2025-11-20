@@ -1,3 +1,12 @@
+## [1.12.3](https://github.com/weskerllc/cronicorn/compare/v1.12.2...v1.12.3) (2025-11-20)
+
+
+### Bug Fixes
+
+* Align API keys page header button layout with other pages ([#50](https://github.com/weskerllc/cronicorn/issues/50)) ([e59aead](https://github.com/weskerllc/cronicorn/commit/e59aead7d320c0a390c5c7577f3f288f27bc4b7e))
+* Replace X-axis date labels with time range boundaries on timeline charts ([#51](https://github.com/weskerllc/cronicorn/issues/51)) ([14c6e4d](https://github.com/weskerllc/cronicorn/commit/14c6e4d6639edfdc55643ca5fe8659d3c18e037a))
+* UI bugfixes ([#56](https://github.com/weskerllc/cronicorn/issues/56)) ([b39a5a3](https://github.com/weskerllc/cronicorn/commit/b39a5a39d73586688a7e38807f36714b77f24b1f))
+
 ## [1.12.2](https://github.com/weskerllc/cronicorn/compare/v1.12.1...v1.12.2) (2025-11-19)
 
 
