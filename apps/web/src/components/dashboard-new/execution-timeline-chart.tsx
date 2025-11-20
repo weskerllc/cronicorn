@@ -20,12 +20,15 @@ interface ExecutionTimelineChartProps {
     chartConfig: ChartConfig;
     /** Selected time range for label display */
     timeRange?: TimeRangeValue;
+    /** Pre-calculated maximum stacked value from server (includes 10% padding) */
+    maxStackedValue?: number;
 }
 
 export function ExecutionTimelineChart({
     data,
     chartConfig,
     timeRange,
+    maxStackedValue: serverMaxStackedValue,
 }: ExecutionTimelineChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
@@ -83,8 +86,14 @@ export function ExecutionTimelineChart({
         return data.reduce((sum, point) => sum + point.success + point.failure, 0);
     }, [data]);
 
-    // Calculate maximum stacked value for proper Y-axis domain
+    // Use server-provided max stacked value, or calculate client-side as fallback
     const maxStackedValue = useMemo(() => {
+        // Prefer server-calculated value for better performance
+        if (serverMaxStackedValue !== undefined && serverMaxStackedValue > 0) {
+            return serverMaxStackedValue;
+        }
+        
+        // Fallback: calculate client-side (for backward compatibility)
         if (chartData.length === 0) return 0;
         
         // For each data point, sum all endpoint values to get the stacked total
@@ -98,7 +107,7 @@ export function ExecutionTimelineChart({
         
         // Add 10% padding to prevent touching the top
         return maxValue * 1.1;
-    }, [chartData, endpoints]);
+    }, [serverMaxStackedValue, chartData, endpoints]);
 
     const description = hasData ? (
         <>
