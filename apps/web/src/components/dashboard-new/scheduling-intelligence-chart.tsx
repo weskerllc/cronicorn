@@ -27,7 +27,7 @@ const SOURCE_CONFIG: Record<string, { label: string; color: string }> = {
     },
     "ai-oneshot": {
         label: "AI One-Shot",
-        color: "var(--chart-2)",
+        color: "var(--chart-1)",
     },
     "clamped-min": {
         label: "Clamped (Min)",
