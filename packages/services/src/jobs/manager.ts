@@ -1,4 +1,4 @@
-import type { Clock, Cron, Job, JobEndpoint, JobsRepo, RunsRepo } from "@cronicorn/domain";
+import type { Clock, Cron, Job, JobEndpoint, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { getExecutionLimits } from "@cronicorn/domain";
 import { nanoid } from "nanoid";
@@ -159,6 +159,7 @@ export class JobsManager {
   constructor(
     private readonly jobsRepo: JobsRepo,
     private readonly runsRepo: RunsRepo,
+    private readonly sessionsRepo: SessionsRepo,
     private readonly clock: Clock,
     private readonly cron: Cron,
   ) { }
@@ -852,5 +853,38 @@ export class JobsManager {
     totalRunsLimit: number;
   }> {
     return this.jobsRepo.getUsage(userId, since);
+  }
+
+  // ==================== AI Analysis Sessions ====================
+
+  /**
+   * List recent AI analysis sessions for an endpoint.
+   * Shows what the AI planner decided and why.
+   *
+   * @param userId - The requesting user (for authorization)
+   * @param endpointId - The endpoint ID
+   * @param limit - Maximum number of sessions to return (default: 10, max: 100)
+   * @returns List of AI sessions ordered newest to oldest
+   * @throws Error if endpoint not found or user not authorized
+   */
+  async listSessions(
+    userId: string,
+    endpointId: string,
+    limit = 10,
+  ): Promise<Array<{
+      id: string;
+      analyzedAt: Date;
+      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+      reasoning: string;
+      tokenUsage: number | null;
+      durationMs: number | null;
+    }>> {
+    // Authorization check
+    const endpoint = await this.getEndpoint(userId, endpointId);
+    if (!endpoint) {
+      throw new Error("Endpoint not found or unauthorized");
+    }
+
+    return this.sessionsRepo.getRecentSessions(endpointId, limit);
   }
 }
