@@ -1,3 +1,10 @@
+## [1.12.4](https://github.com/weskerllc/cronicorn/compare/v1.12.3...v1.12.4) (2025-11-20)
+
+
+### Bug Fixes
+
+* Add Playwright authentication helper for testing protected routes ([#52](https://github.com/weskerllc/cronicorn/issues/52)) ([3bd9ea3](https://github.com/weskerllc/cronicorn/commit/3bd9ea336976d430eb7bfaec6d3d33ec84fdc645))
+
 ## [1.12.3](https://github.com/weskerllc/cronicorn/compare/v1.12.2...v1.12.3) (2025-11-20)
 
 
