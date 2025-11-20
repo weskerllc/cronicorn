@@ -1,4 +1,4 @@
-import type { Clock, Cron, Job, JobEndpoint, JobsRepo, RunsRepo } from "@cronicorn/domain";
+import type { Clock, Cron, Job, JobEndpoint, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +12,7 @@ import { JobsManager } from "../manager.js";
 describe("jobsManager", () => {
   let mockJobsRepo: JobsRepo;
   let mockRunsRepo: RunsRepo;
+  let mockSessionsRepo: SessionsRepo;
   let fakeClock: Clock;
   let fakeCron: Cron;
   let manager: JobsManager;
@@ -71,11 +72,17 @@ describe("jobsManager", () => {
       getRunTimeSeries: vi.fn().mockResolvedValue([]),
       getEndpointTimeSeries: vi.fn().mockResolvedValue([]),
     };
+    mockSessionsRepo = {
+      create: vi.fn(),
+      getRecentSessions: vi.fn().mockResolvedValue([]),
+      getTotalTokenUsage: vi.fn().mockResolvedValue(0),
+      getAISessionTimeSeries: vi.fn().mockResolvedValue([]),
+    };
     const now = new Date("2025-01-14T12:00:00Z");
     fakeClock = { now: () => now, sleep: async () => { } };
     fakeCron = { next: (_cron: string, from: Date) => new Date(from.getTime() + 3600_000) };
 
-    manager = new JobsManager(mockJobsRepo, mockRunsRepo, fakeClock, fakeCron);
+    manager = new JobsManager(mockJobsRepo, mockRunsRepo, mockSessionsRepo, fakeClock, fakeCron);
   });
 
   // ==================== Job Lifecycle Tests ====================
