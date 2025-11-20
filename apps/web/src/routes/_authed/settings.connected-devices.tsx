@@ -20,6 +20,7 @@ import { Skeleton } from "@cronicorn/ui-library/components/skeleton";
 import { EmptyCTA } from "../../components/cards/empty-cta";
 import { InlineBadge } from "../../components/primitives/inline-badge";
 import { ListCard } from "../../components/cards/list-card";
+import { RelativeTime } from "../../components/composed/relative-time";
 
 import type { ListDevicesResponse } from "@/lib/api-client/queries/devices.queries";
 import { devicesQueryOptions, revokeDevice } from "@/lib/api-client/queries/devices.queries";
@@ -29,32 +30,6 @@ export const Route = createFileRoute("/_authed/settings/connected-devices")({
 });
 
 type OAuthToken = ListDevicesResponse["devices"][number];
-
-function formatRelativeTime(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? "" : "s"} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
-    return date.toLocaleDateString();
-}
-
-function formatExpiresIn(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffDays < 1) return "expires soon";
-    if (diffDays === 1) return "expires in 1 day";
-    return `expires in ${diffDays} days`;
-}
 
 function ConnectedDevices() {
     const queryClient = useQueryClient();
@@ -168,8 +143,8 @@ function ConnectedDevices() {
                                         </div>
                                     }
                                     metadata={[
-                                        `Connected ${formatRelativeTime(token.createdAt)}`,
-                                        formatExpiresIn(token.expiresAt),
+                                        <>Connected <RelativeTime date={token.createdAt} showTooltip={false} /></>,
+                                        <RelativeTime date={token.expiresAt} showTooltip={false} />,
                                     ]}
                                     actions={
                                         <Button
