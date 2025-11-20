@@ -36,6 +36,7 @@ import { Route as AuthedJobsIdEndpointsRouteImport } from './routes/_authed/jobs
 import { Route as AuthedJobsIdEditRouteImport } from './routes/_authed/jobs.$id.edit'
 import { Route as AuthedEndpointsIdRunsRouteImport } from './routes/_authed/endpoints.$id.runs'
 import { Route as AuthedEndpointsIdEditRouteImport } from './routes/_authed/endpoints.$id.edit'
+import { Route as AuthedEndpointsIdAiSessionsRouteImport } from './routes/_authed/endpoints.$id.ai-sessions'
 import { Route as AuthedJobsJobIdEndpointsNewRouteImport } from './routes/_authed/jobs.$jobId.endpoints.new'
 
 const PublicRoute = PublicRouteImport.update({
@@ -172,6 +173,12 @@ const AuthedEndpointsIdEditRoute = AuthedEndpointsIdEditRouteImport.update({
   path: '/edit',
   getParentRoute: () => AuthedEndpointsIdRoute,
 } as any)
+const AuthedEndpointsIdAiSessionsRoute =
+  AuthedEndpointsIdAiSessionsRouteImport.update({
+    id: '/ai-sessions',
+    path: '/ai-sessions',
+    getParentRoute: () => AuthedEndpointsIdRoute,
+  } as any)
 const AuthedJobsJobIdEndpointsNewRoute =
   AuthedJobsJobIdEndpointsNewRouteImport.update({
     id: '/jobs/$jobId/endpoints/new',
@@ -199,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/jobs': typeof AuthedJobsIndexRoute
   '/settings/': typeof AuthedSettingsIndexRoute
+  '/endpoints/$id/ai-sessions': typeof AuthedEndpointsIdAiSessionsRoute
   '/endpoints/$id/edit': typeof AuthedEndpointsIdEditRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/jobs/$id/edit': typeof AuthedJobsIdEditRoute
@@ -224,6 +232,7 @@ export interface FileRoutesByTo {
   '/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/jobs': typeof AuthedJobsIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
+  '/endpoints/$id/ai-sessions': typeof AuthedEndpointsIdAiSessionsRoute
   '/endpoints/$id/edit': typeof AuthedEndpointsIdEditRoute
   '/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/jobs/$id/edit': typeof AuthedJobsIdEditRoute
@@ -255,6 +264,7 @@ export interface FileRoutesById {
   '/_authed/settings/connected-devices': typeof AuthedSettingsConnectedDevicesRoute
   '/_authed/jobs/': typeof AuthedJobsIndexRoute
   '/_authed/settings/': typeof AuthedSettingsIndexRoute
+  '/_authed/endpoints/$id/ai-sessions': typeof AuthedEndpointsIdAiSessionsRoute
   '/_authed/endpoints/$id/edit': typeof AuthedEndpointsIdEditRoute
   '/_authed/endpoints/$id/runs': typeof AuthedEndpointsIdRunsRoute
   '/_authed/jobs/$id/edit': typeof AuthedJobsIdEditRoute
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/settings/connected-devices'
     | '/jobs'
     | '/settings/'
+    | '/endpoints/$id/ai-sessions'
     | '/endpoints/$id/edit'
     | '/endpoints/$id/runs'
     | '/jobs/$id/edit'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/settings/connected-devices'
     | '/jobs'
     | '/settings'
+    | '/endpoints/$id/ai-sessions'
     | '/endpoints/$id/edit'
     | '/endpoints/$id/runs'
     | '/jobs/$id/edit'
@@ -340,6 +352,7 @@ export interface FileRouteTypes {
     | '/_authed/settings/connected-devices'
     | '/_authed/jobs/'
     | '/_authed/settings/'
+    | '/_authed/endpoints/$id/ai-sessions'
     | '/_authed/endpoints/$id/edit'
     | '/_authed/endpoints/$id/runs'
     | '/_authed/jobs/$id/edit'
@@ -545,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedEndpointsIdEditRouteImport
       parentRoute: typeof AuthedEndpointsIdRoute
     }
+    '/_authed/endpoints/$id/ai-sessions': {
+      id: '/_authed/endpoints/$id/ai-sessions'
+      path: '/ai-sessions'
+      fullPath: '/endpoints/$id/ai-sessions'
+      preLoaderRoute: typeof AuthedEndpointsIdAiSessionsRouteImport
+      parentRoute: typeof AuthedEndpointsIdRoute
+    }
     '/_authed/jobs/$jobId/endpoints/new': {
       id: '/_authed/jobs/$jobId/endpoints/new'
       path: '/jobs/$jobId/endpoints/new'
@@ -570,12 +590,14 @@ const AuthedSettingsRouteWithChildren = AuthedSettingsRoute._addFileChildren(
 )
 
 interface AuthedEndpointsIdRouteChildren {
+  AuthedEndpointsIdAiSessionsRoute: typeof AuthedEndpointsIdAiSessionsRoute
   AuthedEndpointsIdEditRoute: typeof AuthedEndpointsIdEditRoute
   AuthedEndpointsIdRunsRoute: typeof AuthedEndpointsIdRunsRoute
   AuthedEndpointsIdIndexRoute: typeof AuthedEndpointsIdIndexRoute
 }
 
 const AuthedEndpointsIdRouteChildren: AuthedEndpointsIdRouteChildren = {
+  AuthedEndpointsIdAiSessionsRoute: AuthedEndpointsIdAiSessionsRoute,
   AuthedEndpointsIdEditRoute: AuthedEndpointsIdEditRoute,
   AuthedEndpointsIdRunsRoute: AuthedEndpointsIdRunsRoute,
   AuthedEndpointsIdIndexRoute: AuthedEndpointsIdIndexRoute,
