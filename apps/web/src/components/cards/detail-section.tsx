@@ -7,7 +7,7 @@ import {
 } from "@cronicorn/ui-library/components/card";
 
 interface DetailSectionProps {
-  title: string;
+  title: React.ReactNode;
   description?: React.ReactNode;
   children: React.ReactNode;
   className?: string;

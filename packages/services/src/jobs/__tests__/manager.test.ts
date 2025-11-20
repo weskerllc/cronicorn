@@ -75,6 +75,7 @@ describe("jobsManager", () => {
     mockSessionsRepo = {
       create: vi.fn(),
       getRecentSessions: vi.fn().mockResolvedValue([]),
+      getTotalSessionCount: vi.fn().mockResolvedValue(0),
       getTotalTokenUsage: vi.fn().mockResolvedValue(0),
       getAISessionTimeSeries: vi.fn().mockResolvedValue([]),
     };

@@ -1,17 +1,16 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { Badge } from "@cronicorn/ui-library/components/badge";
-import { Card } from "@cronicorn/ui-library/components/card";
-import { Brain, Clock, Coins, Zap } from "lucide-react";
+import { Brain } from "lucide-react";
 import { PageSection } from "@/components/primitives/page-section";
-import { InfoField, InfoGrid } from "@/components/cards/info-grid";
-import { CodeDisplay } from "@/components/composed/code-display";
 import { EmptyCTA } from "@/components/cards/empty-cta";
 import { sessionsQueryOptions } from "@/lib/api-client/queries/sessions.queries";
+import { AISessionItem } from "@/components/ai/session-item";
+import { formatDuration } from "@/lib/endpoint-utils";
 
 const sessionsSearchSchema = z.object({
   limit: z.coerce.number().int().positive().optional().default(20),
+  offset: z.coerce.number().int().nonnegative().optional().default(0),
 });
 
 export const Route = createFileRoute("/_authed/endpoints/$id/ai-sessions")({
@@ -30,7 +29,7 @@ function AISessionsPage() {
   const search = Route.useSearch();
 
   const { data } = useSuspenseQuery(
-    sessionsQueryOptions(id, { limit: search.limit ?? 20 })
+    sessionsQueryOptions(id, { limit: search.limit ?? 20, offset: search.offset ?? 0 })
   );
 
   if (data.sessions.length === 0) {
@@ -45,98 +44,70 @@ function AISessionsPage() {
     );
   }
 
+  // Group sessions by date for optional date headers
+  const sessionsByDate = data.sessions.reduce((acc, session) => {
+    const date = new Date(session.analyzedAt).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(session);
+    return acc;
+  }, {});
+
   return (
     <PageSection>
-      <div className="space-y-6">
-        {data.sessions.map((session: any) => (
-          <Card key={session.id} className="p-6">
-            {/* Session Header */}
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Brain className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">AI Analysis</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(session.analyzedAt).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                {session.tokenUsage !== null && (
-                  <Badge variant="outline" className="gap-1">
-                    <Coins className="h-3 w-3" />
-                    {session.tokenUsage.toLocaleString()} tokens
-                  </Badge>
-                )}
-                {session.durationMs !== null && (
-                  <Badge variant="outline" className="gap-1">
-                    <Clock className="h-3 w-3" />
-                    {session.durationMs}ms
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            {/* Reasoning */}
-            <div className="mb-4">
-              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                <Zap className="h-4 w-4" />
-                AI Reasoning
-              </h4>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 rounded-lg p-3">
-                {session.reasoning}
-              </p>
-            </div>
-
-            {/* Tool Calls */}
-            {session.toolCalls.length > 0 && (
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Actions Taken</h4>
-                <div className="space-y-3">
-                  {session.toolCalls.map((call: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="border rounded-lg p-4 bg-card"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant="secondary" className="font-mono text-xs">
-                          {call.tool}
-                        </Badge>
-                      </div>
-                      
-                      <InfoGrid columns={1}>
-                        <InfoField
-                          label="Arguments"
-                          value={
-                            <CodeDisplay
-                              code={JSON.stringify(call.args, null, 2)}
-                              language="json"
-                              maxHeight="200px"
-                            />
-                          }
-                        />
-                        {call.result && (
-                          <InfoField
-                            label="Result"
-                            value={
-                              <CodeDisplay
-                                code={JSON.stringify(call.result, null, 2)}
-                                language="json"
-                                maxHeight="200px"
-                              />
-                            }
-                          />
-                        )}
-                      </InfoGrid>
-                    </div>
-                  ))}
-                </div>
+      <div className="space-y-8">
+        {Object.entries(sessionsByDate).map(([date, sessions]: [string, any]) => (
+          <div key={date}>
+            {/* Date header - only show if multiple days */}
+            {Object.keys(sessionsByDate).length > 1 && (
+              <div className="mb-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {date}
               </div>
             )}
-          </Card>
+
+            <div className="divide-y divide-border/20 rounded-md border border-border/20 overflow-hidden bg-background">
+              {sessions.map((session: any) => (
+                <AISessionItem key={session.id} session={session} formatDuration={formatDuration} />
+              ))}
+            </div>
+          </div>
         ))}
+
+        {/* Pagination controls */}
+        <div className="flex items-center justify-between pt-4 text-xs text-muted-foreground">
+          <div>
+            {data.sessions.length > 0 && (
+              <span>
+                Showing {(search.offset ?? 0) + 1}–{(search.offset ?? 0) + data.sessions.length} of {data.total}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              resetScroll={false}
+              search={(s: any) => ({ ...s, offset: Math.max(0, (s?.offset ?? 0) - (s?.limit ?? 20)) })}
+              className={`px-3 py-1 rounded-md border border-border/20 transition-colors ${(search.offset ?? 0) === 0
+                ? 'opacity-50 pointer-events-none'
+                : 'hover:bg-muted/30'
+                }`}
+            >
+              Previous
+            </Link>
+            <Link
+              resetScroll={false}
+              search={(s: any) => ({ ...s, offset: (s?.offset ?? 0) + (s?.limit ?? 20) })}
+              className={`px-3 py-1 rounded-md border border-border/20 transition-colors ${data.sessions.length < (search.limit ?? 20)
+                ? 'opacity-50 pointer-events-none'
+                : 'hover:bg-muted/30'
+                }`}
+            >
+              Next
+            </Link>
+          </div>
+        </div>
       </div>
     </PageSection>
   );
