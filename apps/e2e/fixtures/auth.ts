@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+
 import { DEV_AUTH } from "@cronicorn/config-defaults";
 
 /**
