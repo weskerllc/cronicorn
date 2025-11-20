@@ -21,6 +21,12 @@ export async function migrateHeaders(
     console.log("⚠️  No encryption secret provided - skipping header data migration");
     // eslint-disable-next-line no-console
     console.log("   Set BETTER_AUTH_SECRET environment variable if you have existing header data");
+    // Still need to drop the column even without migration
+    // eslint-disable-next-line no-console
+    console.log("🔄 Dropping old headers_json column...");
+    await db.execute(sql`ALTER TABLE job_endpoints DROP COLUMN IF EXISTS headers_json`);
+    // eslint-disable-next-line no-console
+    console.log("✓ Old headers_json column removed");
     return;
   }
 
@@ -52,6 +58,12 @@ export async function migrateHeaders(
   if (endpointsWithHeaders.length === 0) {
     // eslint-disable-next-line no-console
     console.log("✓ No endpoints with plaintext headers found");
+    // Still need to drop the column
+    // eslint-disable-next-line no-console
+    console.log("🔄 Dropping old headers_json column...");
+    await db.execute(sql`ALTER TABLE job_endpoints DROP COLUMN IF EXISTS headers_json`);
+    // eslint-disable-next-line no-console
+    console.log("✓ Old headers_json column removed");
     return;
   }
 
@@ -84,4 +96,11 @@ export async function migrateHeaders(
 
   // eslint-disable-next-line no-console
   console.log(`✓ Header migration complete: ${migrated} migrated, ${failed} failed`);
+
+  // Now safe to drop the old plaintext column
+  // eslint-disable-next-line no-console
+  console.log("🔄 Dropping old headers_json column...");
+  await db.execute(sql`ALTER TABLE job_endpoints DROP COLUMN IF EXISTS headers_json`);
+  // eslint-disable-next-line no-console
+  console.log("✓ Old headers_json column removed");
 }
