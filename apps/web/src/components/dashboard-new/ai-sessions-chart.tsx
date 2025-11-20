@@ -10,9 +10,9 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
-import type {TimeRangeValue} from "@/lib/time-range-labels";
+import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import {  getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
+import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
 
 interface AISessionsChartProps {
     data: Array<AISessionTimeSeriesPoint>;
@@ -24,9 +24,9 @@ interface AISessionsChartProps {
     maxStackedValue?: number;
 }
 
-export function AISessionsChart({ 
-    data, 
-    chartConfig, 
+export function AISessionsChart({
+    data,
+    chartConfig,
     timeRange,
     maxStackedValue: serverMaxStackedValue,
 }: AISessionsChartProps) {
@@ -95,10 +95,10 @@ export function AISessionsChart({
         if (serverMaxStackedValue !== undefined && serverMaxStackedValue > 0) {
             return serverMaxStackedValue;
         }
-        
+
         // Fallback: calculate client-side (for backward compatibility)
         if (chartData.length === 0) return 0;
-        
+
         // For each data point, sum all endpoint values to get the stacked total
         const maxValue = chartData.reduce((max, dataPoint) => {
             const stackedTotal = endpoints.reduce((sum, endpoint) => {
@@ -107,7 +107,7 @@ export function AISessionsChart({
             }, 0);
             return Math.max(max, stackedTotal);
         }, 0);
-        
+
         // Add 10% padding to prevent touching the top
         return maxValue * 1.1;
     }, [serverMaxStackedValue, chartData, endpoints]);
@@ -253,6 +253,7 @@ export function AISessionsChart({
                                         fill={`url(#fill-${endpoint.id})`}
                                         stroke={`var(--color-${sanitizedKey})`}
                                         stackId="a"
+                                        baseValue={0}
                                     />
                                 );
                             })}
