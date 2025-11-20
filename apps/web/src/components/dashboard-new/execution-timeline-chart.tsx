@@ -10,17 +10,22 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
+import type {TimeRangeValue} from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
+import {  getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
 
 interface ExecutionTimelineChartProps {
     data: Array<EndpointTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
+    /** Selected time range for label display */
+    timeRange?: TimeRangeValue;
 }
 
 export function ExecutionTimelineChart({
     data,
     chartConfig,
+    timeRange,
 }: ExecutionTimelineChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
@@ -145,12 +150,13 @@ export function ExecutionTimelineChart({
                             type="number"
                             scale="time"
                             domain={['dataMin', 'dataMax']}
-                            tickFormatter={(value) => {
-                                const date = new Date(Number(value));
-                                return date.toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                });
+                            ticks={chartData.length >= 2 ? [chartData[0].date as number, chartData[chartData.length - 1].date as number] : undefined}
+                            tickFormatter={(_value, index) => {
+                                // Show start label on left, end label on right
+                                if (index === 0) {
+                                    return getTimeRangeStartLabel(timeRange);
+                                }
+                                return getTimeRangeEndLabel();
                             }}
                         />
                         <YAxis
