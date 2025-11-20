@@ -149,7 +149,7 @@ function ChartTooltipContent({
 
     if (labelFormatter) {
       return (
-        <div className={cn("font-medium", labelClassName)}>
+        <div className={cn("font-medium text-red-500! bg-green-500", labelClassName)}>
           {labelFormatter(value, payload)}
         </div>
       );
@@ -232,7 +232,7 @@ function ChartTooltipContent({
                       )}
                     <div
                       className={cn(
-                        "flex flex-1 justify-between leading-none",
+                        "flex flex-1 justify-between leading-none gap-2",
                         nestLabel ? "items-end" : "items-center",
                       )}
                     >
