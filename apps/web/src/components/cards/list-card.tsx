@@ -80,16 +80,16 @@ export function ListCard({
                 )}
 
                 {/* Content */}
-                <div className="space-y-1 flex-1 min-w-0">
+                <div className="space-y-2 flex-1 min-w-0">
                     {/* Title & Subtitle */}
                     <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium">{title}</p>
+                        <p className="text-base font-semibold leading-tight">{title}</p>
                         {subtitle && <span className="text-sm text-muted-foreground">{subtitle}</span>}
                     </div>
 
                     {/* Metadata */}
                     {metadata && metadata.length > 0 && (
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                             {metadata.map((item, index) => (
                                 <span key={index}>{item}</span>
                             ))}
