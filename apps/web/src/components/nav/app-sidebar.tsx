@@ -8,6 +8,7 @@ import {
   IconSettings
 } from "@tabler/icons-react";
 import * as React from "react";
+import { Link } from "@tanstack/react-router";
 
 import { brand, urls } from "@cronicorn/content";
 import {
@@ -76,11 +77,11 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <a href="/dashboard">
+              <Link to="/dashboard">
                 <AppLogo className="size-5! fill-foreground" />
 
                 <span className="text-base font-semibold">{brand.name}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
