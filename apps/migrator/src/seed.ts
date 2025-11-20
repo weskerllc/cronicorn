@@ -259,8 +259,49 @@ function generateAISessions(endpoints: ReturnType<typeof generateEndpoints>): Ar
   // Helper: build realistic tool call entries using tool names and schemas in packages/worker-ai-planner/src/tools.ts
   const tc = {
     getLatest: () => ({ tool: "get_latest_response", args: {}, result: { found: true, responseBody: { ok: true, errors: 0 }, timestamp: new Date().toISOString(), status: "success" } }),
-    getHistory: (limit: number, offset: number) => ({ tool: "get_response_history", args: { limit, offset }, result: { count: Math.max(0, limit - (offset % 2)), pagination: { offset, limit, nextOffset: offset + limit }, hasMore: true, responses: Array.from({ length: limit }).map((_, i) => ({ responseBody: { ok: true, errors: i + offset }, timestamp: new Date(Date.now() - (i + offset + 1) * 300000).toISOString(), status: "success", durationMs: 200 + (i * 15) })), tokenSavingNote: "Response bodies truncated at 1000 chars to prevent token overflow" } }),
-    siblings: () => ({ tool: "get_sibling_latest_responses", args: {}, result: { count: 2, siblings: [{ endpointId: "sib-1", endpointName: "DB", responseBody: { ok: true }, timestamp: new Date().toISOString(), status: "success" }, { endpointId: "sib-2", endpointName: "Cache", responseBody: { ok: true }, timestamp: new Date().toISOString(), status: "success" }] } }),
+    getHistory: (limit: number, offset: number) => ({
+      tool: "get_response_history",
+      args: { limit, offset },
+      result: {
+        count: Math.max(0, limit - (offset % 2)),
+        pagination: {
+          offset,
+          limit,
+          nextOffset: offset + limit,
+        },
+        hasMore: true,
+        responses: Array.from({ length: limit }).map((_, i) => ({
+          responseBody: { ok: true, errors: i + offset },
+          timestamp: new Date(Date.now() - (i + offset + 1) * 300000).toISOString(),
+          status: "success",
+          durationMs: 200 + (i * 15),
+        })),
+        tokenSavingNote: "Response bodies truncated at 1000 chars to prevent token overflow",
+      },
+    }),
+    siblings: () => ({
+      tool: "get_sibling_latest_responses",
+      args: {},
+      result: {
+        count: 2,
+        siblings: [
+          {
+            endpointId: "sib-1",
+            endpointName: "DB",
+            responseBody: { ok: true },
+            timestamp: new Date().toISOString(),
+            status: "success",
+          },
+          {
+            endpointId: "sib-2",
+            endpointName: "Cache",
+            responseBody: { ok: true },
+            timestamp: new Date().toISOString(),
+            status: "success",
+          },
+        ],
+      },
+    }),
     proposeInterval: (intervalMs: number, ttlMinutes: number, reason?: string) => ({ tool: "propose_interval", args: { intervalMs, ttlMinutes, reason }, result: `Adjusted interval to ${intervalMs}ms (expires in ${ttlMinutes} minutes)${reason ? `: ${reason}` : ""}` }),
     proposeNext: (date: Date, ttlMinutes: number, reason?: string) => ({ tool: "propose_next_time", args: { nextRunAtIso: date.toISOString(), ttlMinutes, reason }, result: `Scheduled one-shot execution at ${date.toISOString()} (expires in ${ttlMinutes} minutes)${reason ? `: ${reason}` : ""}` }),
     pauseUntil: (until: Date | null, reason?: string) => ({ tool: "pause_until", args: { untilIso: until ? until.toISOString() : null, reason }, result: until ? `Paused until ${until.toISOString()}${reason ? `: ${reason}` : ""}` : `Resumed execution${reason ? `: ${reason}` : ""}` }),

@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   Pagination,
@@ -21,7 +21,7 @@ import { formatDuration } from "@/lib/endpoint-utils";
 export const Route = createFileRoute("/_authed/endpoints/$id/ai-sessions")({
   loader: async ({ params, context }) => {
     await context.queryClient.ensureQueryData(
-      sessionsQueryOptions(params.id, { limit: 100 }) // Fetch more upfront for client-side pagination
+      sessionsQueryOptions(params.id, { limit: 20, offset: 0 })
     );
   },
   component: AISessionsPage,
@@ -32,20 +32,12 @@ function AISessionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  const offset = (currentPage - 1) * itemsPerPage;
   const { data } = useSuspenseQuery(
-    sessionsQueryOptions(id, { limit: 100 })
+    sessionsQueryOptions(id, { limit: itemsPerPage, offset })
   );
 
-  const { paginatedSessions, totalPages } = useMemo(() => {
-    const total = Math.ceil(data.sessions.length / itemsPerPage);
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    const paginated = data.sessions.slice(start, end);
-    return {
-      paginatedSessions: paginated,
-      totalPages: total,
-    };
-  }, [data.sessions, currentPage]);
+  const totalPages = Math.ceil(data.total / itemsPerPage);
 
   if (data.sessions.length === 0) {
     return (
@@ -59,9 +51,9 @@ function AISessionsPage() {
     );
   }
 
-  // Group paginated sessions by date for optional date headers
+  // Group sessions by date for optional date headers
   type SessionType = (typeof data.sessions)[number];
-  const sessionsByDate = paginatedSessions.reduce<Record<string, Array<SessionType>>>((acc, session) => {
+  const sessionsByDate = data.sessions.reduce<Record<string, Array<SessionType>>>((acc, session) => {
     const date = new Date(session.analyzedAt).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -75,7 +67,7 @@ function AISessionsPage() {
   return (
     <PageSection>
       <div className="space-y-8">
-        {Object.entries(sessionsByDate).map(([date, sessions]: [string, any]) => (
+        {Object.entries(sessionsByDate).map(([date, sessions]: [string, SessionType[]]) => (
           <div key={date}>
             {/* Date header - only show if multiple days */}
             {Object.keys(sessionsByDate).length > 1 && (
@@ -85,7 +77,7 @@ function AISessionsPage() {
             )}
 
             <div className="divide-y divide-border/20 rounded-md border border-border/20 overflow-hidden bg-background">
-              {sessions.map((session: any) => (
+              {sessions.map((session: SessionType) => (
                 <AISessionItem key={session.id} session={session} formatDuration={formatDuration} />
               ))}
             </div>
@@ -96,7 +88,7 @@ function AISessionsPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between pt-4">
             <div className="text-xs text-muted-foreground whitespace-nowrap">
-              Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, data.sessions.length)} of {data.sessions.length}
+              Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, data.total)} of {data.total}
             </div>
 
             <Pagination>

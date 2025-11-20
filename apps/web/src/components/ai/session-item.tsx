@@ -143,7 +143,8 @@ export function AISessionItem({
                         </button>
                     )}
                 </div>
-            )}            {Array.isArray(session.toolCalls) && session.toolCalls.length > 0 && (
+            )}
+            {Array.isArray(session.toolCalls) && session.toolCalls.length > 0 && (
                 <div className="mt-1.5 space-y-2">
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                         {session.toolCalls.map((call, idx) => {
@@ -299,11 +300,11 @@ export function AISessionItem({
                                             {/* Display helpful hints from result (safe) */}
                                             {isObject(result) && (
                                                 <>
-                                                    {(result.hasMore ||
+                                                    {(Boolean(result.hasMore) ||
                                                         typeof result.tokenSavingNote ===
                                                         "string") && (
                                                             <div className="pt-2 border-t border-muted text-xs text-muted-foreground space-y-1">
-                                                                {result.hasMore && (
+                                                                {Boolean(result.hasMore) && (
                                                                     <p>
                                                                         💡 More results available -
                                                                         increase limit or offset
@@ -333,5 +334,3 @@ export function AISessionItem({
         </div>
     );
 }
-
-export default AISessionItem;
