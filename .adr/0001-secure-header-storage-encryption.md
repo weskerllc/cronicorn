@@ -66,23 +66,25 @@ We implemented end-to-end encryption for sensitive request headers using AES-256
 - ⚠️ **No key rotation**: Changing secret requires re-encrypting all headers (future enhancement)
 - ⚠️ **Performance**: Encryption/decryption adds ~1ms per operation (negligible for our use case)
 - ⚠️ **Zero-knowledge limitation**: Headers must be decrypted server-side to send to endpoints
+- ⚠️ **Breaking change**: Requires data migration for existing deployments with headers
 
 ### Neutral
-- 📝 **Migration path**: Plaintext data encrypted on first write after deployment
-- 📝 **Backward compatibility**: Old code without secret still reads plaintext from `headersJson`
+- 📝 **Migration path**: Run migration script to encrypt existing data, then apply schema migration
 - 📝 **UI masking only**: Frontend receives already-decrypted values (standard practice)
+- 📝 **No backward compatibility**: Old `headers_json` column completely removed to avoid tech debt
 
 ## Code Affected
 
 ### New Files
 - `packages/adapter-drizzle/src/crypto.ts` (encryption utility)
 - `packages/adapter-drizzle/src/__tests__/crypto.test.ts` (unit tests)
-- `packages/adapter-drizzle/migrations/0017_magical_nick_fury.sql` (schema migration)
+- `packages/adapter-drizzle/migrations/0018_loving_anita_blake.sql` (schema migration)
+- `packages/adapter-drizzle/scripts/migrate-headers.ts` (data migration script)
 - `apps/web/src/components/composed/secure-header-input.tsx` (UI component)
 
 ### Modified Files
-- `packages/adapter-drizzle/src/schema.ts` (added `headers_encrypted` column)
-- `packages/adapter-drizzle/src/jobs-repo.ts` (encrypt/decrypt logic)
+- `packages/adapter-drizzle/src/schema.ts` (removed `headers_json`, added `headers_encrypted`)
+- `packages/adapter-drizzle/src/jobs-repo.ts` (encrypt/decrypt logic, no backward compatibility)
 - `apps/api/src/lib/create-jobs-manager.ts` (wire encryption secret)
 - `apps/api/src/lib/create-dashboard-manager.ts` (wire encryption secret)
 - `apps/api/src/app.ts` (pass secret to factories)
@@ -93,19 +95,23 @@ We implemented end-to-end encryption for sensitive request headers using AES-256
 
 ## Alternatives Considered
 
-1. **Database-level encryption (PostgreSQL pgcrypto)**
+1. **Keep backward compatibility with headers_json**
+   - Rejected: Adds tech debt and complexity
+   - Clean migration is better than maintaining dual columns
+
+2. **Database-level encryption (PostgreSQL pgcrypto)**
    - Rejected: Requires column-level encryption keys in application code anyway
    - Our approach is simpler and gives more control
 
-2. **Secrets management service (AWS Secrets Manager, HashiCorp Vault)**
+3. **Secrets management service (AWS Secrets Manager, HashiCorp Vault)**
    - Rejected: Over-engineering for MVP, adds operational complexity
    - Can add later if needed for enterprise features
 
-3. **Client-side encryption (zero-knowledge)**
+4. **Client-side encryption (zero-knowledge)**
    - Rejected: Can't send encrypted headers to external APIs
    - Would require decryption in browser (defeats purpose)
 
-4. **No encryption, rely on database access controls**
+5. **No encryption, rely on database access controls**
    - Rejected: Doesn't meet compliance requirements
    - Unnecessary risk for credentials
 

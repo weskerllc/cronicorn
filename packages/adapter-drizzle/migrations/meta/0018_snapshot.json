@@ -1,5 +1,5 @@
 {
-  "id": "00ed48b5-c3e4-445b-9c09-3f0f872e5db0",
+  "id": "cdaf363b-8878-4f14-8f5c-7710f1c8fca0",
   "prevId": "27ae5daa-5768-442f-9a54-be78241ed6a9",
   "version": "7",
   "dialect": "postgresql",
@@ -606,12 +606,6 @@
         "method": {
           "name": "method",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "headers_json": {
-          "name": "headers_json",
-          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
