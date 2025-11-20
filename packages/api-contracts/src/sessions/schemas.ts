@@ -71,7 +71,7 @@ export const ListSessionsResponseSchema = z.object({
     description: "List of AI analysis sessions, ordered newest to oldest",
   }),
   total: z.number().int().nonnegative().openapi({
-    description: "Total number of sessions returned",
-    example: 10,
+    description: "Total number of sessions for this endpoint (for pagination)",
+    example: 150,
   }),
 });
