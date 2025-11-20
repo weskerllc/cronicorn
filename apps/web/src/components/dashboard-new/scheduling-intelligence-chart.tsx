@@ -180,7 +180,7 @@ export function SchedulingIntelligenceChart({
                 {hasData ? data
                     .filter(item => item && item.source && typeof item.source === "string")
                     .map((item) => {
-                        const config = chartConfig[item.source as keyof typeof chartConfig];
+                        const config = chartConfig[item.source];
                         // Skip if config doesn't have a color (shouldn't happen with dynamic config)
                         if (!config || typeof config !== 'object' || !('color' in config) || !config.color) return null;
                         return (
