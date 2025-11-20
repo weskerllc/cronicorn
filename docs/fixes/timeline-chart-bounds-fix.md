@@ -148,10 +148,41 @@ it('calculates correct max for multiple stacked endpoints', () => {
 This fix resolves the issue: "Timelines on dashboard - the lines sometimes go below the bottom axis and above the top axis"
 
 ## Client vs Server
-This is a **client-side only fix**. The issue was in how the React components calculated chart bounds from data, not in how the server generated the data.
 
-No server changes were needed because:
-1. The data from the server was correct
-2. The issue was in visualization, not data
-3. Recharts' auto-domain calculation didn't account for stacking
-4. Fix needed to be in the component that renders the chart
+**Updated Approach: Server-Side Calculation**
+
+Based on performance feedback, the calculation was moved to the server for better scalability:
+
+### Why Server-Side?
+1. **Performance**: Calculation happens once on server vs. on every client render
+2. **Scalability**: Better for large datasets (more endpoints, longer time ranges)
+3. **Efficiency**: Server already has aggregated data in memory
+4. **Network Cost**: Only +16 bytes (2 numbers) per API response
+
+### Implementation
+**Server (`DashboardManager`):**
+- Added `calculateMaxStackedValue` helper method
+- Calculates during data aggregation: O(n) where n = time series points
+- Returns `endpointTimeSeriesMaxStacked` and `aiSessionTimeSeriesMaxStacked`
+
+**Client (Chart Components):**
+- Accept optional `maxStackedValue` prop from server
+- Prefer server-calculated value for performance
+- Fallback to client-side calculation if not provided (backward compatibility)
+
+### Performance Comparison
+| Approach | When Calculated | Cost | Dataset Size Impact |
+|----------|----------------|------|---------------------|
+| Client-only (old) | Every render | O(d × e) per chart | Scales linearly with data |
+| Server-side (new) | Once on server | O(n) total | Constant client cost |
+
+Where:
+- d = number of dates in chart
+- e = number of endpoints displayed (up to 10)
+- n = total time series points
+
+### Backward Compatibility
+Client-side calculation remains as fallback, ensuring the fix works even if:
+- Server doesn't provide the value (old API version)
+- Server value is 0 or undefined
+- Integration with other data sources
