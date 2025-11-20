@@ -43,6 +43,26 @@ export const Route = createRootRouteWithContext<{
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/site.webmanifest" },
     ],
+    scripts: [
+      {
+        children: `
+          (function() {
+            const storageKey = 'vite-ui-theme';
+            const theme = localStorage.getItem(storageKey) || 'system';
+            const root = document.documentElement;
+            
+            root.classList.remove('light', 'dark');
+            
+            if (theme === 'system') {
+              const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+              root.classList.add(systemTheme);
+            } else {
+              root.classList.add(theme);
+            }
+          })();
+        `,
+      },
+    ],
   }),
   component: RootComponent,
 });
