@@ -171,6 +171,29 @@ export function createToolsForEndpoint(
       },
     }),
 
+    propose_body_values: tool({
+      description: "Generate a request body for the next endpoint execution based on observations. The endpoint has a bodySchema (JSON Schema) that describes the expected structure and field meanings. Observe response data from this endpoint and siblings, then generate a body that conforms to the schema.",
+      schema: z.object({
+        bodyValues: z.any().describe("Generated request body object. Must conform to the endpoint's bodySchema (JSON Schema). Use field descriptions in the schema to determine appropriate values based on your observations."),
+        ttlMinutes: z.number().positive().default(30).describe("How long these body values are valid (minutes)"),
+        reason: z.string().optional().describe("Explanation for the generated values - what you observed and why you chose these values"),
+      }),
+      execute: async (args) => {
+        const now = clock.now();
+        const expiresAt = new Date(now.getTime() + args.ttlMinutes * 60 * 1000);
+
+        // Write AI body hint to database
+        await jobs.writeAIBodyHint(endpointId, {
+
+          resolvedBody: args.bodyValues,
+          expiresAt,
+          reason: args.reason,
+        });
+
+        return `Generated body (expires in ${args.ttlMinutes} minutes)${args.reason ? `: ${args.reason}` : ""}`;
+      },
+    }),
+
     // ============================================================================
     // Query Tools: Response Data Retrieval
     // ============================================================================

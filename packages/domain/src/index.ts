@@ -12,3 +12,4 @@ export * from "./fixtures/index.js";
 export * from "./governor/index.js";
 export * from "./ports/index.js";
 export * from "./quota/tier-limits.js";
+export * from "./template/index.js";

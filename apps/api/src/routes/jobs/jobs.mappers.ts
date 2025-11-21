@@ -58,6 +58,7 @@ export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
     method: endpoint.method,
     headersJson: endpoint.headersJson,
     bodyJson: endpoint.bodyJson,
+    bodySchema: endpoint.bodySchema,
     timeoutMs: endpoint.timeoutMs,
     maxExecutionTimeMs: endpoint.maxExecutionTimeMs,
     maxResponseSizeKb: endpoint.maxResponseSizeKb,
@@ -65,6 +66,9 @@ export function mapEndpointToResponse(endpoint: JobEndpoint): EndpointResponse {
     aiHintNextRunAt: endpoint.aiHintNextRunAt?.toISOString(),
     aiHintExpiresAt: endpoint.aiHintExpiresAt?.toISOString(),
     aiHintReason: endpoint.aiHintReason,
+    aiHintBodyResolved: endpoint.aiHintBodyResolved,
+    aiHintBodyExpiresAt: endpoint.aiHintBodyExpiresAt?.toISOString(),
+    aiHintBodyReason: endpoint.aiHintBodyReason,
   };
 }
 

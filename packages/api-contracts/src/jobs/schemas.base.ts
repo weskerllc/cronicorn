@@ -71,7 +71,8 @@ const EndpointFieldsBaseSchemaShape = {
   url: z.string().url().describe("HTTP endpoint URL"),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET").describe("HTTP method"),
   headersJson: z.record(z.string(), z.string()).optional().describe("HTTP headers as key-value pairs"),
-  bodyJson: z.any().optional().describe("Request body (JSON)"),
+  bodyJson: z.any().optional().describe("Static request body (JSON). Use this for fixed request bodies."),
+  bodySchema: z.any().optional().describe("JSON Schema describing dynamic request body structure. AI generates bodies conforming to this schema based on endpoint observations. Include natural language descriptions in field descriptions to guide AI."),
   timeoutMs: z.number().int().positive().optional().describe("Request timeout in milliseconds"),
   maxExecutionTimeMs: z.number().int().positive().max(1800000).optional().describe("Maximum expected execution time in milliseconds (for lock duration). Default: 60000 (1 minute). Max: 1800000 (30 minutes)."),
   maxResponseSizeKb: z.number().int().positive().optional().describe("Maximum response size in kilobytes"),
@@ -123,7 +124,8 @@ export const EndpointResponseBaseSchema = z.object({
   url: z.string().optional().describe("HTTP endpoint URL"),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).optional().describe("HTTP method"),
   headersJson: z.record(z.string(), z.string()).optional().describe("HTTP headers"),
-  bodyJson: z.any().optional().describe("Request body"),
+  bodyJson: z.any().optional().describe("Static request body"),
+  bodySchema: z.any().optional().describe("JSON Schema for AI-generated request bodies"),
   timeoutMs: z.number().optional().describe("Request timeout in milliseconds"),
   maxExecutionTimeMs: z.number().optional().describe("Maximum execution time in milliseconds"),
   maxResponseSizeKb: z.number().optional().describe("Maximum response size in kilobytes"),
@@ -131,6 +133,9 @@ export const EndpointResponseBaseSchema = z.object({
   aiHintNextRunAt: z.string().datetime().optional().describe("AI-suggested next run time (one-shot). If both interval and one-shot hints are active, the earliest scheduled time wins."),
   aiHintExpiresAt: z.string().datetime().optional().describe("When the AI hint expires"),
   aiHintReason: z.string().optional().describe("Reason for AI hint"),
+  aiHintBodyResolved: z.any().optional().describe("AI-generated request body (active if not expired)"),
+  aiHintBodyExpiresAt: z.string().datetime().optional().describe("When the AI-generated body hint expires"),
+  aiHintBodyReason: z.string().optional().describe("AI's reasoning for the generated body values"),
 });
 
 // ==================== Adaptive Scheduling Schemas ====================
