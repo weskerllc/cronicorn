@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 /**
  * Calculate maximum stacked value for Y-axis domain in stacked area charts.
