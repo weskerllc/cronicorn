@@ -20,15 +20,12 @@ interface AISessionsChartProps {
     chartConfig: ChartConfig;
     /** Selected time range for label display */
     timeRange?: TimeRangeValue;
-    /** Pre-calculated maximum stacked value from server (includes 10% padding) */
-    maxStackedValue?: number;
 }
 
 export function AISessionsChart({
     data,
     chartConfig,
     timeRange,
-    maxStackedValue: serverMaxStackedValue,
 }: AISessionsChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
@@ -89,17 +86,12 @@ export function AISessionsChart({
         return data.reduce((sum, point) => sum + point.sessionCount, 0);
     }, [data]);
 
-    // Use server-provided max stacked value, or calculate client-side as fallback
+    // Calculate max stacked value client-side based on the DISPLAYED endpoints (top 10)
+    // This ensures the Y-axis matches what's actually rendered in the chart
     const maxStackedValue = useMemo(() => {
-        // Prefer server-calculated value for better performance
-        if (serverMaxStackedValue !== undefined && serverMaxStackedValue > 0) {
-            return serverMaxStackedValue;
-        }
-
-        // Fallback: calculate client-side (for backward compatibility)
         if (chartData.length === 0) return 0;
 
-        // For each data point, sum all endpoint values to get the stacked total
+        // For each data point, sum all displayed endpoint values to get the stacked total
         const maxValue = chartData.reduce((max, dataPoint) => {
             const stackedTotal = endpoints.reduce((sum, endpoint) => {
                 const value = dataPoint[endpoint.name];
@@ -110,7 +102,7 @@ export function AISessionsChart({
 
         // Add 10% padding to prevent touching the top
         return maxValue * 1.1;
-    }, [serverMaxStackedValue, chartData, endpoints]);
+    }, [chartData, endpoints]);
 
     const description = hasData ? (
         <>

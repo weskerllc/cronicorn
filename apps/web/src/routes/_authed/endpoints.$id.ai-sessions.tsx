@@ -67,7 +67,7 @@ function AISessionsPage() {
   return (
     <PageSection>
       <div className="space-y-8">
-        {Object.entries(sessionsByDate).map(([date, sessions]: [string, SessionType[]]) => (
+        {Object.entries(sessionsByDate).map(([date, sessions]: [string, Array<SessionType>]) => (
           <div key={date}>
             {/* Date header - only show if multiple days */}
             {Object.keys(sessionsByDate).length > 1 && (
