@@ -23,8 +23,6 @@ export const {
   signIn,
   signUp,
   signOut,
-  forgetPassword,
-  resetPassword,
 } = authClient;
 
 export type Session = typeof authClient.$Infer.Session;

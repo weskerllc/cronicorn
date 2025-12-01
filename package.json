@@ -39,7 +39,7 @@
     "test": "vitest run",
     "test:coverage": "dotenv -e .env vitest run --coverage",
     "test:e2e": "pnpm --filter @cronicorn/e2e test",
-    "lint": "eslint . --cache",
+    "lint": "eslint .",
     "lint:fix": "eslint . --max-warnings 0 --fix",
     "lint:web": "pnpm -F @cronicorn/web lint --fix",
     "sim": "pnpm run -r --parallel sim",
