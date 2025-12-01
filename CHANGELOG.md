@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/weskerllc/cronicorn/compare/v1.13.0...v1.13.1) (2025-12-01)
+
+
+### Bug Fixes
+
+* Y-axis domain mismatch in stacked area charts ([#65](https://github.com/weskerllc/cronicorn/issues/65)) ([b83cfc2](https://github.com/weskerllc/cronicorn/commit/b83cfc203b275af878b231bd125804210338c1d7))
+
 # [1.13.0](https://github.com/weskerllc/cronicorn/compare/v1.12.4...v1.13.0) (2025-11-20)
 
 
