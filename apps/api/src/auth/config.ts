@@ -17,75 +17,28 @@ import type { Database } from "../lib/db";
  * Our middleware handles checking each authentication method in order.
  */
 export function createAuth(config: Env, db: Database) {
-  // Determine which authentication methods are enabled
   const hasGitHubOAuth = !!(config.GITHUB_CLIENT_ID && config.GITHUB_CLIENT_SECRET);
   const hasAdminUser = !!(config.ADMIN_USER_EMAIL && config.ADMIN_USER_PASSWORD);
-
-  // Detect if we're in an HTTPS environment (production or staging)
-  const isHttps = config.BETTER_AUTH_URL.startsWith("https://");
-
-  // Check if we're in local development (different ports = cross-origin)
-  const isLocalDev = config.BETTER_AUTH_URL.includes("localhost") || config.BETTER_AUTH_URL.includes("127.0.0.1");
-
-  // Extract domain from BETTER_AUTH_URL for cookie configuration
-  // This ensures cookies work correctly through Cloudflare proxy
-  const getDomainFromUrl = (url: string): string | undefined => {
-    try {
-      const urlObj = new URL(url);
-      // For production domains, use the domain without subdomain
-      // For localhost, return undefined (browser will use current domain)
-      if (urlObj.hostname === "localhost" || urlObj.hostname.startsWith("127.")) {
-        return undefined;
-      }
-      // Extract root domain (e.g., "cronicorn.com" from "https://cronicorn.com")
-      return urlObj.hostname;
-    }
-    catch {
-      return undefined;
-    }
-  };
-
-  const cookieDomain = getDomainFromUrl(config.BETTER_AUTH_URL);
 
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {
-        // Built-in Better Auth tables (singular names from our schema)
         user: schema.user,
         session: schema.session,
         account: schema.account,
         verification: schema.verification,
-
-        // Custom plugin tables
         apikey: schema.apiKey,
-        deviceCode: schema.deviceCodes, // Device flow uses plural table name
-        oauthToken: schema.oauthTokens, // Device flow uses plural table name
+        deviceCode: schema.deviceCodes,
+        oauthToken: schema.oauthTokens,
       },
     }),
     secret: config.BETTER_AUTH_SECRET,
     baseURL: config.BETTER_AUTH_URL,
     trustedOrigins: [config.WEB_URL],
-    // Long-lived sessions for MCP/CLI tools (30 days)
     session: {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
-      updateAge: 60 * 60 * 24 * 7, // Refresh session weekly
-    },
-    // Advanced cookie configuration for production HTTPS and local dev
-    advanced: {
-      defaultCookieAttributes: {
-        // For local dev with different ports, use "none" to allow cross-origin cookies
-        // For production with same domain, use "lax" for better security
-        sameSite: isLocalDev ? "none" : "lax",
-        // secure must be true when sameSite is "none" (browsers require this)
-        // For local dev, we'll use secure=true but browser will accept it over HTTP for localhost
-        secure: isLocalDev ? true : isHttps,
-        httpOnly: true, // Prevent JavaScript access for security
-        path: "/",
-        // Explicitly set domain for production to ensure Cloudflare compatibility
-        // For localhost, undefined allows browser to use current domain automatically
-        ...(cookieDomain && { domain: cookieDomain }),
-      },
+      updateAge: 60 * 60 * 24, // Refresh daily
     },
     // Email/Password auth enabled if admin user is configured
     emailAndPassword: hasAdminUser
