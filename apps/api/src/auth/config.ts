@@ -20,6 +20,8 @@ export function createAuth(config: Env, db: Database) {
   const hasGitHubOAuth = !!(config.GITHUB_CLIENT_ID && config.GITHUB_CLIENT_SECRET);
   const hasAdminUser = !!(config.ADMIN_USER_EMAIL && config.ADMIN_USER_PASSWORD);
 
+  const isProduction = config.NODE_ENV === "production";
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -36,6 +38,21 @@ export function createAuth(config: Env, db: Database) {
     secret: config.BETTER_AUTH_SECRET,
     baseURL: config.BETTER_AUTH_URL,
     trustedOrigins: [config.WEB_URL],
+    // Advanced configuration for production deployment behind reverse proxy
+    advanced: {
+      // Force secure cookies in production (required when behind HTTPS proxy like Traefik)
+      useSecureCookies: isProduction,
+      // Default cookie attributes for cross-origin cookie handling
+      defaultCookieAttributes: {
+        // Use 'lax' for same-site requests (recommended for OAuth flows)
+        // 'lax' allows cookies to be sent with top-level navigations (like OAuth redirects)
+        sameSite: "lax",
+        // Secure flag - only send cookies over HTTPS in production
+        secure: isProduction,
+        // Path scope for cookies
+        path: "/",
+      },
+    },
     session: {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
       updateAge: 60 * 60 * 24, // Refresh daily
@@ -43,19 +60,19 @@ export function createAuth(config: Env, db: Database) {
     // Email/Password auth enabled if admin user is configured
     emailAndPassword: hasAdminUser
       ? {
-          enabled: true,
-          requireEmailVerification: false, // Skip verification for admin users
-        }
+        enabled: true,
+        requireEmailVerification: false, // Skip verification for admin users
+      }
       : undefined,
     // GitHub OAuth enabled only if credentials are provided
     socialProviders: hasGitHubOAuth
       ? {
-          github: {
-            clientId: config.GITHUB_CLIENT_ID!,
-            clientSecret: config.GITHUB_CLIENT_SECRET!,
-            redirectURI: `${config.BETTER_AUTH_URL}/api/auth/callback/github`,
-          },
-        }
+        github: {
+          clientId: config.GITHUB_CLIENT_ID!,
+          clientSecret: config.GITHUB_CLIENT_SECRET!,
+          redirectURI: `${config.BETTER_AUTH_URL}/api/auth/callback/github`,
+        },
+      }
       : undefined,
     plugins: [
       bearer({

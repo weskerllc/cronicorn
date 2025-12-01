@@ -5,7 +5,9 @@ const getAPIURL = () => {
   return import.meta.env.VITE_API_URL || "http://localhost:3333";
 };
 
-const authUrl = `${getAPIURL()}/api/auth`;
+// VITE_API_URL already includes /api (e.g., https://cronicorn.com/api)
+// Better Auth routes are at /auth/* relative to the API base
+const authUrl = `${getAPIURL()}/auth`;
 
 export const authClient = createAuthClient({
   baseURL: authUrl,
