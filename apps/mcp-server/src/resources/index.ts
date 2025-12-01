@@ -24,11 +24,6 @@ export type DocumentResource = {
   title: string;
   description: string;
   mimeType: string;
-  annotations?: {
-    audience?: string[];
-    priority?: number;
-    lastModified?: string;
-  };
 };
 
 export type DocumentContent = {
@@ -85,32 +80,6 @@ async function parseMarkdownFile(filePath: string): Promise<DocumentContent | nu
       mimeType: mcpMetadata.mimeType || "text/markdown",
     };
 
-    // Add annotations if available
-    const annotations: DocumentResource["annotations"] = {};
-
-    if (data.tags && Array.isArray(data.tags)) {
-      // Filter tags to only include audience-relevant ones
-      const audienceTags = data.tags.filter((t: string) =>
-        ["user", "assistant"].includes(t),
-      );
-      if (audienceTags.length > 0) {
-        annotations.audience = audienceTags;
-      }
-    }
-
-    if (mcpMetadata.priority !== undefined && typeof mcpMetadata.priority === "number") {
-      annotations.priority = mcpMetadata.priority;
-    }
-
-    if (mcpMetadata.lastModified) {
-      annotations.lastModified = mcpMetadata.lastModified;
-    }
-
-    // Only add annotations if not empty
-    if (Object.keys(annotations).length > 0) {
-      resource.annotations = annotations;
-    }
-
     return {
       metadata: resource,
       content: markdownContent.trim(),
@@ -166,7 +135,6 @@ export async function registerResources(server: McpServer): Promise<void> {
         title: doc.metadata.title,
         description: doc.metadata.description,
         mimeType: doc.metadata.mimeType,
-        annotations: doc.metadata.annotations,
       },
       async () => ({
         contents: [
