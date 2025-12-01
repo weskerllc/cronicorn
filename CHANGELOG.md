@@ -1,3 +1,13 @@
+## [1.13.2](https://github.com/weskerllc/cronicorn/compare/v1.13.1...v1.13.2) (2025-12-01)
+
+
+### Bug Fixes
+
+* Better Auth Session ([27f6e76](https://github.com/weskerllc/cronicorn/commit/27f6e76a09330b993f88de3014b8a22656995b83))
+* Bump version ([91c6944](https://github.com/weskerllc/cronicorn/commit/91c6944d86aca9244c61a8940890115d62a357a5))
+* Dep update fixes ([f792ada](https://github.com/weskerllc/cronicorn/commit/f792ada547c843fa5af534a44f088284e84e3218))
+* MCP ([33780b4](https://github.com/weskerllc/cronicorn/commit/33780b425ba46821cbb01a08707c25a1d5092785))
+
 # 1.0.0 (2025-12-01)
 
 
