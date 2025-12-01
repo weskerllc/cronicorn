@@ -2,7 +2,7 @@ import { schema } from "@cronicorn/adapter-drizzle";
 import { DEV_DATABASE } from "@cronicorn/config-defaults";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { test as base } from "vitest";
+import { it as base } from "vitest";
 
 type Fixtures = {
   tx: NodePgDatabase<typeof schema>;
@@ -31,7 +31,6 @@ const pool = new Pool({ connectionString: DATABASE_URL });
  * });
  * ```
  */
-// eslint-disable-next-line test/consistent-test-it
 export const test = base.extend<Fixtures>({
   // eslint-disable-next-line no-empty-pattern
   tx: async ({ }, use) => {
