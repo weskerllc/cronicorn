@@ -1,3 +1,12 @@
+## [1.13.3](https://github.com/weskerllc/cronicorn/compare/v1.13.2...v1.13.3) (2025-12-02)
+
+
+### Bug Fixes
+
+* auth in e2e tests ([c896aa7](https://github.com/weskerllc/cronicorn/commit/c896aa75851014c8beaf6857fb0287db94172f96))
+* Revert config ([c82bdbc](https://github.com/weskerllc/cronicorn/commit/c82bdbce4a3500e41c4a33e6691910f0c02189f1))
+* Secure cookies ([728ba2e](https://github.com/weskerllc/cronicorn/commit/728ba2e272868ab9b4c4f73be6ceda2a0afe29dc))
+
 ## [1.13.2](https://github.com/weskerllc/cronicorn/compare/v1.13.1...v1.13.2) (2025-12-01)
 
 
