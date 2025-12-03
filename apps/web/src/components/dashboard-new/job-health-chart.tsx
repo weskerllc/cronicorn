@@ -146,7 +146,7 @@ export function JobHealthChart({
         </Pagination>
     ) : undefined;
 
-    const title = selectedJobId ? "Runs Per Job • Filtered" : "Runs Per Job";
+    const title = "Runs Per Job";
     return (
         <DashboardCard
             title={title}

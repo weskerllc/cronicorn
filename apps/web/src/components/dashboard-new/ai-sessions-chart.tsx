@@ -86,22 +86,22 @@ export function AISessionsChart({
         return data.reduce((sum, point) => sum + point.sessionCount, 0);
     }, [data]);
 
-    // Calculate max stacked value client-side based on the DISPLAYED endpoints (top 10)
-    // This ensures the Y-axis matches what's actually rendered in the chart
-    const maxStackedValue = useMemo(() => {
+    // Calculate max value across all displayed endpoints (not stacked)
+    // This ensures the Y-axis shows the true magnitude of each endpoint's activity
+    const maxValue = useMemo(() => {
         if (chartData.length === 0) return 0;
 
-        // For each data point, sum all displayed endpoint values to get the stacked total
-        const maxValue = chartData.reduce((max, dataPoint) => {
-            const stackedTotal = endpoints.reduce((sum, endpoint) => {
+        // Find the maximum single value across all data points and endpoints
+        const max = chartData.reduce((maxVal, dataPoint) => {
+            const pointMax = endpoints.reduce((pointMaxVal, endpoint) => {
                 const value = dataPoint[endpoint.name];
-                return sum + (typeof value === 'number' ? value : 0);
+                return Math.max(pointMaxVal, typeof value === 'number' ? value : 0);
             }, 0);
-            return Math.max(max, stackedTotal);
+            return Math.max(maxVal, pointMax);
         }, 0);
 
-        // Add 10% padding to prevent touching the top
-        return maxValue * 1.1;
+        // Add 10% padding and round up to a nice whole number
+        return Math.ceil(max * 1.1);
     }, [chartData, endpoints]);
 
     const description = hasData ? (
@@ -151,12 +151,12 @@ export function AISessionsChart({
                                             <stop
                                                 offset="5%"
                                                 stopColor={`var(--color-${sanitizedKey})`}
-                                                stopOpacity={0.8}
+                                                stopOpacity={0.4}
                                             />
                                             <stop
                                                 offset="95%"
                                                 stopColor={`var(--color-${sanitizedKey})`}
-                                                stopOpacity={0.1}
+                                                stopOpacity={0.05}
                                             />
                                         </linearGradient>
                                     );
@@ -181,11 +181,12 @@ export function AISessionsChart({
                             }}
                         />
                         <YAxis
-                            domain={[0, maxStackedValue || 'auto']}
+                            domain={[0, maxValue || 'auto']}
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
-                            tickFormatter={(value) => value.toLocaleString()}
+                            allowDecimals={false}
+                            tickFormatter={(value) => Math.round(value).toLocaleString()}
                         />
                         <ChartTooltip
                             cursor={false}
@@ -244,8 +245,8 @@ export function AISessionsChart({
                                         type="natural"
                                         fill={`url(#fill-${endpoint.id})`}
                                         stroke={`var(--color-${sanitizedKey})`}
-                                        stackId="a"
-                                        baseValue={0}
+                                        strokeWidth={2}
+                                        fillOpacity={0.6}
                                     />
                                 );
                             })}
