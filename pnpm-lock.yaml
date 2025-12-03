@@ -141,6 +141,9 @@ importers:
       '@cronicorn/config-defaults':
         specifier: workspace:*
         version: link:../../packages/config-defaults
+      '@cronicorn/content':
+        specifier: workspace:*
+        version: link:../../packages/content
       '@cronicorn/domain':
         specifier: workspace:*
         version: link:../../packages/domain

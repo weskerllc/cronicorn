@@ -1,5 +1,8 @@
 import type { OpenAPIObjectConfigure } from "@hono/zod-openapi";
 
+import { brand } from "@cronicorn/content/brand";
+import { business } from "@cronicorn/content/business";
+import { urls } from "@cronicorn/content/urls";
 import { apiReference } from "@scalar/hono-api-reference";
 
 import type { AppBindings, AppOpenAPI } from "../types.js";
@@ -8,43 +11,56 @@ export default function configureOpenAPI(app: AppOpenAPI, apiURL: string) {
   const servers = [
     {
       url: apiURL,
-      description: "Cronicorn API",
+      description: `${brand.name} API`,
     },
-    // Only include local dev server in development mode
-    // ...(env.NODE_ENV === "development"
-    //   ? [
-    //       {
-    //         url: "http://localhost:9999",
-    //         description: "Local development environment",
-    //       },
-    //     ]
-    //   : []
-    // ),
   ];
+
+  // Register security schemes with OpenAPI registry
+  // API Key authentication (header-based) - matches Better Auth apiKey plugin
+  app.openAPIRegistry.registerComponent("securitySchemes", "apiKey", {
+    type: "apiKey",
+    in: "header",
+    name: "x-api-key", // Must be lowercase to match Better Auth's apiKeyHeaders config
+    description: "API key for service-to-service authentication. Create an API key in your account settings.",
+  });
+
+  // Bearer token authentication - for session-based auth with Bearer tokens
+  app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
+    type: "http",
+    scheme: "bearer",
+    bearerFormat: "JWT",
+    description: "Bearer token authentication. Obtain a token via the device authorization flow or session API.",
+  });
+
   // Define OpenAPI document
   const openApiDocument: OpenAPIObjectConfigure<AppBindings, "/doc"> = {
-    openapi: "3.0.0", // Using 3.0.0 for broader compatibility
+    openapi: "3.0.0",
     info: {
       version: "v1",
-      title: "Cronicorn API",
-      description: "A powerful API for managing and executing recurring tasks and jobs",
-      termsOfService: "https://cronicorn.example/terms/",
+      title: `${brand.name} API`,
+      description: brand.description,
+      termsOfService: `${urls.website}${urls.legal.terms}`,
       contact: {
-        name: "API Support",
-        url: "https://cronicorn.example/support",
-        email: "api@cronicorn.example",
+        name: `${brand.name} Support`,
+        url: urls.docs.base,
+        email: business.contactPoint.email,
       },
       license: {
         name: "MIT",
         url: "https://opensource.org/licenses/MIT",
       },
     },
+    // Link to full documentation site - Scalar renders this in the UI
+    externalDocs: {
+      description: `${brand.name} Documentation`,
+      url: urls.docs.base,
+    },
     tags: [
       {
         name: "Jobs",
-        description: `A **Job** in Cronicorn represents a scheduled task defined with:
+        description: `A **Job** in ${brand.name} represents a scheduled task defined with:
 
-- A **plain‑English rule** (e.g. “Run health check every 15 min, but every 3 in if errors > 2%”)
+- A **plain‑English rule** (e.g. "Run health check every 15 min, but every 3 min if errors > 2%")
 - A list of **Endpoints** (HTTP calls made when the job triggers)
 
 ### ✅ Purpose  
@@ -69,23 +85,15 @@ The AI agent linked to the job:
   ]
 }
 \`\`\`
-
 `,
-      },
-      {
-        name: "Planets",
-        description: "Everything about planets",
-      },
-      {
-        name: "Celestial Bodies",
-        description: "Celestial bodies are the planets and satellites in the Scalar Galaxy.",
       },
     ],
     servers,
+    // Document-level security - references the registered security schemes
+    // OR relationship: either apiKey OR bearerAuth can be used
     security: [
       {
-        "API Key": [],
-        "API Secret": [],
+        apiKey: [],
       },
       {
         bearerAuth: [],
@@ -93,38 +101,12 @@ The AI agent linked to the job:
     ],
   };
 
-  // Register bearer auth scheme
-  // app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
-  //   type: "http",
-  //   scheme: "bearer",
-  //   in: "header",
-
-  //   bearerFormat: "JWT",
-  //   description: "JWT Bearer token authentication",
-  // });
-
-  // Register API Key auth scheme
-  // app.openAPIRegistry.registerComponent("securitySchemes", "API Key", {
-  //     type: "apiKey",
-  //     in: "header",
-  //     name: "X-API-Key",
-  //     // description: "API key authentication. Must be used with X-API-Secret header.",
-  // });
-
-  // Register API Secret auth scheme
-  // app.openAPIRegistry.registerComponent("securitySchemes", "API Secret", {
-  //   type: "apiKey",
-  //   in: "header",
-  //   name: "X-API-Secret",
-  //   // description: "API secret authentication. Must be used with X-API-Key header.",
-  // });
-
   app.doc("/doc", openApiDocument);
 
   app.get(
     "/reference",
     apiReference({
-      pageTitle: "Cronicorn API Reference",
+      pageTitle: `${brand.name} API Reference`,
       theme: "alternate",
       layout: "modern",
       baseServerURL: apiURL,
@@ -137,28 +119,30 @@ The AI agent linked to the job:
         url: `/api/doc`,
       },
       servers,
+      // SEO and social sharing metadata
+      metaData: {
+        title: `${brand.name} API Reference`,
+        description: `API documentation for ${brand.name} - ${brand.description}`,
+        ogTitle: `${brand.name} API Reference`,
+        ogDescription: brand.description,
+      },
       // Authentication configuration for Scalar UI
+      // Scheme names must match those registered in OpenAPI securitySchemes
       authentication: {
-        // Set which security scheme to prefer by default
-        // preferredSecurityScheme: "apiKey",
+        // Set API key as the preferred scheme (most common for programmatic access)
+        preferredSecurityScheme: "apiKey",
+        // Persist auth credentials in localStorage for convenience
         securitySchemes: {
-          // API Key auth configuration
-          "API Key": {
-            name: "X-API-Key",
+          // API Key auth configuration - header name must be lowercase to match Better Auth
+          apiKey: {
+            name: "x-api-key",
             in: "header",
             value: "", // Empty by default, user will fill in
           },
-          // API Secret auth configuration
-          // "API Secret": {
-          //   name: "X-API-Secret",
-          //   in: "header",
-          //   value: "", // Empty by default, user will fill in
-          // },
-          // JWT Bearer auth configuration
-          // bearerAuth: {
-          //   in: "header",
-          //   token: "", // Empty by default, user will fill in
-          // },
+          // Bearer auth configuration
+          bearerAuth: {
+            token: "", // Empty by default, user will fill in
+          },
         },
       },
     }),

@@ -23,6 +23,7 @@
     "@cronicorn/adapter-system-clock": "workspace:*",
     "@cronicorn/api-contracts": "workspace:*",
     "@cronicorn/config-defaults": "workspace:*",
+    "@cronicorn/content": "workspace:*",
     "@cronicorn/domain": "workspace:*",
     "@cronicorn/services": "workspace:*",
     "@hono/node-server": "^1.13.7",

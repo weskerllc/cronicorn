@@ -17,6 +17,7 @@ export const getAuthConfig = createRoute({
   path: "/auth/config",
   method: "get",
   tags: ["Authentication"],
+  hide: true,
   summary: "Get available authentication methods",
   description: "Returns which authentication methods are enabled on this server (email/password, GitHub OAuth). No authentication required.",
   responses: {
