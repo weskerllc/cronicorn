@@ -384,9 +384,9 @@ Remember: Query tools are cheap—use them to make informed decisions.
 **Proposed:**
 ```
 **Efficiency Guidelines:**
-- Query 2-3 pages of history maximum (20-30 records total)
+- 10-30 records is usually sufficient for trend analysis
 - If consecutive responses show the same status/pattern, stop paginating
-- One page is often sufficient for stable endpoints
+- Query deeper only when investigating specific anomalies or multi-day patterns
 - Action tools change production behavior—require clear evidence
 ```
 
@@ -488,18 +488,22 @@ hint: hasMore && args.offset === 0
 **Proposed Addition:**
 ```typescript
 // At start of get_response_history execute function:
-const MAX_TOTAL_RECORDS = 50;
+// Note: This limit is configurable per-tenant if deeper history is needed
+// (e.g., investigating multi-day patterns, high-frequency endpoints)
+const MAX_TOTAL_RECORDS = config.maxHistoryRecords || 50;
 const effectiveOffset = Math.min(args.offset, MAX_TOTAL_RECORDS - args.limit);
 
 if (args.offset >= MAX_TOTAL_RECORDS) {
   return {
     count: 0,
-    message: `Maximum history depth reached (${MAX_TOTAL_RECORDS} records). This should be sufficient for trend analysis.`,
+    message: `Maximum history depth reached (${MAX_TOTAL_RECORDS} records). Contact support if deeper analysis needed.`,
     hasMore: false,
     pagination: { offset: args.offset, limit: args.limit },
   };
 }
 ```
+
+**Flexibility Note:** For high-frequency endpoints (e.g., 30-second intervals during flash sales), 50 records only covers ~25 minutes. Consider making this configurable via tenant settings or endpoint metadata.
 
 ---
 
@@ -553,12 +557,18 @@ const result = await generateText({
   prompt: input,
   tools: cleanTools,
   maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
-  maxSteps: config.maxSteps || 15, // Safety limit on tool call iterations
+  maxSteps: config.maxSteps || 20, // Safety limit on tool call iterations
   stopWhen: finalToolName ? hasToolCall(finalToolName) : undefined,
 });
 ```
 
 Also add `maxSteps?: number` to `VercelAiClientConfig` interface.
+
+**Flexibility Note:** Default of 20 allows for:
+- 1 get_latest_response + 2-3 get_response_history pages + 1 get_sibling + 1 action + 1 submit = ~7 typical
+- Complex ETL coordination with 5+ siblings = ~12 steps
+- Deep investigation scenarios = up to 20 steps
+- Override via config for unusual requirements
 
 ---
 
@@ -589,18 +599,41 @@ async getLastAnalyzedAt(endpointId: string): Promise<Date | null> {
 
 2. In worker loop, filter out recently-analyzed endpoints:
 ```typescript
-const ANALYSIS_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
+const ANALYSIS_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes default
+const URGENT_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes for state changes
 
 const endpointsToAnalyze = [];
 for (const id of endpointIds) {
   const lastAnalyzed = await sessions.getLastAnalyzedAt(id);
+  const endpoint = await jobs.getEndpoint(id);
+  const lastSession = await sessions.getLastSessionSummary(id);
+  
+  // Detect significant state changes that warrant immediate re-analysis
+  const stateChanged = detectSignificantChange(endpoint, lastSession);
+  const effectiveCooldown = stateChanged ? URGENT_COOLDOWN_MS : ANALYSIS_COOLDOWN_MS;
+  
   const cooldownElapsed = !lastAnalyzed || 
-    (clock.now().getTime() - lastAnalyzed.getTime() > ANALYSIS_COOLDOWN_MS);
+    (clock.now().getTime() - lastAnalyzed.getTime() > effectiveCooldown);
   if (cooldownElapsed) {
     endpointsToAnalyze.push(id);
   }
 }
+
+// Significant changes that bypass normal cooldown:
+// - Endpoint just recovered (was failing, now succeeding)
+// - Endpoint just started failing (was healthy, now failing)
+// - AI hint just expired (schedule reverted to baseline)
+// - Sibling endpoint status changed (for coordinated workflows)
+function detectSignificantChange(endpoint, lastSession): boolean {
+  // Implementation checks health transition, hint expiry, etc.
+}
 ```
+
+**Flexibility Note:** This approach supports:
+- **Flash sales**: Rapid re-analysis when traffic patterns change
+- **ETL pipelines**: Immediate coordination when upstream completes
+- **Incident response**: Fast feedback loop during active issues
+- **Stable monitoring**: Long cooldown for unchanging endpoints
 
 ---
 
@@ -746,3 +779,69 @@ After implementation, monitor:
 4. **Sessions per endpoint per hour**: Target ≤ 4 (cooldown enforcement)
 5. **Sibling tool usage**: Target > 0 for multi-endpoint jobs
 6. **Decision quality**: No "false alarm" actions on recovered endpoints
+
+---
+
+## Flexibility Considerations
+
+These changes were triggered by observing inefficient AI sessions for a simple commit-monitoring endpoint. However, Cronicorn supports diverse use cases with different requirements. This section ensures our optimizations don't break legitimate scenarios.
+
+### Use Case Compatibility Matrix
+
+| Use Case | Cooldown | History Depth | Sibling Coordination | Interval Tightening |
+|----------|----------|---------------|---------------------|---------------------|
+| **Flash Sale Monitoring** | Short (2 min) during surge | 50+ records at 30s intervals | May need multi-region | 30s intervals expected |
+| **ETL Pipeline Coordination** | Bypassed on upstream completion | Moderate (recent completions) | **Critical** - must check upstream | Varies by pipeline stage |
+| **Incident Response** | Short during incident | Deep investigation needed | Check dependent services | Very tight (30s-60s) |
+| **Content Publishing** | Normal (15 min) | 24h for engagement decay | Usually single endpoint | Tight first 24h, then relax |
+| **Web Scraping** | Normal + respect rate limits | Moderate | Multi-site coordination | Must respect min intervals |
+| **Stable Monitoring** | Long (30 min+) | Minimal (10 records) | Rarely needed | Baseline is optimal |
+
+### Configuration Points
+
+To support all use cases, the following should be **configurable** (not hardcoded):
+
+| Parameter | Default | Override Level | Rationale |
+|-----------|---------|----------------|-----------|
+| `maxSteps` | 20 | Per-tenant or global | Complex coordination needs more steps |
+| `maxHistoryRecords` | 50 | Per-tenant | High-frequency endpoints need deeper history |
+| `analysisCooldownMs` | 15 min | Per-endpoint or per-tenant | Incident response needs faster feedback |
+| `urgentCooldownMs` | 2 min | Global | State change detection threshold |
+| `defaultBatchSize` | 10 | Global | Balance between coverage and efficiency |
+
+### Safeguards vs. Flexibility
+
+Our changes add **safeguards with escape hatches**, not hard limits:
+
+1. **maxSteps: 20** - Prevents runaway sessions, but 20 is generous for complex scenarios
+2. **maxHistoryRecords: 50** - Prevents infinite pagination, configurable if needed
+3. **Cooldown with state-change bypass** - Prevents spam, but allows urgent re-analysis
+4. **Sibling awareness** - Proactive info in prompt, AI decides if relevant
+
+### Anti-Patterns to Avoid
+
+When implementing these changes, ensure we don't:
+
+❌ **Hardcode limits that break legitimate use cases**
+- Flash sales need 30s intervals - don't cap at 2 minutes
+- ETL needs sibling coordination - don't make it optional
+
+❌ **Make efficiency the only goal**
+- A $0.50 AI session that prevents a $10K outage is a good tradeoff
+- Incident response should be fast, not cheap
+
+❌ **Assume all endpoints are the same**
+- Commit monitoring ≠ payment processing ≠ ETL coordination
+- Config should allow per-endpoint or per-tenant customization
+
+❌ **Remove AI agency entirely**
+- The AI should still be able to investigate deeply when warranted
+- Guidance should be "usually sufficient" not "maximum allowed"
+
+### Design Principles for Future Changes
+
+1. **Defaults for efficiency, overrides for flexibility**
+2. **Soft guidance in prompts, hard limits only for safety**
+3. **State-aware cooldowns, not fixed timers**
+4. **Per-tenant/per-endpoint configuration where behavior varies**
+5. **Monitor real-world usage before tightening limits further**
