@@ -19,6 +19,7 @@ export const createCheckout = createRoute({
   method: "post",
   path: "/subscriptions/checkout",
   tags: ["subscriptions"],
+  hide: true,
   summary: "Create Stripe Checkout Session",
   description: "Create a Stripe Checkout Session for subscribing to Pro or Enterprise tier",
   request: {
@@ -65,6 +66,7 @@ export const createPortal = createRoute({
   method: "post",
   path: "/subscriptions/portal",
   tags: ["subscriptions"],
+  hide: true,
   summary: "Create Customer Portal Session",
   description: "Create a Stripe Customer Portal session for managing subscription, payment methods, and invoices",
   request: {
@@ -119,6 +121,7 @@ export const getStatus = createRoute({
   method: "get",
   path: "/subscriptions/status",
   tags: ["subscriptions"],
+  hide: true,
   summary: "Get Subscription Status",
   description: "Get current subscription status for authenticated user",
   responses: {
@@ -156,6 +159,7 @@ export const getUsage = createRoute({
   method: "get",
   path: "/subscriptions/usage",
   tags: ["subscriptions"],
+  hide: true,
   summary: "Get Usage and Quota",
   description: "Get current usage vs quota limits for AI calls and endpoints",
   responses: {

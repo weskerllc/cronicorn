@@ -23,6 +23,7 @@ export const listConnectedDevices = createRoute({
   method: "get",
   path: "/devices",
   tags,
+  hide: true,
   summary: "List connected devices",
   description: "Get all connected sessions (devices) for the current user",
   responses: {
@@ -59,6 +60,7 @@ export const revokeDevice = createRoute({
     params: RevokeDeviceParamSchema,
   },
   tags,
+  hide: true,
   summary: "Revoke device access",
   description: "Revoke session access for a connected device (deletes the session)",
   responses: {
