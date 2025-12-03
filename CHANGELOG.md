@@ -1,3 +1,10 @@
+## [1.13.4](https://github.com/weskerllc/cronicorn/compare/v1.13.3...v1.13.4) (2025-12-03)
+
+
+### Bug Fixes
+
+* Auth client in loader data ([092ecd7](https://github.com/weskerllc/cronicorn/commit/092ecd707d361d9138604101c3d942ab26b584ec))
+
 ## [1.13.3](https://github.com/weskerllc/cronicorn/compare/v1.13.2...v1.13.3) (2025-12-02)
 
 
