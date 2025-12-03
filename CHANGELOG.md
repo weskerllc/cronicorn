@@ -1,3 +1,10 @@
+## [1.13.5](https://github.com/weskerllc/cronicorn/compare/v1.13.4...v1.13.5) (2025-12-03)
+
+
+### Bug Fixes
+
+* Dashboard stacked area chart ([b51c90a](https://github.com/weskerllc/cronicorn/commit/b51c90a7809a3f65d35fddcb1247647c3b1347f8))
+
 ## [1.13.4](https://github.com/weskerllc/cronicorn/compare/v1.13.3...v1.13.4) (2025-12-03)
 
 
