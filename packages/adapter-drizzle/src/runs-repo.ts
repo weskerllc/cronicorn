@@ -553,6 +553,73 @@ export class DrizzleRunsRepo implements RunsRepo {
     };
   }
 
+  async getHealthSummaryMultiWindow(endpointId: string, now: Date): Promise<{
+    hour1: { successCount: number; failureCount: number; successRate: number };
+    hour4: { successCount: number; failureCount: number; successRate: number };
+    hour24: { successCount: number; failureCount: number; successRate: number };
+    avgDurationMs: number | null;
+    failureStreak: number;
+  }> {
+    const hour1Since = new Date(now.getTime() - 1 * 60 * 60 * 1000);
+    const hour4Since = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+    const hour24Since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Get all runs in the 24h window with a single query
+    const allRuns = await this.tx
+      .select({
+        status: runs.status,
+        startedAt: runs.startedAt,
+        durationMs: runs.durationMs,
+      })
+      .from(runs)
+      .where(and(
+        eq(runs.endpointId, endpointId),
+        gte(runs.startedAt, hour24Since),
+      ))
+      .orderBy(desc(runs.startedAt));
+
+    // Partition runs into time windows
+    const hour1Runs = allRuns.filter(r => r.startedAt >= hour1Since);
+    const hour4Runs = allRuns.filter(r => r.startedAt >= hour4Since);
+    const hour24Runs = allRuns;
+
+    // Calculate stats for each window
+    const calcWindowStats = (windowRuns: typeof allRuns) => {
+      const successCount = windowRuns.filter(r => r.status === "success").length;
+      const failureCount = windowRuns.filter(r => r.status === "failed").length;
+      const total = successCount + failureCount;
+      const successRate = total > 0 ? Math.round((successCount / total) * 100) : 0;
+      return { successCount, failureCount, successRate };
+    };
+
+    // Calculate average duration from 24h window
+    const durationsMs = hour24Runs
+      .map(r => r.durationMs)
+      .filter((d): d is number => d !== null);
+    const avgDurationMs = durationsMs.length > 0
+      ? durationsMs.reduce((a, b) => a + b, 0) / durationsMs.length
+      : null;
+
+    // Calculate failure streak (consecutive failures from most recent)
+    let failureStreak = 0;
+    for (const run of allRuns) {
+      if (run.status === "failed") {
+        failureStreak++;
+      }
+      else {
+        break;
+      }
+    }
+
+    return {
+      hour1: calcWindowStats(hour1Runs),
+      hour4: calcWindowStats(hour4Runs),
+      hour24: calcWindowStats(hour24Runs),
+      avgDurationMs,
+      failureStreak,
+    };
+  }
+
   async getEndpointsWithRecentRuns(since: Date): Promise<string[]> {
     // Only return endpoints from active jobs (exclude paused/archived)
     // or endpoints without jobs for backward compat

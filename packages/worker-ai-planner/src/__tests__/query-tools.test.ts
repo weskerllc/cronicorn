@@ -19,6 +19,8 @@ describe("query tools", () => {
     writeAIHint: vi.fn(),
     setNextRunAtIfEarlier: vi.fn(),
     setPausedUntil: vi.fn(),
+    clearAIHints: vi.fn(),
+    listEndpointsByJob: vi.fn(),
   };
 
   const mockRuns = {
@@ -140,19 +142,19 @@ describe("query tools", () => {
 
       // Mock both the main call and the hasMore check
       mockRuns.getResponseHistory
-        .mockResolvedValueOnce(mockHistory) // Main call: limit=2, offset=0
-        .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=2
+        .mockResolvedValueOnce(mockHistory) // Main call: limit=10 (new default), offset=0
+        .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=10
 
       const result = await callTool(tools, "get_response_history", {});
 
-      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 2, 0);
-      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 1, 2);
+      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 10, 0);
+      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 1, 10);
       expect(result).toMatchObject({
         count: 2,
         hasMore: false,
         pagination: {
           offset: 0,
-          limit: 2,
+          limit: 10,
         },
         responses: [
           {
@@ -409,7 +411,7 @@ describe("query tools", () => {
   });
 
   describe("get_sibling_latest_responses", () => {
-    it("should return sibling responses when available", async () => {
+    it("should return sibling responses with schedule and hints info when available", async () => {
       const mockSiblings = [
         {
           endpointId: "ep_sibling_1",
@@ -427,7 +429,39 @@ describe("query tools", () => {
         },
       ];
 
+      // Mock endpoint data for enrichment
+      const mockEndpoints = [
+        {
+          id: endpointId, // current endpoint (should be filtered out)
+          name: "Current Endpoint",
+          nextRunAt: new Date("2025-01-15T13:00:00Z"),
+          failureCount: 0,
+        },
+        {
+          id: "ep_sibling_1",
+          name: "ETL Extract",
+          baselineIntervalMs: 300000,
+          nextRunAt: new Date("2025-01-15T12:30:00Z"),
+          lastRunAt: new Date("2025-01-15T11:55:00Z"),
+          failureCount: 0,
+          pausedUntil: null,
+          aiHintIntervalMs: 60000,
+          aiHintExpiresAt: new Date("2025-01-15T13:00:00Z"), // active hint
+          aiHintReason: "High load detected",
+        },
+        {
+          id: "ep_sibling_2",
+          name: "ETL Transform",
+          baselineCron: "*/5 * * * *",
+          nextRunAt: new Date("2025-01-15T12:05:00Z"),
+          lastRunAt: new Date("2025-01-15T11:56:00Z"),
+          failureCount: 2,
+          pausedUntil: new Date("2025-01-15T14:00:00Z"), // paused
+        },
+      ];
+
       mockRuns.getSiblingLatestResponses.mockResolvedValue(mockSiblings);
+      mockJobs.listEndpointsByJob.mockResolvedValue(mockEndpoints);
 
       const tools = createToolsForEndpoint(endpointId, jobId, {
         // @ts-expect-error Partial mock for testing
@@ -440,25 +474,30 @@ describe("query tools", () => {
       const result = await callTool(tools, "get_sibling_latest_responses", {});
 
       expect(mockRuns.getSiblingLatestResponses).toHaveBeenCalledWith(jobId, endpointId);
-      expect(result).toMatchObject({
-        count: 2,
-        siblings: [
-          {
-            endpointId: "ep_sibling_1",
-            endpointName: "ETL Extract",
-            responseBody: { rowsExtracted: 1000 },
-            timestamp: "2025-01-15T11:55:00.000Z",
-            status: "success",
-          },
-          {
-            endpointId: "ep_sibling_2",
-            endpointName: "ETL Transform",
-            responseBody: { rowsTransformed: 1000 },
-            timestamp: "2025-01-15T11:56:00.000Z",
-            status: "success",
-          },
-        ],
-      });
+      expect(mockJobs.listEndpointsByJob).toHaveBeenCalledWith(jobId);
+
+      // @ts-expect-error result is unknown
+      expect(result.count).toBe(2);
+
+      // Check first sibling (with active AI hint)
+      // @ts-expect-error result is unknown
+      const sibling1 = result.siblings[0];
+      expect(sibling1.endpointId).toBe("ep_sibling_1");
+      expect(sibling1.schedule.baseline).toBe("300000ms");
+      expect(sibling1.schedule.failureCount).toBe(0);
+      expect(sibling1.schedule.isPaused).toBe(false);
+      expect(sibling1.aiHints).not.toBeNull();
+      expect(sibling1.aiHints.intervalMs).toBe(60000);
+      expect(sibling1.aiHints.reason).toBe("High load detected");
+
+      // Check second sibling (paused, no active hints)
+      // @ts-expect-error result is unknown
+      const sibling2 = result.siblings[1];
+      expect(sibling2.endpointId).toBe("ep_sibling_2");
+      expect(sibling2.schedule.baseline).toBe("*/5 * * * *");
+      expect(sibling2.schedule.failureCount).toBe(2);
+      expect(sibling2.schedule.isPaused).toBe(true);
+      expect(sibling2.aiHints).toBeNull();
     });
 
     it("should return empty when no siblings exist", async () => {
@@ -492,7 +531,18 @@ describe("query tools", () => {
         },
       ];
 
+      const mockEndpoints = [
+        {
+          id: "ep_sibling_1",
+          name: "Failed Job",
+          baselineIntervalMs: 60000,
+          nextRunAt: new Date("2025-01-15T12:30:00Z"),
+          failureCount: 3,
+        },
+      ];
+
       mockRuns.getSiblingLatestResponses.mockResolvedValue(mockSiblings);
+      mockJobs.listEndpointsByJob.mockResolvedValue(mockEndpoints);
 
       const tools = createToolsForEndpoint(endpointId, jobId, {
         // @ts-expect-error Partial mock for testing
@@ -510,6 +560,8 @@ describe("query tools", () => {
       expect(result.siblings[0].responseBody).toBeNull();
       // @ts-expect-error siblings exists on result
       expect(result.siblings[0].status).toBe("failed");
+      // @ts-expect-error siblings exists on result
+      expect(result.siblings[0].schedule.failureCount).toBe(3);
     });
 
     it("should exclude current endpoint from results", async () => {

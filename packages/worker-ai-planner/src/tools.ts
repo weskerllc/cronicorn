@@ -82,6 +82,7 @@ export function createToolsForEndpoint(
         reasoning: z.string().describe("Your analysis of the endpoint's health and performance, including what data you examined and why you took (or didn't take) any actions"),
         actions_taken: z.array(z.string()).optional().describe("List of action tools called (e.g., ['propose_interval', 'pause_until'])"),
         confidence: z.enum(["high", "medium", "low"]).optional().describe("Confidence level in your analysis"),
+        next_analysis_in_ms: z.number().int().min(300000).max(86400000).optional().describe("When to analyze this endpoint again (ms). Min 5min, Max 24h. Omit to use baseline interval. Set shorter during incidents, longer when stable."),
       }),
       execute: async (args) => {
         // This is a terminal tool - just return the analysis
@@ -91,6 +92,7 @@ export function createToolsForEndpoint(
           reasoning: args.reasoning,
           actions_taken: args.actions_taken || [],
           confidence: args.confidence || "high",
+          next_analysis_in_ms: args.next_analysis_in_ms,
         };
       },
     }),
@@ -171,6 +173,17 @@ export function createToolsForEndpoint(
       },
     }),
 
+    clear_hints: tool({
+      description: "Clear all AI hints (interval and one-shot), reverting to baseline schedule immediately. Use when adaptive behavior should be reset, e.g., after manual intervention or when hints are no longer relevant.",
+      schema: z.object({
+        reason: z.string().describe("Explanation for clearing hints"),
+      }),
+      execute: async (args) => {
+        await jobs.clearAIHints(endpointId);
+        return `Cleared all AI hints, reverted to baseline schedule: ${args.reason}`;
+      },
+    }),
+
     // ============================================================================
     // Query Tools: Response Data Retrieval
     // ============================================================================
@@ -198,9 +211,9 @@ export function createToolsForEndpoint(
     }),
 
     get_response_history: tool({
-      description: "Get recent response bodies from this endpoint to identify trends (e.g., increasing error rates, growing queue sizes, performance degradation). Use offset for pagination: start with limit=2, then use offset to skip previous results. Responses are returned newest-first.",
+      description: "Get recent response bodies from this endpoint to identify trends (e.g., increasing error rates, growing queue sizes, performance degradation). 10 records is usually sufficient for analysis. Responses are returned newest-first.",
       schema: z.object({
-        limit: z.number().int().min(1).max(10).default(2).describe("Number of recent responses to retrieve (max 10, default 2 for token efficiency)"),
+        limit: z.number().int().min(1).max(10).default(10).describe("Number of recent responses to retrieve (max 10, default 10)"),
         offset: z.number().int().min(0).default(0).describe("Number of newest responses to skip for pagination (0 = start from most recent)"),
       }),
       execute: async (args) => {
@@ -245,7 +258,7 @@ export function createToolsForEndpoint(
           hasMore,
           responses: truncatedResponses,
           hint: hasMore
-            ? `More history available - call again with offset: ${args.offset + args.limit} to get next ${args.limit} older responses`
+            ? "More history exists if needed, but 10 records is usually sufficient for trend analysis"
             : args.offset > 0
               ? "Reached end of history"
               : undefined,
@@ -257,12 +270,15 @@ export function createToolsForEndpoint(
     }),
 
     get_sibling_latest_responses: tool({
-      description: "Get latest responses from all sibling endpoints in the same job. Use this for coordinating across endpoints (e.g., ETL pipeline dependencies, cross-endpoint monitoring).",
+      description: "Get latest responses from all sibling endpoints in the same job, including their health status, schedule info, and active AI hints. Use this for coordinating across endpoints (e.g., ETL pipeline dependencies, cross-endpoint monitoring).",
       schema: z.object({}),
       execute: async () => {
-        const siblings = await runs.getSiblingLatestResponses(jobId, endpointId);
+        const now = clock.now();
 
-        if (siblings.length === 0) {
+        // Get sibling responses
+        const siblingResponses = await runs.getSiblingLatestResponses(jobId, endpointId);
+
+        if (siblingResponses.length === 0) {
           return {
             count: 0,
             message: "No sibling endpoints found or no executions yet",
@@ -270,15 +286,51 @@ export function createToolsForEndpoint(
           };
         }
 
+        // Get all endpoints in job to get schedule/hint info
+        const allEndpoints = await jobs.listEndpointsByJob(jobId);
+        const siblingEndpoints = allEndpoints.filter(ep => ep.id !== endpointId);
+
+        // Combine response data with endpoint info
+        const enrichedSiblings = siblingResponses.map((response) => {
+          const endpoint = siblingEndpoints.find(ep => ep.id === response.endpointId);
+
+          // Build schedule info
+          const scheduleInfo = endpoint
+            ? {
+                baseline: endpoint.baselineCron || `${endpoint.baselineIntervalMs}ms`,
+                nextRunAt: endpoint.nextRunAt?.toISOString() || null,
+                lastRunAt: endpoint.lastRunAt?.toISOString() || null,
+                isPaused: !!(endpoint.pausedUntil && endpoint.pausedUntil > now),
+                pausedUntil: endpoint.pausedUntil?.toISOString() || null,
+                failureCount: endpoint.failureCount || 0,
+              }
+            : null;
+
+          // Build AI hints info (if active)
+          const aiHintsActive = endpoint?.aiHintExpiresAt && endpoint.aiHintExpiresAt > now;
+          const aiHints = aiHintsActive
+            ? {
+                intervalMs: endpoint?.aiHintIntervalMs || null,
+                nextRunAt: endpoint?.aiHintNextRunAt?.toISOString() || null,
+                expiresAt: endpoint?.aiHintExpiresAt?.toISOString() || null,
+                reason: endpoint?.aiHintReason || null,
+              }
+            : null;
+
+          return {
+            endpointId: response.endpointId,
+            endpointName: response.endpointName,
+            responseBody: response.responseBody,
+            timestamp: response.timestamp.toISOString(),
+            status: response.status,
+            schedule: scheduleInfo,
+            aiHints,
+          };
+        });
+
         return {
-          count: siblings.length,
-          siblings: siblings.map(s => ({
-            endpointId: s.endpointId,
-            endpointName: s.endpointName,
-            responseBody: s.responseBody,
-            timestamp: s.timestamp.toISOString(),
-            status: s.status,
-          })),
+          count: enrichedSiblings.length,
+          siblings: enrichedSiblings,
         };
       },
     }),
