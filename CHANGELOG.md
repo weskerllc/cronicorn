@@ -1,3 +1,11 @@
+## [1.14.1](https://github.com/weskerllc/cronicorn/compare/v1.14.0...v1.14.1) (2025-12-04)
+
+
+### Bug Fixes
+
+* Bugfix for run now on endpoint page ([5d0dc5e](https://github.com/weskerllc/cronicorn/commit/5d0dc5ed30c0ff7f8134c1c7f75d1ca27bddbff3))
+* Doc link ([1c32fb1](https://github.com/weskerllc/cronicorn/commit/1c32fb1386854f54655d6f825abeca38cac54f98))
+
 # [1.14.0](https://github.com/weskerllc/cronicorn/compare/v1.13.5...v1.14.0) (2025-12-04)
 
 
