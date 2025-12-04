@@ -1,7 +1,7 @@
 # AI Planner Efficiency Fixes
 
 **Status**: Ready for Implementation  
-**Effort**: ~5-6 hours (Phase 1) + ~5 hours (Phase 2 if needed)
+**Effort**: ~5-6 hours (Phase 1) + ~2 hours (Phase 2: Lean Prompt) + ~2 hours (Phase 3: Additional Tools)
 
 ---
 
@@ -177,18 +177,153 @@ If omitted, defaults to the endpoint's baseline interval.
 
 ---
 
-## Phase 2: If Still Needed (~5 hours)
+## Phase 2: Lean Prompt (~2 hours)
 
-Only implement if Phase 1 doesn't achieve target metrics.
+The current 370-line prompt (~4,000 tokens) includes glossaries, decision frameworks, pattern guides, and examples the AI doesn't need. The AI is smart—give it the facts and let it reason.
 
-### 2.1 Lean Prompt (~3 hours)
+### What Goes IN the Prompt (Essential Context)
 
-Reduce the 370-line prompt to ~50 lines. The AI is smart—give it tools for discovery, not a manual.
+Everything the AI needs to start analyzing—no tool call required:
 
-**Current**: Front-loads all guidelines, decision frameworks, metric vocabulary  
-**Proposed**: Minimal instructions + let AI call tools to understand context
+```markdown
+# Adaptive Scheduler AI
 
-### 2.2 Add clear_hints Tool (~30 min)
+You analyze scheduled endpoint executions and suggest timing adjustments when warranted.
+
+## Your Role
+- Observe endpoint behavior through response data
+- Suggest scheduling changes only with clear evidence
+- Default to stability—most endpoints need no intervention
+- You have a maximum of 15 tool calls
+
+## This Endpoint
+
+**Name:** ${endpoint.name}
+**Purpose:** ${endpoint.description || "Not specified"}
+**Job:** ${siblingCount > 0 ? `${siblingCount + 1} endpoints [${siblingNames}]` : "Standalone"}
+
+**Schedule:**
+- Baseline: ${baseline}
+- Last Run: ${lastRunAt}
+- Next Scheduled: ${nextRunAt}
+- Status: ${pauseStatus}
+- Failure Count: ${failureCount}${backoffNote}
+
+**Constraints:** Min ${min || "none"}, Max ${max || "none"}
+${aiHintsSection}
+
+**Health:**
+| Window | Success | Runs |
+|--------|---------|------|
+| 1h  | ${h1.rate}% | ${h1.runs} |
+| 4h  | ${h4.rate}% | ${h4.runs} |
+| 24h | ${h24.rate}% | ${h24.runs} |
+
+Failure streak: ${streak}, Avg duration: ${avgMs}ms
+
+## How Your Actions Affect Scheduling
+
+**Priority Order (Governor):**
+1. **Pause** - If `pausedUntil > now`, nothing else runs
+2. **Clamp** - All times clamped to [min, max] constraints (hard limits)
+3. **AI Hints** - Your interval/one-shot proposals (if not expired)
+4. **Baseline** - User's original schedule (with backoff if failures > 0)
+
+**Your Interval Hint (`propose_interval`):**
+- OVERRIDES baseline completely while active
+- Bypasses exponential backoff (you control the cadence)
+- Expires at TTL, then reverts to baseline (with backoff if failures remain)
+
+**Your One-Shot Hint (`propose_next_time`):**
+- COMPETES with baseline (earliest wins)
+- Good for "run now" or "defer to specific time"
+- Also expires at TTL
+
+**Both Hints Active:**
+- They compete with each other (earliest wins)
+- Baseline is ignored
+
+**Backoff (Baseline Only):**
+- Formula: `baselineInterval × 2^min(failureCount, 5)`
+- Max 32x multiplier (at 5+ failures)
+- Resets to 0 on first success (system does this, not you)
+- Your interval hints bypass this entirely
+
+**When TTL Expires:**
+- All your hints are ignored
+- Reverts to baseline WITH backoff if failures > 0
+- Use `clear_hints` to manually revert before TTL
+
+**What You Cannot Control:**
+- Cannot modify baseline schedule (read-only)
+- Cannot reset failureCount (system resets on success)
+- Cannot bypass min/max constraints
+
+## Tools
+
+**Query:**
+- `get_latest_response` - Current response body and status
+- `get_response_history` - Recent responses (10 records usually sufficient)
+- `get_sibling_latest_responses` - Other endpoints in this job
+
+**Actions:**
+- `propose_interval` - Change frequency (params: intervalMs, ttlMinutes?, reason?)
+- `propose_next_time` - One-shot schedule (params: nextRunInMs OR nextRunAtIso, ttlMinutes?, reason?)
+- `pause_until` - Pause/resume (params: untilIso or null, reason?)
+- `clear_hints` - Revert to baseline immediately (params: reason)
+
+**Required:**
+- `submit_analysis` - End session (params: reasoning, next_analysis_in_ms?)
+
+## Next Analysis Timing
+Set `next_analysis_in_ms` based on situation:
+- Incident active: 5-15 min (300000-900000)
+- Recovering: 30-60 min
+- Stable: 1-4 hours
+- Very stable: 12-24 hours
+- Omit to use baseline interval
+
+Analyze this endpoint now.
+```
+
+**~60 lines, ~800 tokens** (down from 370 lines, ~4,000 tokens)
+
+### What We REMOVED (AI doesn't need)
+
+| Section | Lines | Why Remove |
+|---------|-------|------------|
+| Key Terms glossary | 20 | AI knows scheduling concepts |
+| How Scheduling Works | 40 | AI learns from tool responses |
+| Understanding Endpoint Intent | 15 | AI infers from name/description |
+| Decision Framework | 60 | AI can reason about patterns |
+| Pattern Recognition Guide | 50 | AI knows how to interpret metrics |
+| Analysis Quality Standards | 30 | Just say "be specific" |
+| Detailed tool docs | 50 | Brief descriptions sufficient |
+
+### What We KEPT
+
+| Context | Why Essential |
+|---------|---------------|
+| Endpoint name, description | Identity |
+| Job + sibling names | Coordination awareness |
+| Baseline schedule | Reference point |
+| Current state (last/next run, paused) | Situational awareness |
+| Failure count + backoff note | Affects decisions |
+| Min/max constraints | Hard limits |
+| Active AI hints | Know what's already set |
+| Multi-window health (1h/4h/24h) | Accurate recovery detection |
+| Tool list with brief params | Know what's available |
+| next_analysis_in_ms guidance | New capability |
+
+### No Required Discovery Tool
+
+The AI has everything it needs in the prompt to start. Query tools (`get_latest_response`, `get_response_history`, `get_sibling_latest_responses`) are available if it needs more data, but not mandatory.
+
+---
+
+## Phase 3: Additional Tools (~2 hours)
+
+### 3.1 Add clear_hints Tool (~30 min)
 
 Allow AI to reset endpoint to baseline schedule when hints are no longer needed.
 
@@ -203,7 +338,7 @@ clear_hints: tool({
 })
 ```
 
-### 2.3 Enhance Sibling Tool (~1.5 hours)
+### 3.2 Enhance Sibling Tool (~1.5 hours)
 
 Current `get_sibling_latest_responses` only returns response body. Add health status and schedule info so AI can coordinate without multiple calls.
 
@@ -334,21 +469,28 @@ Don't build:
 
 ---
 
-### Phase 2: If Metrics Not Met
+### Phase 2: Lean Prompt (2 hours)
 
-#### 2.1 Lean Prompt (3 hours)
-- [ ] Create new `buildLeanPrompt()` function (~50 lines)
-- [ ] A/B test against existing prompt
-- [ ] Measure token usage difference
-- [ ] If successful, replace `buildAnalysisPrompt()`
+#### 2.1 Implement Lean Prompt
+- [ ] Create new `buildLeanPrompt()` function using template above (~60 lines)
+- [ ] Include: endpoint identity, job/siblings, schedule state, constraints, multi-window health
+- [ ] Include: brief tool list with params
+- [ ] Include: next_analysis_in_ms guidance
+- [ ] Remove: glossary, decision frameworks, pattern guides, detailed examples
+- [ ] Replace `buildAnalysisPrompt()` with `buildLeanPrompt()`
+- [ ] Test: verify prompt is ~800 tokens (down from ~4000)
 
-#### 2.2 Add clear_hints Tool (30 min)
+---
+
+### Phase 3: Additional Tools (~2 hours)
+
+#### 3.1 Add clear_hints Tool (30 min)
 - [ ] Open `packages/worker-ai-planner/src/tools.ts`
 - [ ] Add `clear_hints` tool with reason parameter
 - [ ] Implement execute: call `jobs.clearHints(endpointId)`
 - [ ] Test: verify hints are cleared
 
-#### 2.3 Enhance Sibling Tool (1.5 hours)
+#### 3.2 Enhance Sibling Tool (1.5 hours)
 - [ ] Open `packages/worker-ai-planner/src/tools.ts`
 - [ ] Find `get_sibling_latest_responses` tool
 - [ ] Add health summary per sibling
