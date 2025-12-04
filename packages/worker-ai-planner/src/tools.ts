@@ -297,24 +297,24 @@ export function createToolsForEndpoint(
           // Build schedule info
           const scheduleInfo = endpoint
             ? {
-              baseline: endpoint.baselineCron || `${endpoint.baselineIntervalMs}ms`,
-              nextRunAt: endpoint.nextRunAt?.toISOString() || null,
-              lastRunAt: endpoint.lastRunAt?.toISOString() || null,
-              isPaused: !!(endpoint.pausedUntil && endpoint.pausedUntil > now),
-              pausedUntil: endpoint.pausedUntil?.toISOString() || null,
-              failureCount: endpoint.failureCount || 0,
-            }
+                baseline: endpoint.baselineCron || `${endpoint.baselineIntervalMs}ms`,
+                nextRunAt: endpoint.nextRunAt?.toISOString() || null,
+                lastRunAt: endpoint.lastRunAt?.toISOString() || null,
+                isPaused: !!(endpoint.pausedUntil && endpoint.pausedUntil > now),
+                pausedUntil: endpoint.pausedUntil?.toISOString() || null,
+                failureCount: endpoint.failureCount || 0,
+              }
             : null;
 
           // Build AI hints info (if active)
           const aiHintsActive = endpoint?.aiHintExpiresAt && endpoint.aiHintExpiresAt > now;
           const aiHints = aiHintsActive
             ? {
-              intervalMs: endpoint?.aiHintIntervalMs || null,
-              nextRunAt: endpoint?.aiHintNextRunAt?.toISOString() || null,
-              expiresAt: endpoint?.aiHintExpiresAt?.toISOString() || null,
-              reason: endpoint?.aiHintReason || null,
-            }
+                intervalMs: endpoint?.aiHintIntervalMs || null,
+                nextRunAt: endpoint?.aiHintNextRunAt?.toISOString() || null,
+                expiresAt: endpoint?.aiHintExpiresAt?.toISOString() || null,
+                reason: endpoint?.aiHintReason || null,
+              }
             : null;
 
           return {
