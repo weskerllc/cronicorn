@@ -179,16 +179,16 @@ describe("aiPlanner", () => {
       expect(prompt).toContain("0 9 * * 1");
       expect(prompt).toContain("Failure Count: 5");
 
-      // Verify prompt contains multi-window health metrics
-      expect(prompt).toContain("Last 1h | 40%");
-      expect(prompt).toContain("Last 4h | 33%");
-      expect(prompt).toContain("Last 24h | 40%");
-      expect(prompt).toContain("Avg Duration: 2500ms");
-      expect(prompt).toContain("Failure Streak: 3 consecutive failures");
+      // Verify prompt contains multi-window health metrics (lean prompt format)
+      expect(prompt).toContain("| 1h  | 40%");
+      expect(prompt).toContain("| 4h  | 33%");
+      expect(prompt).toContain("| 24h | 40%");
+      expect(prompt).toContain("Avg duration: 2500ms");
+      expect(prompt).toContain("Failure streak: 3");
 
-      // Verify prompt contains sibling endpoint names
-      expect(prompt).toContain("Job Endpoints:");
-      expect(prompt).toContain("3 endpoints"); // current endpoint + 2 siblings
+      // Verify prompt contains sibling endpoint names (lean prompt: Job: X endpoints)
+      expect(prompt).toContain("**Job:**");
+      expect(prompt).toContain("3 endpoints");
       expect(prompt).toContain("API Monitor");
       expect(prompt).toContain("Data Fetcher");
       expect(prompt).toContain("Notifier");

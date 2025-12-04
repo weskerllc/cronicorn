@@ -251,6 +251,23 @@ describe("aiTools", () => {
     });
   });
 
+  describe("clear_hints", () => {
+    it("clears all AI hints and returns confirmation", async () => {
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
+
+      vi.mocked(mockJobsRepo.clearAIHints).mockResolvedValue(undefined);
+
+      const result = await callTool(tools, "clear_hints", {
+        reason: "Manual intervention - resetting to baseline",
+      });
+
+      expect(mockJobsRepo.clearAIHints).toHaveBeenCalledWith("ep-1");
+      expect(result).toContain("Cleared all AI hints");
+      expect(result).toContain("reverted to baseline");
+      expect(result).toContain("Manual intervention");
+    });
+  });
+
   describe("tool binding to endpointId", () => {
     it("creates tools bound to specific endpoint", async () => {
       const toolsEp1 = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
