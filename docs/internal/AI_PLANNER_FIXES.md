@@ -472,31 +472,31 @@ Don't build:
 ### Phase 2: Lean Prompt (2 hours)
 
 #### 2.1 Implement Lean Prompt
-- [ ] Create new `buildLeanPrompt()` function using template above (~60 lines)
-- [ ] Include: endpoint identity, job/siblings, schedule state, constraints, multi-window health
-- [ ] Include: brief tool list with params
-- [ ] Include: next_analysis_in_ms guidance
-- [ ] Remove: glossary, decision frameworks, pattern guides, detailed examples
-- [ ] Replace `buildAnalysisPrompt()` with `buildLeanPrompt()`
-- [ ] Test: verify prompt is ~800 tokens (down from ~4000)
+- [x] Create new `buildLeanPrompt()` function using template above (~60 lines)
+- [x] Include: endpoint identity, job/siblings, schedule state, constraints, multi-window health
+- [x] Include: brief tool list with params
+- [x] Include: next_analysis_in_ms guidance
+- [x] Remove: glossary, decision frameworks, pattern guides, detailed examples
+- [x] Replace `buildAnalysisPrompt()` with `buildLeanPrompt()`
+- [x] Test: verify prompt is ~800 tokens (down from ~4000)
 
 ---
 
 ### Phase 3: Additional Tools (~2 hours)
 
 #### 3.1 Add clear_hints Tool (30 min)
-- [ ] Open `packages/worker-ai-planner/src/tools.ts`
-- [ ] Add `clear_hints` tool with reason parameter
-- [ ] Implement execute: call `jobs.clearHints(endpointId)`
-- [ ] Test: verify hints are cleared
+- [x] Open `packages/worker-ai-planner/src/tools.ts`
+- [x] Add `clear_hints` tool with reason parameter
+- [x] Implement execute: call `jobs.clearAIHints(endpointId)`
+- [x] Test: verify hints are cleared
 
 #### 3.2 Enhance Sibling Tool (1.5 hours)
-- [ ] Open `packages/worker-ai-planner/src/tools.ts`
-- [ ] Find `get_sibling_latest_responses` tool
-- [ ] Add health summary per sibling
-- [ ] Add schedule info (baseline, next run, paused status)
-- [ ] Add active AI hints per sibling
-- [ ] Test: verify enhanced data returned
+- [x] Open `packages/worker-ai-planner/src/tools.ts`
+- [x] Find `get_sibling_latest_responses` tool
+- [x] Add health summary per sibling
+- [x] Add schedule info (baseline, next run, paused status)
+- [x] Add active AI hints per sibling
+- [x] Test: verify enhanced data returned
 
 ---
 
