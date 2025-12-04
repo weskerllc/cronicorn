@@ -96,7 +96,8 @@ export function PaginationControls({
       navigate({
         to: basePath,
         params: linkParams,
-        search: { page, pageSize },
+        // Use function form to preserve other search params
+        search: (prev) => ({ ...prev, page, pageSize }),
         resetScroll: false,
       });
     } else {
