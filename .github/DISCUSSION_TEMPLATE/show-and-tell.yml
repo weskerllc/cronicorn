@@ -1,0 +1,25 @@
+title: "[Show] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Show & Tell
+
+        Share what you've built with Cronicorn! We love seeing how people use it.
+
+  - type: textarea
+    id: showcase
+    attributes:
+      label: What did you build?
+      description: Tell us about your project or use case
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Any interesting technical details, screenshots, or links?
+    validations:
+      required: false
