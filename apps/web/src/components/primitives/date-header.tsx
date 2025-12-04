@@ -1,3 +1,5 @@
+import { cn } from "@cronicorn/ui-library/lib/utils";
+
 interface DateHeaderProps {
   /**
    * The date string to display (already formatted)
@@ -15,7 +17,7 @@ interface DateHeaderProps {
  */
 export function DateHeader({ date, className }: DateHeaderProps) {
   return (
-    <div className={`text-xs font-medium text-muted-foreground uppercase tracking-wider ${className ?? ""}`}>
+    <div className={cn("text-xs font-medium text-muted-foreground uppercase tracking-wider", className)}>
       {date}
     </div>
   );
