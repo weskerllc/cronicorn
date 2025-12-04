@@ -72,6 +72,53 @@ ALTER TABLE "ai_analysis_sessions" ADD COLUMN "next_analysis_at" timestamp;
 ALTER TABLE "ai_analysis_sessions" ADD COLUMN "endpoint_failure_count" integer DEFAULT 0 NOT NULL;
 ```
 
+### 1.3 Fix Tool Defaults
+
+Changed the `get_response_history` tool defaults to reduce pagination loops:
+
+**Before:**
+- Default limit: 2 records
+- Hint: "More history available - call again with offset: X"
+
+**After:**
+- Default limit: 10 records  
+- Hint: "More history exists if needed, but 10 records is usually sufficient"
+
+This prevents the AI from making 10+ pagination calls when analyzing response trends.
+
+### 1.4 Multi-Window Health Display
+
+Replaced single 24-hour health display with three time windows (1h, 4h, 24h):
+
+**New Repo Method:**
+```typescript
+// packages/adapter-drizzle/src/runs-repo.ts
+getHealthSummaryMultiWindow(endpointId, now): Promise<MultiWindowHealth>
+```
+
+**New Type:**
+```typescript
+type MultiWindowHealth = {
+  hour1: { successCount, failureCount, successRate };
+  hour4: { successCount, failureCount, successRate };
+  hour24: { successCount, failureCount, successRate };
+  avgDurationMs: number | null;
+  failureStreak: number;
+};
+```
+
+**Prompt Display:**
+```
+**Health (Multi-Window):**
+| Window | Success Rate | Runs |
+|--------|--------------|------|
+| Last 1h | 100% | 12 |
+| Last 4h | 85% | 40 |
+| Last 24h | 32% | 500 |
+```
+
+This allows the AI to see recovery patterns—if 1h and 4h are healthy but 24h shows 32%, the endpoint has recovered and doesn't need intervention.
+
 ## Consequences
 
 ### Benefits
@@ -84,11 +131,13 @@ ALTER TABLE "ai_analysis_sessions" ADD COLUMN "endpoint_failure_count" integer D
 ### Code Affected
 
 - `packages/adapter-ai/src/client.ts` - Step limit with stopWhen
-- `packages/adapter-drizzle/src/schema.ts` - New columns
+- `packages/adapter-drizzle/src/schema.ts` - New columns for session scheduling
 - `packages/adapter-drizzle/src/sessions-repo.ts` - `getLastSession()` method, extended `create()`
-- `packages/domain/src/ports/repos.ts` - SessionsRepo interface updates
-- `packages/worker-ai-planner/src/tools.ts` - `next_analysis_in_ms` parameter
-- `packages/worker-ai-planner/src/planner.ts` - Capture and store scheduling data
+- `packages/adapter-drizzle/src/runs-repo.ts` - `getHealthSummaryMultiWindow()` method
+- `packages/domain/src/ports/repos.ts` - SessionsRepo and RunsRepo interface updates, new types
+- `packages/domain/src/fixtures/in-memory-runs-repo.ts` - Multi-window health for tests
+- `packages/worker-ai-planner/src/tools.ts` - `next_analysis_in_ms` parameter, increased default limit
+- `packages/worker-ai-planner/src/planner.ts` - Capture scheduling data, multi-window health display
 - `apps/ai-planner/src/index.ts` - Smart analysis scheduling logic
 
 ### Tradeoffs
@@ -107,13 +156,11 @@ To reverse this decision:
 
 ### Future Work (Phase 1 Extended)
 
-- **Task 1.3**: Fix tool defaults (increase `get_response_history` limit from 2 to 10)
-- **Task 1.4**: Add multi-window health display (1h/4h/24h) to prompt
 - **Task 1.5**: Add sibling endpoint context to prompt
 - **Task 1.6**: Update prompt with session constraints and scheduling guidance
 
 ## References
 
-- Task IDs: TASK-1.1, TASK-1.2 from `.tasks/ai-planner-fixes.md`
+- Task IDs: TASK-1.1, TASK-1.2, TASK-1.3, TASK-1.4 from `.tasks/ai-planner-fixes.md`
 - Related ADR: 0050-ai-analysis-session-display-ui.md
 - Implementation doc: `docs/internal/AI_PLANNER_FIXES.md`

@@ -24,6 +24,7 @@ export type AIPlannerDeps = {
 function buildAnalysisPrompt(
   currentTime: Date,
   jobDescription: string | undefined,
+  siblingNames: string[],
   endpoint: {
     name: string;
     description?: string;
@@ -41,15 +42,14 @@ function buildAnalysisPrompt(
     aiHintReason?: string;
   },
   health: {
-    successCount: number;
-    failureCount: number;
+    hour1: { successCount: number; failureCount: number; successRate: number };
+    hour4: { successCount: number; failureCount: number; successRate: number };
+    hour24: { successCount: number; failureCount: number; successRate: number };
     avgDurationMs: number | null;
-    lastRun: { status: string; at: Date } | null;
     failureStreak: number;
   },
 ): string {
-  const totalRuns = health.successCount + health.failureCount;
-  const successRate = totalRuns > 0 ? (health.successCount / totalRuns * 100).toFixed(1) : "N/A";
+  const totalRuns24h = health.hour24.successCount + health.hour24.failureCount;
 
   // Build pause status string
   const pauseStatus = endpoint.pausedUntil && endpoint.pausedUntil > currentTime
@@ -98,6 +98,14 @@ function buildAnalysisPrompt(
 
 ---
 
+## Session Constraints
+
+- **Maximum 15 tool calls** per session. Use them wisely—prioritize the most informative queries.
+- **10 history records** is usually sufficient for trend analysis. Don't paginate endlessly.
+- Sessions that hit the limit will be terminated. Make your decisions within budget.
+
+---
+
 ## How This Scheduling System Works
 
 You control scheduling through **time-bounded hints** that influence the scheduler's decision logic:
@@ -135,7 +143,7 @@ You control scheduling through **time-bounded hints** that influence the schedul
 ## Endpoint Context
 
 **Current Time:** ${currentTime.toISOString()}
-${jobDescription ? `\n**Job Context:** ${jobDescription}\n` : ""}
+${jobDescription ? `\n**Job Context:** ${jobDescription}` : ""}${siblingNames.length > 0 ? `\n**Job Endpoints:** ${siblingNames.length + 1} endpoints [${[endpoint.name, ...siblingNames].join(", ")}]` : ""}
 **Endpoint:** ${endpoint.name}${endpoint.description ? `\n**Purpose:** ${endpoint.description}` : ""}
 
 **Understanding Endpoint Intent:**
@@ -161,12 +169,15 @@ Example interpretations:
 - Min Interval: ${endpoint.minIntervalMs ? `${endpoint.minIntervalMs}ms` : "None"}
 - Max Interval: ${endpoint.maxIntervalMs ? `${endpoint.maxIntervalMs}ms` : "None"}${aiHintsSection}
 
-**Recent Performance (Last 24 hours):**
-- Total Runs: ${totalRuns}
-- Success Rate: ${successRate}%
+**Health (Multi-Window):**
+| Window | Success Rate | Runs |
+|--------|--------------|------|
+| Last 1h | ${health.hour1.successRate}% | ${health.hour1.successCount + health.hour1.failureCount} |
+| Last 4h | ${health.hour4.successRate}% | ${health.hour4.successCount + health.hour4.failureCount} |
+| Last 24h | ${health.hour24.successRate}% | ${totalRuns24h} |
+
 - Avg Duration: ${health.avgDurationMs ? `${health.avgDurationMs.toFixed(0)}ms` : "N/A"}
 - Failure Streak: ${health.failureStreak} consecutive failures
-- Last Status: ${health.lastRun?.status || "No recent runs"}
 
 ---
 
@@ -221,10 +232,16 @@ Example interpretations:
 
 **Final Answer Tool (REQUIRED):**
 
-7. **submit_analysis** - Submit your reasoning
+7. **submit_analysis** - Submit your reasoning and schedule next analysis
    - MUST be called last to complete your analysis
    - Your reasoning will be logged and reviewed by engineers debugging scheduling issues
-   - Params: { reasoning: string, actions_taken?: string[], confidence?: 'high'|'medium'|'low' }
+   - Params: { reasoning: string, actions_taken?: string[], confidence?: 'high'|'medium'|'low', next_analysis_in_ms?: number }
+   - **next_analysis_in_ms**: When should this endpoint be analyzed again?
+     * 300000 (5 min): Incident active, need close monitoring
+     * 1800000 (30 min): Recovering, monitoring progress
+     * 7200000 (2 hours): Stable, routine check
+     * 86400000 (24 hours): Very stable or daily job
+     * Omit to use baseline interval as default
 
 ---
 
@@ -357,9 +374,9 @@ Your reasoning will be logged and reviewed by engineers. Be specific and evidenc
 2. **Query response data if warranted**: Use get_latest_response or get_response_history to understand root causes
 3. **Check coordination needs**: Use get_sibling_latest_responses only if this endpoint is part of a workflow
 4. **Decide on action**: Apply decision framework patterns with evidence-based reasoning
-5. **Submit analysis**: Call submit_analysis with detailed reasoning (REQUIRED)
+5. **Submit analysis**: Call submit_analysis with reasoning AND set next_analysis_in_ms based on endpoint state
 
-Remember: Query tools are cheap—use them to make informed decisions. Action tools change production behavior—only use when you have clear evidence that adjustment will improve reliability or efficiency.
+**Work within your budget.** You have 15 tool calls max. Prioritize the most valuable queries and don't paginate unless truly necessary.
 
 Analyze this endpoint now.`;
 }
@@ -398,19 +415,25 @@ export class AIPlanner {
       return;
     }
 
-    // 3. Get health summary (last 24 hours)
-    const since = new Date(clock.now().getTime() - 24 * 60 * 60 * 1000);
-    const health = await runs.getHealthSummary(endpointId, since);
+    // 3. Get multi-window health summary (1h, 4h, 24h)
+    const health = await runs.getHealthSummaryMultiWindow(endpointId, clock.now());
 
-    // 4. Get job description if endpoint belongs to a job
+    // 4. Get job context if endpoint belongs to a job
     let jobDescription: string | undefined;
+    let siblingNames: string[] = [];
     if (endpoint.jobId) {
       const job = await jobs.getJob(endpoint.jobId);
       jobDescription = job?.description;
+
+      // Get sibling endpoint names (excluding current endpoint)
+      const allEndpoints = await jobs.listEndpointsByJob(endpoint.jobId);
+      siblingNames = allEndpoints
+        .filter(ep => ep.id !== endpointId)
+        .map(ep => ep.name);
     }
 
     // 5. Build AI context with all available information
-    const prompt = buildAnalysisPrompt(clock.now(), jobDescription, endpoint, health);
+    const prompt = buildAnalysisPrompt(clock.now(), jobDescription, siblingNames, endpoint, health);
 
     // 6. Create endpoint-scoped tools (3 query + 3 action)
     // Note: jobId is required for sibling queries. If missing, sibling tool will return empty.

@@ -140,19 +140,19 @@ describe("query tools", () => {
 
       // Mock both the main call and the hasMore check
       mockRuns.getResponseHistory
-        .mockResolvedValueOnce(mockHistory) // Main call: limit=2, offset=0
-        .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=2
+        .mockResolvedValueOnce(mockHistory) // Main call: limit=10 (new default), offset=0
+        .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=10
 
       const result = await callTool(tools, "get_response_history", {});
 
-      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 2, 0);
-      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 1, 2);
+      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 10, 0);
+      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 1, 10);
       expect(result).toMatchObject({
         count: 2,
         hasMore: false,
         pagination: {
           offset: 0,
-          limit: 2,
+          limit: 10,
         },
         responses: [
           {

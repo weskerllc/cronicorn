@@ -62,6 +62,7 @@ describe("dashboardManager", () => {
       listRuns: vi.fn(),
       getRunDetails: vi.fn(),
       getHealthSummary: vi.fn(),
+      getHealthSummaryMultiWindow: vi.fn(),
       getEndpointsWithRecentRuns: vi.fn(),
       getLatestResponse: vi.fn(),
       getResponseHistory: vi.fn(),

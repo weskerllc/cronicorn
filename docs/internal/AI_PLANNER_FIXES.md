@@ -415,12 +415,12 @@ Don't build:
 - [x] Verify state-change override triggers early re-analysis
 
 #### 1.3 Fix Tool Defaults (15 min)
-- [ ] Open `packages/worker-ai-planner/src/tools.ts`
-- [ ] Find `get_response_history` tool
-- [ ] Change `limit` default from `2` to `10`
-- [ ] Find pagination hint string
-- [ ] Change to: `"More history exists if needed, but 10 records is usually sufficient"`
-- [ ] Test: verify AI gets 10 records by default
+- [x] Open `packages/worker-ai-planner/src/tools.ts`
+- [x] Find `get_response_history` tool
+- [x] Change `limit` default from `2` to `10`
+- [x] Find pagination hint string
+- [x] Change to: `"More history exists if needed, but 10 records is usually sufficient"`
+- [x] Test: verify AI gets 10 records by default
 
 ---
 
@@ -429,43 +429,43 @@ Don't build:
 #### 1.4 Multi-Window Health Display (1 hour)
 
 **Repo method:**
-- [ ] Open `packages/adapter-drizzle/src/runs-repo.ts`
-- [ ] Add `getHealthSummaryMultiWindow(endpointId)` method
-- [ ] Returns: `{ hour1: {...}, hour4: {...}, hour24: {...} }`
-- [ ] Each window has: `successCount`, `failureCount`, `successRate`
+- [x] Open `packages/adapter-drizzle/src/runs-repo.ts`
+- [x] Add `getHealthSummaryMultiWindow(endpointId)` method
+- [x] Returns: `{ hour1: {...}, hour4: {...}, hour24: {...} }`
+- [x] Each window has: `successCount`, `failureCount`, `successRate`
 
 **Planner update:**
-- [ ] Open `packages/worker-ai-planner/src/planner.ts`
-- [ ] Find health summary section in `buildAnalysisPrompt()`
-- [ ] Replace single 24h display with 3-window table
-- [ ] Format as markdown table in prompt
+- [x] Open `packages/worker-ai-planner/src/planner.ts`
+- [x] Find health summary section in `buildAnalysisPrompt()`
+- [x] Replace single 24h display with 3-window table
+- [x] Format as markdown table in prompt
 
 **Test:**
-- [ ] Verify prompt shows 1h, 4h, 24h windows
-- [ ] Verify rates calculate correctly
+- [x] Verify prompt shows 1h, 4h, 24h windows
+- [x] Verify rates calculate correctly
 
 #### 1.5 Add Sibling Count to Prompt (15 min)
 
 **Repo method:**
-- [ ] Check if `getSiblingCount(endpointId)` exists in jobs repo
-- [ ] If not, add method to return count and names of siblings
+- [x] Check if `getSiblingCount(endpointId)` exists in jobs repo
+- [x] If not, add method to return count and names of siblings
 
 **Planner update:**
-- [ ] Open `packages/worker-ai-planner/src/planner.ts`
-- [ ] Find endpoint context section in `buildAnalysisPrompt()`
-- [ ] Add sibling info: `**Job:** 3 endpoints [name1, name2, name3]`
-- [ ] Only show if siblings > 0
+- [x] Open `packages/worker-ai-planner/src/planner.ts`
+- [x] Find endpoint context section in `buildAnalysisPrompt()`
+- [x] Add sibling info: `**Job:** 3 endpoints [name1, name2, name3]`
+- [x] Only show if siblings > 0
 
 **Test:**
-- [ ] Verify sibling count appears in prompt for multi-endpoint jobs
-- [ ] Verify nothing appears for standalone endpoints
+- [x] Verify sibling count appears in prompt for multi-endpoint jobs
+- [x] Verify nothing appears for standalone endpoints
 
 #### 1.6 Prompt Updates (30 min)
-- [ ] Open `packages/worker-ai-planner/src/planner.ts`
-- [ ] Add "Session Constraints" section (maxSteps, history guidance)
-- [ ] Add "Scheduling Your Next Analysis" section with examples
-- [ ] Remove "Query tools are cheap" messaging
-- [ ] Test: review full prompt output
+- [x] Open `packages/worker-ai-planner/src/planner.ts`
+- [x] Add "Session Constraints" section (maxSteps, history guidance)
+- [x] Add "Scheduling Your Next Analysis" section with examples
+- [x] Remove "Query tools are cheap" messaging
+- [x] Test: review full prompt output
 
 ---
 

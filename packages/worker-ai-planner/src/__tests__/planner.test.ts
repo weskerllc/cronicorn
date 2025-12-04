@@ -4,6 +4,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AIPlanner } from "../planner.js";
 
+// Helper to create multi-window health mock
+function createMultiWindowHealth(overrides?: Partial<{
+  hour1: { successCount: number; failureCount: number; successRate: number };
+  hour4: { successCount: number; failureCount: number; successRate: number };
+  hour24: { successCount: number; failureCount: number; successRate: number };
+  avgDurationMs: number | null;
+  failureStreak: number;
+}>) {
+  return {
+    hour1: { successCount: 10, failureCount: 0, successRate: 100, ...overrides?.hour1 },
+    hour4: { successCount: 30, failureCount: 2, successRate: 94, ...overrides?.hour4 },
+    hour24: { successCount: 42, failureCount: 3, successRate: 93, ...overrides?.hour24 },
+    avgDurationMs: overrides?.avgDurationMs ?? 150.5,
+    failureStreak: overrides?.failureStreak ?? 0,
+  };
+}
+
 describe("aiPlanner", () => {
   let mockJobsRepo: JobsRepo;
   let mockRunsRepo: RunsRepo;
@@ -47,6 +64,7 @@ describe("aiPlanner", () => {
 
     mockRunsRepo = {
       getHealthSummary: vi.fn(),
+      getHealthSummaryMultiWindow: vi.fn(),
       // Add other required methods as stubs
       create: vi.fn(),
       finish: vi.fn(),
@@ -98,19 +116,8 @@ describe("aiPlanner", () => {
         failureCount: 2,
       };
 
-      const mockHealth = {
-        successCount: 42,
-        failureCount: 3,
-        avgDurationMs: 150.5,
-        lastRun: {
-          status: "success" as const,
-          at: new Date("2025-10-15T11:55:00Z"),
-        },
-        failureStreak: 0,
-      };
-
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
-      vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
+      vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
       vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       await planner.analyzeEndpoint("ep-1");
@@ -118,9 +125,8 @@ describe("aiPlanner", () => {
       // Verify endpoint fetch
       expect(mockJobsRepo.getEndpoint).toHaveBeenCalledWith("ep-1");
 
-      // Verify health summary fetch (last 24 hours)
-      const expectedSince = new Date("2025-10-14T12:00:00Z");
-      expect(mockRunsRepo.getHealthSummary).toHaveBeenCalledWith("ep-1", expectedSince);
+      // Verify multi-window health summary fetch
+      expect(mockRunsRepo.getHealthSummaryMultiWindow).toHaveBeenCalledWith("ep-1", fakeClock.now());
 
       // Verify AI invocation
       expect(mockAIClient.planWithTools).toHaveBeenCalledWith(
@@ -132,9 +138,10 @@ describe("aiPlanner", () => {
       );
     });
 
-    it("builds prompt with endpoint and health data", async () => {
+    it("builds prompt with endpoint, health data, and sibling names", async () => {
       const mockEndpoint: JobEndpoint = {
         id: "ep-1",
+        jobId: "job-1",
         tenantId: "user-1",
         name: "API Monitor",
         baselineCron: "0 9 * * 1", // Monday at 9 AM
@@ -143,19 +150,23 @@ describe("aiPlanner", () => {
         failureCount: 5,
       };
 
-      const mockHealth = {
-        successCount: 10,
-        failureCount: 15,
+      const mockHealth = createMultiWindowHealth({
+        hour1: { successCount: 2, failureCount: 3, successRate: 40 },
+        hour4: { successCount: 5, failureCount: 10, successRate: 33 },
+        hour24: { successCount: 10, failureCount: 15, successRate: 40 },
         avgDurationMs: 2500.0,
-        lastRun: {
-          status: "failure" as const,
-          at: new Date("2025-10-14T09:00:00Z"),
-        },
         failureStreak: 3,
-      };
+      });
+
+      const siblingEndpoints: JobEndpoint[] = [
+        { id: "ep-2", jobId: "job-1", tenantId: "user-1", name: "Data Fetcher", nextRunAt: new Date(), failureCount: 0 },
+        { id: "ep-3", jobId: "job-1", tenantId: "user-1", name: "Notifier", nextRunAt: new Date(), failureCount: 0 },
+      ];
 
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
-      vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
+      vi.mocked(mockJobsRepo.getJob).mockResolvedValue({ id: "job-1", name: "My Job", userId: "user-1", status: "active", createdAt: new Date(), updatedAt: new Date() });
+      vi.mocked(mockJobsRepo.listEndpointsByJob).mockResolvedValue([mockEndpoint, ...siblingEndpoints]);
+      vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(mockHealth);
       vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       await planner.analyzeEndpoint("ep-1");
@@ -168,11 +179,19 @@ describe("aiPlanner", () => {
       expect(prompt).toContain("0 9 * * 1");
       expect(prompt).toContain("Failure Count: 5");
 
-      // Verify prompt contains health metrics
-      expect(prompt).toContain("Total Runs: 25");
-      expect(prompt).toContain("Success Rate: 40.0%");
+      // Verify prompt contains multi-window health metrics
+      expect(prompt).toContain("Last 1h | 40%");
+      expect(prompt).toContain("Last 4h | 33%");
+      expect(prompt).toContain("Last 24h | 40%");
       expect(prompt).toContain("Avg Duration: 2500ms");
       expect(prompt).toContain("Failure Streak: 3 consecutive failures");
+
+      // Verify prompt contains sibling endpoint names
+      expect(prompt).toContain("Job Endpoints:");
+      expect(prompt).toContain("3 endpoints"); // current endpoint + 2 siblings
+      expect(prompt).toContain("API Monitor");
+      expect(prompt).toContain("Data Fetcher");
+      expect(prompt).toContain("Notifier");
     });
 
     it("passes endpoint-scoped tools to AI", async () => {
@@ -185,16 +204,8 @@ describe("aiPlanner", () => {
         failureCount: 0,
       };
 
-      const mockHealth = {
-        successCount: 100,
-        failureCount: 0,
-        avgDurationMs: 50.0,
-        lastRun: null,
-        failureStreak: 0,
-      };
-
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
-      vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
+      vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
       vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       await planner.analyzeEndpoint("ep-1");
@@ -259,18 +270,10 @@ describe("aiPlanner", () => {
         failureCount: 0,
       };
 
-      const mockHealth = {
-        successCount: 10,
-        failureCount: 0,
-        avgDurationMs: 100.0,
-        lastRun: null,
-        failureStreak: 0,
-      };
-
       vi.mocked(mockJobsRepo.getEndpoint)
         .mockResolvedValueOnce(mockEndpoint1)
         .mockResolvedValueOnce(mockEndpoint2);
-      vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
+      vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
       vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       await planner.analyzeEndpoints(["ep-1", "ep-2"]);
@@ -290,20 +293,12 @@ describe("aiPlanner", () => {
         failureCount: 0,
       };
 
-      const mockHealth = {
-        successCount: 10,
-        failureCount: 0,
-        avgDurationMs: 100.0,
-        lastRun: null,
-        failureStreak: 0,
-      };
-
       // First endpoint throws error
       vi.mocked(mockJobsRepo.getEndpoint)
         .mockRejectedValueOnce(new Error("Database connection lost"))
         .mockResolvedValueOnce(mockEndpoint2);
 
-      vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
+      vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
       vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
       // Mock console.error to verify error logging
