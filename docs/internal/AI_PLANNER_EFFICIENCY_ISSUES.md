@@ -4,7 +4,7 @@
 **Updated**: 2025-12-03  
 **Status**: Investigation Complete, Solutions Pending  
 **Related Sessions**: `session_1763500906992_67` and surrounding sessions  
-**Total Issues**: 9
+**Total Issues**: 16
 
 ---
 
@@ -21,6 +21,9 @@ Production observation of the AI Planner over several weeks reveals significant 
 **Key Observations:**
 - **Issue 8**: Success rate doesn't decay - old failures dominate even after hours of recovery
 - **Issue 9**: `get_sibling_latest_responses` has ZERO calls across all observed sessions
+- **Issue 10**: Prompt assumes health monitoring - doesn't generalize to data sync, batch jobs, etc.
+- **Issue 11**: 370-line prompt loaded for every session regardless of endpoint complexity
+- **Issue 12-16**: Cross-endpoint tools are too limited; AI lacks job context, error analysis, and type-specific guidance
 
 ---
 
@@ -308,17 +311,546 @@ get_sibling_latest_responses: tool({
 
 ---
 
+### Issue 10: Prompt Assumes Health Monitoring Use Case
+
+| Field | Value |
+|-------|-------|
+| **Priority** | High |
+| **Status** | Open |
+| **Impact** | AI misinterprets non-monitoring endpoints; guidance doesn't apply to all use cases |
+
+**Problem**: The current 370-line prompt is heavily biased toward health monitoring patterns (success rate, failure streak, queue depth, latency). However, Cronicorn supports many use cases where these concepts don't apply:
+
+- **Data sync**: "Did it run?" matters, not health metrics
+- **Content publishing**: Timing matters, not health
+- **Notification triggers**: One-shot actions based on external events
+- **Batch processing**: Throughput matters, not health
+- **Rate-limited API calls**: Pacing matters, not health
+
+**Additional Problem**: Users often don't write detailed job/endpoint descriptions. The AI can't know if "sync_data" is a health check or a batch job without more context.
+
+**Code Location**: `packages/worker-ai-planner/src/planner.ts` - `buildAnalysisPrompt()` function
+
+**Evidence from Prompt:**
+```
+**Common Metric Vocabulary:**
+- **Load/Backlog**: queue_depth, pending_count... (higher = worse)
+- **Performance**: latency, duration... (higher = worse)
+- **Quality**: accuracy, success_rate... (lower = worse)
+```
+
+This vocabulary assumes monitoring. A data sync endpoint might return `{ synced_count: 500 }` - is higher better or worse? The current prompt doesn't help.
+
+**Proposed Solutions**:
+1. **Add inference-based endpoint classification** (see Issue 11)
+2. **Make prompt use-case-agnostic**: Remove health-monitoring assumptions
+3. **Move specific guidance into tools**: AI fetches relevant framework based on inferred type
+
+---
+
+### Issue 11: Front-Loaded Context is Inefficient and Inflexible
+
+| Field | Value |
+|-------|-------|
+| **Priority** | High |
+| **Status** | Open |
+| **Impact** | High base token cost; same prompt for all endpoint types |
+
+**Problem**: Every AI session loads ~370 lines of prompt context (~4,000+ tokens) regardless of whether it's needed. A simple, stable endpoint gets the same giant prompt as a complex multi-endpoint ETL pipeline.
+
+**Current Architecture:**
+```
+[370-line prompt with ALL guidelines] → AI → [Tools for data only] → Decision
+```
+
+**Proposed Architecture:**
+```
+[~50-line lean prompt] → AI → [Tools for context + data] → Decision
+```
+
+**Key Insight**: Tools should provide **context discovery**, not just data retrieval. The AI should be able to ask "What am I looking at?" before diving into data.
+
+**Proposed New Tools:**
+
+1. **`get_endpoint_profile`** - Infer endpoint type and purpose from signals
+   ```typescript
+   // Returns:
+   {
+     "inferred_type": "health_check" | "data_sync" | "notification" | "batch_job" | "rate_limited_api" | "unknown",
+     "confidence": "high" | "medium" | "low",
+     "signals": {
+       "name_suggests": "monitoring (contains 'health', 'check')",
+       "url_pattern": "api_call (/api/v1/...)",
+       "response_structure": "has 'status' and 'latency' fields → likely monitoring",
+       "schedule_pattern": "every 30s → likely real-time monitoring",
+       "historical_behavior": "consistent timing → scheduled task"
+     },
+     "typical_concerns": ["latency", "error_rate"],
+     "irrelevant_for_this_type": ["throughput", "data_freshness"],
+     "suggested_approach": "Focus on error rate and response time trends"
+   }
+   ```
+
+2. **`get_response_schema`** - Understand response body structure
+   ```typescript
+   // Returns:
+   {
+     "fields": {
+       "queue_depth": { "type": "number", "trend": "increasing", "typical_range": [10, 100] },
+       "status": { "type": "string", "values_seen": ["healthy", "degraded"] }
+     },
+     "interpretation_hints": [
+       "queue_depth appears to be a backlog metric (higher = worse)",
+       "status appears to be a health indicator"
+     ]
+   }
+   ```
+
+3. **`get_decision_framework`** - Fetch relevant guidelines for this endpoint type
+   - Input: `{ type: "health_check" | "data_sync" | ... }`
+   - Returns: Subset of current prompt's decision framework relevant to this type
+   - AI only loads what it needs
+
+**Inference Signals (when descriptions are missing):**
+
+| Signal | Example | Inference |
+|--------|---------|-----------|
+| Endpoint name | `check_api_health` | Health monitoring |
+| Endpoint name | `sync_salesforce` | Data sync |
+| Endpoint name | `send_weekly_report` | Scheduled notification |
+| URL pattern | `/health`, `/status` | Health monitoring |
+| URL pattern | `/sync`, `/import` | Data sync |
+| Response fields | `status`, `latency`, `error_count` | Health monitoring |
+| Response fields | `synced_count`, `last_sync` | Data sync |
+| Response fields | `sent`, `recipients` | Notification |
+| Baseline schedule | Every 30 seconds | Real-time monitoring |
+| Baseline schedule | Daily at 2am | Batch job |
+| Baseline schedule | Weekly Monday 9am | Scheduled report |
+
+**Proposed Lean Prompt (~50 lines):**
+
+```markdown
+# Adaptive Scheduler AI
+
+You analyze scheduled endpoint executions and suggest timing adjustments when warranted.
+
+## Your Role
+- Observe endpoint behavior through response data
+- Understand context through inference (names, patterns, response structure)
+- Suggest scheduling changes only with clear evidence
+- Default to stability - most endpoints need no intervention
+
+## Available Tools
+
+**Context Discovery:**
+- `get_endpoint_profile` - Understand what this endpoint does (START HERE)
+- `get_response_schema` - Understand response body structure and field meanings
+- `get_decision_framework` - Get relevant guidelines for this endpoint type
+
+**Data Retrieval:**
+- `get_latest_response` - Most recent execution result
+- `get_response_history` - Recent execution history (for trends)
+- `get_sibling_latest_responses` - Other endpoints in same job
+
+**Actions:**
+- `propose_interval` - Change execution frequency
+- `propose_next_time` - Schedule one-shot execution  
+- `pause_until` - Temporarily stop execution
+
+**Required:**
+- `submit_analysis` - Submit your reasoning (MUST call to complete)
+
+## Analysis Process
+1. Call `get_endpoint_profile` to understand what you're analyzing
+2. Check `get_latest_response` for current state
+3. Query history only if you need to confirm a trend
+4. Take action only with clear evidence
+5. Submit your analysis with reasoning
+
+## Key Principles
+- **Stability is the default.** Don't intervene without evidence.
+- **Infer purpose from signals** if descriptions are missing.
+- **Different endpoints need different approaches.** A health check ≠ a data sync.
+- Your reasoning will be logged for debugging.
+
+---
+Endpoint: ${endpoint.name}
+Baseline: ${endpoint.baselineCron || endpoint.baselineIntervalMs + 'ms'}
+Last run: ${health.lastRun?.status || 'Never'} at ${health.lastRun?.at || 'N/A'}
+```
+
+**Benefits:**
+- ~90% reduction in base prompt tokens
+- AI discovers context relevant to THIS endpoint
+- Same AI works for any endpoint type
+- Easier to update guidelines (change tool responses, not giant prompt)
+- More aligned with how human experts work
+
+**Risks & Mitigations:**
+- **Risk**: AI might not call discovery tools → **Mitigation**: "START HERE" in tool description
+- **Risk**: More tool calls initially → **Mitigation**: One discovery call replaces 300 lines of prompt
+- **Risk**: Less guidance → **Mitigation**: Guidance moves to tools, not removed
+
+---
+
+### Issue 12: Sibling Tool Returns Insufficient Data
+
+| Field | Value |
+|-------|-------|
+| **Priority** | High |
+| **Status** | Open |
+| **Impact** | Limited cross-endpoint coordination; AI can't make informed decisions about siblings |
+
+**Problem**: The current `get_sibling_latest_responses` tool only returns the latest response body from sibling endpoints. For meaningful coordination, the AI needs much more context about siblings:
+
+- **Health summary**: Is the sibling healthy? What's its success rate?
+- **Scheduling state**: What interval is it running at? Is it paused? Does it have active hints?
+- **Profile**: What type of endpoint is it? What's its purpose?
+- **Relationships**: Is this sibling upstream or downstream from the current endpoint?
+
+**Current Tool Returns:**
+```typescript
+{
+  endpointId: string,
+  endpointName: string,
+  responseBody: unknown,  // Only the response!
+  timestamp: Date,
+  status: string
+}
+```
+
+**Proposed Enhancement: `get_sibling_details`**
+```typescript
+get_sibling_details: tool({
+  description: "Get comprehensive information about sibling endpoints. Use to coordinate scheduling and understand job-wide health.",
+  schema: z.object({
+    include: z.array(z.enum([
+      "latest_response",   // Current response body
+      "health_summary",    // Success rate, failure streak, last N runs
+      "scheduling_state",  // Interval, pause status, active hints
+      "profile"            // Inferred type and purpose
+    ])).optional().default(["health_summary", "scheduling_state"]),
+  }),
+  execute: async (args) => {
+    return {
+      job_name: ...,
+      job_health: {
+        overall_success_rate: ...,
+        endpoints_healthy: X,
+        endpoints_degraded: Y,
+      },
+      siblings: siblings.map(s => ({
+        id: s.id,
+        name: s.name,
+        health_summary: args.include.includes("health_summary") ? {
+          success_rate_1h: 95,
+          success_rate_24h: 87,
+          failure_streak: 0,
+          last_run: { status: "success", at: "..." },
+        } : undefined,
+        scheduling_state: args.include.includes("scheduling_state") ? {
+          baseline_interval_ms: 300000,
+          current_effective_interval_ms: 60000,  // After hints
+          is_paused: false,
+          has_active_hint: true,
+          hint_expires_at: "...",
+          next_run_at: "...",
+        } : undefined,
+        profile: args.include.includes("profile") ? {
+          inferred_type: "data_sync",
+          confidence: "high",
+        } : undefined,
+        latest_response: args.include.includes("latest_response") ? {...} : undefined,
+      })),
+      inferred_relationships: {
+        upstream: ["data_fetcher"],      // Endpoints this one depends on
+        downstream: ["data_reporter"],   // Endpoints that depend on this one
+        parallel: ["backup_sync"],       // Endpoints that run independently
+      },
+    };
+  },
+}),
+```
+
+**Use Cases Enabled:**
+- "Is my upstream endpoint healthy enough to provide data?" → Check sibling health
+- "Should I coordinate timing with the data_fetcher?" → Check sibling schedule
+- "Is the whole job struggling, or just this endpoint?" → Check job health
+
+---
+
+### Issue 13: No Job-Level Context Tool
+
+| Field | Value |
+|-------|-------|
+| **Priority** | Medium |
+| **Status** | Open |
+| **Impact** | AI lacks job-wide perspective; can't detect job-level issues |
+
+**Problem**: Currently the AI only gets `jobDescription` (if provided). It doesn't know:
+- How many endpoints are in the job
+- Overall job health
+- Workflow structure (sequential? parallel? mixed?)
+- Which endpoints are healthy vs degraded
+
+**Proposed: `get_job_context`**
+```typescript
+get_job_context: tool({
+  description: "Get job-level context including overall health, endpoint count, and inferred workflow patterns. Use to understand the bigger picture.",
+  schema: z.object({}),
+  execute: async () => {
+    return {
+      job: {
+        id: ...,
+        name: ...,
+        description: ...,
+      },
+      endpoints: {
+        total: 5,
+        healthy: 3,
+        degraded: 1,
+        failing: 1,
+        list: [
+          { id: "...", name: "data_fetcher", status: "healthy", inferred_type: "data_sync" },
+          { id: "...", name: "transformer", status: "healthy", inferred_type: "batch_job" },
+          { id: "...", name: "loader", status: "degraded", inferred_type: "data_sync" },
+          // ...
+        ],
+      },
+      overall_health: {
+        success_rate_1h: 85,
+        success_rate_24h: 92,
+        total_runs_24h: 1500,
+      },
+      inferred_workflow: {
+        pattern: "sequential",  // "sequential", "parallel", "fan_out", "fan_in", "mixed", "unknown"
+        order: ["data_fetcher", "transformer", "loader"],  // If detectable
+        confidence: "medium",
+      },
+    };
+  },
+}),
+```
+
+**Use Cases Enabled:**
+- "Is this a job-wide issue or just this endpoint?" → Check overall health
+- "Should I wait for upstream to recover?" → Check workflow order
+- "How critical is this endpoint to the job?" → Understand position in workflow
+
+---
+
+### Issue 14: No Error Analysis Tool
+
+| Field | Value |
+|-------|-------|
+| **Priority** | Medium |
+| **Status** | Open |
+| **Impact** | AI sees failures but can't diagnose WHY; leads to generic responses |
+
+**Problem**: The AI knows from health summary that failures occurred, but can't determine root cause. Is it:
+- Network timeout?
+- Authentication failure?
+- Rate limiting?
+- Server error?
+- External dependency down?
+
+**Proposed: `get_error_analysis`**
+```typescript
+get_error_analysis: tool({
+  description: "Analyze recent failures to identify root causes and patterns. Use when failure rate is high to understand WHY.",
+  schema: z.object({
+    since_hours: z.number().min(1).max(72).default(24),
+  }),
+  execute: async (args) => {
+    const failures = await runs.getRecentFailures(endpointId, args.since_hours);
+    
+    return {
+      failure_summary: {
+        total_failures: failures.length,
+        time_window: `${args.since_hours} hours`,
+      },
+      error_categories: {
+        timeout: 12,           // Connection/read timeouts
+        connection_refused: 3, // Target unreachable
+        auth_failure: 0,       // 401/403 responses
+        rate_limited: 8,       // 429 responses
+        server_error: 2,       // 5xx responses
+        client_error: 1,       // 4xx (non-auth/rate)
+        unknown: 0,
+      },
+      most_common_error: {
+        category: "timeout",
+        count: 12,
+        example_message: "ETIMEDOUT: connection timed out after 30000ms",
+      },
+      error_trend: "increasing",  // "increasing", "decreasing", "stable", "sporadic"
+      suggested_cause: "external_dependency_slow",  // Inference based on patterns
+      suggested_actions: [
+        "Consider increasing timeout if external service is slow",
+        "Check if rate limiting is causing cascading timeouts",
+        "Verify external dependency health",
+      ],
+    };
+  },
+}),
+```
+
+**Use Cases Enabled:**
+- "Why is this endpoint failing?" → Get categorized error breakdown
+- "Is this rate limiting or a real outage?" → Distinguish error types
+- "Should I back off or retry?" → Get suggested actions
+
+---
+
+### Issue 15: Missing `clear_hints` Action
+
+| Field | Value |
+|-------|-------|
+| **Priority** | Low |
+| **Status** | Open |
+| **Impact** | AI can't undo previous AI decisions; stuck with bad hints until TTL expires |
+
+**Problem**: The AI can propose hints (`propose_interval`, `propose_next_time`) but can't clear them. If a previous analysis made a bad decision, the current analysis can only:
+1. Wait for TTL to expire
+2. Propose a different hint (but old one may still influence)
+
+The MCP server has `clearHints` but the AI planner doesn't expose it.
+
+**Proposed: Add `clear_hints` to AI planner tools**
+```typescript
+clear_hints: tool({
+  description: "Clear all active AI hints for this endpoint, reverting to baseline schedule. Use when previous hints are no longer appropriate or when you want a clean slate.",
+  schema: z.object({
+    reason: z.string().optional().describe("Why hints are being cleared"),
+  }),
+  execute: async (args) => {
+    await jobs.clearHints(endpointId);
+    return `Cleared all AI hints. Endpoint reverted to baseline schedule.${args.reason ? ` Reason: ${args.reason}` : ''}`;
+  },
+}),
+```
+
+**Use Cases Enabled:**
+- "Previous analysis over-reacted, let's reset" → Clear and start fresh
+- "Endpoint recovered, no longer need aggressive monitoring" → Clear instead of proposing baseline
+- "Want to see baseline behavior" → Clear for debugging
+
+---
+
+### Issue 16: Decision Frameworks Only Cover Monitoring
+
+| Field | Value |
+|-------|-------|
+| **Priority** | High |
+| **Status** | Open |
+| **Impact** | AI guidance is biased toward health monitoring; doesn't help with other use cases |
+
+**Problem**: The current prompt's decision framework covers:
+- Growing Load (queue depth)
+- Transient Spike
+- High Failure Rate
+- Recovery from Failures
+- Dependency Coordination
+- Metrics Trending Down
+
+These are all monitoring-focused. Missing frameworks for:
+
+**Data Sync Patterns:**
+- Sync lag increasing → Tighten interval
+- Large batch incoming → Burst processing mode
+- Upstream data stale → Wait or alert
+- Conflict rate high → Pause and investigate
+
+**Notification Patterns:**
+- Delivery rate dropping → Check provider
+- Bounce rate increasing → Pause and investigate
+- Rate limit approaching → Proactive backoff
+- Queue building → Burst mode
+
+**Batch Job Patterns:**
+- Job duration increasing → Extend window or investigate
+- Resource contention → Coordinate with other jobs
+- SLA approaching → Priority boost
+- Repeated failures → Escalate
+
+**Rate-Limited API Patterns:**
+- Approaching limit → Proactive backoff
+- Limit hit → Pause until reset
+- Quota renewed → Can increase frequency
+- Degraded responses → Reduce load
+
+**Proposed: Move to `get_decision_framework` tool**
+
+```typescript
+get_decision_framework: tool({
+  description: "Get relevant decision patterns and guidelines for this endpoint type. Call after get_endpoint_profile to get type-specific guidance.",
+  schema: z.object({
+    endpoint_type: z.enum([
+      "health_check",
+      "data_sync", 
+      "notification",
+      "batch_job",
+      "rate_limited_api",
+      "unknown"
+    ]),
+  }),
+  execute: async (args) => {
+    const frameworks = {
+      health_check: {
+        key_metrics: ["success_rate", "latency", "error_rate"],
+        patterns: [
+          { name: "High Failure Rate", trigger: "success_rate < 70%", action: "investigate, possibly pause" },
+          { name: "Latency Spike", trigger: "latency > 2x baseline", action: "tighten monitoring" },
+          { name: "Recovery", trigger: "was failing, now succeeding", action: "clear hints, return to baseline" },
+        ],
+        stability_indicators: ["success_rate > 95%", "latency stable", "no error trend"],
+      },
+      data_sync: {
+        key_metrics: ["sync_lag", "records_processed", "conflict_rate"],
+        patterns: [
+          { name: "Sync Lag Growing", trigger: "lag increasing over 3+ runs", action: "tighten interval" },
+          { name: "Large Batch", trigger: "records > 10x normal", action: "burst mode (short interval, short TTL)" },
+          { name: "Conflicts", trigger: "conflict_rate > threshold", action: "pause and alert" },
+        ],
+        stability_indicators: ["lag stable", "throughput consistent", "no conflicts"],
+      },
+      // ... other types
+    };
+    
+    return frameworks[args.endpoint_type] || frameworks.unknown;
+  },
+}),
+```
+
+**Use Cases Enabled:**
+- AI gets type-specific guidance instead of generic monitoring advice
+- New endpoint types can be added without changing the main prompt
+- Guidance stays up-to-date (tool response, not baked into prompt)
+
+---
+
 ## Implementation Priority
 
-1. **Issue 2** (Cooldown) - Biggest bang for buck, prevents runaway cycles
+**Tier 1: Critical Safety & Efficiency (Do First)**
+1. **Issue 2** (Cooldown) - Prevents runaway analysis cycles
 2. **Issue 3** (Pagination limits) - Caps worst-case session cost
 3. **Issue 6** (Max iterations) - Safety net for all sessions
-4. **Issue 8** (Success rate recovery) - Improves signal quality during incidents
-5. **Issue 1** (Session memory) - Improves decision quality
-6. **Issue 5** (Prompt guidance) - Low effort, moderate impact
-7. **Issue 4** (Batch sizes) - Minor optimization
-8. **Issue 9** (Sibling coordination) - Feature enablement
-9. **Issue 7** (Feedback loop) - Addressed by Issues 2+3
+
+**Tier 2: Architectural Foundation (Enables Flexibility)**
+4. **Issue 11** (Lean prompt) - Reduces base token cost 90%
+5. **Issue 10** + **Issue 16** (Use-case agnostic + decision frameworks) - Makes AI flexible
+6. **Issue 12** (Enhanced sibling tool) - Enables cross-endpoint coordination
+
+**Tier 3: Improved Context (Better Decisions)**
+7. **Issue 13** (Job context tool) - Job-wide perspective
+8. **Issue 14** (Error analysis tool) - Root cause diagnosis
+9. **Issue 8** (Multi-window health) - Better recovery detection
+
+**Tier 4: Polish & Completeness**
+10. **Issue 1** (Session memory) - Avoids redundant analysis
+11. **Issue 15** (Clear hints action) - Undo capability
+12. **Issue 9** (Sibling awareness in prompt) - Proactive guidance
+13. **Issue 5** + **Issue 4** + **Issue 7** - Minor optimizations
 
 ---
 
@@ -356,6 +888,63 @@ Assuming ~$0.01 per 1K tokens (GPT-4 class):
 - `packages/adapter-drizzle/src/runs-repo.ts` - Database queries, getHealthSummary, getResponseHistory
 - `apps/ai-planner/src/index.ts` - Worker entry point, analysis loop
 - `packages/domain/src/ports.ts` - Port interfaces for repos
+
+---
+
+## Tool Inventory (Current vs. Proposed)
+
+### Current Tools (7 total)
+
+| Tool | Type | Purpose | Issues |
+|------|------|---------|--------|
+| `get_latest_response` | Query | Single latest HTTP response | Works well |
+| `get_response_history` | Query | Paginated response history | Issue 7: Pagination hint |
+| `get_sibling_latest_responses` | Query | Latest response per sibling | Issue 9, 12: Never used, limited data |
+| `propose_interval` | Action | Set AI interval hint | Works well |
+| `propose_next_time` | Action | Set one-shot schedule | Works well |
+| `pause_until` | Action | Pause endpoint | Works well |
+| `submit_analysis` | Required | End session with summary | Works well |
+
+### Proposed New Tools (5-7 additions)
+
+| Tool | Type | Purpose | Addresses | Priority |
+|------|------|---------|-----------|----------|
+| `get_endpoint_profile` | Discovery | Endpoint config + purpose + context | Issue 11 | High |
+| `get_health_summary` | Query | Multi-window health metrics | Issue 2, 8 | High |
+| `get_sibling_health` | Query | Siblings with health + schedules | Issue 12 | High |
+| `get_job_summary` | Query | Job-wide aggregated metrics | Issue 13 | Medium |
+| `get_response_schema` | Discovery | Learn response structure | Issue 11 | Medium |
+| `analyze_error_pattern` | Query | Categorized error analysis | Issue 14 | Medium |
+| `clear_hints` | Action | Reset AI hints to baseline | Issue 15 | High |
+
+### Tool Capability Matrix
+
+```
+                        CURRENT    PROPOSED
+Context Discovery
+  ├─ Endpoint purpose      ❌         ✅ get_endpoint_profile
+  ├─ Response structure    ❌         ✅ get_response_schema
+  └─ Available actions     ❌         ✅ get_endpoint_profile
+
+Single-Endpoint Health
+  ├─ Latest response       ✅         ✅ get_latest_response
+  ├─ Response history      ✅         ✅ get_response_history
+  ├─ Multi-window health   ❌         ✅ get_health_summary
+  └─ Error patterns        ❌         ✅ analyze_error_pattern
+
+Cross-Endpoint Awareness
+  ├─ Sibling responses     ⚠️ Limited  ✅ get_sibling_latest_responses (existing)
+  ├─ Sibling health        ❌         ✅ get_sibling_health
+  ├─ Sibling schedules     ❌         ✅ get_sibling_health
+  └─ Job-level metrics     ❌         ✅ get_job_summary
+
+Actions
+  ├─ Set interval hint     ✅         ✅ propose_interval
+  ├─ Set next run time     ✅         ✅ propose_next_time
+  ├─ Pause endpoint        ✅         ✅ pause_until
+  ├─ Clear hints           ❌         ✅ clear_hints
+  └─ End session           ✅         ✅ submit_analysis
+```
 
 ---
 
@@ -754,6 +1343,419 @@ ${siblings.map(s => `- ${s.name}`).join('\n')}
 
 ---
 
+### Phase 7: Lean Prompt + Discovery Tools (Architectural)
+
+This phase represents a larger architectural shift toward a more flexible, efficient AI planner.
+
+#### 7.1 Add `get_endpoint_profile` Tool
+
+| Attribute | Value |
+|-----------|-------|
+| **Files** | `packages/worker-ai-planner/src/tools.ts`, `packages/adapter-drizzle/src/runs-repo.ts` |
+| **Issues** | #10, #11 |
+| **Effort** | 3-4 hours |
+
+**Proposed Tool:**
+```typescript
+get_endpoint_profile: tool({
+  description: "Understand what this endpoint does based on inference signals. START HERE to understand context before analyzing data.",
+  schema: z.object({}),
+  execute: async () => {
+    const endpoint = await jobs.getEndpoint(endpointId);
+    const recentResponses = await runs.getResponseHistory(endpointId, 5, 0);
+    
+    // Infer type from multiple signals
+    const inference = inferEndpointType({
+      name: endpoint.name,
+      description: endpoint.description,
+      url: endpoint.url,
+      baselineSchedule: endpoint.baselineCron || endpoint.baselineIntervalMs,
+      responseStructure: analyzeResponseStructure(recentResponses),
+    });
+    
+    return {
+      inferred_type: inference.type, // "health_check" | "data_sync" | "notification" | "batch_job" | "unknown"
+      confidence: inference.confidence,
+      signals: inference.signals,
+      typical_concerns: inference.concerns,
+      suggested_approach: inference.approach,
+    };
+  },
+}),
+```
+
+**Inference Logic:**
+```typescript
+function inferEndpointType(signals: EndpointSignals): InferenceResult {
+  const indicators = [];
+  
+  // Name-based inference
+  if (/health|check|status|monitor|ping/i.test(signals.name)) {
+    indicators.push({ type: "health_check", weight: 3, reason: "name suggests monitoring" });
+  }
+  if (/sync|import|export|backup/i.test(signals.name)) {
+    indicators.push({ type: "data_sync", weight: 3, reason: "name suggests data sync" });
+  }
+  if (/send|notify|alert|email|sms/i.test(signals.name)) {
+    indicators.push({ type: "notification", weight: 3, reason: "name suggests notification" });
+  }
+  if (/batch|process|job|queue/i.test(signals.name)) {
+    indicators.push({ type: "batch_job", weight: 2, reason: "name suggests batch processing" });
+  }
+  
+  // Schedule-based inference
+  if (signals.baselineSchedule && signals.baselineSchedule < 60000) {
+    indicators.push({ type: "health_check", weight: 2, reason: "high frequency (<1min) suggests monitoring" });
+  }
+  if (signals.baselineSchedule && signals.baselineSchedule >= 86400000) {
+    indicators.push({ type: "batch_job", weight: 2, reason: "daily+ schedule suggests batch job" });
+  }
+  
+  // Response structure inference
+  if (signals.responseStructure.hasFields(["status", "latency", "error"])) {
+    indicators.push({ type: "health_check", weight: 3, reason: "response has health metrics" });
+  }
+  if (signals.responseStructure.hasFields(["synced", "count", "records"])) {
+    indicators.push({ type: "data_sync", weight: 3, reason: "response has sync metrics" });
+  }
+  
+  // Aggregate and return highest-weighted type
+  return aggregateInference(indicators);
+}
+```
+
+---
+
+#### 7.2 Add `get_response_schema` Tool
+
+| Attribute | Value |
+|-----------|-------|
+| **Files** | `packages/worker-ai-planner/src/tools.ts` |
+| **Issues** | #10, #11 |
+| **Effort** | 2 hours |
+
+**Proposed Tool:**
+```typescript
+get_response_schema: tool({
+  description: "Understand the structure of response bodies and what fields mean. Use this to interpret data correctly.",
+  schema: z.object({}),
+  execute: async () => {
+    const history = await runs.getResponseHistory(endpointId, 10, 0);
+    const schema = inferResponseSchema(history);
+    
+    return {
+      fields: schema.fields, // { fieldName: { type, trend, range, interpretation } }
+      interpretation_hints: schema.hints,
+      example_response: history[0]?.responseBody,
+    };
+  },
+}),
+```
+
+---
+
+#### 7.3 Implement Lean Prompt
+
+| Attribute | Value |
+|-----------|-------|
+| **Files** | `packages/worker-ai-planner/src/planner.ts` |
+| **Issues** | #10, #11 |
+| **Effort** | 2-3 hours |
+
+**Current**: ~370 lines, ~4000+ tokens base cost  
+**Proposed**: ~50 lines, ~500 tokens base cost
+
+See Issue 11 for the full lean prompt proposal.
+
+**Migration Strategy:**
+1. Implement discovery tools (7.1, 7.2) alongside existing prompt
+2. A/B test lean prompt on subset of endpoints
+3. Compare metrics: token usage, tool calls, decision quality
+4. If successful, migrate all endpoints to lean prompt
+5. Keep detailed prompt as "expert mode" for complex cases
+
+---
+
+### Phase 8: Cross-Endpoint Awareness Tools
+
+This phase addresses Issues 12-16 by adding tools for cross-endpoint coordination and job-level context.
+
+#### 8.1 Enhanced `get_sibling_health` Tool
+
+| Attribute | Value |
+|-----------|-------|
+| **Files** | `packages/worker-ai-planner/src/tools.ts`, `packages/adapter-drizzle/src/runs-repo.ts` |
+| **Issues** | #12, #9 |
+| **Effort** | 3 hours |
+
+**Purpose:** Replace/enhance `get_sibling_latest_responses` with comprehensive sibling data.
+
+**Proposed Tool:**
+```typescript
+get_sibling_health: tool({
+  description: "Get health status and scheduling info for all sibling endpoints in this job. Essential for coordinated scheduling decisions.",
+  schema: z.object({
+    include_pending_hints: z.boolean().optional().describe("Include active AI hints on siblings"),
+    health_window_hours: z.number().optional().default(24).describe("Health metric window"),
+  }),
+  execute: async ({ include_pending_hints, health_window_hours }) => {
+    const siblings = await jobs.getSiblingEndpoints(endpointId);
+    
+    return Promise.all(siblings.map(async (sibling) => {
+      const health = await runs.getHealthSummary(sibling.id, { hours: health_window_hours });
+      const latestRun = await runs.getLatestRun(sibling.id);
+      
+      return {
+        id: sibling.id,
+        name: sibling.name,
+        // Health metrics
+        health: {
+          successRate: health.successRate,
+          avgDurationMs: health.avgDurationMs,
+          recentFailures: health.failureCount,
+          currentStreak: health.consecutiveStatus,
+        },
+        // Schedule info
+        schedule: {
+          baselineIntervalMs: sibling.baselineIntervalMs,
+          baselineCron: sibling.baselineCron,
+          nextRunAt: sibling.nextRunAt,
+          lastRunAt: sibling.lastRunAt,
+        },
+        // Active AI hints (if requested)
+        activeHints: include_pending_hints ? {
+          intervalHintMs: sibling.aiHintIntervalMs,
+          nextRunHint: sibling.aiHintNextRunAt,
+          hintExpiresAt: sibling.aiHintExpiresAt,
+        } : undefined,
+        // Latest run summary
+        latestRun: latestRun ? {
+          status: latestRun.status,
+          durationMs: latestRun.durationMs,
+          errorMessage: latestRun.errorMessage?.substring(0, 100),
+        } : null,
+      };
+    }));
+  },
+}),
+```
+
+---
+
+#### 8.2 Add `get_job_summary` Tool
+
+| Attribute | Value |
+|-----------|-------|
+| **Files** | `packages/worker-ai-planner/src/tools.ts`, `packages/adapter-drizzle/src/runs-repo.ts` |
+| **Issues** | #13 |
+| **Effort** | 2-3 hours |
+
+**Purpose:** Provide job-level aggregated metrics for context without per-endpoint drilling.
+
+**Proposed Tool:**
+```typescript
+get_job_summary: tool({
+  description: "Get aggregated metrics for the entire job. Use for job-wide context before making endpoint-specific decisions.",
+  schema: z.object({
+    hours: z.number().optional().default(24).describe("Time window for metrics"),
+  }),
+  execute: async ({ hours }) => {
+    const job = await jobs.getJobById(jobId);
+    const endpoints = await jobs.getEndpointsForJob(jobId);
+    const jobHealth = await runs.getJobHealthSummary(jobId, { hours });
+    
+    return {
+      job: {
+        name: job.name,
+        description: job.description,
+        endpointCount: endpoints.length,
+      },
+      health: {
+        overallSuccessRate: jobHealth.successRate,
+        totalRuns: jobHealth.totalRuns,
+        failingEndpointCount: jobHealth.failingEndpoints,
+        healthyEndpointCount: jobHealth.healthyEndpoints,
+      },
+      endpoints: endpoints.map(ep => ({
+        id: ep.id,
+        name: ep.name,
+        status: ep.status, // "healthy" | "failing" | "paused" | "degraded"
+        lastRunAt: ep.lastRunAt,
+      })),
+      systemStatus: {
+        anyEndpointFailing: jobHealth.failingEndpoints > 0,
+        allEndpointsHealthy: jobHealth.failingEndpoints === 0,
+        hasActiveHints: endpoints.some(ep => ep.aiHintExpiresAt > new Date()),
+      },
+    };
+  },
+}),
+```
+
+---
+
+#### 8.3 Add `analyze_error_pattern` Tool
+
+| Attribute | Value |
+|-----------|-------|
+| **Files** | `packages/worker-ai-planner/src/tools.ts`, `packages/adapter-drizzle/src/runs-repo.ts` |
+| **Issues** | #14 |
+| **Effort** | 2-3 hours |
+
+**Purpose:** Help AI interpret errors systematically rather than relying on unstructured error messages.
+
+**Proposed Tool:**
+```typescript
+analyze_error_pattern: tool({
+  description: "Analyze recent errors to identify patterns. Use when endpoint is failing to understand the type of failure.",
+  schema: z.object({
+    hours: z.number().optional().default(24),
+    limit: z.number().optional().default(20),
+  }),
+  execute: async ({ hours, limit }) => {
+    const failures = await runs.getRecentFailures(endpointId, { hours, limit });
+    
+    // Categorize errors
+    const errorCategories = categorizeErrors(failures);
+    
+    return {
+      totalFailures: failures.length,
+      byCategory: errorCategories,
+      patterns: {
+        isIntermittent: errorCategories.percentIntermittent > 50,
+        isConsistent: errorCategories.percentConsistent > 80,
+        isTimeBased: detectTimePattern(failures),
+        isLoadRelated: detectLoadPattern(failures),
+      },
+      suggestedAction: inferAction(errorCategories),
+      recentErrors: failures.slice(0, 5).map(f => ({
+        timestamp: f.timestamp,
+        category: f.category,
+        message: f.errorMessage?.substring(0, 100),
+      })),
+    };
+  },
+}),
+
+function categorizeErrors(failures: RunRecord[]): ErrorCategories {
+  const categories = {
+    timeout: 0,
+    network: 0,
+    http4xx: 0,
+    http5xx: 0,
+    parse: 0,
+    unknown: 0,
+  };
+  
+  for (const failure of failures) {
+    const msg = failure.errorMessage?.toLowerCase() || "";
+    const status = failure.httpStatus;
+    
+    if (msg.includes("timeout") || msg.includes("timed out")) categories.timeout++;
+    else if (msg.includes("econnrefused") || msg.includes("network")) categories.network++;
+    else if (status >= 400 && status < 500) categories.http4xx++;
+    else if (status >= 500) categories.http5xx++;
+    else if (msg.includes("parse") || msg.includes("json")) categories.parse++;
+    else categories.unknown++;
+  }
+  
+  return categories;
+}
+```
+
+---
+
+#### 8.4 Add `clear_hints` Action Tool
+
+| Attribute | Value |
+|-----------|-------|
+| **Files** | `packages/worker-ai-planner/src/tools.ts`, `packages/adapter-drizzle/src/jobs-repo.ts` |
+| **Issues** | #15 |
+| **Effort** | 1 hour |
+
+**Purpose:** Allow AI to reset endpoint to baseline schedule when hints are no longer needed.
+
+**Proposed Tool:**
+```typescript
+clear_hints: tool({
+  description: "Clear all AI hints for this endpoint, reverting to baseline schedule. Use when previous adjustments are no longer needed.",
+  schema: z.object({
+    reason: z.string().describe("Why hints are being cleared"),
+  }),
+  execute: async ({ reason }) => {
+    const before = await jobs.getEndpoint(endpointId);
+    
+    await jobs.clearAIHints(endpointId);
+    
+    const after = await jobs.getEndpoint(endpointId);
+    
+    return {
+      cleared: true,
+      reason,
+      before: {
+        intervalHintMs: before.aiHintIntervalMs,
+        nextRunHint: before.aiHintNextRunAt,
+      },
+      after: {
+        nextRunAt: after.nextRunAt,
+        revertedTo: before.baselineCron || `${before.baselineIntervalMs}ms interval`,
+      },
+    };
+  },
+}),
+```
+
+---
+
+#### 8.5 Endpoint Type Decision Matrix (Prompt Enhancement)
+
+| Attribute | Value |
+|-----------|-------|
+| **Files** | `packages/worker-ai-planner/src/planner.ts` |
+| **Issues** | #16 |
+| **Effort** | 1-2 hours |
+
+**Purpose:** Add type-specific guidance that AI can reference after calling `get_endpoint_profile`.
+
+**Add to Discovery Tool Result:**
+```typescript
+// In get_endpoint_profile, add decision matrix based on inferred type:
+const decisionMatrix: Record<EndpointType, TypeGuidance> = {
+  health_check: {
+    primary_concern: "uptime and response time",
+    typical_actions: ["Tighten interval on degradation", "Relax during stable periods"],
+    sibling_relevance: "Check if degradation is isolated or system-wide",
+    history_depth: "Short (10-20 records) usually sufficient",
+  },
+  data_sync: {
+    primary_concern: "successful data transfer completion",
+    typical_actions: ["Retry on failure", "Coordinate with upstream endpoints"],
+    sibling_relevance: "CRITICAL - check upstream completion before triggering",
+    history_depth: "Moderate (focus on recent completion status)",
+  },
+  notification: {
+    primary_concern: "delivery success and appropriate timing",
+    typical_actions: ["Immediate retry on failure", "Respect quiet hours"],
+    sibling_relevance: "May depend on trigger events from other endpoints",
+    history_depth: "Short (delivery receipts)",
+  },
+  batch_job: {
+    primary_concern: "completion within expected window",
+    typical_actions: ["Monitor duration trends", "Alert on unexpected length"],
+    sibling_relevance: "May be part of pipeline sequence",
+    history_depth: "Moderate (duration trending)",
+  },
+  unknown: {
+    primary_concern: "investigate to understand purpose",
+    typical_actions: ["Call get_response_schema to understand output", "Review baseline schedule"],
+    sibling_relevance: "Unknown - check job context",
+    history_depth: "Moderate (need data to infer purpose)",
+  },
+};
+```
+
+---
+
 ## Recommended Implementation Order
 
 | Priority | Changes | Impact | Effort | Issues Addressed |
@@ -764,8 +1766,20 @@ ${siblings.map(s => `- ${s.name}`).join('\n')}
 | **4** | 5.1 (Multi-window health) | High | 3 hrs | #8 |
 | **5** | 4.2 (Session memory) | Medium | 2 hrs | #1 |
 | **6** | 1.3 + 6.1 (Sibling awareness) | Medium | 2 hrs | #9 |
+| **7** | 7.1 + 7.2 (Discovery tools) | High | 5-6 hrs | #10, #11 |
+| **8** | 7.3 (Lean prompt) | High | 3 hrs | #10, #11 |
+| **9** | 8.1 (Enhanced sibling health) | High | 3 hrs | #12 |
+| **10** | 8.2 + 8.3 (Job summary + error analysis) | Medium | 5 hrs | #13, #14 |
+| **11** | 8.4 (clear_hints action) | Medium | 1 hr | #15 |
+| **12** | 8.5 (Type-specific guidance) | Medium | 2 hrs | #16 |
 
-**Estimated Total Effort:** 8-10 hours for full implementation
+**Estimated Total Effort:** 27-32 hours for full implementation (including architectural changes)
+
+**Phased Rollout:**
+- **Phase A (Quick wins)**: Priorities 1-3 = ~3 hours
+- **Phase B (Signal improvements)**: Priorities 4-6 = ~7 hours  
+- **Phase C (Architecture)**: Priorities 7-8 = ~8 hours (can run in parallel with A/B testing)
+- **Phase D (Cross-endpoint)**: Priorities 9-12 = ~11 hours (enables coordination use cases)
 
 ---
 
@@ -773,12 +1787,16 @@ ${siblings.map(s => `- ${s.name}`).join('\n')}
 
 After implementation, monitor:
 
-1. **Token usage per session**: Target < 10K average (down from 42K worst case)
+1. **Token usage per session**: Target < 5K average (down from 42K worst case)
 2. **Tool calls per session**: Target < 8 average (down from 50+ worst case)
-3. **Session duration**: Target < 30s average (down from 263s worst case)
+3. **Session duration**: Target < 20s average (down from 263s worst case)
 4. **Sessions per endpoint per hour**: Target ≤ 4 (cooldown enforcement)
 5. **Sibling tool usage**: Target > 0 for multi-endpoint jobs
-6. **Decision quality**: No "false alarm" actions on recovered endpoints
+6. **Discovery tool usage**: Target 100% call `get_endpoint_profile` first
+7. **Decision quality**: No "false alarm" actions on recovered endpoints
+8. **Use-case coverage**: AI correctly handles health checks, data syncs, notifications, and batch jobs
+9. **Cross-endpoint awareness**: AI uses sibling/job tools for coordination scenarios
+10. **Hint lifecycle**: `clear_hints` called when endpoints stabilize
 
 ---
 
