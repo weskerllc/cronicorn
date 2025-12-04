@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/weskerllc/cronicorn/compare/v1.13.5...v1.14.0) (2025-12-04)
+
+
+### Features
+
+* AI Planner efficiency improvements ([#68](https://github.com/weskerllc/cronicorn/issues/68)) ([05d912c](https://github.com/weskerllc/cronicorn/commit/05d912c4cb152aa2a46a379a24801a06c95478e9))
+
 ## [1.13.5](https://github.com/weskerllc/cronicorn/compare/v1.13.4...v1.13.5) (2025-12-03)
 
 
