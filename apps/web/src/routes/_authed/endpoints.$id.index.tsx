@@ -53,6 +53,9 @@ function ViewEndpointPage() {
       }
       toast.success(pausedUntil ? "Endpoint paused for 24 hours" : "Endpoint resumed");
     },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to pause/resume endpoint");
+    },
   });
 
   const { mutateAsync: resetMutate, isPending: resetPending } = useMutation({
@@ -64,16 +67,22 @@ function ViewEndpointPage() {
       }
       toast.success("Failure count reset");
     },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to reset failures");
+    },
   });
 
   const { mutateAsync: runNowMutate, isPending: runNowPending } = useMutation({
-    mutationFn: async () => scheduleOneShot(id, { nextRunInMs: 0, reason: "Manual trigger via UI" }),
+    mutationFn: async () => scheduleOneShot(id, { nextRunInMs: 1000, reason: "Manual trigger via UI" }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["endpoints", id] });
       if (endpoint.jobId) {
         await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints"] });
       }
       toast.success("Endpoint scheduled to run immediately");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to schedule run");
     },
   });
 
@@ -88,6 +97,9 @@ function ViewEndpointPage() {
         await queryClient.invalidateQueries({ queryKey: ["jobs", endpoint.jobId, "endpoints"] });
       }
       toast.success("Endpoint archived successfully");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to archive endpoint");
     },
   });
 
