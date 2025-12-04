@@ -1,4 +1,4 @@
-import type { HealthSummary, JsonValue, RunsRepo } from "../index.js";
+import type { HealthSummary, JsonValue, MultiWindowHealth, RunsRepo } from "../index.js";
 
 type Run = {
   id: string;
@@ -145,6 +145,55 @@ export class InMemoryRunsRepo implements RunsRepo {
       failureCount,
       avgDurationMs,
       lastRun,
+      failureStreak,
+    };
+  }
+
+  async getHealthSummaryMultiWindow(endpointId: string, now: Date): Promise<MultiWindowHealth> {
+    const hour1Since = now.getTime() - 1 * 60 * 60 * 1000;
+    const hour4Since = now.getTime() - 4 * 60 * 60 * 1000;
+    const hour24Since = now.getTime() - 24 * 60 * 60 * 1000;
+
+    // Get all runs in 24h window
+    const allRuns = this.runs
+      .filter(r => r.endpointId === endpointId && r.startedAt >= hour24Since)
+      .sort((a, b) => b.startedAt - a.startedAt);
+
+    // Partition by window
+    const hour1Runs = allRuns.filter(r => r.startedAt >= hour1Since);
+    const hour4Runs = allRuns.filter(r => r.startedAt >= hour4Since);
+    const hour24Runs = allRuns;
+
+    const calcWindowStats = (windowRuns: typeof allRuns) => {
+      const successCount = windowRuns.filter(r => r.status === "success").length;
+      const failureCount = windowRuns.filter(r => r.status === "failed").length;
+      const total = successCount + failureCount;
+      const successRate = total > 0 ? Math.round((successCount / total) * 100) : 0;
+      return { successCount, failureCount, successRate };
+    };
+
+    const durations = hour24Runs
+      .map(r => r.durationMs)
+      .filter((d): d is number => d !== undefined);
+    const avgDurationMs = durations.length > 0
+      ? durations.reduce((a, b) => a + b, 0) / durations.length
+      : null;
+
+    let failureStreak = 0;
+    for (const run of allRuns) {
+      if (run.status === "failed") {
+        failureStreak++;
+      }
+      else {
+        break;
+      }
+    }
+
+    return {
+      hour1: calcWindowStats(hour1Runs),
+      hour4: calcWindowStats(hour4Runs),
+      hour24: calcWindowStats(hour24Runs),
+      avgDurationMs,
       failureStreak,
     };
   }

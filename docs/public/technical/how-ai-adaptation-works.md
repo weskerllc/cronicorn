@@ -25,15 +25,21 @@ The AI Planner runs independently from the Scheduler. Typically it wakes up ever
 
 The AI Planner doesn't analyze every endpoint on every cycle. That would be expensive (AI API costs) and unnecessary (most endpoints are stable).
 
-Instead, it uses a **discovery mechanism** to find endpoints that executed recently:
+Instead, it uses **smart scheduling** where the AI controls when it needs to analyze again:
 
-1. Query the database for endpoints that ran within the last 5-10 minutes
-2. Filter to endpoints that haven't been analyzed in the last cycle (avoid duplicate work)
-3. Analyze each discovered endpoint in sequence
+1. Query the database for endpoints that ran recently
+2. Check if the endpoint is due for analysis based on:
+   - **First analysis**: New endpoints that have never been analyzed
+   - **Scheduled time**: AI-requested re-analysis time has passed
+   - **State change**: New failures since last analysis (triggers immediate re-analysis)
+3. Skip endpoints where none of these conditions are met
 
-This approach focuses AI attention on active endpoints where adaptation might be valuable. Dormant endpoints (not running) don't get analyzed until they become active again.
+This approach lets the AI decide its own analysis frequency:
+- Stable endpoints: "Check again in 4 hours"
+- Incidents: "Check again in 5 minutes"
+- Very stable daily jobs: "Check again in 24 hours"
 
-The discovery window (5-10 minutes) is configurable. Wider windows catch more endpoints but increase batch size. Narrower windows reduce costs but might miss some activity.
+The AI communicates this via the `next_analysis_in_ms` parameter in `submit_analysis` (see Tools section).
 
 ## What the AI Sees: Building Context
 
@@ -49,15 +55,28 @@ For each endpoint, the AI Planner builds a comprehensive analysis prompt contain
 
 This tells the AI what scheduling behavior is currently in effect.
 
-### Recent Performance (Last 24 Hours)
+### Recent Performance (Multi-Window Health)
 
-- **Success rate**: Percentage of successful executions
-- **Total runs**: Number of executions
+The AI sees health metrics across **three time windows** to accurately detect recovery patterns:
+
+| Window | Metrics |
+|--------|--------|
+| **Last 1 hour** | Success rate, run count |
+| **Last 4 hours** | Success rate, run count |
+| **Last 24 hours** | Success rate, run count |
+
+Plus:
 - **Average duration**: Mean execution time
 - **Failure streak**: Consecutive failures (signals degradation)
-- **Last run status**: Most recent execution outcome
 
-These health metrics help the AI spot trends: improving, degrading, or stable.
+**Why multiple windows matter**: A single 24-hour window can be misleading during recovery. If an endpoint failed at high frequency (every 5 seconds for 2 hours = 1,440 failures) and then recovered at normal frequency (every 5 minutes for 6 hours = 72 successes), the 24-hour rate shows 4.8% success even though recent performance is 100%.
+
+With multi-window health, the AI sees:
+- Last 1h: 100% success (12 runs)
+- Last 4h: 85% success (40 runs)
+- Last 24h: 32% success (500 runs) ← skewed by old failures
+
+This tells the AI "endpoint has recovered" rather than "endpoint is still failing."
 
 ### Response Body Data
 
@@ -82,15 +101,33 @@ Structure your response bodies to include the metrics that matter for your use c
 
 ### Job Context
 
-If the endpoint belongs to a job, the AI sees the job's description. This provides high-level intent:
+If the endpoint belongs to a job, the AI sees:
 
-> "Monitors payment queue and triggers processing when depth exceeds threshold"
+- **Job description**: High-level intent (e.g., "Monitors payment queue and triggers processing when depth exceeds threshold")
+- **Sibling endpoint names**: Other endpoints in the same job (e.g., "3 endpoints [API Monitor, Data Fetcher, Notifier]")
 
-The AI uses this context to interpret what "good" vs "bad" looks like for specific metrics. A growing queue_depth might be normal for a collector endpoint but alarming for a processor endpoint.
+Knowing sibling names helps the AI:
+- Understand the endpoint is part of a larger workflow
+- Decide when to check sibling responses for coordination
+- Make informed decisions about the `get_sibling_latest_responses` tool
 
-## The Three Tools: How AI Takes Action
+The AI uses job context to interpret what "good" vs "bad" looks like for specific metrics. A growing queue_depth might be normal for a collector endpoint but alarming for a processor endpoint.
 
-The AI Planner doesn't write to the database directly. Instead, it has access to **three action tools** that write hints:
+## Session Constraints
+
+Each AI analysis session has resource limits to prevent runaway costs:
+
+- **Maximum 15 tool calls** per session (hard limit)
+- **10 history records** is usually sufficient for trend analysis
+- Sessions that hit the limit are terminated
+
+These constraints prevent the worst-case scenario: an AI session that paginates through hundreds of identical failure records, consuming 42K+ tokens for a decision reachable in 5 tool calls.
+
+The AI is informed of these limits and prioritizes the most valuable queries.
+
+## The Four Tools: How AI Takes Action
+
+The AI Planner doesn't write to the database directly. Instead, it has access to **four action tools** that write hints:
 
 ### 1. propose_interval
 
@@ -175,6 +212,31 @@ Effect: No executions until 3:30 PM, then resumes baseline
 3. Scheduler's Governor checks pause state—if `pausedUntil > now`, returns that timestamp with source `"paused"`
 4. When pause time passes, Governor resumes normal scheduling
 
+### 4. clear_hints
+
+**Purpose**: Reset endpoint to baseline schedule by clearing all AI hints
+
+**Parameters**:
+- `reason`: Explanation for clearing hints
+
+**When to use**:
+- AI hints are no longer relevant (situation changed)
+- Manual intervention resolved the issue
+- False positive detection (AI over-reacted)
+- Want to revert to baseline without waiting for TTL expiry
+
+**Example**:
+```
+AI sees endpoint recovered but has aggressive 30s interval hint active
+Action: clear_hints(reason="Endpoint recovered, reverting to baseline")
+Effect: AI hints cleared immediately, baseline schedule resumes
+```
+
+**How it works**:
+1. AI calls the tool with a reason
+2. Tool clears `aiHintIntervalMs`, `aiHintNextRunAt`, `aiHintExpiresAt`
+3. Next execution uses baseline schedule
+
 ## Query Tools: Informing Decisions
 
 Before taking action, the AI can query response data using **three query tools**:
@@ -190,7 +252,7 @@ Example: "What's the current queue depth?"
 ### 2. get_response_history
 
 **Parameters**:
-- `limit`: Number of responses (1-10, default 2)
+- `limit`: Number of responses (1-10, default 10)
 - `offset`: Skip N newest responses for pagination
 
 **Returns**: Array of response bodies with timestamps, newest first
@@ -199,17 +261,39 @@ Example: "What's the current queue depth?"
 
 Example: "Is queue_depth increasing monotonically?"
 
-**Efficiency tip**: Start with `limit=2` to check recent trend. If you need more context, use `offset=2, limit=3` to get the next 3 older responses.
+**Note**: 10 records is usually sufficient for trend analysis. The AI is encouraged not to paginate endlessly—if patterns are unclear after 10-20 records, more data rarely helps.
 
 Response bodies are truncated at 1000 characters to prevent token overflow.
 
 ### 3. get_sibling_latest_responses
 
-**Returns**: Latest response from each sibling endpoint in the same job
+**Returns**: For each sibling endpoint in the same job:
+- **Response data**: Latest response body, timestamp, status
+- **Schedule info**: Baseline, next run, last run, pause status, failure count
+- **AI hints**: Active interval/one-shot hints with expiry and reason
 
-**Use case**: Coordinate across endpoints
+**Use case**: Coordinate across endpoints with full context
 
-Example: "Did the upstream endpoint finish processing?"
+Example: "Is the upstream endpoint healthy and running normally, or is it paused/failing?"
+
+The enriched response allows the AI to understand sibling state at a glance:
+```json
+{
+  "endpointId": "ep_456",
+  "endpointName": "Data Fetcher",
+  "responseBody": { "batch_ready": true },
+  "timestamp": "2025-11-02T14:25:00Z",
+  "status": "success",
+  "schedule": {
+    "baseline": "every 5 minutes",
+    "nextRunAt": "2025-11-02T14:30:00Z",
+    "lastRunAt": "2025-11-02T14:25:00Z",
+    "isPaused": false,
+    "failureCount": 0
+  },
+  "aiHints": null
+}
+```
 
 Only useful for workflow endpoints (multiple endpoints in the same job that coordinate).
 
@@ -371,12 +455,15 @@ Every AI analysis creates a session record:
 - **Reasoning** (AI's explanation of its decision)
 - **Token usage** (cost tracking)
 - **Duration**
+- **Next analysis at** (when AI scheduled its next analysis)
+- **Endpoint failure count** (snapshot for detecting state changes)
 
 This audit trail helps you:
 - Debug unexpected scheduling behavior
 - Understand why AI tightened/relaxed intervals
 - Review cost (token usage per analysis)
 - Tune prompts or constraints based on AI reasoning
+- See when AI expects to analyze again
 
 Check the sessions table when an endpoint's schedule changes unexpectedly. The reasoning field shows the AI's thought process.
 
@@ -434,14 +521,15 @@ This ensures that even if AI becomes unavailable or too expensive, your jobs kee
 
 ## Key Takeaways
 
-1. **AI discovers active endpoints**: Only analyzes what's running
-2. **AI sees health + response data**: Metrics inform decisions
-3. **Three action tools**: propose_interval, propose_next_time, pause_until
-4. **Hints have TTLs**: Auto-revert on expiration (safety)
-5. **Interval hints override baseline**: Enables adaptation
-6. **Nudging provides immediacy**: Changes apply within seconds
-7. **Structure response bodies intentionally**: Include metrics AI should monitor
-8. **Sessions provide audit trail**: Debug AI reasoning
-9. **Quota controls costs**: AI unavailable ≠ jobs stop running
+1. **AI controls its own analysis frequency**: Schedules re-analysis based on endpoint state
+2. **AI sees multi-window health data**: 1h, 4h, 24h windows for accurate recovery detection
+3. **Sessions have constraints**: Max 15 tool calls to prevent runaway costs
+4. **Four action tools**: propose_interval, propose_next_time, pause_until, clear_hints
+5. **Hints have TTLs**: Auto-revert on expiration (safety)
+6. **Interval hints override baseline**: Enables adaptation
+7. **Nudging provides immediacy**: Changes apply within seconds
+8. **Structure response bodies intentionally**: Include metrics AI should monitor
+9. **Sessions provide audit trail**: Debug AI reasoning
+10. **Quota controls costs**: AI unavailable ≠ jobs stop running
 
 Understanding how AI adaptation works helps you design endpoints that benefit from intelligent scheduling, structure response bodies effectively, and debug unexpected schedule changes.

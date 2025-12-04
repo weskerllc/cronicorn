@@ -49,6 +49,7 @@ describe("aiTools", () => {
       listRuns: vi.fn(),
       getRunDetails: vi.fn(),
       getHealthSummary: vi.fn(),
+      getHealthSummaryMultiWindow: vi.fn(),
       getEndpointsWithRecentRuns: vi.fn(),
       getLatestResponse: vi.fn(),
       getResponseHistory: vi.fn(),
@@ -247,6 +248,23 @@ describe("aiTools", () => {
       expect(result).toContain("Paused until");
       // Don't check for ":" since ISO timestamp contains colons
       expect(result).not.toContain(": ");
+    });
+  });
+
+  describe("clear_hints", () => {
+    it("clears all AI hints and returns confirmation", async () => {
+      const tools = createToolsForEndpoint("ep-1", "job-1", { jobs: mockJobsRepo, runs: mockRunsRepo, clock: fakeClock });
+
+      vi.mocked(mockJobsRepo.clearAIHints).mockResolvedValue(undefined);
+
+      const result = await callTool(tools, "clear_hints", {
+        reason: "Manual intervention - resetting to baseline",
+      });
+
+      expect(mockJobsRepo.clearAIHints).toHaveBeenCalledWith("ep-1");
+      expect(result).toContain("Cleared all AI hints");
+      expect(result).toContain("reverted to baseline");
+      expect(result).toContain("Manual intervention");
     });
   });
 
