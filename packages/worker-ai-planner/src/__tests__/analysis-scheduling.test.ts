@@ -15,6 +15,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AIPlanner } from "../planner.js";
 import { createToolsForEndpoint } from "../tools.js";
 
+// Helper to create multi-window health mock
+function createMultiWindowHealth(overrides?: Partial<{
+    hour1: { successCount: number; failureCount: number; successRate: number };
+    hour4: { successCount: number; failureCount: number; successRate: number };
+    hour24: { successCount: number; failureCount: number; successRate: number };
+    avgDurationMs: number | null;
+    failureStreak: number;
+}>) {
+    return {
+        hour1: { successCount: 10, failureCount: 0, successRate: 100, ...overrides?.hour1 },
+        hour4: { successCount: 30, failureCount: 2, successRate: 94, ...overrides?.hour4 },
+        hour24: { successCount: 100, failureCount: 0, successRate: 100, ...overrides?.hour24 },
+        avgDurationMs: overrides?.avgDurationMs ?? 50.0,
+        failureStreak: overrides?.failureStreak ?? 0,
+    };
+}
+
 describe("ai-controlled analysis scheduling", () => {
     let mockJobsRepo: JobsRepo;
     let mockRunsRepo: RunsRepo;
@@ -65,6 +82,7 @@ describe("ai-controlled analysis scheduling", () => {
 
         mockRunsRepo = {
             getHealthSummary: vi.fn(),
+            getHealthSummaryMultiWindow: vi.fn(),
             create: vi.fn(),
             finish: vi.fn(),
             listRuns: vi.fn(),
@@ -185,16 +203,8 @@ describe("ai-controlled analysis scheduling", () => {
                 failureCount: 0,
             };
 
-            const mockHealth = {
-                successCount: 100,
-                failureCount: 0,
-                avgDurationMs: 50.0,
-                lastRun: null,
-                failureStreak: 0,
-            };
-
             vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
-            vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
+            vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
             vi.mocked(mockAIClient.planWithTools).mockResolvedValue({
                 toolCalls: [
                     {
@@ -244,16 +254,8 @@ describe("ai-controlled analysis scheduling", () => {
                 failureCount: 2,
             };
 
-            const mockHealth = {
-                successCount: 100,
-                failureCount: 0,
-                avgDurationMs: 50.0,
-                lastRun: null,
-                failureStreak: 0,
-            };
-
             vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
-            vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
+            vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
             vi.mocked(mockAIClient.planWithTools).mockResolvedValue({
                 toolCalls: [
                     {
@@ -302,16 +304,10 @@ describe("ai-controlled analysis scheduling", () => {
                 failureCount: 5, // 5 consecutive failures
             };
 
-            const mockHealth = {
-                successCount: 10,
-                failureCount: 5,
-                avgDurationMs: 50.0,
-                lastRun: { status: "failure", at: new Date() },
-                failureStreak: 5,
-            };
-
             vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
-            vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
+            vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(
+                createMultiWindowHealth({ failureStreak: 5, hour24: { successCount: 10, failureCount: 5, successRate: 67 } }),
+            );
             vi.mocked(mockAIClient.planWithTools).mockResolvedValue({
                 toolCalls: [
                     {
@@ -352,16 +348,8 @@ describe("ai-controlled analysis scheduling", () => {
                 failureCount: 0,
             };
 
-            const mockHealth = {
-                successCount: 100,
-                failureCount: 0,
-                avgDurationMs: 50.0,
-                lastRun: null,
-                failureStreak: 0,
-            };
-
             vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
-            vi.mocked(mockRunsRepo.getHealthSummary).mockResolvedValue(mockHealth);
+            vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
             vi.mocked(mockAIClient.planWithTools).mockResolvedValue({
                 toolCalls: [
                     {

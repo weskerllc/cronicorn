@@ -1,4 +1,4 @@
-import type { HealthSummary, JsonValue, RunsRepo } from "../index.js";
+import type { HealthSummary, JsonValue, MultiWindowHealth, RunsRepo } from "../index.js";
 
 type Run = {
   id: string;
@@ -39,16 +39,16 @@ export class InMemoryRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-      runs: Array<{
-        runId: string;
-        endpointId: string;
-        startedAt: Date;
-        status: string;
-        durationMs?: number;
-        source?: string;
-      }>;
-      total: number;
-    }> {
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }> {
     let filtered = this.runs;
 
     if (filters.endpointId) {
@@ -149,6 +149,55 @@ export class InMemoryRunsRepo implements RunsRepo {
     };
   }
 
+  async getHealthSummaryMultiWindow(endpointId: string, now: Date): Promise<MultiWindowHealth> {
+    const hour1Since = now.getTime() - 1 * 60 * 60 * 1000;
+    const hour4Since = now.getTime() - 4 * 60 * 60 * 1000;
+    const hour24Since = now.getTime() - 24 * 60 * 60 * 1000;
+
+    // Get all runs in 24h window
+    const allRuns = this.runs
+      .filter(r => r.endpointId === endpointId && r.startedAt >= hour24Since)
+      .sort((a, b) => b.startedAt - a.startedAt);
+
+    // Partition by window
+    const hour1Runs = allRuns.filter(r => r.startedAt >= hour1Since);
+    const hour4Runs = allRuns.filter(r => r.startedAt >= hour4Since);
+    const hour24Runs = allRuns;
+
+    const calcWindowStats = (windowRuns: typeof allRuns) => {
+      const successCount = windowRuns.filter(r => r.status === "success").length;
+      const failureCount = windowRuns.filter(r => r.status === "failed").length;
+      const total = successCount + failureCount;
+      const successRate = total > 0 ? Math.round((successCount / total) * 100) : 0;
+      return { successCount, failureCount, successRate };
+    };
+
+    const durations = hour24Runs
+      .map(r => r.durationMs)
+      .filter((d): d is number => d !== undefined);
+    const avgDurationMs = durations.length > 0
+      ? durations.reduce((a, b) => a + b, 0) / durations.length
+      : null;
+
+    let failureStreak = 0;
+    for (const run of allRuns) {
+      if (run.status === "failed") {
+        failureStreak++;
+      }
+      else {
+        break;
+      }
+    }
+
+    return {
+      hour1: calcWindowStats(hour1Runs),
+      hour4: calcWindowStats(hour4Runs),
+      hour24: calcWindowStats(hour24Runs),
+      avgDurationMs,
+      failureStreak,
+    };
+  }
+
   async getEndpointsWithRecentRuns(since: Date): Promise<string[]> {
     const sinceMs = since.getTime();
     const endpointIds = new Set<string>();
@@ -192,11 +241,11 @@ export class InMemoryRunsRepo implements RunsRepo {
     limit: number,
     offset?: number,
   ): Promise<Array<{
-      responseBody: JsonValue | null;
-      timestamp: Date;
-      status: string;
-      durationMs: number;
-    }>> {
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+    durationMs: number;
+  }>> {
     // Filter to endpoint and only finished runs (those with durationMs)
     const filtered = this.runs.filter(r =>
       r.endpointId === endpointId && r.durationMs !== undefined,
@@ -222,12 +271,12 @@ export class InMemoryRunsRepo implements RunsRepo {
     _jobId: string,
     _excludeEndpointId: string,
   ): Promise<Array<{
-      endpointId: string;
-      endpointName: string;
-      responseBody: JsonValue | null;
-      timestamp: Date;
-      status: string;
-    }>> {
+    endpointId: string;
+    endpointName: string;
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+  }>> {
     // In-memory implementation doesn't have job/endpoint relationships
     // So we'll return empty array. This is fine for unit tests that mock this.
     // Integration tests use DrizzleRunsRepo which has full implementation.
@@ -268,11 +317,11 @@ export class InMemoryRunsRepo implements RunsRepo {
     source?: string;
     sinceDate?: Date;
   }): Promise<{
-      totalRuns: number;
-      successCount: number;
-      failureCount: number;
-      avgDurationMs: number | null;
-    }> {
+    totalRuns: number;
+    successCount: number;
+    failureCount: number;
+    avgDurationMs: number | null;
+  }> {
     // Stub implementation for in-memory repo
     return {
       totalRuns: 0,
@@ -288,9 +337,9 @@ export class InMemoryRunsRepo implements RunsRepo {
     source?: string;
     sinceDate?: Date;
   }): Promise<Array<{
-      source: string;
-      count: number;
-    }>> {
+    source: string;
+    count: number;
+  }>> {
     // Stub implementation for in-memory repo
     return [];
   }
@@ -301,10 +350,10 @@ export class InMemoryRunsRepo implements RunsRepo {
     source?: string;
     sinceDate?: Date;
   }): Promise<Array<{
-      date: string;
-      success: number;
-      failure: number;
-    }>> {
+    date: string;
+    success: number;
+    failure: number;
+  }>> {
     // Stub implementation for in-memory repo
     return [];
   }
@@ -316,12 +365,12 @@ export class InMemoryRunsRepo implements RunsRepo {
     sinceDate?: Date;
     endpointLimit?: number;
   }): Promise<Array<{
-      date: string;
-      endpointId: string;
-      endpointName: string;
-      success: number;
-      failure: number;
-    }>> {
+    date: string;
+    endpointId: string;
+    endpointName: string;
+    success: number;
+    failure: number;
+  }>> {
     // Stub implementation for in-memory repo
     return [];
   }

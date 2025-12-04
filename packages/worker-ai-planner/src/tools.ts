@@ -200,9 +200,9 @@ export function createToolsForEndpoint(
     }),
 
     get_response_history: tool({
-      description: "Get recent response bodies from this endpoint to identify trends (e.g., increasing error rates, growing queue sizes, performance degradation). Use offset for pagination: start with limit=2, then use offset to skip previous results. Responses are returned newest-first.",
+      description: "Get recent response bodies from this endpoint to identify trends (e.g., increasing error rates, growing queue sizes, performance degradation). 10 records is usually sufficient for analysis. Responses are returned newest-first.",
       schema: z.object({
-        limit: z.number().int().min(1).max(10).default(2).describe("Number of recent responses to retrieve (max 10, default 2 for token efficiency)"),
+        limit: z.number().int().min(1).max(10).default(10).describe("Number of recent responses to retrieve (max 10, default 10)"),
         offset: z.number().int().min(0).default(0).describe("Number of newest responses to skip for pagination (0 = start from most recent)"),
       }),
       execute: async (args) => {
@@ -247,7 +247,7 @@ export function createToolsForEndpoint(
           hasMore,
           responses: truncatedResponses,
           hint: hasMore
-            ? `More history available - call again with offset: ${args.offset + args.limit} to get next ${args.limit} older responses`
+            ? "More history exists if needed, but 10 records is usually sufficient for trend analysis"
             : args.offset > 0
               ? "Reached end of history"
               : undefined,
