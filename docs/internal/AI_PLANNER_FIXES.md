@@ -234,3 +234,142 @@ Don't build:
 - ❌ Response schema analyzers
 
 **Let the AI reason.** Our job is to give it the right inputs and prevent runaway costs.
+
+---
+
+## Implementation Checklist
+
+### Phase 1: MVP (2.5 hours)
+
+#### 1.1 Add maxSteps Limit (15 min)
+- [ ] Open `packages/adapter-ai/src/client.ts`
+- [ ] Find `generateText()` call
+- [ ] Add `maxSteps: 15` to config object
+- [ ] Test: verify session stops after 15 tool calls
+
+#### 1.2 AI-Controlled Analysis Frequency (2-3 hours)
+
+**Schema update:**
+- [ ] Add `next_analysis_at` column to `ai_sessions` table (nullable timestamp)
+- [ ] Add `endpoint_failure_count` column to `ai_sessions` table (integer, snapshot at analysis time)
+- [ ] Run migration
+
+**Tool update:**
+- [ ] Open `packages/worker-ai-planner/src/tools.ts`
+- [ ] Find `submit_analysis` tool schema
+- [ ] Add `next_analysis_in_ms: z.number().min(300000).max(86400000).optional()`
+- [ ] Update execute function to return `next_analysis_in_ms` value
+
+**Sessions repo:**
+- [ ] Open `packages/adapter-drizzle/src/sessions-repo.ts`
+- [ ] Update `createSession` / save method to store `nextAnalysisAt` and `endpointFailureCount`
+- [ ] Add `getLastSession(endpointId)` method if not exists
+
+**Worker loop:**
+- [ ] Open `apps/ai-planner/src/index.ts`
+- [ ] Replace endpoint selection logic with:
+  ```
+  isFirstAnalysis || isDue || hasNewFailures
+  ```
+- [ ] Calculate `nextAnalysisAt` from AI response or default to baseline interval
+- [ ] Store `endpointFailureCount` snapshot with each session
+
+**Test:**
+- [ ] Verify new endpoint gets analyzed on first run
+- [ ] Verify AI can set next analysis time
+- [ ] Verify state-change override triggers early re-analysis
+
+#### 1.3 Fix Tool Defaults (15 min)
+- [ ] Open `packages/worker-ai-planner/src/tools.ts`
+- [ ] Find `get_response_history` tool
+- [ ] Change `limit` default from `2` to `10`
+- [ ] Find pagination hint string
+- [ ] Change to: `"More history exists if needed, but 10 records is usually sufficient"`
+- [ ] Test: verify AI gets 10 records by default
+
+---
+
+### Phase 1: Extended (2.5 more hours)
+
+#### 1.4 Multi-Window Health Display (1 hour)
+
+**Repo method:**
+- [ ] Open `packages/adapter-drizzle/src/runs-repo.ts`
+- [ ] Add `getHealthSummaryMultiWindow(endpointId)` method
+- [ ] Returns: `{ hour1: {...}, hour4: {...}, hour24: {...} }`
+- [ ] Each window has: `successCount`, `failureCount`, `successRate`
+
+**Planner update:**
+- [ ] Open `packages/worker-ai-planner/src/planner.ts`
+- [ ] Find health summary section in `buildAnalysisPrompt()`
+- [ ] Replace single 24h display with 3-window table
+- [ ] Format as markdown table in prompt
+
+**Test:**
+- [ ] Verify prompt shows 1h, 4h, 24h windows
+- [ ] Verify rates calculate correctly
+
+#### 1.5 Add Sibling Count to Prompt (15 min)
+
+**Repo method:**
+- [ ] Check if `getSiblingCount(endpointId)` exists in jobs repo
+- [ ] If not, add method to return count and names of siblings
+
+**Planner update:**
+- [ ] Open `packages/worker-ai-planner/src/planner.ts`
+- [ ] Find endpoint context section in `buildAnalysisPrompt()`
+- [ ] Add sibling info: `**Job:** 3 endpoints [name1, name2, name3]`
+- [ ] Only show if siblings > 0
+
+**Test:**
+- [ ] Verify sibling count appears in prompt for multi-endpoint jobs
+- [ ] Verify nothing appears for standalone endpoints
+
+#### 1.6 Prompt Updates (30 min)
+- [ ] Open `packages/worker-ai-planner/src/planner.ts`
+- [ ] Add "Session Constraints" section (maxSteps, history guidance)
+- [ ] Add "Scheduling Your Next Analysis" section with examples
+- [ ] Remove "Query tools are cheap" messaging
+- [ ] Test: review full prompt output
+
+---
+
+### Phase 2: If Metrics Not Met
+
+#### 2.1 Lean Prompt (3 hours)
+- [ ] Create new `buildLeanPrompt()` function (~50 lines)
+- [ ] A/B test against existing prompt
+- [ ] Measure token usage difference
+- [ ] If successful, replace `buildAnalysisPrompt()`
+
+#### 2.2 Add clear_hints Tool (30 min)
+- [ ] Open `packages/worker-ai-planner/src/tools.ts`
+- [ ] Add `clear_hints` tool with reason parameter
+- [ ] Implement execute: call `jobs.clearHints(endpointId)`
+- [ ] Test: verify hints are cleared
+
+#### 2.3 Enhance Sibling Tool (1.5 hours)
+- [ ] Open `packages/worker-ai-planner/src/tools.ts`
+- [ ] Find `get_sibling_latest_responses` tool
+- [ ] Add health summary per sibling
+- [ ] Add schedule info (baseline, next run, paused status)
+- [ ] Add active AI hints per sibling
+- [ ] Test: verify enhanced data returned
+
+---
+
+### Validation
+
+#### After MVP Deploy
+- [ ] Monitor token usage per session (target: < 5K avg)
+- [ ] Monitor tool calls per session (target: < 10 avg)
+- [ ] Monitor session duration (target: < 30s avg)
+- [ ] Monitor analysis frequency per endpoint
+- [ ] Check for any maxSteps terminations (should be rare)
+
+#### Success Criteria
+- [ ] No session exceeds 10K tokens
+- [ ] No session exceeds 15 tool calls (maxSteps working)
+- [ ] AI correctly schedules its own re-analysis
+- [ ] State-change override triggers appropriately
+- [ ] Sibling tool gets called for multi-endpoint jobs
