@@ -56,6 +56,7 @@ describe("jobsManager", () => {
       listRuns: vi.fn(),
       getRunDetails: vi.fn(),
       getHealthSummary: vi.fn(),
+      getHealthSummaryMultiWindow: vi.fn(),
       getEndpointsWithRecentRuns: vi.fn(),
       getLatestResponse: vi.fn(),
       getResponseHistory: vi.fn(),
@@ -78,6 +79,7 @@ describe("jobsManager", () => {
       getTotalSessionCount: vi.fn().mockResolvedValue(0),
       getTotalTokenUsage: vi.fn().mockResolvedValue(0),
       getAISessionTimeSeries: vi.fn().mockResolvedValue([]),
+      getLastSession: vi.fn().mockResolvedValue(null),
     };
     const now = new Date("2025-01-14T12:00:00Z");
     fakeClock = { now: () => now, sleep: async () => { } };

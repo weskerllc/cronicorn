@@ -203,6 +203,8 @@ export const aiAnalysisSessions = pgTable("ai_analysis_sessions", {
   reasoning: text("reasoning"), // AI's explanation/decision
   tokenUsage: integer("token_usage"), // Total tokens consumed
   durationMs: integer("duration_ms"), // Analysis duration
+  nextAnalysisAt: timestamp("next_analysis_at", { mode: "date" }), // AI-scheduled next analysis time
+  endpointFailureCount: integer("endpoint_failure_count"), // Snapshot of failure count at analysis time
 }, table => ({
   endpointIdIdx: index("ai_sessions_endpoint_id_idx").on(table.endpointId),
   analyzedAtIdx: index("ai_sessions_analyzed_at_idx").on(table.analyzedAt),

@@ -16,6 +16,28 @@ export type HealthSummary = {
   failureStreak: number; // consecutive failures from most recent
 };
 
+/**
+ * Compact health summary for a single time window.
+ * Used by multi-window health display.
+ */
+export type WindowHealth = {
+  successCount: number;
+  failureCount: number;
+  successRate: number; // 0-100 percentage
+};
+
+/**
+ * Multi-window health summary for AI analysis.
+ * Shows health across 1h, 4h, and 24h windows.
+ */
+export type MultiWindowHealth = {
+  hour1: WindowHealth;
+  hour4: WindowHealth;
+  hour24: WindowHealth;
+  avgDurationMs: number | null;
+  failureStreak: number;
+};
+
 export type JobsRepo = {
   // Job lifecycle operations (Phase 3)
   createJob: (job: Omit<Job, "id" | "createdAt" | "updatedAt">) => Promise<Job>;
@@ -319,6 +341,16 @@ export type RunsRepo = {
   getHealthSummary: (endpointId: string, since: Date) => Promise<HealthSummary>;
 
   /**
+   * Get health summary across multiple time windows (1h, 4h, 24h).
+   * Used by AI Planner to show accurate recovery detection.
+   *
+   * @param endpointId - The endpoint to summarize
+   * @param now - Current time reference for calculating windows
+   * @returns Health metrics for each time window
+   */
+  getHealthSummaryMultiWindow: (endpointId: string, now: Date) => Promise<MultiWindowHealth>;
+
+  /**
    * Get unique endpoint IDs that have runs after the specified timestamp.
    * Used by AI Planner to discover endpoints needing analysis.
    *
@@ -402,7 +434,23 @@ export type SessionsRepo = {
     reasoning: string;
     tokenUsage?: number;
     durationMs?: number;
+    nextAnalysisAt?: Date; // AI-scheduled next analysis time
+    endpointFailureCount?: number; // Snapshot of failure count at analysis time
   }) => Promise<string>;
+
+  /**
+   * Get the last analysis session for an endpoint.
+   * Used by AI planner to determine if analysis is due.
+   *
+   * @param endpointId - The endpoint to query
+   * @returns Last session with scheduling info, or null if none exists
+   */
+  getLastSession: (endpointId: string) => Promise<{
+    id: string;
+    analyzedAt: Date;
+    nextAnalysisAt: Date | null;
+    endpointFailureCount: number | null;
+  } | null>;
 
   /**
    * Get total count of analysis sessions for an endpoint.
