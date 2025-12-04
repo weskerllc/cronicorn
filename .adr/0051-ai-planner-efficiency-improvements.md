@@ -5,14 +5,101 @@
 
 ## Context
 
-Production analysis of the AI planner after one month revealed significant inefficiency issues. In worst-case scenarios, AI sessions were consuming **42,000+ tokens** and making **50+ tool calls** for a single endpoint analysis. The root causes identified were:
+Production observation of the AI Planner over several weeks revealed significant inefficiency in AI sessions for frequently-running endpoints. Sessions were redundant, expensive, and created feedback loops that amplified costs. Additionally, key features (sibling coordination) went unused, and metrics (success rate) became misleading during recovery from incidents.
 
-1. **No step limit**: The AI could loop indefinitely through tools without a safety cap
-2. **Aggressive analysis frequency**: Every endpoint was analyzed on every planner tick, regardless of whether analysis was needed
-3. **Pagination loops**: Default `limit: 2` on `get_response_history` caused the AI to request "more history" repeatedly (10+ calls for 30 records)
-4. **Missing context**: AI lacked job-level context (sibling endpoints) and multi-window health data, leading to excessive querying
+### Problem Session Analysis
 
-The target was to reduce typical sessions to **<5,000 tokens** and eliminate unnecessary tool call loops.
+**Worst Case Observed (`session_1763500906992_67`):**
+- Duration: 263,682ms (~4.4 minutes)
+- Token usage: 42,630 tokens
+- Tool calls: 50+ calls to `get_response_history`
+- Outcome: Proposed 60s interval (same conclusion reachable with 5 tool calls)
+
+Sessions 66, 67, 68 ran within 10 minutes of each other, each re-analyzing the same failure data from scratch.
+
+### Root Causes Identified
+
+| Issue | Priority | Impact |
+|-------|----------|--------|
+| No session-to-session memory | Critical | High token waste, redundant analysis |
+| No per-endpoint analysis cooldown | Critical | Excessive AI invocations, feedback loop |
+| Unbounded pagination in `get_response_history` | High | Runaway tool calls, token explosion |
+| Small default batch sizes (limit=2) | Medium | Multiplied tool calls |
+| Prompt encourages liberal tool use | Medium | AI over-explores |
+| No max iterations/cost budget | High | Unbounded session cost |
+| Feedback loop from short intervals | High | Exponential cost growth during incidents |
+| Success rate doesn't decay | High | AI makes decisions on stale statistical signals |
+| Sibling coordination tool never called | Medium | Missed coordination opportunities |
+| Prompt assumes health monitoring use case | High | AI misinterprets non-monitoring endpoints |
+| Front-loaded context is inefficient | High | High base token cost |
+
+### Detailed Issue Analysis
+
+#### Issue 1: No Session-to-Session Memory
+
+Each AI analysis starts completely fresh. The AI doesn't know that another session analyzed this exact endpoint 1 minute ago.
+
+**Code Location**: `packages/worker-ai-planner/src/planner.ts` - `analyzeEndpoint()` method
+
+```typescript
+// Every call builds a brand new prompt from scratch
+const prompt = buildAnalysisPrompt(clock.now(), jobDescription, endpoint, health);
+```
+
+#### Issue 2: No Per-Endpoint Analysis Cooldown
+
+The AI planner analyzes ANY endpoint with recent runs, regardless of when it was last analyzed.
+
+**Code Location**: `apps/ai-planner/src/index.ts`
+
+```typescript
+// No filter for lastAnalyzedAt - if endpoint ran recently, it gets analyzed
+const endpointIds = await runsRepo.getEndpointsWithRecentRuns(since);
+```
+
+#### Issue 3: Unbounded Pagination
+
+The `get_response_history` tool allows infinite pagination and actively encourages the AI to continue with hints like "More history available - call again with offset: X".
+
+**Evidence**: Session 67 made 50+ pagination calls (offset 0, 3, 6, 9... 171, 174...) through hundreds of identical failure records.
+
+#### Issue 7: Feedback Loop from Short Intervals
+
+AI proposes short intervals (30s-60s) during failures → more runs → always has "recent activity" → always gets re-analyzed → vicious cycle.
+
+| Session | Time | Interval Proposed | Next Analysis |
+|---------|------|-------------------|---------------|
+| 66 | 21:13 | immediate | 8 min later |
+| 67 | 21:21 | 60s | 1 min later |
+| 68 | 21:22 | immediate | continues... |
+
+#### Issue 8: Success Rate Doesn't Reflect Recent Recovery
+
+The 24-hour health summary window becomes misleading during recovery. After a failure period with high-frequency runs (5s intervals), hundreds of failures accumulate. Even after 6+ hours of successful runs, the success rate still shows ~30% because failure volume dominates.
+
+**Root Cause Math**:
+- During 2-hour failure at 5s interval = 1,440 failures
+- During 6-hour recovery at normal 5m interval = 72 successes
+- Rate: 72 / (72 + 1440) = 4.8% (misleading!)
+
+#### Issue 9: Sibling Coordination Tool Never Called
+
+The `get_sibling_latest_responses` tool exists but was never called across all observed sessions. **Zero** invocations.
+
+**Root Causes**:
+- No sibling awareness in prompt—AI doesn't know siblings exist until it calls the tool
+- Guidance is passive—"When" implies optional
+- No sibling count in context
+- Empty jobId fallback returns "No sibling endpoints found", teaching AI the tool is useless
+
+### Success Metrics Target
+
+| Metric | Target | Worst Case Observed |
+|--------|--------|---------------------|
+| Tokens per session | < 5K | 42K |
+| Tool calls per session | < 10 | 50+ |
+| Session duration | < 30s | 263s |
+| Redundant analysis | 0 (cooldown works) | 3 sessions in 10 min |
 
 ## Decision
 
@@ -272,8 +359,38 @@ Extended `get_sibling_latest_responses` to return enriched data:
 
 **Use case:** AI can now coordinate across endpoints without multiple tool calls—see sibling states at a glance.
 
+## Design Philosophy
+
+The AI is capable of reasoning. Give it:
+- ✅ Good data (tools that return useful context)
+- ✅ Safety rails (maxSteps, cooldown)
+- ✅ Clear goal (concise prompt)
+
+Don't build:
+- ❌ Complex endpoint type inference systems
+- ❌ Per-type decision frameworks  
+- ❌ Error categorization logic
+- ❌ Response schema analyzers
+
+**Let the AI reason.** Our job is to give it the right inputs and prevent runaway costs.
+
+## Validation Checklist
+
+### After Deploy
+- [ ] Monitor token usage per session (target: < 5K avg)
+- [ ] Monitor tool calls per session (target: < 10 avg)
+- [ ] Monitor session duration (target: < 30s avg)
+- [ ] Monitor analysis frequency per endpoint
+- [ ] Check for any maxSteps terminations (should be rare)
+
+### Success Criteria
+- [ ] No session exceeds 10K tokens
+- [ ] No session exceeds 15 tool calls (maxSteps working)
+- [ ] AI correctly schedules its own re-analysis
+- [ ] State-change override triggers appropriately
+- [ ] Sibling tool gets called for multi-endpoint jobs
+
 ## References
 
-- Task IDs: TASK-1.1 through TASK-3.2 from `docs/internal/AI_PLANNER_FIXES.md`
 - Related ADR: 0050-ai-analysis-session-display-ui.md
-- Implementation doc: `docs/internal/AI_PLANNER_FIXES.md`
+- Original investigation session: `session_1763500906992_67`
