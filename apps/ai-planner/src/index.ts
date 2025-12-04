@@ -108,6 +108,11 @@ async function main() {
 
   /**
    * Analysis tick - discover and analyze endpoints with recent activity
+   *
+   * Analysis is due when:
+   * 1. First analysis: no previous session exists for the endpoint
+   * 2. Scheduled: AI said "check after X" and that time has passed
+   * 3. State-change override: new failures since last analysis (don't wait if things broke)
    */
   async function analysisTick() {
     if (isShuttingDown)
@@ -115,9 +120,10 @@ async function main() {
 
     try {
       const startTime = Date.now();
+      const now = clock.now();
 
       // Find endpoints with runs in the lookback window
-      const since = new Date(clock.now().getTime() - config.AI_LOOKBACK_MINUTES * 60 * 1000);
+      const since = new Date(now.getTime() - config.AI_LOOKBACK_MINUTES * 60 * 1000);
       const endpointIds = await runsRepo.getEndpointsWithRecentRuns(since);
 
       if (endpointIds.length === 0) {
@@ -125,17 +131,67 @@ async function main() {
         return;
       }
 
+      // Filter endpoints that need analysis
+      const endpointsToAnalyze: string[] = [];
+
+      for (const endpointId of endpointIds) {
+        try {
+          const lastSession = await sessionsRepo.getLastSession(endpointId);
+          const endpoint = await jobsRepo.getEndpoint(endpointId);
+
+          // First analysis: no previous session
+          const isFirstAnalysis = !lastSession;
+
+          // Scheduled: AI said "check after X" and that time has passed
+          const scheduledTime = lastSession?.nextAnalysisAt;
+          const isDue = !scheduledTime || now >= scheduledTime;
+
+          // State-change override: new failures since last analysis (respond to incidents quickly)
+          const previousFailureCount = lastSession?.endpointFailureCount ?? 0;
+          const hasNewFailures = endpoint.failureCount > previousFailureCount;
+
+          if (isFirstAnalysis || isDue || hasNewFailures) {
+            endpointsToAnalyze.push(endpointId);
+
+            if (hasNewFailures && !isDue) {
+              logger("info", "State-change override triggered early analysis", {
+                endpointId,
+                endpointName: endpoint.name,
+                previousFailureCount,
+                currentFailureCount: endpoint.failureCount,
+              });
+            }
+          }
+        }
+        catch (err) {
+          // Log but continue checking other endpoints
+          logger("warn", "Failed to check if endpoint needs analysis", {
+            endpointId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
+      if (endpointsToAnalyze.length === 0) {
+        logger("info", "No endpoints due for analysis", {
+          totalWithRecentRuns: endpointIds.length,
+        });
+        return;
+      }
+
       logger("info", "Starting analysis cycle", {
-        endpointCount: endpointIds.length,
+        endpointCount: endpointsToAnalyze.length,
+        totalWithRecentRuns: endpointIds.length,
         since: since.toISOString(),
       });
 
-      // Analyze each endpoint
-      await planner.analyzeEndpoints(endpointIds);
+      // Analyze each endpoint that needs it
+      await planner.analyzeEndpoints(endpointsToAnalyze);
 
       const duration = Date.now() - startTime;
       logger("info", "Analysis cycle complete", {
-        endpointCount: endpointIds.length,
+        analyzedCount: endpointsToAnalyze.length,
+        skippedCount: endpointIds.length - endpointsToAnalyze.length,
         durationMs: duration,
       });
     }

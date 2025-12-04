@@ -437,6 +437,16 @@ export class AIPlanner {
       ? String(analysisResult.reasoning)
       : undefined;
 
+    // Extract next_analysis_in_ms from submit_analysis result
+    const nextAnalysisInMs = analysisResult && typeof analysisResult === "object" && "next_analysis_in_ms" in analysisResult
+      ? (typeof analysisResult.next_analysis_in_ms === "number" ? analysisResult.next_analysis_in_ms : undefined)
+      : undefined;
+
+    // Calculate next analysis time from AI response or fall back to baseline interval
+    const baselineIntervalMs = endpoint.baselineIntervalMs || 5 * 60 * 1000; // Default to 5 min if no baseline
+    const effectiveIntervalMs = nextAnalysisInMs ?? baselineIntervalMs;
+    const nextAnalysisAt = new Date(clock.now().getTime() + effectiveIntervalMs);
+
     if (!reasoning) {
       console.warn(`[AI Analysis] Missing reasoning for endpoint ${endpoint.name}`);
     }
@@ -450,6 +460,8 @@ export class AIPlanner {
       reasoning: safeReasoning,
       tokenUsage: session.tokenUsage,
       durationMs,
+      nextAnalysisAt,
+      endpointFailureCount: endpoint.failureCount,
     });
 
     // Log summary for real-time observability

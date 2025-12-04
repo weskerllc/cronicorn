@@ -82,6 +82,7 @@ export function createToolsForEndpoint(
         reasoning: z.string().describe("Your analysis of the endpoint's health and performance, including what data you examined and why you took (or didn't take) any actions"),
         actions_taken: z.array(z.string()).optional().describe("List of action tools called (e.g., ['propose_interval', 'pause_until'])"),
         confidence: z.enum(["high", "medium", "low"]).optional().describe("Confidence level in your analysis"),
+        next_analysis_in_ms: z.number().int().min(300000).max(86400000).optional().describe("When to analyze this endpoint again (ms). Min 5min, Max 24h. Omit to use baseline interval. Set shorter during incidents, longer when stable."),
       }),
       execute: async (args) => {
         // This is a terminal tool - just return the analysis
@@ -91,6 +92,7 @@ export function createToolsForEndpoint(
           reasoning: args.reasoning,
           actions_taken: args.actions_taken || [],
           confidence: args.confidence || "high",
+          next_analysis_in_ms: args.next_analysis_in_ms,
         };
       },
     }),

@@ -2,7 +2,7 @@
 
 import type { AIClient, Tool } from "@cronicorn/domain";
 
-import { generateText, hasToolCall, tool } from "ai";
+import { generateText, hasToolCall, stepCountIs, tool } from "ai";
 import { z } from "zod";
 
 import type { VercelAiClientConfig } from "./types.js";
@@ -125,12 +125,19 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           ? vercelTools as Parameters<typeof generateText>[0]["tools"]
           : undefined;
 
+        // Build stop conditions:
+        // 1. Safety limit: stop at step 15 to prevent runaway tool loops
+        // 2. Final tool: stop when the specified tool is called (e.g., submit_analysis)
+        const stopConditions = finalToolName
+          ? [stepCountIs(15), hasToolCall(finalToolName)]
+          : stepCountIs(15);
+
         const result = await generateText({
           model: config.model,
           prompt: input,
           tools: cleanTools,
           maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
-          stopWhen: finalToolName ? hasToolCall(finalToolName) : undefined,
+          stopWhen: stopConditions,
         });
 
         // Extract ALL tool calls and results from ALL steps
