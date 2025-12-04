@@ -402,7 +402,23 @@ export type SessionsRepo = {
     reasoning: string;
     tokenUsage?: number;
     durationMs?: number;
+    nextAnalysisAt?: Date; // AI-scheduled next analysis time
+    endpointFailureCount?: number; // Snapshot of failure count at analysis time
   }) => Promise<string>;
+
+  /**
+   * Get the last analysis session for an endpoint.
+   * Used by AI planner to determine if analysis is due.
+   *
+   * @param endpointId - The endpoint to query
+   * @returns Last session with scheduling info, or null if none exists
+   */
+  getLastSession: (endpointId: string) => Promise<{
+    id: string;
+    analyzedAt: Date;
+    nextAnalysisAt: Date | null;
+    endpointFailureCount: number | null;
+  } | null>;
 
   /**
    * Get total count of analysis sessions for an endpoint.

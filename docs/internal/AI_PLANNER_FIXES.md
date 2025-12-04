@@ -377,42 +377,42 @@ Don't build:
 ### Phase 1: MVP (2.5 hours)
 
 #### 1.1 Add maxSteps Limit (15 min)
-- [ ] Open `packages/adapter-ai/src/client.ts`
-- [ ] Find `generateText()` call
-- [ ] Add `maxSteps: 15` to config object
+- [x] Open `packages/adapter-ai/src/client.ts`
+- [x] Find `generateText()` call
+- [x] Add `maxSteps: 15` to config object
 - [ ] Test: verify session stops after 15 tool calls
 
 #### 1.2 AI-Controlled Analysis Frequency (2-3 hours)
 
 **Schema update:**
-- [ ] Add `next_analysis_at` column to `ai_sessions` table (nullable timestamp)
-- [ ] Add `endpoint_failure_count` column to `ai_sessions` table (integer, snapshot at analysis time)
-- [ ] Run migration
+- [x] Add `next_analysis_at` column to `ai_sessions` table (nullable timestamp)
+- [x] Add `endpoint_failure_count` column to `ai_sessions` table (integer, snapshot at analysis time)
+- [x] Run migration
 
 **Tool update:**
-- [ ] Open `packages/worker-ai-planner/src/tools.ts`
-- [ ] Find `submit_analysis` tool schema
-- [ ] Add `next_analysis_in_ms: z.number().min(300000).max(86400000).optional()`
-- [ ] Update execute function to return `next_analysis_in_ms` value
+- [x] Open `packages/worker-ai-planner/src/tools.ts`
+- [x] Find `submit_analysis` tool schema
+- [x] Add `next_analysis_in_ms: z.number().min(300000).max(86400000).optional()`
+- [x] Update execute function to return `next_analysis_in_ms` value
 
 **Sessions repo:**
-- [ ] Open `packages/adapter-drizzle/src/sessions-repo.ts`
-- [ ] Update `createSession` / save method to store `nextAnalysisAt` and `endpointFailureCount`
-- [ ] Add `getLastSession(endpointId)` method if not exists
+- [x] Open `packages/adapter-drizzle/src/sessions-repo.ts`
+- [x] Update `createSession` / save method to store `nextAnalysisAt` and `endpointFailureCount`
+- [x] Add `getLastSession(endpointId)` method if not exists
 
 **Worker loop:**
-- [ ] Open `apps/ai-planner/src/index.ts`
-- [ ] Replace endpoint selection logic with:
+- [x] Open `apps/ai-planner/src/index.ts`
+- [x] Replace endpoint selection logic with:
   ```
   isFirstAnalysis || isDue || hasNewFailures
   ```
-- [ ] Calculate `nextAnalysisAt` from AI response or default to baseline interval
-- [ ] Store `endpointFailureCount` snapshot with each session
+- [x] Calculate `nextAnalysisAt` from AI response or default to baseline interval
+- [x] Store `endpointFailureCount` snapshot with each session
 
 **Test:**
-- [ ] Verify new endpoint gets analyzed on first run
-- [ ] Verify AI can set next analysis time
-- [ ] Verify state-change override triggers early re-analysis
+- [x] Verify new endpoint gets analyzed on first run
+- [x] Verify AI can set next analysis time
+- [x] Verify state-change override triggers early re-analysis
 
 #### 1.3 Fix Tool Defaults (15 min)
 - [ ] Open `packages/worker-ai-planner/src/tools.ts`
