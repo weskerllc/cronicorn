@@ -26,6 +26,8 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     reasoning: string;
     tokenUsage?: number;
     durationMs?: number;
+    nextAnalysisAt?: Date;
+    endpointFailureCount?: number;
   }): Promise<string> {
     const id = `session_${Date.now()}_${this.seq++}`;
 
@@ -37,9 +39,41 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       reasoning: session.reasoning,
       tokenUsage: session.tokenUsage ?? null,
       durationMs: session.durationMs ?? null,
+      nextAnalysisAt: session.nextAnalysisAt ?? null,
+      endpointFailureCount: session.endpointFailureCount ?? null,
     });
 
     return id;
+  }
+
+  async getLastSession(endpointId: string): Promise<{
+    id: string;
+    analyzedAt: Date;
+    nextAnalysisAt: Date | null;
+    endpointFailureCount: number | null;
+  } | null> {
+    const results = await this.tx
+      .select({
+        id: aiAnalysisSessions.id,
+        analyzedAt: aiAnalysisSessions.analyzedAt,
+        nextAnalysisAt: aiAnalysisSessions.nextAnalysisAt,
+        endpointFailureCount: aiAnalysisSessions.endpointFailureCount,
+      })
+      .from(aiAnalysisSessions)
+      .where(eq(aiAnalysisSessions.endpointId, endpointId))
+      .orderBy(desc(aiAnalysisSessions.analyzedAt))
+      .limit(1);
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    return {
+      id: results[0].id,
+      analyzedAt: results[0].analyzedAt,
+      nextAnalysisAt: results[0].nextAnalysisAt,
+      endpointFailureCount: results[0].endpointFailureCount,
+    };
   }
 
   async getRecentSessions(

@@ -50,8 +50,27 @@ Quick lookup for Cronicorn terminology, schema, defaults, and tools.
 **Sibling Endpoints**
 : Endpoints in the same job that can coordinate via `get_sibling_latest_responses()`.
 
+**Multi-Window Health**
+: Health metrics shown across three time windows (1h, 4h, 24h) to accurately detect recovery patterns. Prevents old failure bursts from skewing recent health assessment.
+
 **Analysis Session**
-: Record of AI analysis for an endpoint, including tools called, reasoning, and token usage. Stored in `ai_analysis_sessions` table.
+: Record of AI analysis for an endpoint, including tools called, reasoning, token usage, and when to analyze next. Stored in `ai_analysis_sessions` table.
+
+**Session Constraints**
+: Resource limits on AI analysis sessions. Maximum 15 tool calls per session to prevent runaway costs. Sessions that hit the limit are terminated.
+
+## Schema: ai_analysis_sessions Table
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Unique session identifier |
+| `endpointId` | UUID | Endpoint that was analyzed |
+| `createdAt` | Timestamp | When analysis started |
+| `reasoning` | String | AI's explanation for decision |
+| `tokenUsage` | Integer | Tokens consumed |
+| `durationMs` | Integer | How long analysis took |
+| `nextAnalysisAt` | Timestamp | When AI requested re-analysis |
+| `endpointFailureCount` | Integer | Failure count snapshot at analysis time |
 
 ## Schema: job_endpoints Table
 
@@ -88,7 +107,8 @@ Quick lookup for Cronicorn terminology, schema, defaults, and tools.
 | Setting | Default | Notes |
 |---------|---------|-------|
 | **Scheduler tick interval** | 5 seconds | How often Scheduler wakes up to claim endpoints |
-| **AI analysis interval** | 5 minutes | How often AI Planner discovers and analyzes endpoints |
+| **AI analysis interval** | 5 minutes | How often AI Planner discovers endpoints (overridden by AI scheduling) |
+| **AI max tool calls** | 15 | Maximum tool calls per AI session (hard limit) |
 | **Lock TTL** | 30 seconds | How long claimed endpoints stay locked |
 | **Batch size** | 10 endpoints | Max endpoints claimed per tick |
 | **Zombie threshold** | 5 minutes | Runs older than this marked as timeout |
@@ -97,6 +117,7 @@ Quick lookup for Cronicorn terminology, schema, defaults, and tools.
 | **Timeout** | 30 seconds | Default request timeout |
 | **Max response size** | 100 KB | Default response body limit |
 | **Failure count cap** | 5 | Backoff capped at 2^5 = 32x |
+| **History limit** | 10 | Default records returned by get_response_history |
 | **Min interval** | None | No minimum unless configured |
 | **Max interval** | None | No maximum unless configured |
 
@@ -168,6 +189,24 @@ Pause execution temporarily or resume.
 }
 ```
 
+#### clear_hints
+
+Clear all AI hints, reverting to baseline schedule immediately.
+
+**Parameters**:
+- `reason` (string, required): Explanation for clearing hints
+
+**Effect**: Clears `aiHintIntervalMs`, `aiHintNextRunAt`, `aiHintExpiresAt`
+
+**Use case**: When adaptive hints are no longer relevant (manual intervention, false positive, situation resolved)
+
+**Example**:
+```json
+{
+  "reason": "Endpoint recovered, reverting to baseline schedule"
+}
+```
+
 ### Query Tools (Read Data)
 
 #### get_latest_response
@@ -191,15 +230,15 @@ Get most recent response body from this endpoint.
 Get recent response bodies to identify trends.
 
 **Parameters**:
-- `limit` (number, default: 2, max: 10): Number of responses
+- `limit` (number, default: 10, max: 10): Number of responses
 - `offset` (number, default: 0): Skip N newest for pagination
 
 **Returns**:
 ```json
 {
-  "count": 2,
+  "count": 10,
   "hasMore": true,
-  "pagination": { "offset": 0, "limit": 2, "nextOffset": 2 },
+  "pagination": { "offset": 0, "limit": 10, "nextOffset": 10 },
   "responses": [
     {
       "responseBody": { "queue_depth": 200 },
@@ -208,15 +247,15 @@ Get recent response bodies to identify trends.
       "durationMs": 120
     }
   ],
-  "hint": "More history available - call again with offset: 2"
+  "hint": "More history exists if needed, but 10 records is usually sufficient"
 }
 ```
 
-**Note**: Response bodies truncated at 1000 chars
+**Note**: Response bodies truncated at 1000 chars. 10 records is usually sufficient for trend analysis.
 
 #### get_sibling_latest_responses
 
-Get latest responses from all endpoints in same job.
+Get latest responses and state from all endpoints in same job.
 
 **Parameters**: None
 
@@ -230,22 +269,40 @@ Get latest responses from all endpoints in same job.
       "endpointName": "Data Processor",
       "responseBody": { "batch_id": "2025-11-02", "ready": true },
       "timestamp": "2025-11-02T14:25:00Z",
-      "status": "success"
+      "status": "success",
+      "schedule": {
+        "baseline": "every 5 minutes",
+        "nextRunAt": "2025-11-02T14:30:00Z",
+        "lastRunAt": "2025-11-02T14:25:00Z",
+        "isPaused": false,
+        "pausedUntil": null,
+        "failureCount": 0
+      },
+      "aiHints": {
+        "intervalMs": 30000,
+        "nextRunAt": null,
+        "expiresAt": "2025-11-02T15:25:00Z",
+        "reason": "Tightening monitoring"
+      }
     }
   ]
 }
 ```
 
-**Note**: Only returns endpoints with same `jobId`
+**Note**: Returns schedule info and active AI hints per sibling for full context
 
 ### Final Answer Tool
 
 #### submit_analysis
 
-Signal analysis completion and provide reasoning.
+Signal analysis completion, provide reasoning, and schedule next analysis.
 
 **Parameters**:
 - `reasoning` (string, required): Analysis explanation
+- `next_analysis_in_ms` (number, optional): When to analyze this endpoint again
+  - Min: 300000 (5 minutes)
+  - Max: 86400000 (24 hours)
+  - If omitted, uses baseline interval
 - `actions_taken` (string[], optional): List of tools called
 - `confidence` (enum, optional): 'high' | 'medium' | 'low'
 
@@ -254,10 +311,17 @@ Signal analysis completion and provide reasoning.
 {
   "status": "analysis_complete",
   "reasoning": "...",
+  "next_analysis_in_ms": 7200000,
   "actions_taken": ["propose_interval"],
   "confidence": "high"
 }
 ```
+
+**Scheduling guidance**:
+- 300000 (5 min): Incident active, need close monitoring
+- 1800000 (30 min): Recovering, monitoring progress
+- 7200000 (2 hours): Stable, routine check
+- 86400000 (24 hours): Very stable or daily job
 
 **Note**: Must be called last to complete analysis
 
