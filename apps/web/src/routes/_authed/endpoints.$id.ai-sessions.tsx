@@ -1,27 +1,31 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@cronicorn/ui-library/components/pagination";
+import { z } from "zod";
 
 import { Brain } from "lucide-react";
 import { AISessionItem } from "@/components/ai/session-item";
 import { EmptyCTA } from "@/components/cards/empty-cta";
+import { DateHeader } from "@/components/primitives/date-header";
 import { PageSection } from "@/components/primitives/page-section";
+import { PaginationControls } from "@/components/primitives/pagination-controls";
 import { sessionsQueryOptions } from "@/lib/api-client/queries/sessions.queries";
 import { formatDuration } from "@/lib/endpoint-utils";
 
+// Schema for URL search params - enables pagination through URL
+const aiSessionsSearchSchema = z.object({
+  page: z.coerce.number().int().positive().optional().default(1),
+  pageSize: z.coerce.number().int().positive().optional().default(20),
+});
+
 export const Route = createFileRoute("/_authed/endpoints/$id/ai-sessions")({
-  loader: async ({ params, context }) => {
+  validateSearch: aiSessionsSearchSchema,
+  loaderDeps: ({ search }) => ({ search }),
+  loader: async ({ params, context, deps }) => {
+    const limit = deps.search.pageSize;
+    const offset = (deps.search.page - 1) * deps.search.pageSize;
+
     await context.queryClient.ensureQueryData(
-      sessionsQueryOptions(params.id, { limit: 20, offset: 0 })
+      sessionsQueryOptions(params.id, { limit, offset })
     );
   },
   component: AISessionsPage,
@@ -29,15 +33,15 @@ export const Route = createFileRoute("/_authed/endpoints/$id/ai-sessions")({
 
 function AISessionsPage() {
   const { id } = Route.useParams();
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const search = Route.useSearch();
 
-  const offset = (currentPage - 1) * itemsPerPage;
+  const limit = search.pageSize;
+  const offset = (search.page - 1) * search.pageSize;
   const { data } = useSuspenseQuery(
-    sessionsQueryOptions(id, { limit: itemsPerPage, offset })
+    sessionsQueryOptions(id, { limit, offset })
   );
 
-  const totalPages = Math.ceil(data.total / itemsPerPage);
+  const totalPages = Math.ceil(data.total / search.pageSize);
 
   if (data.sessions.length === 0) {
     return (
@@ -69,12 +73,8 @@ function AISessionsPage() {
       <div className="space-y-8">
         {Object.entries(sessionsByDate).map(([date, sessions]: [string, Array<SessionType>]) => (
           <div key={date}>
-            {/* Date header - only show if multiple days */}
-            {Object.keys(sessionsByDate).length > 1 && (
-              <div className="mb-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                {date}
-              </div>
-            )}
+            {/* Date header - always show to provide context regardless of pagination */}
+            <DateHeader date={date} className="mb-4" />
 
             <div className="divide-y divide-border/20 rounded-md border border-border/20 overflow-hidden bg-background">
               {sessions.map((session: SessionType) => (
@@ -84,60 +84,15 @@ function AISessionsPage() {
           </div>
         ))}
 
-        {/* Pagination controls */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-4">
-            <div className="text-xs text-muted-foreground whitespace-nowrap">
-              Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, data.total)} of {data.total}
-            </div>
-
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum: number;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-
-                  return (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                        isActive={currentPage === pageNum}
-                        className="cursor-pointer"
-                      >
-                        {pageNum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                })}
-
-                <PaginationItem>
-                  <PaginationNext
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+        {/* Pagination controls - URL-based for sharing/bookmarking */}
+        <PaginationControls
+          currentPage={search.page}
+          totalPages={totalPages}
+          pageSize={search.pageSize}
+          totalItems={data.total}
+          basePath="/endpoints/$id/ai-sessions"
+          linkParams={{ id }}
+        />
       </div>
     </PageSection>
   );
