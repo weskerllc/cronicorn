@@ -158,7 +158,7 @@ export function AISessionItem({
                             const keyArgs: Array<string> = [];
 
                             // Action tools (scheduling changes)
-                            const isActionTool = ["propose_interval", "propose_next_time", "pause_until"].includes(
+                            const isActionTool = ["propose_interval", "propose_next_time", "pause_until", "clear_hints"].includes(
                                 call.tool
                             );
 
@@ -228,6 +228,17 @@ export function AISessionItem({
                                     args.actions_taken.length > 0
                                 ) {
                                     keyArgs.push(`actions: ${args.actions_taken.length}`);
+                                }
+                                const nextAnalysisMs = safeNumber(args.next_analysis_in_ms);
+                                if (nextAnalysisMs !== null && nextAnalysisMs > 0) {
+                                    // Format as human-readable duration
+                                    const minutes = Math.round(nextAnalysisMs / 60000);
+                                    if (minutes >= 60) {
+                                        const hours = Math.round(minutes / 60);
+                                        keyArgs.push(`next: ${hours}h`);
+                                    } else {
+                                        keyArgs.push(`next: ${minutes}m`);
+                                    }
                                 }
 
                                 // Generic reason (if not already shown and not too long)
