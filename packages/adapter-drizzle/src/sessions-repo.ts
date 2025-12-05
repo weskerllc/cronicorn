@@ -81,13 +81,13 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     limit = 10,
     offset = 0,
   ): Promise<Array<{
-    id: string;
-    analyzedAt: Date;
-    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
-    reasoning: string;
-    tokenUsage: number | null;
-    durationMs: number | null;
-  }>> {
+      id: string;
+      analyzedAt: Date;
+      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+      reasoning: string;
+      tokenUsage: number | null;
+      durationMs: number | null;
+    }>> {
     const results = await this.tx
       .select({
         id: aiAnalysisSessions.id,
@@ -147,12 +147,12 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     endpointLimit?: number;
     granularity?: "hour" | "day";
   }): Promise<Array<{
-    date: string;
-    endpointId: string;
-    endpointName: string;
-    sessionCount: number;
-    totalTokens: number;
-  }>> {
+      date: string;
+      endpointId: string;
+      endpointName: string;
+      sessionCount: number;
+      totalTokens: number;
+    }>> {
     const conditions = [
       eq(jobs.userId, filters.userId),
       ne(jobs.status, "archived"), // Exclude archived jobs
@@ -237,18 +237,18 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-    sessions: Array<{
-      sessionId: string;
-      endpointId: string;
-      endpointName: string;
-      analyzedAt: Date;
-      reasoning: string;
-      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
-      tokenUsage: number | null;
-      durationMs: number | null;
-    }>;
-    total: number;
-  }> {
+      sessions: Array<{
+        sessionId: string;
+        endpointId: string;
+        endpointName: string;
+        analyzedAt: Date;
+        reasoning: string;
+        toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+        tokenUsage: number | null;
+        durationMs: number | null;
+      }>;
+      total: number;
+    }> {
     const conditions = [
       eq(jobs.userId, filters.userId),
       ne(jobs.status, "archived"),
