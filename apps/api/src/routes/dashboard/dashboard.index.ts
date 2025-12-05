@@ -4,6 +4,8 @@ import * as routes from "./dashboard.routes.js";
 
 const router = createRouter()
 // ==================== Dashboard Stats Route ====================
-  .openapi(routes.getDashboardStats, handlers.getDashboardStats);
+  .openapi(routes.getDashboardStats, handlers.getDashboardStats)
+// ==================== Job Activity Timeline Route ====================
+  .openapi(routes.getJobActivityTimeline, handlers.getJobActivityTimeline);
 
 export default router;

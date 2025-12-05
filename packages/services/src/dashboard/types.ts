@@ -79,3 +79,31 @@ export type DashboardStats = {
   aiSessionTimeSeries: AISessionTimeSeriesPoint[];
   aiSessionTimeSeriesMaxStacked: number;
 };
+
+// ==================== Job Activity Timeline Types ====================
+
+export type ActivityEvent = {
+  type: "run" | "session";
+  id: string;
+  endpointId: string;
+  endpointName: string;
+  timestamp: Date;
+  // Run-specific fields
+  status?: string;
+  durationMs?: number;
+  source?: string;
+  // Session-specific fields
+  reasoning?: string;
+  toolCalls?: Array<{ tool: string; args: unknown; result: unknown }>;
+  tokenUsage?: number;
+};
+
+export type JobActivityTimeline = {
+  events: ActivityEvent[];
+  total: number;
+  summary: {
+    runsCount: number;
+    sessionsCount: number;
+    successRate: number;
+  };
+};
