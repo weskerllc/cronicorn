@@ -23,6 +23,7 @@ type EndpointStat = {
     name: string;
     runs: number;
     sessions: number;
+    tokens: number;
 };
 
 export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMappings, chartConfig, onEndpointClick }: EndpointTableProps) {
@@ -32,14 +33,15 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
         const stats = new Map<string, EndpointStat>();
 
         endpointTimeSeries.forEach(point => {
-            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, sessions: 0 };
+            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, sessions: 0, tokens: 0 };
             existing.runs += point.success + point.failure;
             stats.set(point.endpointId, existing);
         });
 
         aiSessionTimeSeries.forEach(point => {
-            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, sessions: 0 };
+            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, sessions: 0, tokens: 0 };
             existing.sessions += point.sessionCount;
+            existing.tokens += point.totalTokens;
             stats.set(point.endpointId, existing);
         });
 
@@ -86,6 +88,15 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
             cell: ({ row }) => (
                 <div className="text-muted-foreground">
                     {row.original.sessions.toLocaleString()}
+                </div>
+            ),
+        },
+        {
+            accessorKey: "tokens",
+            header: "Tokens",
+            cell: ({ row }) => (
+                <div className="text-muted-foreground">
+                    {row.original.tokens.toLocaleString()}
                 </div>
             ),
         },
