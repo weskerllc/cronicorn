@@ -747,11 +747,11 @@ export class DashboardManager {
   }
 
   /**
-   * Get combined activity timeline for a job.
+   * Get combined activity timeline for a job (or all jobs).
    * Merges runs and AI sessions into a single chronological timeline.
    *
    * @param userId - The user ID
-   * @param jobId - The job ID
+   * @param jobId - Optional job ID (omit for all jobs)
    * @param options - Query options
    * @param options.timeRange - Time range filter: 24h, 7d, 30d (default: 7d)
    * @param options.limit - Maximum events to return (default: 50)
@@ -760,7 +760,7 @@ export class DashboardManager {
    */
   async getJobActivityTimeline(
     userId: string,
-    jobId: string,
+    jobId: string | undefined,
     options: {
       timeRange?: "24h" | "7d" | "30d";
       limit?: number;

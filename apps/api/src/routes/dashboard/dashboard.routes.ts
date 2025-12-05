@@ -46,7 +46,36 @@ export const getDashboardStats = createRoute({
 
 export type GetDashboardStatsRoute = typeof getDashboardStats;
 
-// ==================== Job Activity Timeline Route ====================
+// ==================== Dashboard Activity Timeline Route ====================
+
+const DashboardActivityQuerySchema = JobActivityTimelineQuerySchema.extend({
+  jobId: z.string().optional().openapi({
+    description: "Optional job ID to filter by (omit for all jobs)",
+    example: "job_123abc",
+  }),
+});
+
+export const getDashboardActivity = createRoute({
+  path: "/dashboard/activity",
+  method: "get",
+  tags,
+  summary: "Get activity timeline",
+  description: "Get a chronological timeline of recent runs and AI sessions. Optionally filter by job ID.",
+  request: {
+    query: DashboardActivityQuerySchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      JobActivityTimelineResponseSchema,
+      "Activity timeline",
+    ),
+    ...errorResponses,
+  },
+});
+
+export type GetDashboardActivityRoute = typeof getDashboardActivity;
+
+// ==================== Job Activity Timeline Route (Legacy) ====================
 
 export const getJobActivityTimeline = createRoute({
   path: "/jobs/:jobId/activity",

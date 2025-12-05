@@ -416,12 +416,12 @@ export type RunsRepo = {
   cleanupZombieRuns: (olderThanMs: number) => Promise<number>;
 
   /**
-   * Get recent runs for a job across all endpoints.
+   * Get recent runs for a job (or all jobs) across all endpoints.
    * Used for the job activity timeline display.
    *
    * @param filters - Filter criteria
    * @param filters.userId - User ID for authorization
-   * @param filters.jobId - The job to get runs for
+   * @param filters.jobId - Optional job ID to filter by (omit for all jobs)
    * @param filters.sinceDate - Optional start date filter
    * @param filters.limit - Maximum runs to return (default: 50)
    * @param filters.offset - Pagination offset
@@ -429,7 +429,7 @@ export type RunsRepo = {
    */
   getJobRuns: (filters: {
     userId: string;
-    jobId: string;
+    jobId?: string;
     sinceDate?: Date;
     limit?: number;
     offset?: number;
@@ -540,12 +540,12 @@ export type SessionsRepo = {
   }>>;
 
   /**
-   * Get recent AI analysis sessions for a job across all endpoints.
+   * Get recent AI analysis sessions for a job (or all jobs) across all endpoints.
    * Used for the job activity timeline display.
    *
    * @param filters - Filter criteria
    * @param filters.userId - User ID for authorization
-   * @param filters.jobId - The job to get sessions for
+   * @param filters.jobId - Optional job ID to filter by (omit for all jobs)
    * @param filters.sinceDate - Optional start date filter
    * @param filters.limit - Maximum sessions to return (default: 50)
    * @param filters.offset - Pagination offset
@@ -553,7 +553,7 @@ export type SessionsRepo = {
    */
   getJobSessions: (filters: {
     userId: string;
-    jobId: string;
+    jobId?: string;
     sinceDate?: Date;
     limit?: number;
     offset?: number;
