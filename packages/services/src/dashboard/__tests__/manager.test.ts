@@ -78,6 +78,7 @@ describe("dashboardManager", () => {
       getSourceDistribution: vi.fn().mockResolvedValue([]),
       getRunTimeSeries: vi.fn().mockResolvedValue([]),
       getEndpointTimeSeries: vi.fn().mockResolvedValue([]),
+      getJobRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
     };
 
     // Mock SessionsRepo with all required methods
@@ -88,6 +89,7 @@ describe("dashboardManager", () => {
       getTotalTokenUsage: vi.fn(),
       getAISessionTimeSeries: vi.fn().mockResolvedValue([]),
       getLastSession: vi.fn().mockResolvedValue(null),
+      getJobSessions: vi.fn().mockResolvedValue({ sessions: [], total: 0 }),
     };
 
     // Fake clock for deterministic time-based tests
