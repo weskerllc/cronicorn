@@ -3,8 +3,6 @@ import {
   DashboardStatsResponseSchema,
   GetDashboardStatsDescription,
   GetDashboardStatsSummary,
-  GetJobActivityTimelineDescription,
-  GetJobActivityTimelineSummary,
   JobActivityTimelineQuerySchema,
   JobActivityTimelineResponseSchema,
 } from "@cronicorn/api-contracts/dashboard";
@@ -74,35 +72,3 @@ export const getDashboardActivity = createRoute({
 });
 
 export type GetDashboardActivityRoute = typeof getDashboardActivity;
-
-// ==================== Job Activity Timeline Route (Legacy) ====================
-
-export const getJobActivityTimeline = createRoute({
-  path: "/jobs/:jobId/activity",
-  method: "get",
-  tags,
-  summary: GetJobActivityTimelineSummary,
-  description: GetJobActivityTimelineDescription,
-  request: {
-    params: z.object({
-      jobId: z.string().openapi({
-        description: "Job ID",
-        example: "job_123abc",
-      }),
-    }),
-    query: JobActivityTimelineQuerySchema,
-  },
-  responses: {
-    [HttpStatusCodes.OK]: jsonContent(
-      JobActivityTimelineResponseSchema,
-      "Job activity timeline",
-    ),
-    [HttpStatusCodes.NOT_FOUND]: jsonContent(
-      z.object({ message: z.string() }),
-      "Job not found",
-    ),
-    ...errorResponses,
-  },
-});
-
-export type GetJobActivityTimelineRoute = typeof getJobActivityTimeline;

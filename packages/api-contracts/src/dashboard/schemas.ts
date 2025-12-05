@@ -239,10 +239,7 @@ export const DashboardStatsQuerySchema = z.object({
   description: "Query parameters for dashboard stats",
 });
 
-// ==================== Job Activity Timeline Schemas ====================
-
-export const GetJobActivityTimelineSummary = "Get job activity timeline";
-export const GetJobActivityTimelineDescription = "Get a chronological timeline of recent runs and AI analysis sessions for a job. Shows the combined activity sequence across all endpoints in the job.";
+// ==================== Activity Timeline Schemas ====================
 
 /**
  * An activity event - either a run execution or an AI analysis session.

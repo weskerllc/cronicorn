@@ -49,28 +49,6 @@ export async function getDashboardActivity(
     return json;
 }
 
-// ==================== Job Activity Timeline (Legacy) ====================
-
-const $getJobActivity = apiClient.api.jobs[":jobId"].activity.$get;
-type GetJobActivityQuery = InferRequestType<typeof $getJobActivity>["query"];
-type GetJobActivityResponse = SuccessResponse<InferResponseType<typeof $getJobActivity>>;
-
-export async function getJobActivityTimeline(
-    jobId: string,
-    query: GetJobActivityQuery = {}
-): Promise<GetJobActivityResponse> {
-    const resp = await apiClient.api.jobs[":jobId"].activity.$get({
-        param: { jobId },
-        query,
-    });
-    const json = await resp.json();
-
-    if ("message" in json) {
-        throw new Error(json.message);
-    }
-    return json;
-}
-
 // ==================== Query Options Factories ====================
 
 export const DASHBOARD_QUERY_KEY = ["dashboard"] as const;
@@ -87,18 +65,6 @@ export function dashboardStatsQueryOptions(query: GetDashboardStatsQuery = {}) {
         queryKey: [DASHBOARD_QUERY_KEY, "stats", query] as const,
         queryFn: () => getDashboardStats(query),
         staleTime: 30000, // 30 seconds - dashboard data doesn't need to be real-time
-    });
-}
-
-/**
- * Query options for dashboard activity timeline (supports all jobs or filtered by jobId)
- * Usage: useQuery(dashboardActivityQueryOptions()), useQuery(dashboardActivityQueryOptions({ jobId: "..." }))
- */
-export function dashboardActivityQueryOptions(query: GetDashboardActivityQuery = {}) {
-    return queryOptions({
-        queryKey: [DASHBOARD_QUERY_KEY, "activity", query] as const,
-        queryFn: () => getDashboardActivity(query),
-        staleTime: 30000, // 30 seconds
     });
 }
 
@@ -120,17 +86,5 @@ export function dashboardActivityInfiniteQueryOptions(
             return totalFetched < lastPage.total ? totalFetched : undefined;
         },
         staleTime: 30000,
-    });
-}
-
-/**
- * Query options for job activity timeline (legacy - requires jobId)
- * @deprecated Use dashboardActivityQueryOptions instead
- */
-export function jobActivityTimelineQueryOptions(jobId: string, query: GetJobActivityQuery = {}) {
-    return queryOptions({
-        queryKey: ["jobs", jobId, "activity", query] as const,
-        queryFn: () => getJobActivityTimeline(jobId, query),
-        staleTime: 30000, // 30 seconds
     });
 }

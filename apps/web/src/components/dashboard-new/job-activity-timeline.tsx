@@ -4,7 +4,6 @@ import { Activity, Loader2 } from "lucide-react";
 
 import { ScrollArea } from "@cronicorn/ui-library/components/scroll-area";
 import { Button } from "@cronicorn/ui-library/components/button";
-import { cn } from "@cronicorn/ui-library/lib/utils";
 
 import { DashboardCard } from "./dashboard-card";
 import { ActivityEventItem } from "./activity-event-item";
@@ -23,12 +22,6 @@ function formatDate(date: Date): string {
     month: "short",
     day: "numeric",
   });
-}
-
-function getSuccessRateColor(rate: number): string {
-  if (rate >= 90) return "text-success";
-  if (rate >= 70) return "text-warning";
-  return "text-destructive";
 }
 
 // Convert "all" to "30d" for the API
@@ -51,8 +44,6 @@ export function JobActivityTimeline({ jobId, jobName, timeRange = "7d" }: JobAct
     return data.pages.flatMap((page) => page.events);
   }, [data]);
 
-  // Get summary from first page (total counts are consistent across pages)
-  const summary = data?.pages[0]?.summary;
   const total = data?.pages[0]?.total ?? 0;
 
   const eventsByDate = useMemo(() => {
@@ -63,24 +54,11 @@ export function JobActivityTimeline({ jobId, jobName, timeRange = "7d" }: JobAct
     }, {});
   }, [allEvents]);
 
-  const description = summary ? (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="font-medium text-foreground">{summary.runsCount}</span> runs
-      <span className="text-muted-foreground">•</span>
-      <span className="font-medium text-foreground">{summary.sessionsCount}</span> AI
-      <span className="text-muted-foreground">•</span>
-      <span className={cn("font-medium", getSuccessRateColor(summary.successRate))}>
-        {summary.successRate}%
-      </span>
-    </div>
-  ) : null;
-
   const title = jobName ? `Activity: ${jobName}` : "Recent Activity";
 
   return (
     <DashboardCard
       title={title}
-      description={description}
       className="h-[400px]"
     >
       <ScrollArea className="h-full w-full">

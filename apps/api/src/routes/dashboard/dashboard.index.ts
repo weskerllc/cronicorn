@@ -6,8 +6,6 @@ const router = createRouter()
   // ==================== Dashboard Stats Route ====================
   .openapi(routes.getDashboardStats, handlers.getDashboardStats)
   // ==================== Dashboard Activity Route ====================
-  .openapi(routes.getDashboardActivity, handlers.getDashboardActivity)
-  // ==================== Job Activity Timeline Route (Legacy) ====================
-  .openapi(routes.getJobActivityTimeline, handlers.getJobActivityTimeline);
+  .openapi(routes.getDashboardActivity, handlers.getDashboardActivity);
 
 export default router;
