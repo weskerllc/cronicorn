@@ -18,13 +18,17 @@
  * - Filtering: Multiple jobs/endpoints/statuses to filter
  *
  * Run with: pnpm tsx apps/migrator/src/seed.ts
+ *
+ * NOTE: This script can run standalone (without the API). It will automatically
+ * create the admin user if it doesn't exist using the ensureAdminUser utility.
  */
 
 import { schema } from "@cronicorn/adapter-drizzle";
 import { DEV_AUTH, DEV_DATABASE } from "@cronicorn/config-defaults";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm/sql/expressions/conditions";
 import pg from "pg";
+
+import { ensureAdminUser } from "./ensure-admin-user.js";
 
 const { Pool } = pg;
 
@@ -34,9 +38,6 @@ const pool = new Pool({
 });
 
 const db = drizzle(pool, { schema });
-
-// Demo user name from env (we'll look up the ID from the database)
-const DEMO_USER_NAME = process.env.DEMO_USER_NAME || DEV_AUTH.ADMIN_NAME;
 
 // Configurable seed size (dev-friendly defaults)
 const NUM_JOBS = Number.parseInt(process.env.SEED_NUM_JOBS || "5", 10); // Default: 5 jobs (was 50)
@@ -560,24 +561,19 @@ async function seed() {
   console.log(`  • Historical data: 45+ days of runs`);
   console.log("");
 
-  // 1. Find demo user by name
-  console.log(`📝 Looking up user: ${DEMO_USER_NAME}...`);
-  const existingUser = await db
-    .select()
-    .from(schema.user)
-    .where(eq(schema.user.name, DEMO_USER_NAME))
-    .limit(1);
+  // 1. Ensure admin user exists (creates if needed, returns existing if already created)
+  // This allows seed to run standalone without requiring the API to be started first.
+  const adminEmail = process.env.ADMIN_USER_EMAIL || DEV_AUTH.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_USER_PASSWORD || DEV_AUTH.ADMIN_PASSWORD;
+  const adminName = process.env.ADMIN_USER_NAME || DEV_AUTH.ADMIN_NAME;
 
-  if (existingUser.length === 0) {
-    console.error(`❌ User "${DEMO_USER_NAME}" not found in database.`);
-    console.error("Please ensure you're logged in or set DEMO_USER_NAME to an existing user.");
-    await pool.end();
-    process.exit(1);
-  }
-
-  const demoUser = existingUser[0];
-  const DEMO_USER_ID = demoUser.id;
-  console.log(`✓ Found user: ${demoUser.email} (ID: ${DEMO_USER_ID})\n`);
+  console.log(`📝 Ensuring admin user exists: ${adminEmail}...`);
+  const DEMO_USER_ID = await ensureAdminUser(db, {
+    email: adminEmail,
+    password: adminPassword,
+    name: adminName,
+  });
+  console.log(`✓ Admin user ready (ID: ${DEMO_USER_ID})\n`);
 
   // Calculate summary stats once
   const archivedJobsCount = JOBS.filter(j => j.status === "archived").length;

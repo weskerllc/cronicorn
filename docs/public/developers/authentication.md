@@ -1,7 +1,7 @@
 ---
 id: developer-authentication
 title: Authentication Configuration
-description: Configure authentication methods for your Cronicorn deployment
+description: Configure GitHub OAuth, API keys, and programmatic access
 tags:
   - developer
   - configuration
@@ -14,45 +14,22 @@ mcp:
 
 # Authentication Configuration
 
-Cronicorn supports two authentication methods. At least one must be enabled.
+> **Getting started?** See [Quick Start](./quick-start.md) - no configuration required for local development.
 
-## Quick Reference
+This guide covers advanced authentication setup: GitHub OAuth for production, API keys, and programmatic access.
 
-```bash
-# Admin User (local dev, CI/CD)
-ADMIN_USER_EMAIL=admin@example.com
-ADMIN_USER_PASSWORD=your-secure-password-min-8-chars
+## Authentication Methods
 
-# GitHub OAuth (production)
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-```
-
-**Choose based on your use case:**
-- **Local Dev**: Admin user only (no OAuth setup needed)
-- **Production**: GitHub OAuth (for multiple users)
-- **Hybrid**: Both (admins use email, users use GitHub)
-
-## Admin User Setup
-
-Perfect for development and self-hosting.
-
-**1. Edit `.env`:**
-```bash
-ADMIN_USER_EMAIL=admin@example.com
-ADMIN_USER_PASSWORD=your-secure-password
-ADMIN_USER_NAME=Admin  # Optional
-```
-
-**2. Restart the app** - admin user auto-created on startup
-
-**3. Login** at `http://localhost:5173/login` with your email/password
-
-**Benefits**: ✅ No OAuth app needed, ✅ Works offline, ✅ Perfect for CI/CD
+| Method | Use Case | Setup Required |
+|--------|----------|----------------|
+| Admin User | Local dev, self-hosting | None (works by default) |
+| GitHub OAuth | Production with multiple users | GitHub OAuth app |
+| API Keys | Service-to-service | Generate in web UI |
+| Bearer Tokens | CLI/AI agents | Device authorization flow |
 
 ## GitHub OAuth Setup
 
-Best for production with multiple users.
+Best for production deployments with multiple users.
 
 **1. [Create GitHub OAuth app](https://github.com/settings/developers)**
 
@@ -60,7 +37,7 @@ Best for production with multiple users.
 ```
 ${BETTER_AUTH_URL}/api/auth/callback/github
 ```
-Example: `http://localhost:3333/api/auth/callback/github`
+Example: `https://api.yourdomain.com/api/auth/callback/github`
 
 **3. Add to `.env`:**
 ```bash
@@ -68,95 +45,28 @@ GITHUB_CLIENT_ID=your_client_id
 GITHUB_CLIENT_SECRET=your_client_secret
 ```
 
-**4. Login** - click "Sign in with GitHub" button
-
-## Validation Rules
-
-**At least one method required.** App validates on startup:
-
-| Configuration | Status |
-|---------------|--------|
-| Admin user only | ✅ Works |
-| GitHub OAuth only | ✅ Works |
-| Both enabled | ✅ Works |
-| Neither enabled | ❌ Fails |
-
-## Required Environment Variables
-
-### Base Config (Always Required)
-
-```bash
-DATABASE_URL=postgresql://user:password@localhost:6666/db
-BETTER_AUTH_SECRET=$(openssl rand -base64 32)
-BETTER_AUTH_URL=http://localhost:3333
-WEB_URL=http://localhost:5173
-```
-
-### Admin User (Optional*)
-
-| Variable | Description |
-|----------|-------------|
-| `ADMIN_USER_EMAIL` | Valid email address |
-| `ADMIN_USER_PASSWORD` | Minimum 8 characters |
-| `ADMIN_USER_NAME` | Display name (optional) |
-
-*Required if GitHub OAuth not configured
-
-### GitHub OAuth (Optional*)
-
-| Variable | Description |
-|----------|-------------|
-| `GITHUB_CLIENT_ID` | From GitHub OAuth app |
-| `GITHUB_CLIENT_SECRET` | From GitHub OAuth app |
-
-*Required if admin user not configured
-
-## Common Issues
-
-### Admin user not created
-
-1. Check both `ADMIN_USER_EMAIL` and `ADMIN_USER_PASSWORD` are in `.env`
-2. Restart the application
-3. Check logs for "Admin user created successfully"
-
-### Login returns 404
-
-1. Restart API server after changing `.env`
-2. Verify: `curl http://localhost:3333/api/auth/config`
-
-### Wrong credentials
-
-1. Check email/password match `.env` exactly (case-sensitive)
-2. Password must be at least 8 characters
-3. Remove any extra whitespace
-
-## Production Configuration
-
-**Admin for emergency access:**
-```bash
-ADMIN_USER_EMAIL=admin@yourdomain.com
-ADMIN_USER_PASSWORD=${SECRET_FROM_VAULT}
-```
-
-**GitHub for regular users:**
-```bash
-GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-BETTER_AUTH_URL=https://api.yourdomain.com
-WEB_URL=https://yourdomain.com
-```
-
-**Security**: Use secrets manager, not plain `.env` files
+**4. Restart the app** - "Sign in with GitHub" button will appear
 
 ## Programmatic Access
 
+### API Keys
+
+Generate in web UI at `/settings/api-keys`:
+
+```bash
+curl -H "X-API-Key: your-api-key" \
+  http://localhost:3333/api/jobs
+```
+
 ### Bearer Tokens (CLI/AI Agents)
+
+Use the OAuth device authorization flow:
 
 ```bash
 # 1. Initiate device flow
 curl -X POST http://localhost:3333/api/auth/device/code
 
-# 2. User authorizes in browser
+# 2. User authorizes in browser at the provided URL
 
 # 3. Poll for token
 curl -X POST http://localhost:3333/api/auth/device/token \
@@ -167,11 +77,45 @@ curl -H "Authorization: Bearer TOKEN" \
   http://localhost:3333/api/jobs
 ```
 
-### API Keys
-
-Generate in web UI at `/settings/api-keys`:
+## Production Configuration
 
 ```bash
-curl -H "X-API-Key: your-api-key" \
-  http://localhost:3333/api/jobs
+# Required: Secure secret (generate with: openssl rand -base64 32)
+BETTER_AUTH_SECRET=your-secure-random-secret-min-32-chars
+
+# Required: Production URLs
+BETTER_AUTH_URL=https://api.yourdomain.com
+WEB_URL=https://yourdomain.com
+
+# Option A: Admin user for emergency access
+ADMIN_USER_EMAIL=admin@yourdomain.com
+ADMIN_USER_PASSWORD=${SECRET_FROM_VAULT}
+
+# Option B: GitHub OAuth for regular users
+GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
 ```
+
+> ⚠️ **Security**: Use a secrets manager in production, not plain `.env` files.
+
+## Validation Rules
+
+At least one authentication method must be configured:
+
+| Configuration | Status |
+|---------------|--------|
+| Admin user only | ✅ Works |
+| GitHub OAuth only | ✅ Works |
+| Both enabled | ✅ Works |
+| Neither enabled | ❌ App won't start |
+
+## Troubleshooting
+
+**Login returns 404?**  
+→ Restart API server after changing `.env`
+
+**Admin user not created?**  
+→ Run `pnpm db:seed` or check logs for "Admin user created"
+
+**GitHub OAuth not working?**  
+→ Verify callback URL matches `${BETTER_AUTH_URL}/api/auth/callback/github`
