@@ -14,7 +14,7 @@ import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
 import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
 
-interface AISessionsChartProps {
+interface AITokensChartProps {
     data: Array<AISessionTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
@@ -22,25 +22,25 @@ interface AISessionsChartProps {
     timeRange?: TimeRangeValue;
 }
 
-export function AISessionsChart({
+export function AITokensChart({
     data,
     chartConfig,
     timeRange,
-}: AISessionsChartProps) {
+}: AITokensChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
-        // Calculate total sessions per endpoint to find top performers
+        // Calculate total tokens per endpoint to find top performers
         const endpointTotals = new Map<string, { id: string; name: string; total: number }>();
         data.forEach((item) => {
             const existing = endpointTotals.get(item.endpointId);
             if (existing) {
-                existing.total += item.sessionCount;
+                existing.total += item.totalTokens;
             } else {
-                endpointTotals.set(item.endpointId, { id: item.endpointId, name: item.endpointName, total: item.sessionCount });
+                endpointTotals.set(item.endpointId, { id: item.endpointId, name: item.endpointName, total: item.totalTokens });
             }
         });
 
-        // Sort endpoints by total sessions DESC and take top 10 for display
+        // Sort endpoints by total tokens DESC and take top 10 for display
         const MAX_ENDPOINTS = 10;
         const sortedEndpoints = Array.from(endpointTotals.values())
             .sort((a, b) => b.total - a.total)
@@ -62,8 +62,8 @@ export function AISessionsChart({
                 });
             }
             const dateEntry = dateMap.get(item.date)!;
-            // Use endpoint name as key for session count
-            dateEntry[item.endpointName] = item.sessionCount;
+            // Use endpoint name as key for token count
+            dateEntry[item.endpointName] = item.totalTokens;
         });
 
         // Convert to array and sort by date
@@ -78,12 +78,12 @@ export function AISessionsChart({
         };
     }, [data]);
 
-    // Show chart even if all sessions are zero (to show the timeline structure)
+    // Show chart even if all tokens are zero (to show the timeline structure)
     const hasData = data.length > 0;
 
-    // Calculate total sessions
-    const totalSessions = useMemo(() => {
-        return data.reduce((sum, point) => sum + point.sessionCount, 0);
+    // Calculate total tokens
+    const totalTokens = useMemo(() => {
+        return data.reduce((sum, point) => sum + point.totalTokens, 0);
     }, [data]);
 
     // Calculate max value across all displayed endpoints (not stacked)
@@ -107,7 +107,7 @@ export function AISessionsChart({
     const description = hasData ? (
         <>
             <p>
-                Sessions: <span className="text-foreground font-medium">{totalSessions.toLocaleString()}</span>
+                Tokens: <span className="text-foreground font-medium">{totalTokens.toLocaleString()}</span>
                 {totalEndpoints > endpoints.length && (
                     <span className="text-muted-foreground text-xs ml-2">
                         (Showing top {endpoints.length} of {totalEndpoints})
@@ -121,7 +121,7 @@ export function AISessionsChart({
 
     return (
         <DashboardCard
-            title="AI Activity"
+            title="AI Token Usage"
             description={description}
             contentClassName="p-3"
         >
@@ -142,7 +142,7 @@ export function AISessionsChart({
                                     return (
                                         <linearGradient
                                             key={endpoint.id}
-                                            id={`fill-${endpoint.id}`}
+                                            id={`fill-tokens-${endpoint.id}`}
                                             x1="0"
                                             y1="0"
                                             x2="0"
@@ -243,7 +243,7 @@ export function AISessionsChart({
                                         key={endpoint.id}
                                         dataKey={endpointName}
                                         type="natural"
-                                        fill={`url(#fill-${endpoint.id})`}
+                                        fill={`url(#fill-tokens-${endpoint.id})`}
                                         stroke={`var(--color-${sanitizedKey})`}
                                         strokeWidth={2}
                                         fillOpacity={0.6}
