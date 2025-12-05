@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/weskerllc/cronicorn/compare/v1.14.2...v1.15.0) (2025-12-05)
+
+
+### Features
+
+* URL-based pagination and always-visible date headers for AI sessions ([#71](https://github.com/weskerllc/cronicorn/issues/71)) ([107953f](https://github.com/weskerllc/cronicorn/commit/107953ff26948ff1149ecfd3dde3f79c2d3d4efc))
+
 ## [1.14.2](https://github.com/weskerllc/cronicorn/compare/v1.14.1...v1.14.2) (2025-12-05)
 
 
