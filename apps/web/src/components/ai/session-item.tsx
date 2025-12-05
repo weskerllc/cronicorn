@@ -1,5 +1,7 @@
 import { AlertCircle, Check, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@cronicorn/ui-library/components/button";
+import { cn } from "@cronicorn/ui-library/lib/utils";
 
 export type AISession = {
     id: string;
@@ -109,18 +111,18 @@ export function AISessionItem({
     const tokenDisplay = safeNumber(session.tokenUsage)?.toLocaleString() ?? null;
 
     return (
-        <div className="group px-4 py-3 transition-colors hover:bg-muted/30">
+        <div className="group px-4 py-3 transition-colors hover:bg-accent/50">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                 <time className="font-medium">{formattedTime}</time>
                 {tokenDisplay !== null && (
                     <>
-                        <span className="opacity-30">•</span>
+                        <span className="text-border">•</span>
                         <span>{tokenDisplay} tokens</span>
                     </>
                 )}
                 {formattedDuration && (
                     <>
-                        <span className="opacity-30">•</span>
+                        <span className="text-border">•</span>
                         <span>{formattedDuration}</span>
                     </>
                 )}
@@ -130,17 +132,22 @@ export function AISessionItem({
                 <div className="mt-1">
                     <p
                         ref={reasoningRef}
-                        className={`text-sm leading-relaxed text-foreground/85 ${!isReasoningExpanded ? 'line-clamp-2' : ''}`}
+                        className={cn(
+                            "text-sm leading-relaxed text-foreground/85",
+                            !isReasoningExpanded && "line-clamp-2"
+                        )}
                     >
                         {session.reasoning}
                     </p>
                     {isClamped && (
-                        <button
+                        <Button
+                            variant="link"
+                            size="sm"
                             onClick={() => setIsReasoningExpanded(!isReasoningExpanded)}
-                            className="mt-1 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+                            className="mt-1 h-auto p-0 text-xs text-muted-foreground"
                         >
                             {isReasoningExpanded ? 'Show less' : 'Show more'}
-                        </button>
+                        </Button>
                     )}
                 </div>
             )}
@@ -276,35 +283,41 @@ export function AISessionItem({
                                 <div key={idx} className="w-full">
                                     <button
                                         onClick={() => setExpandedToolIndex(isExpanded ? null : idx)}
-                                        className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-mono transition-all hover:ring-2 hover:ring-offset-1 ${hasError
-                                            ? 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20 hover:ring-red-500/40'
-                                            : isActionTool
-                                                ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 hover:ring-blue-500/40'
-                                                : 'bg-muted/40 hover:ring-muted-foreground/20'
-                                            }`}
+                                        className={cn(
+                                            "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-xs transition-colors",
+                                            "hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                                            hasError
+                                                ? "border-destructive/30 bg-destructive/10 text-destructive"
+                                                : isActionTool
+                                                    ? "border-primary/20 bg-primary/10 text-primary"
+                                                    : "border-border bg-secondary text-secondary-foreground"
+                                        )}
                                     >
-                                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-                                        <span className="text-foreground/75">{call.tool}</span>
-                                        {argsDisplay && <span className="text-muted-foreground/60">({argsDisplay})</span>}
-                                        {hasError && <AlertCircle className="h-3 w-3 text-red-600/90" />}
-                                        {isSuccess && <Check className="h-3 w-3 text-emerald-600/90" />}
+                                        <ChevronRight className={cn(
+                                            "h-3.5 w-3.5 transition-transform",
+                                            isExpanded && "rotate-90"
+                                        )} />
+                                        <span>{call.tool}</span>
+                                        {argsDisplay && <span className="text-muted-foreground">({argsDisplay})</span>}
+                                        {hasError && <AlertCircle className="h-3 w-3" />}
+                                        {isSuccess && <Check className="h-3 w-3 text-success" />}
                                     </button>
 
                                     {isExpanded && (
-                                        <div className="mt-2 ml-6 rounded-md border border-muted bg-muted/20 p-3 space-y-2">
+                                        <div className="mt-2 ml-6 space-y-2 rounded-md border bg-muted p-3">
                                             <div>
-                                                <h4 className="text-xs font-semibold text-muted-foreground mb-1">
+                                                <h4 className="mb-1 text-xs font-semibold text-muted-foreground">
                                                     Arguments
                                                 </h4>
-                                                <pre className="text-xs text-foreground/70 max-h-32 overflow-y-auto">
+                                                <pre className="max-h-32 overflow-y-auto text-xs text-foreground/70">
                                                     {safeStringify(args, "[Unable to serialize]")}
                                                 </pre>
                                             </div>
                                             <div>
-                                                <h4 className="text-xs font-semibold text-muted-foreground mb-1">
+                                                <h4 className="mb-1 text-xs font-semibold text-muted-foreground">
                                                     Result
                                                 </h4>
-                                                <pre className="text-xs text-foreground/70 max-h-32 overflow-y-auto">
+                                                <pre className="max-h-32 overflow-y-auto text-xs text-foreground/70">
                                                     {safeStringify(result, "[Unable to serialize]")}
                                                 </pre>
                                             </div>
@@ -314,7 +327,7 @@ export function AISessionItem({
                                                     {(Boolean(result.hasMore) ||
                                                         typeof result.tokenSavingNote ===
                                                         "string") && (
-                                                            <div className="pt-2 border-t border-muted text-xs text-muted-foreground space-y-1">
+                                                            <div className="space-y-1 border-t pt-2 text-xs text-muted-foreground">
                                                                 {Boolean(result.hasMore) && (
                                                                     <p>
                                                                         💡 More results available -
