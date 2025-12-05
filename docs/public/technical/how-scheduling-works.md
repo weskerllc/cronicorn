@@ -176,7 +176,8 @@ The Scheduler writes back to the database:
 - `lastRunAt = now` (when this execution started)
 - `nextRunAt = governor result` (when to run next)
 - `failureCount`: reset to 0 on success, increment on failure
-- Clear expired AI hints (if `aiHintExpiresAt <= now`)
+- Clear consumed one-shot hints (if `aiHintNextRunAt <= now`)
+- Clear all AI hints if TTL expired (if `aiHintExpiresAt <= now`)
 
 The database update is atomic. If two Schedulers somehow claimed the same endpoint (shouldn't happen due to locks, but defensive programming), only one update succeeds.
 
