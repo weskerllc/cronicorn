@@ -414,6 +414,38 @@ export type RunsRepo = {
    * @returns Number of runs cleaned up
    */
   cleanupZombieRuns: (olderThanMs: number) => Promise<number>;
+
+  /**
+   * Get recent runs for a job across all endpoints.
+   * Used for the job activity timeline display.
+   *
+   * @param filters - Filter criteria
+   * @param filters.userId - User ID for authorization
+   * @param filters.jobId - The job to get runs for
+   * @param filters.sinceDate - Optional start date filter
+   * @param filters.limit - Maximum runs to return (default: 50)
+   * @param filters.offset - Pagination offset
+   * @returns Array of runs with endpoint info, ordered by startedAt DESC
+   */
+  getJobRuns: (filters: {
+    userId: string;
+    jobId: string;
+    sinceDate?: Date;
+    limit?: number;
+    offset?: number;
+  }) => Promise<{
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      endpointName: string;
+      status: string;
+      startedAt: Date;
+      finishedAt?: Date;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }>;
 };
 
 /**
@@ -506,4 +538,36 @@ export type SessionsRepo = {
     sessionCount: number;
     totalTokens: number;
   }>>;
+
+  /**
+   * Get recent AI analysis sessions for a job across all endpoints.
+   * Used for the job activity timeline display.
+   *
+   * @param filters - Filter criteria
+   * @param filters.userId - User ID for authorization
+   * @param filters.jobId - The job to get sessions for
+   * @param filters.sinceDate - Optional start date filter
+   * @param filters.limit - Maximum sessions to return (default: 50)
+   * @param filters.offset - Pagination offset
+   * @returns Array of sessions with endpoint info, ordered by analyzedAt DESC
+   */
+  getJobSessions: (filters: {
+    userId: string;
+    jobId: string;
+    sinceDate?: Date;
+    limit?: number;
+    offset?: number;
+  }) => Promise<{
+    sessions: Array<{
+      sessionId: string;
+      endpointId: string;
+      endpointName: string;
+      analyzedAt: Date;
+      reasoning: string;
+      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+      tokenUsage: number | null;
+      durationMs: number | null;
+    }>;
+    total: number;
+  }>;
 };

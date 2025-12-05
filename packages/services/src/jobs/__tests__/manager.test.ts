@@ -72,6 +72,7 @@ describe("jobsManager", () => {
       getSourceDistribution: vi.fn().mockResolvedValue([]),
       getRunTimeSeries: vi.fn().mockResolvedValue([]),
       getEndpointTimeSeries: vi.fn().mockResolvedValue([]),
+      getJobRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
     };
     mockSessionsRepo = {
       create: vi.fn(),
@@ -80,6 +81,7 @@ describe("jobsManager", () => {
       getTotalTokenUsage: vi.fn().mockResolvedValue(0),
       getAISessionTimeSeries: vi.fn().mockResolvedValue([]),
       getLastSession: vi.fn().mockResolvedValue(null),
+      getJobSessions: vi.fn().mockResolvedValue({ sessions: [], total: 0 }),
     };
     const now = new Date("2025-01-14T12:00:00Z");
     fakeClock = { now: () => now, sleep: async () => { } };
