@@ -382,18 +382,18 @@ export class InMemoryRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-    runs: Array<{
-      runId: string;
-      endpointId: string;
-      endpointName: string;
-      status: string;
-      startedAt: Date;
-      finishedAt?: Date;
-      durationMs?: number;
-      source?: string;
-    }>;
-    total: number;
-  }> {
+      runs: Array<{
+        runId: string;
+        endpointId: string;
+        endpointName: string;
+        status: string;
+        startedAt: Date;
+        finishedAt?: Date;
+        durationMs?: number;
+        source?: string;
+      }>;
+      total: number;
+    }> {
     // Stub implementation for in-memory repo
     // Real implementation is in DrizzleRunsRepo with SQL joins
     return { runs: [], total: 0 };

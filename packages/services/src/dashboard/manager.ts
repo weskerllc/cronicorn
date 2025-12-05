@@ -843,7 +843,10 @@ export class DashboardManager {
     const sessionsInResponse = paginatedEvents.filter(e => e.type === "session");
     const successfulRuns = runsInResponse.filter(e => e.status === "success").length;
     const totalRuns = runsInResponse.length;
-    const successRate = totalRuns > 0 ? Math.round((successfulRuns / totalRuns) * 1000) / 10 : 0;
+    // Calculate success rate as percentage with one decimal place
+    const successRate = totalRuns > 0
+      ? Number(((successfulRuns / totalRuns) * 100).toFixed(1))
+      : 0;
 
     return {
       events: paginatedEvents,
