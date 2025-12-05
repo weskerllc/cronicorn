@@ -16,7 +16,10 @@ export function DefaultCatchBoundary({ error }: Readonly<ErrorComponentProps>) {
         select: (state) => state.id === rootRouteId,
     });
 
-    console.error(error);
+    // Only log non-redirect errors (redirects are normal control flow)
+    if (error && typeof error === 'object' && !('to' in error)) {
+        console.error('[CatchBoundary] Caught error:', error);
+    }
 
     return (
         <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-6 p-4">

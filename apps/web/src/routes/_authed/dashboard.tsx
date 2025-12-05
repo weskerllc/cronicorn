@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useMemo } from "react";
 
 import { ErrorState } from "../../components/composed/error-state";
-import { LoadingState } from "../../components/composed/loading-state";
+import { PageSkeleton } from "../../components/skeletons/page-skeleton";
 import { GridLayout } from "../../components/primitives/grid-layout";
 import { ExecutionTimelineChart } from "../../components/dashboard-new/execution-timeline-chart";
 import { FilterBar } from "../../components/dashboard-new/filter-bar";
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/_authed/dashboard")({
     />
   ),
   pendingComponent: () => (
-    <LoadingState message="Loading dashboard..." />
+    <PageSkeleton variant="dashboard" showDescription={false} />
   ),
 });
 
