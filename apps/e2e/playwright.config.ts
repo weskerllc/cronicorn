@@ -13,11 +13,19 @@ config({ path: resolve(__dirname, "../../.env") });
 // eslint-disable-next-line node/no-process-env
 const isCI = !!process.env.CI;
 
+// Check if global setup should be skipped (for quick re-runs)
+// eslint-disable-next-line node/no-process-env
+const skipSetup = !!process.env.SKIP_E2E_SETUP;
+
 /**
  * Playwright configuration for E2E tests
  * See https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
+  // Global setup: reset, migrate, and seed database before all tests
+  // Skip with SKIP_E2E_SETUP=1 for faster re-runs during development
+  globalSetup: skipSetup ? undefined : "./global-setup.ts",
+
   // Look for test files in the "tests" directory
   testDir: "./tests",
 

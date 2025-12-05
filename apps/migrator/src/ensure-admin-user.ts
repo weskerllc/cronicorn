@@ -6,7 +6,9 @@
  * Creates the admin user directly in the database if it doesn't exist.
  * This allows the seed script to run standalone without requiring the API to be started first.
  *
- * Password is hashed using bcrypt (same as Better Auth) to ensure compatibility.
+ * Password is hashed using scrypt (same as Better Auth) to ensure compatibility.
+ * Better Auth uses the format: `salt:hex_encoded_key`
+ *
  * If the user already exists, this function is a no-op.
  *
  * NOTE: The API also creates this user on startup via Better Auth's signUpEmail.
@@ -16,7 +18,8 @@
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 import { schema } from "@cronicorn/adapter-drizzle";
-import bcrypt from "bcryptjs";
+import { scryptAsync } from "@noble/hashes/scrypt";
+import { bytesToHex } from "@noble/hashes/utils";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 
 type AdminUserConfig = {
@@ -24,6 +27,26 @@ type AdminUserConfig = {
   password: string;
   name: string;
 };
+
+/**
+ * Hash password using scrypt - matching Better Auth's implementation exactly.
+ * Better Auth uses: N=16384, r=16, p=1, dkLen=64
+ * Format: `salt:hex_encoded_key`
+ */
+async function hashPassword(password: string): Promise<string> {
+  // Generate 16 random bytes for salt, encode as hex
+  const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+  const salt = bytesToHex(saltBytes);
+
+  // Use same scrypt params as Better Auth (including NFKC normalization and dkLen=64)
+  const key = await scryptAsync(
+    password.normalize("NFKC"),
+    salt,
+    { N: 16384, r: 16, p: 1, dkLen: 64, maxmem: 128 * 16384 * 16 * 2 },
+  );
+
+  return `${salt}:${bytesToHex(key)}`;
+}
 
 /**
  * Ensures the admin user exists in the database.
@@ -57,9 +80,9 @@ export async function ensureAdminUser(
   const accountId = crypto.randomUUID();
   const now = new Date();
 
-  // Hash password using bcrypt (same algorithm as Better Auth)
-  // Using 10 salt rounds (Better Auth default)
-  const hashedPassword = await bcrypt.hash(config.password, 10);
+  // Hash password using scrypt (same algorithm as Better Auth)
+  // Better Auth format: `salt:hex_encoded_key`
+  const hashedPassword = await hashPassword(config.password);
 
   // Create user record
   await db.insert(schema.user).values({
