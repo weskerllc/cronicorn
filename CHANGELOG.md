@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/weskerllc/cronicorn/compare/v1.15.0...v1.15.1) (2025-12-05)
+
+
+### Bug Fixes
+
+* Seed admin user ([0a7e087](https://github.com/weskerllc/cronicorn/commit/0a7e087ac2808d801c343e467abde26be16a79e7))
+
 # [1.15.0](https://github.com/weskerllc/cronicorn/compare/v1.14.2...v1.15.0) (2025-12-05)
 
 
