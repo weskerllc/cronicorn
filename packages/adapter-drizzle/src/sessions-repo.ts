@@ -225,4 +225,86 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       totalTokens: row.totalTokens ? Number(row.totalTokens) : 0,
     }));
   }
+
+  // ============================================================================
+  // Job Activity Timeline
+  // ============================================================================
+
+  async getJobSessions(filters: {
+    userId: string;
+    jobId: string;
+    sinceDate?: Date;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+      sessions: Array<{
+        sessionId: string;
+        endpointId: string;
+        endpointName: string;
+        analyzedAt: Date;
+        reasoning: string;
+        toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+        tokenUsage: number | null;
+        durationMs: number | null;
+      }>;
+      total: number;
+    }> {
+    const conditions = [
+      eq(jobs.userId, filters.userId),
+      eq(jobs.id, filters.jobId),
+      ne(jobs.status, "archived"),
+      isNull(jobEndpoints.archivedAt),
+    ];
+
+    if (filters.sinceDate) {
+      conditions.push(gte(aiAnalysisSessions.analyzedAt, filters.sinceDate));
+    }
+
+    const limit = filters.limit ?? 50;
+    const offset = filters.offset ?? 0;
+
+    // Get sessions with endpoint info
+    const rows = await this.tx
+      .select({
+        sessionId: aiAnalysisSessions.id,
+        endpointId: aiAnalysisSessions.endpointId,
+        endpointName: jobEndpoints.name,
+        analyzedAt: aiAnalysisSessions.analyzedAt,
+        reasoning: aiAnalysisSessions.reasoning,
+        toolCalls: aiAnalysisSessions.toolCalls,
+        tokenUsage: aiAnalysisSessions.tokenUsage,
+        durationMs: aiAnalysisSessions.durationMs,
+      })
+      .from(aiAnalysisSessions)
+      .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(and(...conditions))
+      .orderBy(desc(aiAnalysisSessions.analyzedAt))
+      .limit(limit)
+      .offset(offset);
+
+    // Get total count
+    const countResult = await this.tx
+      .select({ count: count() })
+      .from(aiAnalysisSessions)
+      .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(and(...conditions));
+
+    const total = Number(countResult[0]?.count ?? 0);
+
+    return {
+      sessions: rows.map(row => ({
+        sessionId: row.sessionId,
+        endpointId: row.endpointId,
+        endpointName: row.endpointName,
+        analyzedAt: row.analyzedAt,
+        reasoning: row.reasoning ?? "",
+        toolCalls: row.toolCalls ?? [],
+        tokenUsage: row.tokenUsage,
+        durationMs: row.durationMs,
+      })),
+      total,
+    };
+  }
 }
