@@ -20,9 +20,9 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 
 type AdminUserConfig = {
-    email: string;
-    password: string;
-    name: string;
+  email: string;
+  password: string;
+  name: string;
 };
 
 /**
@@ -34,54 +34,54 @@ type AdminUserConfig = {
  * @returns The user ID (existing or newly created)
  */
 export async function ensureAdminUser(
-    db: NodePgDatabase<typeof schema>,
-    config: AdminUserConfig,
+  db: NodePgDatabase<typeof schema>,
+  config: AdminUserConfig,
 ): Promise<string> {
-    // Check if user already exists by email
-    const existingUsers = await db
-        .select()
-        .from(schema.user)
-        .where(eq(schema.user.email, config.email))
-        .limit(1);
+  // Check if user already exists by email
+  const existingUsers = await db
+    .select()
+    .from(schema.user)
+    .where(eq(schema.user.email, config.email))
+    .limit(1);
 
-    if (existingUsers.length > 0) {
-        // User already exists - return existing ID
-        console.log(`✓ Admin user already exists (ID: ${existingUsers[0].id})\n`);
-        return existingUsers[0].id;
-    }
+  if (existingUsers.length > 0) {
+    // User already exists - return existing ID
+    console.log(`✓ Admin user already exists (ID: ${existingUsers[0].id})\n`);
+    return existingUsers[0].id;
+  }
 
-    console.log("➤ Creating admin user...");
+  console.log("➤ Creating admin user...");
 
-    // Generate IDs for new records
-    const userId = crypto.randomUUID();
-    const accountId = crypto.randomUUID();
-    const now = new Date();
+  // Generate IDs for new records
+  const userId = crypto.randomUUID();
+  const accountId = crypto.randomUUID();
+  const now = new Date();
 
-    // Hash password using bcrypt (same algorithm as Better Auth)
-    // Using 10 salt rounds (Better Auth default)
-    const hashedPassword = await bcrypt.hash(config.password, 10);
+  // Hash password using bcrypt (same algorithm as Better Auth)
+  // Using 10 salt rounds (Better Auth default)
+  const hashedPassword = await bcrypt.hash(config.password, 10);
 
-    // Create user record
-    await db.insert(schema.user).values({
-        id: userId,
-        name: config.name,
-        email: config.email,
-        emailVerified: true, // Admin user is pre-verified
-        createdAt: now,
-        updatedAt: now,
-    });
+  // Create user record
+  await db.insert(schema.user).values({
+    id: userId,
+    name: config.name,
+    email: config.email,
+    emailVerified: true, // Admin user is pre-verified
+    createdAt: now,
+    updatedAt: now,
+  });
 
-    // Create account record (Better Auth credential storage)
-    await db.insert(schema.account).values({
-        id: accountId,
-        accountId: userId, // For email/password auth, accountId = userId
-        providerId: "credential", // Better Auth's provider ID for email/password
-        userId,
-        password: hashedPassword,
-        createdAt: now,
-        updatedAt: now,
-    });
-    console.log(`✓ Admin user created (ID: ${userId})\n`);
+  // Create account record (Better Auth credential storage)
+  await db.insert(schema.account).values({
+    id: accountId,
+    accountId: userId, // For email/password auth, accountId = userId
+    providerId: "credential", // Better Auth's provider ID for email/password
+    userId,
+    password: hashedPassword,
+    createdAt: now,
+    updatedAt: now,
+  });
+  console.log(`✓ Admin user created (ID: ${userId})\n`);
 
-    return userId;
+  return userId;
 }
