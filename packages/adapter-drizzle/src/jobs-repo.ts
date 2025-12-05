@@ -288,10 +288,18 @@ export class DrizzleJobsRepo implements JobsRepo {
       ? ep.failureCount + 1
       : 0;
 
-    // Clear hints if expired
-    const clearHints = patch.clearExpiredHints
+    // Clear ALL hints if TTL expired
+    const clearAllHints = patch.clearExpiredHints
       && ep.aiHintExpiresAt
       && ep.aiHintExpiresAt <= now;
+
+    // Clear one-shot hint if it's in the past (consumed), even if TTL not expired.
+    // One-shot hints represent a specific execution time - once that time passes,
+    // the hint should be consumed to prevent infinite re-execution loops.
+    // Interval hints are preserved since they remain valid until TTL expires.
+    const clearOneShotHint = !clearAllHints
+      && ep.aiHintNextRunAt
+      && ep.aiHintNextRunAt <= now;
 
     // Don't clear lock immediately - keep it until nextRunAt to prevent re-claiming
     // during the claim horizon window. This ensures an endpoint isn't claimed multiple
@@ -305,11 +313,15 @@ export class DrizzleJobsRepo implements JobsRepo {
       _lockedUntil: lockUntil,
     };
 
-    if (clearHints) {
+    if (clearAllHints) {
       updates.aiHintNextRunAt = null;
       updates.aiHintIntervalMs = null;
       updates.aiHintExpiresAt = null;
       updates.aiHintReason = null;
+    }
+    else if (clearOneShotHint) {
+      // Only clear the one-shot hint, preserve interval hint if present
+      updates.aiHintNextRunAt = null;
     }
 
     await this.tx

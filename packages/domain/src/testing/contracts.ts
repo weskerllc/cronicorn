@@ -334,6 +334,101 @@ export function testJobsRepoContract(
         expect(ep.aiHintIntervalMs).toBe(30000);
         expect(ep.aiHintExpiresAt?.getTime()).toBe(new Date("2025-01-01T01:00:00Z").getTime());
       });
+
+      it("should clear consumed one-shot hint even if TTL not expired", async () => {
+        // This test covers the critical bug fix: one-shot hints should be cleared
+        // after their scheduled time passes, preventing infinite re-execution loops.
+        setNow(new Date("2025-01-01T00:05:00Z")); // Current time
+
+        await repo.addEndpoint({
+          id: "ep1",
+          jobId: "job1",
+          tenantId: "t1",
+          name: "test",
+          nextRunAt: new Date("2025-01-01T00:00:00Z"),
+          aiHintNextRunAt: new Date("2025-01-01T00:02:00Z"), // In the past (consumed)
+          aiHintExpiresAt: new Date("2025-01-01T01:00:00Z"), // TTL still valid (future)
+          aiHintReason: "Manual trigger via UI",
+          failureCount: 0,
+        });
+
+        await repo.updateAfterRun("ep1", {
+          lastRunAt: new Date("2025-01-01T00:05:00Z"),
+          nextRunAt: new Date("2025-01-01T00:10:00Z"),
+          status: { status: "success", durationMs: 1000 },
+          failureCountPolicy: "reset",
+          clearExpiredHints: true,
+        });
+
+        const ep = await repo.getEndpoint("ep1");
+        // One-shot hint should be cleared (consumed)
+        expect(ep.aiHintNextRunAt).toBeUndefined();
+        // TTL fields should still exist since TTL not expired
+        expect(ep.aiHintExpiresAt?.getTime()).toBe(new Date("2025-01-01T01:00:00Z").getTime());
+        expect(ep.aiHintReason).toBe("Manual trigger via UI");
+      });
+
+      it("should preserve interval hint when clearing consumed one-shot hint", async () => {
+        // When both interval and one-shot hints exist, clearing the consumed
+        // one-shot should preserve the valid interval hint.
+        setNow(new Date("2025-01-01T00:05:00Z"));
+
+        await repo.addEndpoint({
+          id: "ep1",
+          jobId: "job1",
+          tenantId: "t1",
+          name: "test",
+          nextRunAt: new Date("2025-01-01T00:00:00Z"),
+          aiHintNextRunAt: new Date("2025-01-01T00:02:00Z"), // In the past (consumed)
+          aiHintIntervalMs: 30000, // Active interval hint
+          aiHintExpiresAt: new Date("2025-01-01T01:00:00Z"), // TTL still valid
+          failureCount: 0,
+        });
+
+        await repo.updateAfterRun("ep1", {
+          lastRunAt: new Date("2025-01-01T00:05:00Z"),
+          nextRunAt: new Date("2025-01-01T00:10:00Z"),
+          status: { status: "success", durationMs: 1000 },
+          failureCountPolicy: "reset",
+          clearExpiredHints: true,
+        });
+
+        const ep = await repo.getEndpoint("ep1");
+        // One-shot cleared
+        expect(ep.aiHintNextRunAt).toBeUndefined();
+        // Interval hint preserved
+        expect(ep.aiHintIntervalMs).toBe(30000);
+        expect(ep.aiHintExpiresAt?.getTime()).toBe(new Date("2025-01-01T01:00:00Z").getTime());
+      });
+
+      it("should not clear future one-shot hint", async () => {
+        // A one-shot hint for a future time should not be cleared prematurely
+        setNow(new Date("2025-01-01T00:00:00Z"));
+
+        await repo.addEndpoint({
+          id: "ep1",
+          jobId: "job1",
+          tenantId: "t1",
+          name: "test",
+          nextRunAt: new Date("2025-01-01T00:00:00Z"),
+          aiHintNextRunAt: new Date("2025-01-01T00:10:00Z"), // Future one-shot
+          aiHintExpiresAt: new Date("2025-01-01T01:00:00Z"),
+          failureCount: 0,
+        });
+
+        await repo.updateAfterRun("ep1", {
+          lastRunAt: new Date("2025-01-01T00:00:00Z"),
+          nextRunAt: new Date("2025-01-01T00:05:00Z"),
+          status: { status: "success", durationMs: 1000 },
+          failureCountPolicy: "reset",
+          clearExpiredHints: true,
+        });
+
+        const ep = await repo.getEndpoint("ep1");
+        // Future one-shot should be preserved
+        expect(ep.aiHintNextRunAt?.getTime()).toBe(new Date("2025-01-01T00:10:00Z").getTime());
+        expect(ep.aiHintExpiresAt?.getTime()).toBe(new Date("2025-01-01T01:00:00Z").getTime());
+      });
     });
 
     describe("AI steering - writeAIHint", () => {
