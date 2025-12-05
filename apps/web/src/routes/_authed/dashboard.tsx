@@ -12,6 +12,7 @@ import { JobHealthChart } from "../../components/dashboard-new/job-health-chart"
 import { SchedulingIntelligenceChart } from "../../components/dashboard-new/scheduling-intelligence-chart";
 import { PageHeader } from "../../components/composed/page-header";
 import { AISessionsChart } from "../../components/dashboard-new/ai-sessions-chart";
+import { AITokensChart } from "../../components/dashboard-new/ai-tokens-chart";
 import { EndpointTable } from "../../components/dashboard-new/endpoint-table";
 import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";
@@ -159,6 +160,14 @@ function DashboardPage() {
           timeRange={filters.timeRange}
         />
         <AISessionsChart
+          data={dashboardData?.aiSessionTimeSeries || []}
+          chartConfig={endpointChartConfig}
+          timeRange={filters.timeRange}
+        />
+      </GridLayout>
+
+      <GridLayout cols={1} lg={2}>
+        <AITokensChart
           data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
           timeRange={filters.timeRange}

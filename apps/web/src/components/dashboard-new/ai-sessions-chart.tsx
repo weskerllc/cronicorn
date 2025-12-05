@@ -86,11 +86,6 @@ export function AISessionsChart({
         return data.reduce((sum, point) => sum + point.sessionCount, 0);
     }, [data]);
 
-    // Calculate total tokens
-    const totalTokens = useMemo(() => {
-        return data.reduce((sum, point) => sum + point.totalTokens, 0);
-    }, [data]);
-
     // Calculate max value across all displayed endpoints (not stacked)
     // This ensures the Y-axis shows the true magnitude of each endpoint's activity
     const maxValue = useMemo(() => {
@@ -113,8 +108,6 @@ export function AISessionsChart({
         <>
             <p>
                 Sessions: <span className="text-foreground font-medium">{totalSessions.toLocaleString()}</span>
-                <span className="mx-2">|</span>
-                Tokens: <span className="text-foreground font-medium">{totalTokens.toLocaleString()}</span>
                 {totalEndpoints > endpoints.length && (
                     <span className="text-muted-foreground text-xs ml-2">
                         (Showing top {endpoints.length} of {totalEndpoints})
