@@ -156,6 +156,7 @@ function DashboardPage() {
       <JobActivityTimeline
         jobId={filters.jobId ?? null}
         jobName={selectedJobName}
+        timeRange={filters.timeRange}
       />
 
       <EndpointTable

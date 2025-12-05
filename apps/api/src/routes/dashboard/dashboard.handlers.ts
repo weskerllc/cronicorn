@@ -24,7 +24,23 @@ export const getDashboardStats: AppRouteHandler<routes.GetDashboardStatsRoute> =
   });
 };
 
-// ==================== Job Activity Timeline Handler ====================
+// ==================== Dashboard Activity Handler ====================
+
+export const getDashboardActivity: AppRouteHandler<routes.GetDashboardActivityRoute> = async (c) => {
+  const query = c.req.valid("query");
+  const { userId } = getAuthContext(c);
+
+  return c.get("withDashboardManager")(async (manager) => {
+    const timeline = await manager.getJobActivityTimeline(userId, query.jobId, {
+      timeRange: query.timeRange,
+      limit: query.limit,
+      offset: query.offset,
+    });
+    return c.json(mappers.mapJobActivityTimelineToResponse(timeline), HTTPStatusCodes.OK);
+  });
+};
+
+// ==================== Job Activity Timeline Handler (Legacy) ====================
 
 export const getJobActivityTimeline: AppRouteHandler<routes.GetJobActivityTimelineRoute> = async (c) => {
   const { jobId } = c.req.valid("param");

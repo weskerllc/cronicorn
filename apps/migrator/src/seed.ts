@@ -32,6 +32,28 @@ import { ensureAdminUser } from "./ensure-admin-user.js";
 
 const { Pool } = pg;
 
+/**
+ * Batch insert helper with concurrency control
+ * Splits items into batches and inserts them with limited parallelism
+ */
+async function batchInsertWithConcurrency<T>(
+  items: T[],
+  batchSize: number,
+  concurrency: number,
+  insertFn: (batch: T[]) => Promise<void>,
+): Promise<void> {
+  const batches: T[][] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    batches.push(items.slice(i, i + batchSize));
+  }
+
+  // Process batches with limited concurrency
+  for (let i = 0; i < batches.length; i += concurrency) {
+    const chunk = batches.slice(i, i + concurrency);
+    await Promise.all(chunk.map(batch => insertFn(batch)));
+  }
+}
+
 // Database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || DEV_DATABASE.URL,
@@ -581,69 +603,69 @@ async function seed() {
   const archivedJobEndpointsCount = ENDPOINTS.filter(e => e.jobStatus === "archived").length;
   const archivedJobNonArchivedEndpointsCount = ENDPOINTS.filter(e => e.jobStatus === "archived" && !e.archived).length;
 
-  // 2. Create jobs
+  // 2. Create jobs (batch insert)
   console.log("📦 Creating jobs...");
-  for (const job of JOBS) {
-    await db
-      .insert(schema.jobs)
-      .values({
-        ...job,
-        userId: DEMO_USER_ID,
-        status: job.status,
-        createdAt: new Date(SALE_START.getTime() - 7 * 24 * 60 * 60 * 1000), // Created 1 week before
-        updatedAt: NOW,
-        archivedAt: job.status === "archived" ? new Date(NOW.getTime() - 3 * 24 * 60 * 60 * 1000) : null, // Archived 3 days ago
-      })
-      .onConflictDoNothing();
-  }
+  const jobsToInsert = JOBS.map(job => ({
+    ...job,
+    userId: DEMO_USER_ID,
+    status: job.status,
+    createdAt: new Date(SALE_START.getTime() - 7 * 24 * 60 * 60 * 1000), // Created 1 week before
+    updatedAt: NOW,
+    archivedAt: job.status === "archived" ? new Date(NOW.getTime() - 3 * 24 * 60 * 60 * 1000) : null, // Archived 3 days ago
+  }));
+  await db.insert(schema.jobs).values(jobsToInsert).onConflictDoNothing();
   console.log(`✓ Created ${JOBS.length} jobs (${archivedJobsCount} archived)\n`);
 
-  // 3. Create endpoints
+  // 3. Create endpoints (batch insert)
   console.log("🎯 Creating endpoints...");
-  for (const endpoint of ENDPOINTS) {
-    await db
-      .insert(schema.jobEndpoints)
-      .values({
-        id: endpoint.id,
-        jobId: endpoint.jobId,
-        tenantId: DEMO_USER_ID,
-        name: endpoint.name,
-        description: endpoint.description,
-        url: endpoint.url,
-        method: "GET",
-        baselineIntervalMs: endpoint.baselineIntervalMs,
-        minIntervalMs: endpoint.minIntervalMs,
-        maxIntervalMs: endpoint.maxIntervalMs,
-        timeoutMs: 5000,
-        lastRunAt: endpoint.archived ? new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000) : new Date(NOW.getTime() - 60000), // Last run 5 days ago if archived, 1 min ago otherwise
-        nextRunAt: new Date(NOW.getTime() + endpoint.baselineIntervalMs), // Next run scheduled
-        failureCount: 0,
-        archivedAt: endpoint.archived ? new Date(NOW.getTime() - 2 * 24 * 60 * 60 * 1000) : null, // Archived 2 days ago
-      })
-      .onConflictDoNothing();
-  }
+  const endpointsToInsert = ENDPOINTS.map(endpoint => ({
+    id: endpoint.id,
+    jobId: endpoint.jobId,
+    tenantId: DEMO_USER_ID,
+    name: endpoint.name,
+    description: endpoint.description,
+    url: endpoint.url,
+    method: "GET" as const,
+    baselineIntervalMs: endpoint.baselineIntervalMs,
+    minIntervalMs: endpoint.minIntervalMs,
+    maxIntervalMs: endpoint.maxIntervalMs,
+    timeoutMs: 5000,
+    lastRunAt: endpoint.archived ? new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000) : new Date(NOW.getTime() - 60000),
+    nextRunAt: new Date(NOW.getTime() + endpoint.baselineIntervalMs),
+    failureCount: 0,
+    archivedAt: endpoint.archived ? new Date(NOW.getTime() - 2 * 24 * 60 * 60 * 1000) : null,
+  }));
+  await db.insert(schema.jobEndpoints).values(endpointsToInsert).onConflictDoNothing();
   console.log(`✓ Created ${ENDPOINTS.length} endpoints (${archivedEndpointsCount} archived)`);
   console.log(`  • ${archivedJobEndpointsCount} endpoints in archived jobs`);
   console.log(`  • ${archivedJobNonArchivedEndpointsCount} non-archived endpoints in archived jobs (for testing)\n`);
 
-  // 4. Generate and insert runs
-  console.log("⚡ Generating runs (this may take a moment)...");
-  let totalRuns = 0;
+  // 4. Generate and insert runs (optimized: generate all first, then parallel batch insert)
+  console.log("⚡ Generating runs...");
+  const startGenTime = Date.now();
 
+  // Generate all runs upfront (CPU-bound, no async needed)
+  const allRuns: schema.RunInsert[] = [];
   for (const endpoint of ENDPOINTS) {
     const runs = generateRuns(endpoint);
-    totalRuns += runs.length;
-
-    // Insert in batches to avoid overwhelming the database
-    const batchSize = 100;
-    for (let i = 0; i < runs.length; i += batchSize) {
-      const batch = runs.slice(i, i + batchSize);
-      await db.insert(schema.runs).values(batch).onConflictDoNothing();
-    }
-
-    console.log(`  ✓ ${endpoint.name}: ${runs.length} runs`);
+    allRuns.push(...runs);
   }
-  console.log(`\n✓ Generated ${totalRuns} total runs\n`);
+  console.log(`  ✓ Generated ${allRuns.length} runs in ${Date.now() - startGenTime}ms`);
+
+  // Batch insert with parallelization (5 concurrent batches of 500)
+  console.log("  ⏳ Inserting runs...");
+  const startInsertTime = Date.now();
+  await batchInsertWithConcurrency(
+    allRuns,
+    500, // batch size
+    5, // concurrency
+    async (batch) => {
+      await db.insert(schema.runs).values(batch).onConflictDoNothing();
+    },
+  );
+  console.log(`  ✓ Inserted ${allRuns.length} runs in ${Date.now() - startInsertTime}ms`);
+  console.log(`\n✓ Total runs: ${allRuns.length}\n`);
+  const totalRuns = allRuns.length;
 
   // 5. Create AI analysis sessions
   console.log("🤖 Creating AI analysis sessions...");
