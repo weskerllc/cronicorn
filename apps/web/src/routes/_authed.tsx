@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Outlet, createFileRoute, isRedirect, redirect } from "@tanstack/react-router";
 import React from "react";
 
 import { SidebarInset, SidebarProvider } from "@cronicorn/ui-library/components/sidebar";
@@ -13,8 +13,30 @@ export const Route = createFileRoute("/_authed")({
   // beforeLoad runs BEFORE child route loaders, ensuring session is validated first
   // This prevents race conditions where child loaders make API calls before auth is confirmed
   beforeLoad: async () => {
-    const { data: session } = await getSession();
-    if (!session) {
+    // During OAuth callback redirect, getSession() may briefly fail before cookies are set.
+    // We catch errors and redirect to login - the OAuth flow will complete and redirect properly.
+    // This follows TanStack Router's recommended pattern for auth guards in beforeLoad.
+    try {
+      const result = await getSession();
+
+      if (!result.data) {
+        throw redirect({
+          to: '/login',
+          search: {
+            redirect: window.location.pathname,
+          },
+        });
+      }
+
+      // Return session in context - available to this route and all children via useRouteContext()
+      return { session: result.data };
+    } catch (e) {
+      // Re-throw TanStack Router redirects (they use throw for control flow)
+      if (isRedirect(e)) {
+        throw e;
+      }
+      // If getSession throws (e.g., during OAuth callback timing), redirect to login.
+      // The OAuth callback will complete independently and redirect the user.
       throw redirect({
         to: '/login',
         search: {
@@ -22,8 +44,6 @@ export const Route = createFileRoute("/_authed")({
         },
       });
     }
-    // Return session in context - available to this route and all children via useRouteContext()
-    return { session };
   },
   component: AuthenticatedLayout,
 });
