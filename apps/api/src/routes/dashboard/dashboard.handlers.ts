@@ -23,3 +23,20 @@ export const getDashboardStats: AppRouteHandler<routes.GetDashboardStatsRoute> =
     return c.json(mappers.mapDashboardStatsToResponse(stats), HTTPStatusCodes.OK);
   });
 };
+
+// ==================== Job Activity Timeline Handler ====================
+
+export const getJobActivityTimeline: AppRouteHandler<routes.GetJobActivityTimelineRoute> = async (c) => {
+  const { jobId } = c.req.valid("param");
+  const query = c.req.valid("query");
+  const { userId } = getAuthContext(c);
+
+  return c.get("withDashboardManager")(async (manager) => {
+    const timeline = await manager.getJobActivityTimeline(userId, jobId, {
+      timeRange: query.timeRange,
+      limit: query.limit,
+      offset: query.offset,
+    });
+    return c.json(mappers.mapJobActivityTimelineToResponse(timeline), HTTPStatusCodes.OK);
+  });
+};

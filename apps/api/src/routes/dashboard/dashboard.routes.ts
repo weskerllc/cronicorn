@@ -1,4 +1,13 @@
-import { DashboardStatsQuerySchema, DashboardStatsResponseSchema, GetDashboardStatsDescription, GetDashboardStatsSummary } from "@cronicorn/api-contracts/dashboard";
+import {
+  DashboardStatsQuerySchema,
+  DashboardStatsResponseSchema,
+  GetDashboardStatsDescription,
+  GetDashboardStatsSummary,
+  GetJobActivityTimelineDescription,
+  GetJobActivityTimelineSummary,
+  JobActivityTimelineQuerySchema,
+  JobActivityTimelineResponseSchema,
+} from "@cronicorn/api-contracts/dashboard";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -36,3 +45,35 @@ export const getDashboardStats = createRoute({
 });
 
 export type GetDashboardStatsRoute = typeof getDashboardStats;
+
+// ==================== Job Activity Timeline Route ====================
+
+export const getJobActivityTimeline = createRoute({
+  path: "/jobs/:jobId/activity",
+  method: "get",
+  tags,
+  summary: GetJobActivityTimelineSummary,
+  description: GetJobActivityTimelineDescription,
+  request: {
+    params: z.object({
+      jobId: z.string().openapi({
+        description: "Job ID",
+        example: "job_123abc",
+      }),
+    }),
+    query: JobActivityTimelineQuerySchema,
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      JobActivityTimelineResponseSchema,
+      "Job activity timeline",
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(
+      z.object({ message: z.string() }),
+      "Job not found",
+    ),
+    ...errorResponses,
+  },
+});
+
+export type GetJobActivityTimelineRoute = typeof getJobActivityTimeline;
