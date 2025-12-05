@@ -1,3 +1,10 @@
+## [1.14.2](https://github.com/weskerllc/cronicorn/compare/v1.14.1...v1.14.2) (2025-12-05)
+
+
+### Bug Fixes
+
+* Clear consumed one-shot hints once their scheduled time passes even if TTL not expired ([71c3c2e](https://github.com/weskerllc/cronicorn/commit/71c3c2eda5dfc4afe441b81b215021fe71809232))
+
 ## [1.14.1](https://github.com/weskerllc/cronicorn/compare/v1.14.0...v1.14.1) (2025-12-04)
 
 
