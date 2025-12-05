@@ -814,18 +814,18 @@ export class DrizzleRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-    runs: Array<{
-      runId: string;
-      endpointId: string;
-      endpointName: string;
-      status: string;
-      startedAt: Date;
-      finishedAt?: Date;
-      durationMs?: number;
-      source?: string;
-    }>;
-    total: number;
-  }> {
+      runs: Array<{
+        runId: string;
+        endpointId: string;
+        endpointName: string;
+        status: string;
+        startedAt: Date;
+        finishedAt?: Date;
+        durationMs?: number;
+        source?: string;
+      }>;
+      total: number;
+    }> {
     const conditions = [
       eq(jobs.userId, filters.userId),
       eq(jobs.id, filters.jobId),

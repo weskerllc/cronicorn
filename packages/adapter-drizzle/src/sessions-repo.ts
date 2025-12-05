@@ -237,18 +237,18 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-    sessions: Array<{
-      sessionId: string;
-      endpointId: string;
-      endpointName: string;
-      analyzedAt: Date;
-      reasoning: string;
-      toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
-      tokenUsage: number | null;
-      durationMs: number | null;
-    }>;
-    total: number;
-  }> {
+      sessions: Array<{
+        sessionId: string;
+        endpointId: string;
+        endpointName: string;
+        analyzedAt: Date;
+        reasoning: string;
+        toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+        tokenUsage: number | null;
+        durationMs: number | null;
+      }>;
+      total: number;
+    }> {
     const conditions = [
       eq(jobs.userId, filters.userId),
       eq(jobs.id, filters.jobId),
