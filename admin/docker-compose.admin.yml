@@ -1,0 +1,21 @@
+services:
+  # Admin monitoring with Metabase
+  # Access at: http://localhost:3030
+  metabase:
+    image: metabase/metabase:v0.51.0
+    container_name: cronicorn-admin-metabase
+    restart: unless-stopped
+    ports:
+      - "${METABASE_PORT:-3030}:3000"
+    environment:
+      # Use H2 embedded database for Metabase's own data
+      MB_DB_FILE: /metabase-data/metabase.db
+    volumes:
+      - ./metabase-data:/metabase-data
+    networks:
+      - cronicorn
+
+networks:
+  cronicorn:
+    external: true
+    name: cronicorn_cronicorn
