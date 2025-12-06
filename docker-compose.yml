@@ -126,29 +126,6 @@ services:
     #   - "3000:80"
     restart: unless-stopped
 
-  # Admin monitoring tool (optional - only for administrators)
-  # Access at: http://localhost:3030 or via your domain
-  metabase:
-    image: metabase/metabase:v0.51.0
-    container_name: cronicorn-metabase
-    restart: unless-stopped
-    networks:
-      - cronicorn
-    ports:
-      - "${METABASE_PORT:-3030}:3000"
-    environment:
-      # Use H2 embedded database for Metabase's own data
-      MB_DB_FILE: /metabase-data/metabase.db
-      # Optional: Set admin email for notifications
-      # MB_ADMIN_EMAIL: ${METABASE_ADMIN_EMAIL}
-    volumes:
-      - "../files/metabase-data:/metabase-data"
-    depends_on:
-      db:
-        condition: service_healthy
-    profiles:
-      - admin # Only start when explicitly requested: docker compose --profile admin up
-
 networks:
   cronicorn:
     driver: bridge

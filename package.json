@@ -61,11 +61,6 @@
     "docker:prod": "docker compose --env-file .env.production up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "🚀 ---------- ADMIN MONITORING ----------": "",
-    "admin:start": "bash scripts/admin-monitoring.sh start",
-    "admin:stop": "bash scripts/admin-monitoring.sh stop",
-    "admin:logs": "bash scripts/admin-monitoring.sh logs",
-    "admin:status": "bash scripts/admin-monitoring.sh status",
     "prepare": "husky"
   },
   "devDependencies": {
