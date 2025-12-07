@@ -99,16 +99,24 @@ describe("seedAdminUser", () => {
   });
 
   test("allows login with created admin user", async ({ tx }) => {
-    const auth = createAuth(testConfig, tx);
+    // Use a unique email to avoid conflicts with seeded data
+    const uniqueTestConfig: Env = {
+      ...testConfig,
+      ADMIN_USER_EMAIL: `test-admin-${Date.now()}@example.com`,
+      ADMIN_USER_PASSWORD: "test-password-123",
+      ADMIN_USER_NAME: "Test Admin User",
+    };
 
-    // Seed the admin user
-    await seedAdminUser(testConfig, tx, auth);
+    const auth = createAuth(uniqueTestConfig, tx);
+
+    // Seed the admin user with unique credentials
+    await seedAdminUser(uniqueTestConfig, tx, auth);
 
     // Try to sign in with the admin credentials
     const signInResult = await auth.api.signInEmail({
       body: {
-        email: testConfig.ADMIN_USER_EMAIL!,
-        password: testConfig.ADMIN_USER_PASSWORD!,
+        email: uniqueTestConfig.ADMIN_USER_EMAIL!,
+        password: uniqueTestConfig.ADMIN_USER_PASSWORD!,
       },
     });
 

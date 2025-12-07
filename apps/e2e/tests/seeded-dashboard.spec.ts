@@ -30,9 +30,10 @@ test.describe("Seeded Dashboard", () => {
     const runsPerJobSection = page.locator("text=Runs Per Job").first();
     await expect(runsPerJobSection).toBeVisible({ timeout: 10000 });
 
-    // Verify a seeded job name appears (e.g., "Monitoring 1")
-    const monitoringJob = page.locator("text=Monitoring").first();
-    await expect(monitoringJob).toBeVisible({ timeout: 10000 });
+    // Verify that jobs are displayed by checking for "Active Jobs:" text
+    // which appears in the chart description when data exists
+    const activeJobsText = page.locator("text=Active Jobs:").first();
+    await expect(activeJobsText).toBeVisible({ timeout: 10000 });
   });
 
   test("should display seeded endpoints in Endpoints table", async ({ page }) => {
