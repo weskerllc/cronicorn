@@ -2,7 +2,7 @@ services:
   # Admin monitoring with Metabase
   # Access at: http://localhost:3030
   metabase:
-    image: metabase/metabase:v0.51.0
+    image: metabase/metabase:v0.57.x
     container_name: cronicorn-admin-metabase
     restart: unless-stopped
     ports:
