@@ -497,6 +497,7 @@ export class DashboardManager {
             endpointName: endpoint.name,
             success: existing?.success ?? 0,
             failure: existing?.failure ?? 0,
+            totalDurationMs: existing?.totalDurationMs ?? 0,
           });
         });
       }
@@ -507,7 +508,7 @@ export class DashboardManager {
 
     // If using multi-day buckets, aggregate the daily data per endpoint
     if (bucketDays > 1) {
-      const bucketMap = new Map<string, { success: number; failure: number }>();
+      const bucketMap = new Map<string, { success: number; failure: number; totalDurationMs: number }>();
 
       aggregatedData.forEach((item) => {
         const date = new Date(item.date);
@@ -516,9 +517,10 @@ export class DashboardManager {
         const bucketStart = new Date(now.getTime() - (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
         const bucketKey = `${bucketStart.toISOString().split("T")[0]}-${item.endpointId}`;
 
-        const existing = bucketMap.get(bucketKey) || { success: 0, failure: 0 };
+        const existing = bucketMap.get(bucketKey) || { success: 0, failure: 0, totalDurationMs: 0 };
         existing.success += item.success;
         existing.failure += item.failure;
+        existing.totalDurationMs += item.totalDurationMs;
         bucketMap.set(bucketKey, existing);
       });
 
@@ -538,6 +540,7 @@ export class DashboardManager {
             endpointName: endpoint.name,
             success: existing?.success ?? 0,
             failure: existing?.failure ?? 0,
+            totalDurationMs: existing?.totalDurationMs ?? 0,
           });
         });
       }
@@ -566,6 +569,7 @@ export class DashboardManager {
           endpointName: endpoint.name,
           success: existing?.success ?? 0,
           failure: existing?.failure ?? 0,
+          totalDurationMs: existing?.totalDurationMs ?? 0,
         });
       });
     }

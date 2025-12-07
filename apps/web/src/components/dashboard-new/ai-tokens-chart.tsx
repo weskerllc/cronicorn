@@ -8,39 +8,39 @@ import {
     ChartTooltipContent,
 } from "@cronicorn/ui-library/components/chart";
 import { DashboardCard } from "./dashboard-card";
-import type { EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
+import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
 import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
 
-interface ExecutionTimelineChartProps {
-    data: Array<EndpointTimeSeriesPoint>;
+interface AITokensChartProps {
+    data: Array<AISessionTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
     /** Selected time range for label display */
     timeRange?: TimeRangeValue;
 }
 
-export function ExecutionTimelineChart({
+export function AITokensChart({
     data,
     chartConfig,
     timeRange,
-}: ExecutionTimelineChartProps) {
+}: AITokensChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
-        // Calculate total runs per endpoint to find top performers
+        // Calculate total tokens per endpoint to find top performers
         const endpointTotals = new Map<string, { id: string; name: string; total: number }>();
         data.forEach((item) => {
             const existing = endpointTotals.get(item.endpointId);
             if (existing) {
-                existing.total += item.success + item.failure;
+                existing.total += item.totalTokens;
             } else {
-                endpointTotals.set(item.endpointId, { id: item.endpointId, name: item.endpointName, total: item.success + item.failure });
+                endpointTotals.set(item.endpointId, { id: item.endpointId, name: item.endpointName, total: item.totalTokens });
             }
         });
 
-        // Sort endpoints by total runs DESC and take top 10 for display
+        // Sort endpoints by total tokens DESC and take top 10 for display
         const MAX_ENDPOINTS = 10;
         const sortedEndpoints = Array.from(endpointTotals.values())
             .sort((a, b) => b.total - a.total)
@@ -57,11 +57,13 @@ export function ExecutionTimelineChart({
             if (!endpointSet.has(item.endpointName)) return;
             if (!dateMap.has(item.date)) {
                 // Store timestamp for X-axis domain calculation
-                dateMap.set(item.date, { date: new Date(item.date).getTime() });
+                dateMap.set(item.date, {
+                    date: new Date(item.date).getTime()
+                });
             }
             const dateEntry = dateMap.get(item.date)!;
-            // Use endpoint name as key, combine success + failure for total runs
-            dateEntry[item.endpointName] = item.success + item.failure;
+            // Use endpoint name as key for token count
+            dateEntry[item.endpointName] = item.totalTokens;
         });
 
         // Convert to array and sort by date
@@ -76,11 +78,12 @@ export function ExecutionTimelineChart({
         };
     }, [data]);
 
-    const hasData = data.some(point => point.success > 0 || point.failure > 0);
+    // Show chart even if all tokens are zero (to show the timeline structure)
+    const hasData = data.length > 0;
 
-    // Calculate total invocations
-    const totalInvocations = useMemo(() => {
-        return data.reduce((sum, point) => sum + point.success + point.failure, 0);
+    // Calculate total tokens
+    const totalTokens = useMemo(() => {
+        return data.reduce((sum, point) => sum + point.totalTokens, 0);
     }, [data]);
 
     // Calculate max value across all displayed endpoints (not stacked)
@@ -104,7 +107,7 @@ export function ExecutionTimelineChart({
     const description = hasData ? (
         <>
             <p>
-                Invocations: <span className="text-foreground font-medium">{totalInvocations.toLocaleString()}</span>
+                Tokens: <span className="text-foreground font-medium">{totalTokens.toLocaleString()}</span>
                 {totalEndpoints > endpoints.length && (
                     <span className="text-muted-foreground text-xs ml-2">
                         (Showing top {endpoints.length} of {totalEndpoints})
@@ -118,7 +121,7 @@ export function ExecutionTimelineChart({
 
     return (
         <DashboardCard
-            title="Endpoint Activity"
+            title="AI Token Usage"
             description={description}
             contentClassName="p-3"
         >
@@ -139,7 +142,7 @@ export function ExecutionTimelineChart({
                                     return (
                                         <linearGradient
                                             key={endpoint.id}
-                                            id={`fill-${endpoint.id}`}
+                                            id={`fill-tokens-${endpoint.id}`}
                                             x1="0"
                                             y1="0"
                                             x2="0"
@@ -183,7 +186,6 @@ export function ExecutionTimelineChart({
                             axisLine={false}
                             tickMargin={8}
                             width={75}
-
                             allowDecimals={false}
                             tickFormatter={(value) => Math.round(value).toLocaleString()}
                         />
@@ -242,7 +244,7 @@ export function ExecutionTimelineChart({
                                         key={endpoint.id}
                                         dataKey={endpointName}
                                         type="natural"
-                                        fill={`url(#fill-${endpoint.id})`}
+                                        fill={`url(#fill-tokens-${endpoint.id})`}
                                         stroke={`var(--color-${sanitizedKey})`}
                                         strokeWidth={2}
                                         fillOpacity={0.6}
@@ -252,6 +254,7 @@ export function ExecutionTimelineChart({
                     </AreaChart>
                 </ChartContainer>
             ) : null}
+
         </DashboardCard>
     );
 }

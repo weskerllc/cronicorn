@@ -5,7 +5,6 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
     ChartContainer,
     ChartTooltip,
-    ChartTooltipContent,
 } from "@cronicorn/ui-library/components/chart";
 import { DashboardCard } from "./dashboard-card";
 import type { EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
@@ -14,7 +13,7 @@ import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
 import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
 
-interface ExecutionTimelineChartProps {
+interface ExecutionDurationChartProps {
     data: Array<EndpointTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
@@ -22,25 +21,43 @@ interface ExecutionTimelineChartProps {
     timeRange?: TimeRangeValue;
 }
 
-export function ExecutionTimelineChart({
+/**
+ * Format milliseconds to a human-readable duration string.
+ * - < 1 second: show ms (e.g., "234ms")
+ * - < 1 minute: show seconds with 1 decimal (e.g., "45.2s")
+ * - >= 1 minute: show minutes and seconds (e.g., "2m 30s")
+ */
+function formatDuration(ms: number): string {
+    if (ms < 1000) {
+        return `${Math.round(ms)}ms`;
+    }
+    if (ms < 60000) {
+        return `${(ms / 1000).toFixed(1)}s`;
+    }
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.round((ms % 60000) / 1000);
+    return `${minutes}m ${seconds}s`;
+}
+
+export function ExecutionDurationChart({
     data,
     chartConfig,
     timeRange,
-}: ExecutionTimelineChartProps) {
+}: ExecutionDurationChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
-        // Calculate total runs per endpoint to find top performers
+        // Calculate total duration per endpoint to find top performers
         const endpointTotals = new Map<string, { id: string; name: string; total: number }>();
         data.forEach((item) => {
             const existing = endpointTotals.get(item.endpointId);
             if (existing) {
-                existing.total += item.success + item.failure;
+                existing.total += item.totalDurationMs;
             } else {
-                endpointTotals.set(item.endpointId, { id: item.endpointId, name: item.endpointName, total: item.success + item.failure });
+                endpointTotals.set(item.endpointId, { id: item.endpointId, name: item.endpointName, total: item.totalDurationMs });
             }
         });
 
-        // Sort endpoints by total runs DESC and take top 10 for display
+        // Sort endpoints by total duration DESC and take top 10 for display
         const MAX_ENDPOINTS = 10;
         const sortedEndpoints = Array.from(endpointTotals.values())
             .sort((a, b) => b.total - a.total)
@@ -60,8 +77,8 @@ export function ExecutionTimelineChart({
                 dateMap.set(item.date, { date: new Date(item.date).getTime() });
             }
             const dateEntry = dateMap.get(item.date)!;
-            // Use endpoint name as key, combine success + failure for total runs
-            dateEntry[item.endpointName] = item.success + item.failure;
+            // Use endpoint name as key for total duration
+            dateEntry[item.endpointName] = item.totalDurationMs;
         });
 
         // Convert to array and sort by date
@@ -76,15 +93,15 @@ export function ExecutionTimelineChart({
         };
     }, [data]);
 
-    const hasData = data.some(point => point.success > 0 || point.failure > 0);
+    const hasData = data.some(point => point.totalDurationMs > 0);
 
-    // Calculate total invocations
-    const totalInvocations = useMemo(() => {
-        return data.reduce((sum, point) => sum + point.success + point.failure, 0);
+    // Calculate total duration
+    const totalDuration = useMemo(() => {
+        return data.reduce((sum, point) => sum + point.totalDurationMs, 0);
     }, [data]);
 
     // Calculate max value across all displayed endpoints (not stacked)
-    // This ensures the Y-axis shows the true magnitude of each endpoint's activity
+    // This ensures the Y-axis shows the true magnitude of each endpoint's duration
     const maxValue = useMemo(() => {
         if (chartData.length === 0) return 0;
 
@@ -104,7 +121,7 @@ export function ExecutionTimelineChart({
     const description = hasData ? (
         <>
             <p>
-                Invocations: <span className="text-foreground font-medium">{totalInvocations.toLocaleString()}</span>
+                Total: <span className="text-foreground font-medium">{formatDuration(totalDuration)}</span>
                 {totalEndpoints > endpoints.length && (
                     <span className="text-muted-foreground text-xs ml-2">
                         (Showing top {endpoints.length} of {totalEndpoints})
@@ -118,7 +135,7 @@ export function ExecutionTimelineChart({
 
     return (
         <DashboardCard
-            title="Endpoint Activity"
+            title="Execution Duration"
             description={description}
             contentClassName="p-3"
         >
@@ -139,7 +156,7 @@ export function ExecutionTimelineChart({
                                     return (
                                         <linearGradient
                                             key={endpoint.id}
-                                            id={`fill-${endpoint.id}`}
+                                            id={`fill-duration-${endpoint.id}`}
                                             x1="0"
                                             y1="0"
                                             x2="0"
@@ -182,10 +199,9 @@ export function ExecutionTimelineChart({
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
-                            width={75}
-
                             allowDecimals={false}
-                            tickFormatter={(value) => Math.round(value).toLocaleString()}
+                            width={75}
+                            tickFormatter={(value) => formatDuration(value)}
                         />
                         <ChartTooltip
                             cursor={false}
@@ -216,17 +232,38 @@ export function ExecutionTimelineChart({
                                     );
                                 }
 
+                                // Custom tooltip that shows endpoint names with formatted durations
                                 return (
-                                    <ChartTooltipContent
-                                        active={active}
-                                        payload={filteredPayload}
-                                        label={date.toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric",
-                                        })}
-                                        indicator="dot"
-                                    />
+                                    <div className="rounded-lg border bg-background p-2 shadow-sm min-w-[8rem]">
+                                        <div className="text-muted-foreground text-xs font-medium mb-1.5">
+                                            {date.toLocaleDateString("en-US", {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                            })}
+                                        </div>
+                                        <div className="grid gap-1">
+                                            {filteredPayload.map((item, index) => {
+                                                const endpointName = item.name || item.dataKey;
+                                                const sanitizedKey = getSanitizedKey(String(endpointName));
+                                                const value = typeof item.value === 'number' ? item.value : 0;
+                                                return (
+                                                    <div key={index} className="flex items-center gap-2 text-xs">
+                                                        <div
+                                                            className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                                                            style={{
+                                                                backgroundColor: sanitizedKey ? `var(--color-${sanitizedKey})` : item.color,
+                                                            }}
+                                                        />
+                                                        <span className="text-muted-foreground flex-1">{endpointName}</span>
+                                                        <span className="text-foreground font-mono font-medium tabular-nums">
+                                                            {formatDuration(value)}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 );
                             }}
                         />
@@ -242,7 +279,7 @@ export function ExecutionTimelineChart({
                                         key={endpoint.id}
                                         dataKey={endpointName}
                                         type="natural"
-                                        fill={`url(#fill-${endpoint.id})`}
+                                        fill={`url(#fill-duration-${endpoint.id})`}
                                         stroke={`var(--color-${sanitizedKey})`}
                                         strokeWidth={2}
                                         fillOpacity={0.6}

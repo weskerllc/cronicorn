@@ -329,6 +329,7 @@ export type RunsRepo = {
     endpointName: string;
     success: number;
     failure: number;
+    totalDurationMs: number;
   }>>;
 
   /**
