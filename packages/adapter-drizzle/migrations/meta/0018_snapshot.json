@@ -1,0 +1,1658 @@
+{
+  "id": "e3428433-8fe7-4199-9a64-92a1883f851d",
+  "prevId": "d67082e0-c5dc-4167-867e-5fcc1138335b",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.account": {
+      "name": "account",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_token": {
+          "name": "id_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token_expires_at": {
+          "name": "access_token_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token_expires_at": {
+          "name": "refresh_token_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "account_user_id_user_id_fk": {
+          "name": "account_user_id_user_id_fk",
+          "tableFrom": "account",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ai_analysis_sessions": {
+      "name": "ai_analysis_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "endpoint_id": {
+          "name": "endpoint_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "analyzed_at": {
+          "name": "analyzed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tool_calls": {
+          "name": "tool_calls",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reasoning": {
+          "name": "reasoning",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_usage": {
+          "name": "token_usage",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_ms": {
+          "name": "duration_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_analysis_at": {
+          "name": "next_analysis_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "endpoint_failure_count": {
+          "name": "endpoint_failure_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ai_sessions_endpoint_id_idx": {
+          "name": "ai_sessions_endpoint_id_idx",
+          "columns": [
+            {
+              "expression": "endpoint_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_sessions_analyzed_at_idx": {
+          "name": "ai_sessions_analyzed_at_idx",
+          "columns": [
+            {
+              "expression": "analyzed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ai_analysis_sessions_endpoint_id_job_endpoints_id_fk": {
+          "name": "ai_analysis_sessions_endpoint_id_job_endpoints_id_fk",
+          "tableFrom": "ai_analysis_sessions",
+          "tableTo": "job_endpoints",
+          "columnsFrom": [
+            "endpoint_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.apikey": {
+      "name": "apikey",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start": {
+          "name": "start",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prefix": {
+          "name": "prefix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "refill_interval": {
+          "name": "refill_interval",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refill_amount": {
+          "name": "refill_amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_refill_at": {
+          "name": "last_refill_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "rate_limit_enabled": {
+          "name": "rate_limit_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "rate_limit_time_window": {
+          "name": "rate_limit_time_window",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rate_limit_max": {
+          "name": "rate_limit_max",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_count": {
+          "name": "request_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "remaining": {
+          "name": "remaining",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_request": {
+          "name": "last_request",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "permissions": {
+          "name": "permissions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "apikey_user_id_user_id_fk": {
+          "name": "apikey_user_id_user_id_fk",
+          "tableFrom": "apikey",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.device_codes": {
+      "name": "device_codes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "device_code": {
+          "name": "device_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_code": {
+          "name": "user_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "last_polled_at": {
+          "name": "last_polled_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "polling_interval": {
+          "name": "polling_interval",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "device_codes_user_id_user_id_fk": {
+          "name": "device_codes_user_id_user_id_fk",
+          "tableFrom": "device_codes",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "device_codes_device_code_unique": {
+          "name": "device_codes_device_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "device_code"
+          ]
+        },
+        "device_codes_user_code_unique": {
+          "name": "device_codes_user_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.job_endpoints": {
+      "name": "job_endpoints",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "baseline_cron": {
+          "name": "baseline_cron",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "baseline_interval_ms": {
+          "name": "baseline_interval_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_hint_interval_ms": {
+          "name": "ai_hint_interval_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_hint_next_run_at": {
+          "name": "ai_hint_next_run_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_hint_expires_at": {
+          "name": "ai_hint_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_hint_reason": {
+          "name": "ai_hint_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "min_interval_ms": {
+          "name": "min_interval_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_interval_ms": {
+          "name": "max_interval_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "paused_until": {
+          "name": "paused_until",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_run_at": {
+          "name": "last_run_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_run_at": {
+          "name": "next_run_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "failure_count": {
+          "name": "failure_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "method": {
+          "name": "method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "headers_json": {
+          "name": "headers_json",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body_json": {
+          "name": "body_json",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timeout_ms": {
+          "name": "timeout_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_execution_time_ms": {
+          "name": "max_execution_time_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_response_size_kb": {
+          "name": "max_response_size_kb",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "_locked_until": {
+          "name": "_locked_until",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "job_endpoints_job_id_idx": {
+          "name": "job_endpoints_job_id_idx",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "job_endpoints_next_run_at_idx": {
+          "name": "job_endpoints_next_run_at_idx",
+          "columns": [
+            {
+              "expression": "next_run_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "job_endpoints_job_id_jobs_id_fk": {
+          "name": "job_endpoints_job_id_jobs_id_fk",
+          "tableFrom": "job_endpoints",
+          "tableTo": "jobs",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.jobs": {
+      "name": "jobs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "job_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "jobs_user_id_user_id_fk": {
+          "name": "jobs_user_id_user_id_fk",
+          "tableFrom": "jobs",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.oauth_tokens": {
+      "name": "oauth_tokens",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "device_code_id": {
+          "name": "device_code_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "oauth_tokens_user_id_user_id_fk": {
+          "name": "oauth_tokens_user_id_user_id_fk",
+          "tableFrom": "oauth_tokens",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "oauth_tokens_device_code_id_device_codes_id_fk": {
+          "name": "oauth_tokens_device_code_id_device_codes_id_fk",
+          "tableFrom": "oauth_tokens",
+          "tableTo": "device_codes",
+          "columnsFrom": [
+            "device_code_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.runs": {
+      "name": "runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "endpoint_id": {
+          "name": "endpoint_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempt": {
+          "name": "attempt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_ms": {
+          "name": "duration_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_details": {
+          "name": "error_details",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_body": {
+          "name": "response_body",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_code": {
+          "name": "status_code",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "runs_endpoint_id_idx": {
+          "name": "runs_endpoint_id_idx",
+          "columns": [
+            {
+              "expression": "endpoint_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "runs_started_at_idx": {
+          "name": "runs_started_at_idx",
+          "columns": [
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "runs_status_idx": {
+          "name": "runs_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "runs_endpoint_started_idx": {
+          "name": "runs_endpoint_started_idx",
+          "columns": [
+            {
+              "expression": "endpoint_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "runs_endpoint_id_job_endpoints_id_fk": {
+          "name": "runs_endpoint_id_job_endpoints_id_fk",
+          "tableFrom": "runs",
+          "tableTo": "job_endpoints",
+          "columnsFrom": [
+            "endpoint_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.session": {
+      "name": "session",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "session_user_id_user_id_fk": {
+          "name": "session_user_id_user_id_fk",
+          "tableFrom": "session",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "session_token_unique": {
+          "name": "session_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_anonymous": {
+          "name": "is_anonymous",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "tier": {
+          "name": "tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        },
+        "stripe_customer_id": {
+          "name": "stripe_customer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripe_subscription_id": {
+          "name": "stripe_subscription_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subscription_status": {
+          "name": "subscription_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subscription_ends_at": {
+          "name": "subscription_ends_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.verification": {
+      "name": "verification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.job_status": {
+      "name": "job_status",
+      "schema": "public",
+      "values": [
+        "active",
+        "paused",
+        "archived"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {
+    "public.admin_apikey_stats": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tier": {
+          "name": "tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "rate_limit_enabled": {
+          "name": "rate_limit_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "request_count": {
+          "name": "request_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "remaining": {
+          "name": "remaining",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_request": {
+          "name": "last_request",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "definition": "select \"apikey\".\"id\", \"apikey\".\"name\", \"apikey\".\"user_id\", \"user\".\"email\", \"user\".\"tier\", \"apikey\".\"enabled\", \"apikey\".\"rate_limit_enabled\", \"apikey\".\"request_count\", \"apikey\".\"remaining\", \"apikey\".\"last_request\", \"apikey\".\"created_at\", \"apikey\".\"expires_at\", case \n        when \"apikey\".\"expires_at\" is not null and \"apikey\".\"expires_at\" < now() then 'expired'\n        when not \"apikey\".\"enabled\" then 'disabled'\n        else 'active'\n      end as \"status\" from \"apikey\" inner join \"user\" on \"user\".\"id\" = \"apikey\".\"user_id\"",
+      "name": "admin_apikey_stats",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.admin_daily_metrics": {
+      "columns": {},
+      "definition": "select date(\"runs\".\"started_at\") as \"date\", count(distinct \"runs\".\"endpoint_id\") as \"active_endpoints\", count(\"runs\".\"id\") as \"total_runs\", count(case when \"runs\".\"status\" = 'success' then 1 end) as \"successful_runs\", count(case when \"runs\".\"status\" = 'failed' then 1 end) as \"failed_runs\", round(100.0 * count(case when \"runs\".\"status\" = 'success' then 1 end) / nullif(count(\"runs\".\"id\"), 0), 2) as \"success_rate_percent\", avg(\"runs\".\"duration_ms\") as \"avg_duration_ms\", count(distinct \"ai_analysis_sessions\".\"id\") as \"ai_sessions\", sum(\"ai_analysis_sessions\".\"token_usage\") as \"total_tokens\" from \"runs\" left join \"ai_analysis_sessions\" on date(\"ai_analysis_sessions\".\"analyzed_at\") = date(\"runs\".\"started_at\") where \"runs\".\"started_at\" >= now() - interval '90 days' group by date(\"runs\".\"started_at\") order by date desc",
+      "name": "admin_daily_metrics",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.admin_error_analysis": {
+      "columns": {
+        "status_code": {
+          "name": "status_code",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "definition": "select date(\"runs\".\"started_at\") as \"date\", \"runs\".\"status_code\", left(\"runs\".\"error_message\", 100) as \"error_summary\", count(*) as \"error_count\", count(distinct \"runs\".\"endpoint_id\") as \"affected_endpoints\", count(distinct \"job_endpoints\".\"job_id\") as \"affected_jobs\", count(distinct \"jobs\".\"user_id\") as \"affected_users\" from \"runs\" inner join \"job_endpoints\" on \"job_endpoints\".\"id\" = \"runs\".\"endpoint_id\" inner join \"jobs\" on \"jobs\".\"id\" = \"job_endpoints\".\"job_id\" inner join \"user\" on \"user\".\"id\" = \"jobs\".\"user_id\" where \"runs\".\"status\" in ('failed', 'timeout') and \"runs\".\"started_at\" >= now() - interval '7 days' group by date(\"runs\".\"started_at\"), \"runs\".\"status_code\", left(\"runs\".\"error_message\", 100) order by date desc, count(*) desc limit 100",
+      "name": "admin_error_analysis",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.admin_run_source_stats": {
+      "columns": {
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "definition": "select date(\"started_at\") as \"date\", \"source\", count(*) as \"run_count\", count(case when \"status\" = 'success' then 1 end) as \"successful_runs\", count(case when \"status\" = 'failed' then 1 end) as \"failed_runs\" from \"runs\" where \"runs\".\"started_at\" >= now() - interval '30 days' and \"runs\".\"source\" is not null group by date(\"runs\".\"started_at\"), \"runs\".\"source\" order by date desc, \"runs\".\"source\"",
+      "name": "admin_run_source_stats",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.admin_subscription_overview": {
+      "columns": {
+        "tier": {
+          "name": "tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        },
+        "subscription_status": {
+          "name": "subscription_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "definition": "select \"tier\", \"subscription_status\", count(*) as \"user_count\", count(case when \"created_at\" >= now() - interval '30 days' then 1 end) as \"new_users_30d\", count(case when \"subscription_ends_at\" is not null and \"subscription_ends_at\" < now() then 1 end) as \"expired_subscriptions\", count(case when \"subscription_ends_at\" is not null and \"subscription_ends_at\" > now() then 1 end) as \"active_subscriptions\" from \"user\" group by \"user\".\"tier\", \"user\".\"subscription_status\" order by \"user\".\"tier\", \"user\".\"subscription_status\"",
+      "name": "admin_subscription_overview",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.admin_top_jobs": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tier": {
+          "name": "tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        },
+        "status": {
+          "name": "status",
+          "type": "job_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "definition": "select \"jobs\".\"id\", \"jobs\".\"name\", \"jobs\".\"user_id\", \"user\".\"email\", \"user\".\"tier\", \"jobs\".\"status\", count(distinct \"job_endpoints\".\"id\") as \"endpoint_count\", count(\"runs\".\"id\") as \"total_runs\", count(case when \"runs\".\"status\" = 'success' then 1 end) as \"successful_runs\", count(case when \"runs\".\"status\" = 'failed' then 1 end) as \"failed_runs\", max(\"runs\".\"started_at\") as \"last_run_at\", \"jobs\".\"created_at\" from \"jobs\" inner join \"user\" on \"user\".\"id\" = \"jobs\".\"user_id\" left join \"job_endpoints\" on \"job_endpoints\".\"job_id\" = \"jobs\".\"id\" left join \"runs\" on \"runs\".\"endpoint_id\" = \"job_endpoints\".\"id\" where \"jobs\".\"archived_at\" is null group by \"jobs\".\"id\", \"jobs\".\"name\", \"jobs\".\"user_id\", \"user\".\"email\", \"user\".\"tier\", \"jobs\".\"status\", \"jobs\".\"created_at\" order by count(\"runs\".\"id\") desc limit 100",
+      "name": "admin_top_jobs",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.admin_user_activity": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tier": {
+          "name": "tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        },
+        "subscription_status": {
+          "name": "subscription_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "definition": "select \"user\".\"id\", \"user\".\"email\", \"user\".\"tier\", \"user\".\"subscription_status\", \"user\".\"created_at\", max(\"runs\".\"started_at\") as \"last_activity_date\", extract(day from now() - max(\"runs\".\"started_at\")) as \"days_since_last_activity\", count(distinct date(\"runs\".\"started_at\")) as \"total_active_days\", case\n        when max(\"runs\".\"started_at\") >= now() - interval '7 days' then 'active'\n        when max(\"runs\".\"started_at\") >= now() - interval '30 days' then 'inactive'\n        when max(\"runs\".\"started_at\") is null then 'never_active'\n        else 'churned'\n      end as \"activity_status\" from \"user\" left join \"jobs\" on \"jobs\".\"user_id\" = \"user\".\"id\" left join \"job_endpoints\" on \"job_endpoints\".\"job_id\" = \"jobs\".\"id\" left join \"runs\" on \"runs\".\"endpoint_id\" = \"job_endpoints\".\"id\" group by \"user\".\"id\", \"user\".\"email\", \"user\".\"tier\", \"user\".\"subscription_status\", \"user\".\"created_at\" order by max(\"runs\".\"started_at\") desc nulls last",
+      "name": "admin_user_activity",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.admin_user_ai_stats": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tier": {
+          "name": "tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        }
+      },
+      "definition": "select \"user\".\"id\", \"user\".\"email\", \"user\".\"tier\", count(\"ai_analysis_sessions\".\"id\") as \"total_ai_sessions\", sum(\"ai_analysis_sessions\".\"token_usage\") as \"total_tokens_used\", avg(\"ai_analysis_sessions\".\"token_usage\") as \"avg_tokens_per_session\", avg(\"ai_analysis_sessions\".\"duration_ms\") as \"avg_session_duration_ms\", max(\"ai_analysis_sessions\".\"analyzed_at\") as \"last_ai_analysis_at\", count(case when \"ai_analysis_sessions\".\"analyzed_at\" >= now() - interval '24 hours' then 1 end) as \"ai_sessions_last_24h\", count(case when \"ai_analysis_sessions\".\"analyzed_at\" >= now() - interval '7 days' then 1 end) as \"ai_sessions_last_7d\", count(case when \"ai_analysis_sessions\".\"analyzed_at\" >= now() - interval '30 days' then 1 end) as \"ai_sessions_last_30d\", sum(case when \"ai_analysis_sessions\".\"analyzed_at\" >= now() - interval '30 days' then \"ai_analysis_sessions\".\"token_usage\" else 0 end) as \"tokens_last_30d\" from \"user\" left join \"jobs\" on \"jobs\".\"user_id\" = \"user\".\"id\" left join \"job_endpoints\" on \"job_endpoints\".\"job_id\" = \"jobs\".\"id\" left join \"ai_analysis_sessions\" on \"ai_analysis_sessions\".\"endpoint_id\" = \"job_endpoints\".\"id\" group by \"user\".\"id\", \"user\".\"email\", \"user\".\"tier\"",
+      "name": "admin_user_ai_stats",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.admin_user_run_stats": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tier": {
+          "name": "tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        }
+      },
+      "definition": "select \"user\".\"id\", \"user\".\"email\", \"user\".\"tier\", count(\"runs\".\"id\") as \"total_runs\", count(case when \"runs\".\"status\" = 'success' then 1 end) as \"successful_runs\", count(case when \"runs\".\"status\" = 'failed' then 1 end) as \"failed_runs\", count(case when \"runs\".\"status\" = 'timeout' then 1 end) as \"timeout_runs\", round(100.0 * count(case when \"runs\".\"status\" = 'success' then 1 end) / nullif(count(\"runs\".\"id\"), 0), 2) as \"success_rate_percent\", avg(\"runs\".\"duration_ms\") as \"avg_duration_ms\", max(\"runs\".\"started_at\") as \"last_run_at\", count(distinct date(\"runs\".\"started_at\")) as \"active_days\", count(case when \"runs\".\"started_at\" >= now() - interval '24 hours' then 1 end) as \"runs_last_24h\", count(case when \"runs\".\"started_at\" >= now() - interval '7 days' then 1 end) as \"runs_last_7d\", count(case when \"runs\".\"started_at\" >= now() - interval '30 days' then 1 end) as \"runs_last_30d\" from \"user\" left join \"jobs\" on \"jobs\".\"user_id\" = \"user\".\"id\" left join \"job_endpoints\" on \"job_endpoints\".\"job_id\" = \"jobs\".\"id\" left join \"runs\" on \"runs\".\"endpoint_id\" = \"job_endpoints\".\"id\" group by \"user\".\"id\", \"user\".\"email\", \"user\".\"tier\"",
+      "name": "admin_user_run_stats",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.admin_user_stats": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tier": {
+          "name": "tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        },
+        "subscription_status": {
+          "name": "subscription_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_anonymous": {
+          "name": "is_anonymous",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "subscription_ends_at": {
+          "name": "subscription_ends_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "definition": "select \"user\".\"id\", \"user\".\"email\", \"user\".\"name\", \"user\".\"tier\", \"user\".\"subscription_status\", \"user\".\"created_at\", \"user\".\"is_anonymous\", \"user\".\"subscription_ends_at\", count(distinct \"jobs\".\"id\") as \"total_jobs\", count(distinct \"job_endpoints\".\"id\") as \"total_endpoints\", count(distinct case when \"job_endpoints\".\"archived_at\" is null then \"job_endpoints\".\"id\" end) as \"active_endpoints\", count(distinct case when \"job_endpoints\".\"paused_until\" is not null and \"job_endpoints\".\"paused_until\" > now() then \"job_endpoints\".\"id\" end) as \"paused_endpoints\" from \"user\" left join \"jobs\" on \"jobs\".\"user_id\" = \"user\".\"id\" and \"jobs\".\"archived_at\" is null left join \"job_endpoints\" on \"job_endpoints\".\"job_id\" = \"jobs\".\"id\" group by \"user\".\"id\", \"user\".\"email\", \"user\".\"name\", \"user\".\"tier\", \"user\".\"subscription_status\", \"user\".\"created_at\", \"user\".\"is_anonymous\", \"user\".\"subscription_ends_at\"",
+      "name": "admin_user_stats",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    }
+  },
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
