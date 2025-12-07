@@ -36,6 +36,7 @@ export type EndpointTimeSeriesPoint = {
   endpointName: string;
   success: number;
   failure: number;
+  totalDurationMs: number;
 };
 
 export type JobHealthItem = {

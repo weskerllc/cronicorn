@@ -1,7 +1,7 @@
 import type { HealthSummary, JsonValue, RunsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, avg, count, desc, eq, gte, inArray, isNull, lte, ne, not, or, sql } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, inArray, isNull, lte, ne, not, or, sql, sum } from "drizzle-orm";
 
 import { jobEndpoints, jobs, runs } from "./schema.js";
 
@@ -82,16 +82,16 @@ export class DrizzleRunsRepo implements RunsRepo {
     limit?: number;
     offset?: number;
   }): Promise<{
-      runs: Array<{
-        runId: string;
-        endpointId: string;
-        startedAt: Date;
-        status: string;
-        durationMs?: number;
-        source?: string;
-      }>;
-      total: number;
-    }> {
+    runs: Array<{
+      runId: string;
+      endpointId: string;
+      startedAt: Date;
+      status: string;
+      durationMs?: number;
+      source?: string;
+    }>;
+    total: number;
+  }> {
     // Build conditions
     // Build query conditions
     const conditions = [];
@@ -221,11 +221,11 @@ export class DrizzleRunsRepo implements RunsRepo {
     source?: string;
     sinceDate?: Date;
   }): Promise<{
-      totalRuns: number;
-      successCount: number;
-      failureCount: number;
-      avgDurationMs: number | null;
-    }> {
+    totalRuns: number;
+    successCount: number;
+    failureCount: number;
+    avgDurationMs: number | null;
+  }> {
     const conditions = [
       eq(jobs.userId, filters.userId),
       ne(jobs.status, "archived"), // Exclude archived jobs
@@ -269,9 +269,9 @@ export class DrizzleRunsRepo implements RunsRepo {
     source?: string;
     sinceDate?: Date;
   }): Promise<Array<{
-      source: string;
-      count: number;
-    }>> {
+    source: string;
+    count: number;
+  }>> {
     const conditions = [
       eq(jobs.userId, filters.userId),
       not(isNull(runs.source)), // Exclude null sources
@@ -313,10 +313,10 @@ export class DrizzleRunsRepo implements RunsRepo {
     sinceDate?: Date;
     granularity?: "hour" | "day";
   }): Promise<Array<{
-      date: string;
-      success: number;
-      failure: number;
-    }>> {
+    date: string;
+    success: number;
+    failure: number;
+  }>> {
     const conditions = [
       eq(jobs.userId, filters.userId),
       ne(jobs.status, "archived"), // Exclude archived jobs
@@ -367,12 +367,13 @@ export class DrizzleRunsRepo implements RunsRepo {
     endpointLimit?: number;
     granularity?: "hour" | "day";
   }): Promise<Array<{
-      date: string;
-      endpointId: string;
-      endpointName: string;
-      success: number;
-      failure: number;
-    }>> {
+    date: string;
+    endpointId: string;
+    endpointName: string;
+    success: number;
+    failure: number;
+    totalDurationMs: number;
+  }>> {
     const conditions = [
       eq(jobs.userId, filters.userId),
       ne(jobs.status, "archived"), // Exclude archived jobs
@@ -432,6 +433,7 @@ export class DrizzleRunsRepo implements RunsRepo {
         endpointName: jobEndpoints.name,
         success: count(sql`CASE WHEN ${runs.status} = 'success' THEN 1 END`),
         failure: count(sql`CASE WHEN ${runs.status} IN ('failed', 'timeout') THEN 1 END`),
+        totalDurationMs: sum(runs.durationMs),
       })
       .from(runs)
       .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
@@ -446,6 +448,7 @@ export class DrizzleRunsRepo implements RunsRepo {
       endpointName: row.endpointName,
       success: Number(row.success),
       failure: Number(row.failure),
+      totalDurationMs: Number(row.totalDurationMs ?? 0),
     }));
   }
 
@@ -681,11 +684,11 @@ export class DrizzleRunsRepo implements RunsRepo {
     limit: number,
     offset?: number,
   ): Promise<Array<{
-      responseBody: JsonValue | null;
-      timestamp: Date;
-      status: string;
-      durationMs: number;
-    }>> {
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+    durationMs: number;
+  }>> {
     // Clamp limit to max 50
     const clampedLimit = Math.min(limit, 50);
 
@@ -718,12 +721,12 @@ export class DrizzleRunsRepo implements RunsRepo {
     jobId: string,
     excludeEndpointId: string,
   ): Promise<Array<{
-      endpointId: string;
-      endpointName: string;
-      responseBody: JsonValue | null;
-      timestamp: Date;
-      status: string;
-    }>> {
+    endpointId: string;
+    endpointName: string;
+    responseBody: JsonValue | null;
+    timestamp: Date;
+    status: string;
+  }>> {
     // This requires a lateral join to get latest run per endpoint.
     // We'll use a window function approach instead (simpler with Drizzle).
 

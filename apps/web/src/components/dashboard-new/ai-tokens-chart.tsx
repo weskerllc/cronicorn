@@ -185,6 +185,7 @@ export function AITokensChart({
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
+                            width={75}
                             allowDecimals={false}
                             tickFormatter={(value) => Math.round(value).toLocaleString()}
                         />
