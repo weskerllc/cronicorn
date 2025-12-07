@@ -805,4 +805,90 @@ export class DrizzleRunsRepo implements RunsRepo {
 
     return zombies.length;
   }
+
+  // ============================================================================
+  // Job Activity Timeline
+  // ============================================================================
+
+  async getJobRuns(filters: {
+    userId: string;
+    jobId?: string;
+    sinceDate?: Date;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+      runs: Array<{
+        runId: string;
+        endpointId: string;
+        endpointName: string;
+        status: string;
+        startedAt: Date;
+        finishedAt?: Date;
+        durationMs?: number;
+        source?: string;
+      }>;
+      total: number;
+    }> {
+    const conditions = [
+      eq(jobs.userId, filters.userId),
+      ne(jobs.status, "archived"),
+      isNull(jobEndpoints.archivedAt),
+    ];
+
+    // Only filter by jobId if provided
+    if (filters.jobId) {
+      conditions.push(eq(jobs.id, filters.jobId));
+    }
+
+    if (filters.sinceDate) {
+      conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+
+    const limit = filters.limit ?? 50;
+    const offset = filters.offset ?? 0;
+
+    // Get runs with endpoint info
+    const rows = await this.tx
+      .select({
+        runId: runs.id,
+        endpointId: runs.endpointId,
+        endpointName: jobEndpoints.name,
+        status: runs.status,
+        startedAt: runs.startedAt,
+        finishedAt: runs.finishedAt,
+        durationMs: runs.durationMs,
+        source: runs.source,
+      })
+      .from(runs)
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(and(...conditions))
+      .orderBy(desc(runs.startedAt))
+      .limit(limit)
+      .offset(offset);
+
+    // Get total count
+    const countResult = await this.tx
+      .select({ count: count() })
+      .from(runs)
+      .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
+      .innerJoin(jobs, eq(jobEndpoints.jobId, jobs.id))
+      .where(and(...conditions));
+
+    const total = Number(countResult[0]?.count ?? 0);
+
+    return {
+      runs: rows.map(row => ({
+        runId: row.runId,
+        endpointId: row.endpointId,
+        endpointName: row.endpointName,
+        status: row.status,
+        startedAt: row.startedAt,
+        finishedAt: row.finishedAt ?? undefined,
+        durationMs: row.durationMs ?? undefined,
+        source: row.source ?? undefined,
+      })),
+      total,
+    };
+  }
 }

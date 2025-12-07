@@ -1,10 +1,12 @@
 import type { Clock, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import type {
+  ActivityEvent,
   AISessionTimeSeriesPoint,
   DashboardStats,
   EndpointStats,
   EndpointTimeSeriesPoint,
+  JobActivityTimeline,
   JobStats,
   RecentActivityStats,
   RunTimeSeriesPoint,
@@ -746,5 +748,118 @@ export class DashboardManager {
 
     // Add 10% padding to prevent touching the top
     return maxValue * 1.1;
+  }
+
+  /**
+   * Get combined activity timeline for a job (or all jobs).
+   * Merges runs and AI sessions into a single chronological timeline.
+   *
+   * @param userId - The user ID
+   * @param jobId - Optional job ID (omit for all jobs)
+   * @param options - Query options
+   * @param options.timeRange - Time range filter: 24h, 7d, 30d (default: 7d)
+   * @param options.limit - Maximum events to return (default: 50)
+   * @param options.offset - Pagination offset (default: 0)
+   * @returns Combined timeline of runs and AI sessions
+   */
+  async getJobActivityTimeline(
+    userId: string,
+    jobId: string | undefined,
+    options: {
+      timeRange?: "24h" | "7d" | "30d";
+      limit?: number;
+      offset?: number;
+    } = {},
+  ): Promise<JobActivityTimeline> {
+    const now = this.clock.now();
+    const timeRange = options.timeRange ?? "7d";
+    const limit = Math.min(options.limit ?? 50, 100);
+    const offset = options.offset ?? 0;
+
+    // Convert timeRange to sinceDate
+    let sinceDate: Date;
+    switch (timeRange) {
+      case "24h":
+        sinceDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case "7d":
+        sinceDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case "30d":
+        sinceDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+    }
+
+    // Fetch runs and sessions in parallel
+    // We fetch more than needed from each source to handle interleaving properly
+    const fetchLimit = limit + offset;
+    const [runsResult, sessionsResult] = await Promise.all([
+      this.runsRepo.getJobRuns({
+        userId,
+        jobId,
+        sinceDate,
+        limit: fetchLimit,
+        offset: 0,
+      }),
+      this.sessionsRepo.getJobSessions({
+        userId,
+        jobId,
+        sinceDate,
+        limit: fetchLimit,
+        offset: 0,
+      }),
+    ]);
+
+    // Convert runs to activity events
+    const runEvents: ActivityEvent[] = runsResult.runs.map(run => ({
+      type: "run" as const,
+      id: run.runId,
+      endpointId: run.endpointId,
+      endpointName: run.endpointName,
+      timestamp: run.startedAt,
+      status: run.status,
+      durationMs: run.durationMs,
+      source: run.source,
+    }));
+
+    // Convert sessions to activity events
+    const sessionEvents: ActivityEvent[] = sessionsResult.sessions.map(session => ({
+      type: "session" as const,
+      id: session.sessionId,
+      endpointId: session.endpointId,
+      endpointName: session.endpointName,
+      timestamp: session.analyzedAt,
+      reasoning: session.reasoning,
+      toolCalls: session.toolCalls,
+      tokenUsage: session.tokenUsage ?? undefined,
+    }));
+
+    // Merge and sort by timestamp (descending)
+    const allEvents = [...runEvents, ...sessionEvents].sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+    );
+
+    // Apply pagination
+    const paginatedEvents = allEvents.slice(offset, offset + limit);
+
+    // Calculate summary statistics
+    const runsInResponse = paginatedEvents.filter(e => e.type === "run");
+    const sessionsInResponse = paginatedEvents.filter(e => e.type === "session");
+    const successfulRuns = runsInResponse.filter(e => e.status === "success").length;
+    const totalRuns = runsInResponse.length;
+    // Calculate success rate as percentage with one decimal place
+    const successRate = totalRuns > 0
+      ? Number(((successfulRuns / totalRuns) * 100).toFixed(1))
+      : 0;
+
+    return {
+      events: paginatedEvents,
+      total: runsResult.total + sessionsResult.total,
+      summary: {
+        runsCount: runsInResponse.length,
+        sessionsCount: sessionsInResponse.length,
+        successRate,
+      },
+    };
   }
 }
