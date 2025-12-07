@@ -242,3 +242,107 @@ export const DashboardStatsQuerySchema = z.object({
 }).openapi({
   description: "Query parameters for dashboard stats",
 });
+
+// ==================== Activity Timeline Schemas ====================
+
+/**
+ * An activity event - either a run execution or an AI analysis session.
+ */
+export const ActivityEventSchema = z.object({
+  type: z.enum(["run", "session"]).openapi({
+    description: "Type of activity event",
+    example: "run",
+  }),
+  id: z.string().openapi({
+    description: "Event ID (run ID or session ID)",
+    example: "run_123abc",
+  }),
+  endpointId: z.string().openapi({
+    description: "Endpoint ID",
+    example: "ep_abc123",
+  }),
+  endpointName: z.string().openapi({
+    description: "Endpoint name",
+    example: "Health Check",
+  }),
+  timestamp: z.string().datetime().openapi({
+    description: "Event timestamp (ISO 8601)",
+    example: "2025-10-20T10:30:00.000Z",
+  }),
+  // Run-specific fields (only present when type = "run")
+  status: z.string().optional().openapi({
+    description: "Run status (success, failed, timeout, running)",
+    example: "success",
+  }),
+  durationMs: z.number().int().optional().openapi({
+    description: "Run duration in milliseconds",
+    example: 234,
+  }),
+  source: z.string().optional().openapi({
+    description: "Scheduling source that triggered this run",
+    example: "baseline-cron",
+  }),
+  // Session-specific fields (only present when type = "session")
+  reasoning: z.string().optional().openapi({
+    description: "AI reasoning/explanation",
+    example: "Traffic patterns suggest increasing check frequency",
+  }),
+  toolCalls: z.array(z.object({
+    tool: z.string(),
+    args: z.unknown().optional(),
+    result: z.unknown().optional(),
+  })).optional().openapi({
+    description: "AI tool calls made during session",
+  }),
+  tokenUsage: z.number().int().optional().openapi({
+    description: "Tokens consumed during AI session",
+    example: 1250,
+  }),
+}).openapi({
+  description: "An activity event (run or AI session)",
+});
+
+export const JobActivityTimelineQuerySchema = z.object({
+  timeRange: z.enum(["24h", "7d", "30d"]).optional().default("7d").openapi({
+    description: "Time range filter for activity events",
+    example: "7d",
+  }),
+  limit: z.coerce.number().int().positive().max(100).optional().default(50).openapi({
+    description: "Maximum number of events to return",
+    example: 50,
+  }),
+  offset: z.coerce.number().int().nonnegative().optional().default(0).openapi({
+    description: "Pagination offset",
+    example: 0,
+  }),
+}).openapi({
+  description: "Query parameters for job activity timeline",
+});
+
+export const JobActivityTimelineResponseSchema = z.object({
+  events: z.array(ActivityEventSchema).openapi({
+    description: "Combined timeline of runs and AI sessions, ordered by timestamp descending",
+  }),
+  total: z.number().int().nonnegative().openapi({
+    description: "Total count of events matching the filter",
+    example: 150,
+  }),
+  summary: z.object({
+    runsCount: z.number().int().nonnegative().openapi({
+      description: "Number of runs in the response",
+      example: 35,
+    }),
+    sessionsCount: z.number().int().nonnegative().openapi({
+      description: "Number of AI sessions in the response",
+      example: 15,
+    }),
+    successRate: z.number().min(0).max(100).openapi({
+      description: "Success rate percentage for runs in the response",
+      example: 94.3,
+    }),
+  }).openapi({
+    description: "Summary statistics for the returned events",
+  }),
+}).openapi({
+  description: "Job activity timeline response",
+});

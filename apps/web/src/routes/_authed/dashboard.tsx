@@ -9,6 +9,7 @@ import { GridLayout } from "../../components/primitives/grid-layout";
 import { ExecutionTimelineChart } from "../../components/dashboard-new/execution-timeline-chart";
 import { ExecutionDurationChart } from "../../components/dashboard-new/execution-duration-chart";
 import { FilterBar } from "../../components/dashboard-new/filter-bar";
+import { JobActivityTimeline } from "../../components/dashboard-new/job-activity-timeline";
 import { JobHealthChart } from "../../components/dashboard-new/job-health-chart";
 import { SchedulingIntelligenceChart } from "../../components/dashboard-new/scheduling-intelligence-chart";
 import { PageHeader } from "../../components/composed/page-header";
@@ -116,6 +117,14 @@ function DashboardPage() {
   }, [dashboardData?.endpointTimeSeries, dashboardData?.aiSessionTimeSeries]);
 
 
+  // Get selected job name for the activity timeline
+  const selectedJobName = useMemo(() => {
+    if (!filters.jobId) return undefined;
+    const job = dashboardData?.jobHealth.find(j => j.jobId === filters.jobId);
+    return job?.jobName;
+  }, [filters.jobId, dashboardData?.jobHealth]);
+
+
   return (
     <>
       <PageHeader text="Dashboard" slotRight={
@@ -145,6 +154,12 @@ function DashboardPage() {
         </GridLayout>
       </div>
 
+      {/* Job Activity Timeline - Shows combined runs + AI sessions when a job is selected */}
+      <JobActivityTimeline
+        jobId={filters.jobId ?? null}
+        jobName={selectedJobName}
+        timeRange={filters.timeRange}
+      />
 
       <EndpointTable
         endpointTimeSeries={dashboardData?.endpointTimeSeries || []}
