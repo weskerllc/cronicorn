@@ -86,6 +86,19 @@ cd admin
 pnpm dlx tsx provision-metabase.ts
 ```
 
+To override credentials/targets, set env vars before running. Examples:
+
+```bash
+# From repo root, reuse .env
+pnpm exec dotenv -e .env -- pnpm dlx tsx admin/provision-metabase.ts
+
+# Custom admin creds (run from admin/)
+MB_ADMIN_EMAIL=me@example.com MB_ADMIN_PASSWORD='strongpass' pnpm dlx tsx provision-metabase.ts
+
+# Point to a remote Metabase instance
+MB_URL=https://metabase.mycompany.com pnpm dlx tsx provision-metabase.ts
+```
+
 Environment overrides (optional):
 
 - Metabase URL: `MB_URL` (default `http://localhost:3030`)
