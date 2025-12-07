@@ -1,3 +1,16 @@
+# [1.16.0](https://github.com/weskerllc/cronicorn/compare/v1.15.1...v1.16.0) (2025-12-07)
+
+
+### Bug Fixes
+
+* Seed user on pnpm seed. also write e2e test to ensure seed works ([274b0dc](https://github.com/weskerllc/cronicorn/commit/274b0dc47ea4595963ab4e1197970a9581a6a3dd))
+* Test isolation issues with seeded database data ([#80](https://github.com/weskerllc/cronicorn/issues/80)) ([22145d2](https://github.com/weskerllc/cronicorn/commit/22145d2fdc7bff0c38da1888b3866dd8692ccc70))
+
+
+### Features
+
+* Add unified activity timeline to dashboard ([#79](https://github.com/weskerllc/cronicorn/issues/79)) ([3e9ebde](https://github.com/weskerllc/cronicorn/commit/3e9ebdea5eaf80278f698266c3f204691e460f5a))
+
 ## [1.15.1](https://github.com/weskerllc/cronicorn/compare/v1.15.0...v1.15.1) (2025-12-05)
 
 
