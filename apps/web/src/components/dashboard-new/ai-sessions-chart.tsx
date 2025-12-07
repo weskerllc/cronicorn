@@ -181,6 +181,8 @@ export function AISessionsChart({
                             }}
                         />
                         <YAxis
+                            width={75}
+
                             domain={[0, maxValue || 'auto']}
                             tickLine={false}
                             axisLine={false}
