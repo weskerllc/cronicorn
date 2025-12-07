@@ -36,6 +36,29 @@ export const DashboardStatsResponseBaseSchema = z.object({
     failure24h: z.number().int().nonnegative(),
   }),
 
+  jobHealth: z.array(
+    z.object({
+      jobId: z.string(),
+      jobName: z.string(),
+      successCount: z.number().int().nonnegative(),
+      failureCount: z.number().int().nonnegative(),
+    }),
+  ),
+
+  filteredMetrics: z.object({
+    totalRuns: z.number().int().nonnegative(),
+    successCount: z.number().int().nonnegative(),
+    failureCount: z.number().int().nonnegative(),
+    avgDurationMs: z.number().nullable(),
+  }),
+
+  sourceDistribution: z.array(
+    z.object({
+      source: z.string(),
+      count: z.number().int().nonnegative(),
+    }),
+  ),
+
   runTimeSeries: z.array(
     z.object({
       date: z.string(),
@@ -43,6 +66,31 @@ export const DashboardStatsResponseBaseSchema = z.object({
       failure: z.number().int().nonnegative(),
     }),
   ),
+
+  endpointTimeSeries: z.array(
+    z.object({
+      date: z.string(),
+      endpointId: z.string(),
+      endpointName: z.string(),
+      success: z.number().int().nonnegative(),
+      failure: z.number().int().nonnegative(),
+      totalDurationMs: z.number().int().nonnegative(),
+    }),
+  ),
+
+  endpointTimeSeriesMaxStacked: z.number().nonnegative(),
+
+  aiSessionTimeSeries: z.array(
+    z.object({
+      date: z.string(),
+      endpointId: z.string(),
+      endpointName: z.string(),
+      sessionCount: z.number().int().nonnegative(),
+      totalTokens: z.number().int().nonnegative(),
+    }),
+  ),
+
+  aiSessionTimeSeriesMaxStacked: z.number().nonnegative(),
 
   topEndpoints: z.array(
     z.object({
@@ -73,4 +121,8 @@ export const DashboardStatsResponseBaseSchema = z.object({
 
 export const DashboardStatsQueryBaseSchema = z.object({
   days: z.coerce.number().int().positive().max(30).optional().default(7),
+  jobId: z.string().optional(),
+  source: z.string().optional(),
+  timeRange: z.enum(["24h", "7d", "30d", "all"]).optional(),
+  endpointLimit: z.coerce.number().int().positive().max(100).optional().default(20),
 });

@@ -1,7 +1,7 @@
 import type { HealthSummary, JsonValue, RunsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, avg, count, desc, eq, gte, inArray, isNull, lte, ne, not, or, sql } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, inArray, isNull, lte, ne, not, or, sql, sum } from "drizzle-orm";
 
 import { jobEndpoints, jobs, runs } from "./schema.js";
 
@@ -372,6 +372,7 @@ export class DrizzleRunsRepo implements RunsRepo {
       endpointName: string;
       success: number;
       failure: number;
+      totalDurationMs: number;
     }>> {
     const conditions = [
       eq(jobs.userId, filters.userId),
@@ -432,6 +433,7 @@ export class DrizzleRunsRepo implements RunsRepo {
         endpointName: jobEndpoints.name,
         success: count(sql`CASE WHEN ${runs.status} = 'success' THEN 1 END`),
         failure: count(sql`CASE WHEN ${runs.status} IN ('failed', 'timeout') THEN 1 END`),
+        totalDurationMs: sum(runs.durationMs),
       })
       .from(runs)
       .innerJoin(jobEndpoints, eq(runs.endpointId, jobEndpoints.id))
@@ -446,6 +448,7 @@ export class DrizzleRunsRepo implements RunsRepo {
       endpointName: row.endpointName,
       success: Number(row.success),
       failure: Number(row.failure),
+      totalDurationMs: Number(row.totalDurationMs ?? 0),
     }));
   }
 

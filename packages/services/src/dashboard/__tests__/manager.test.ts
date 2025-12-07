@@ -779,6 +779,7 @@ describe("dashboardManager", () => {
           endpointName: "Endpoint 1",
           success: 5,
           failure: 1,
+          totalDurationMs: 1500,
         },
         {
           date: currentHour,
@@ -786,6 +787,7 @@ describe("dashboardManager", () => {
           endpointName: "Endpoint 2",
           success: 3,
           failure: 0,
+          totalDurationMs: 900,
         },
       ]);
 
@@ -810,6 +812,7 @@ describe("dashboardManager", () => {
         endpointName: "Endpoint 1",
         success: 5,
         failure: 1,
+        totalDurationMs: 1500,
       });
       expect(ep2CurrentHour).toEqual({
         date: currentHour,
@@ -817,6 +820,7 @@ describe("dashboardManager", () => {
         endpointName: "Endpoint 2",
         success: 3,
         failure: 0,
+        totalDurationMs: 900,
       });
     });
 
