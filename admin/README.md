@@ -25,46 +25,50 @@ Access Metabase at: **http://localhost:3030**
    - Username: **user**
    - Password: **password**
 
-## Available Views
+## Prebuilt views
 
-The database has 10 pre-built views for admin analytics:
-
-| View | What It Shows |
-|------|---------------|
-| `admin_user_stats` | Users with job/endpoint counts |
-| `admin_user_run_stats` | Execution stats per user (success rates, activity) |
-| `admin_user_ai_stats` | AI token usage per user |
-| `admin_daily_metrics` | Daily system metrics (last 90 days) |
-| `admin_subscription_overview` | Revenue by tier and status |
-| `admin_top_jobs` | Most active jobs (top 100) |
-| `admin_error_analysis` | Recent errors (last 7 days) |
-| `admin_user_activity` | User engagement/churn status |
-| `admin_run_source_stats` | Baseline vs AI scheduling |
-| `admin_apikey_stats` | API key usage |
+We removed the shared analytics views and the migration that created them. Use raw SQL directly in Metabase against the base tables (`user`, `jobs`, `job_endpoints`, `runs`, `ai_analysis_sessions`, `apikey`). No extra migrations are required beyond the normal app schema.
 
 ## Example Queries
 
-**Top AI token consumers:**
+**Top AI token consumers (30d):**
 ```sql
-SELECT email, tier, tokens_last_30d
-FROM admin_user_ai_stats
-WHERE tokens_last_30d > 0
-ORDER BY tokens_last_30d DESC
-LIMIT 20;
+select u.email, u.tier, coalesce(sum(a.token_usage) filter (where a.analyzed_at >= now() - interval '30 days'), 0) as tokens_last_30d
+from "user" u
+left join jobs j on j.user_id = u.id
+left join job_endpoints je on je.job_id = j.id
+left join ai_analysis_sessions a on a.endpoint_id = je.id
+group by u.email, u.tier
+having coalesce(sum(a.token_usage) filter (where a.analyzed_at >= now() - interval '30 days'), 0) > 0
+order by tokens_last_30d desc
+limit 20;
 ```
 
 **System health (24h):**
 ```sql
-SELECT * FROM admin_daily_metrics
-WHERE date >= CURRENT_DATE - 1;
+select
+   count(*) as total_runs,
+   count(*) filter (where status = 'success') as successful_runs,
+   count(*) filter (where status = 'failed') as failed_runs,
+   round(100.0 * count(*) filter (where status = 'success') / nullif(count(*), 0), 2) as success_rate_percent,
+   count(distinct endpoint_id) as active_endpoints
+from runs
+where started_at >= now() - interval '24 hours';
 ```
 
 **Active users by tier:**
 ```sql
-SELECT tier, COUNT(*) 
-FROM admin_user_activity
-WHERE activity_status = 'active'
-GROUP BY tier;
+select tier, count(*)
+from "user"
+where id in (
+   select distinct u.id
+   from "user" u
+   join jobs j on j.user_id = u.id
+   join job_endpoints je on je.job_id = j.id
+   join runs r on r.endpoint_id = je.id
+   where r.started_at >= now() - interval '7 days'
+)
+group by tier;
 ```
 
 ## Commands
@@ -117,27 +121,176 @@ Goal: one dashboard "Admin Overview" in collection "Admin Insights" with clear l
 - Ensure database `Cronicorn Analytics` is connected (Settings → Admin → Databases).
 - Create collection "Admin Insights".
 
-2) Create questions (New → Question → Native query). Save each into "Admin Insights". Use exactly these queries and visual types:
+2) Create questions (New → Question → Native query). Save each into "Admin Insights". Use exactly these queries and visual types (all run against base tables, no views needed):
 
-KPIs (keep as single-value cards):
-- "KPI: Total runs 24h" → `select sum(total_runs) as total_runs_24h from admin_daily_metrics where date >= current_date - 1;` (visual: single value)
-- "KPI: Success rate 24h" → `select round(avg(success_rate_percent),2) as success_rate_24h from admin_daily_metrics where date >= current_date - 1;` (single value, suffix "%")
-- "KPI: Active endpoints 24h" → `select sum(active_endpoints) as active_endpoints_24h from admin_daily_metrics where date >= current_date - 1;` (single value)
-- "KPI: AI tokens 30d" → `select coalesce(sum(total_tokens),0) as tokens_30d from admin_daily_metrics;` (single value)
+KPIs (single-value):
+- "KPI: Total runs 24h"
+```sql
+select count(*) as total_runs_24h
+from runs
+where started_at >= now() - interval '24 hours';
+```
+- "KPI: Success rate 24h"
+```sql
+select round(100.0 * count(*) filter (where status = 'success') / nullif(count(*), 0), 2) as success_rate_24h
+from runs
+where started_at >= now() - interval '24 hours';
+```
+- "KPI: Active endpoints 24h"
+```sql
+select count(distinct endpoint_id) as active_endpoints_24h
+from runs
+where started_at >= now() - interval '24 hours';
+```
+- "KPI: AI tokens 30d"
+```sql
+select coalesce(sum(token_usage), 0) as tokens_30d
+from ai_analysis_sessions
+where analyzed_at >= now() - interval '30 days';
+```
 
 Trends:
-- "Trend: Runs success vs failed (90d)" → `select date, successful_runs, failed_runs from admin_daily_metrics order by date asc;` (visual: line/area with two series; x=date, y=counts)
-- "Trend: Run sources (30d)" → `select date, source, run_count from admin_run_source_stats order by date asc;` (visual: stacked bar; x=date, y=run_count, stacked by source)
-- "Trend: AI tokens (30d)" → `select date, total_tokens from admin_daily_metrics order by date asc;` (visual: line; x=date, y=total_tokens)
-- "Trend: Success rate (90d)" → `select date, success_rate_percent from admin_daily_metrics order by date asc;` (visual: line; x=date, y=success_rate_percent; show y-axis as %)
+- "Trend: Runs success vs failed (90d)"
+```sql
+select date(started_at) as date,
+   count(*) filter (where status = 'success') as successful_runs,
+   count(*) filter (where status = 'failed') as failed_runs
+from runs
+where started_at >= now() - interval '90 days'
+group by date(started_at)
+order by date asc;
+```
+- "Trend: Run sources (30d)"
+```sql
+select date(started_at) as date,
+   coalesce(source, 'unknown') as source,
+   count(*) as run_count
+from runs
+where started_at >= now() - interval '30 days'
+group by date(started_at), coalesce(source, 'unknown')
+order by date asc;
+```
+- "Trend: AI tokens (30d)"
+```sql
+select date(analyzed_at) as date,
+   sum(token_usage) as total_tokens
+from ai_analysis_sessions
+where analyzed_at >= now() - interval '30 days'
+group by date(analyzed_at)
+order by date asc;
+```
+- "Trend: Success rate (90d)"
+```sql
+select date(started_at) as date,
+   round(100.0 * count(*) filter (where status = 'success') / nullif(count(*), 0), 2) as success_rate_percent
+from runs
+where started_at >= now() - interval '90 days'
+group by date(started_at)
+order by date asc;
+```
 
-Breakdowns (tables/charts):
-- "Users by activity" → `select * from admin_user_activity order by days_since_last_activity asc nulls last;` (table; show columns email, tier, activity_status, days_since_last_activity, last_activity_date)
-- "Top jobs (by runs)" → `select * from admin_top_jobs order by total_runs desc limit 25;` (table; show job_name, user_email, total_runs, successful_runs, failed_runs, last_run_at)
-- "Errors last 7d" → `select * from admin_error_analysis order by date desc, error_count desc;` (table; show date, status_code, error_summary, error_count, affected_jobs, affected_users)
-- "API keys status" → `select * from admin_apikey_stats;` (table; show api_key_name, email, tier, status, request_count, remaining, last_request, expires_at)
-- "Subscriptions by status" → `select subscription_status, tier, user_count from admin_subscription_overview;` (visual: stacked bar; x=subscription_status, y=user_count, stack by tier)
-- "AI usage by user (30d)" → `select email, tier, tokens_last_30d from admin_user_ai_stats order by tokens_last_30d desc;` (visual: bar; x=tokens_last_30d, y=email; color by tier)
+Breakdowns:
+- "Users by activity" (table; show email, tier, activity_status, days_since_last_activity, last_activity_date)
+```sql
+select
+   u.email,
+   u.tier,
+   u.subscription_status,
+   u.created_at as signup_date,
+   max(r.started_at) as last_activity_date,
+   extract(day from now() - max(r.started_at)) as days_since_last_activity,
+   count(distinct date(r.started_at)) as total_active_days,
+   case
+      when max(r.started_at) is null then 'never_active'
+      when max(r.started_at) >= now() - interval '7 days' then 'active'
+      when max(r.started_at) >= now() - interval '30 days' then 'inactive'
+      else 'churned'
+   end as activity_status
+from "user" u
+left join jobs j on j.user_id = u.id
+left join job_endpoints je on je.job_id = j.id
+left join runs r on r.endpoint_id = je.id
+group by u.email, u.tier, u.subscription_status, u.created_at
+order by last_activity_date desc nulls last;
+```
+
+- "Top jobs (by runs)" (table; show job_name, user_email, total_runs, successful_runs, failed_runs, last_run_at)
+```sql
+select
+   j.id as job_id,
+   j.name as job_name,
+   u.email as user_email,
+   count(r.id) as total_runs,
+   count(r.id) filter (where r.status = 'success') as successful_runs,
+   count(r.id) filter (where r.status = 'failed') as failed_runs,
+   max(r.started_at) as last_run_at
+from jobs j
+join "user" u on u.id = j.user_id
+left join job_endpoints je on je.job_id = j.id
+left join runs r on r.endpoint_id = je.id
+where j.archived_at is null
+group by j.id, j.name, u.email
+order by total_runs desc
+limit 25;
+```
+
+- "Errors last 7d" (table; show date, status_code, error_summary, error_count, affected_jobs, affected_users)
+```sql
+select
+   date(r.started_at) as date,
+   r.status_code,
+   left(r.error_message, 100) as error_summary,
+   count(*) as error_count,
+   count(distinct je.job_id) as affected_jobs,
+   count(distinct j.user_id) as affected_users
+from runs r
+join job_endpoints je on je.id = r.endpoint_id
+join jobs j on j.id = je.job_id
+where r.status in ('failed', 'timeout')
+   and r.started_at >= now() - interval '7 days'
+group by date(r.started_at), r.status_code, left(r.error_message, 100)
+order by date desc, error_count desc;
+```
+
+- "API keys status" (table; show api_key_name, email, tier, status, request_count, remaining, last_request, expires_at)
+```sql
+select
+   ak.name as api_key_name,
+   u.email,
+   u.tier,
+   case
+      when ak.expires_at is not null and ak.expires_at < now() then 'expired'
+      when not ak.enabled then 'disabled'
+      else 'active'
+   end as status,
+   ak.request_count,
+   ak.remaining,
+   ak.last_request,
+   ak.expires_at
+from apikey ak
+join "user" u on u.id = ak.user_id;
+```
+
+- "Subscriptions by status" (stacked bar; x=subscription_status, y=user_count, stack by tier)
+```sql
+select subscription_status, tier, count(*) as user_count
+from "user"
+group by subscription_status, tier;
+```
+
+- "AI usage by user (30d)" (bar; x=tokens_last_30d, y=email, color by tier)
+```sql
+select
+   u.email,
+   u.tier,
+   coalesce(sum(a.token_usage) filter (where a.analyzed_at >= now() - interval '30 days'), 0) as tokens_last_30d
+from "user" u
+left join jobs j on j.user_id = u.id
+left join job_endpoints je on je.job_id = j.id
+left join ai_analysis_sessions a on a.endpoint_id = je.id
+group by u.email, u.tier
+order by tokens_last_30d desc;
+```
 
 3) Build the dashboard (New → Dashboard → "Admin Overview" in "Admin Insights")
 - Row 1 (KPIs): add the four KPI cards side-by-side.
