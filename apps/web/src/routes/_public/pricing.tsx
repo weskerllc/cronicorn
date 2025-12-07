@@ -44,6 +44,7 @@ function Pricing() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
   const handleCheckout = async (tier: "pro" | "enterprise") => {
     if (!session) {
@@ -88,8 +89,8 @@ function Pricing() {
         {/* Hero Section */}
         <section className="text-center space-y-6">
           <div className="space-y-4">
-            <Badge variant="secondary" className="mb-4">
-              💎 Transparent Pricing
+            <Badge variant="default" className="mb-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0">
+              🎉 Early Adopter Offer: 35% OFF Premium Forever
             </Badge>
             <h1 className="text-4xl lg:text-5xl font-bold">
               Choose Your Plan
@@ -97,6 +98,35 @@ function Pricing() {
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               {pricingText.hero.subtitle}
             </p>
+          </div>
+
+          {/* Billing Period Toggle */}
+          <div className="flex items-center justify-center gap-4 pt-4">
+            <button
+              onClick={() => setBillingPeriod("monthly")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                billingPeriod === "monthly"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+              aria-pressed={billingPeriod === "monthly"}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingPeriod("annual")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                billingPeriod === "annual"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+              aria-pressed={billingPeriod === "annual"}
+            >
+              Annual
+              <Badge variant="secondary" className="ml-2 bg-green-500/10 text-green-600 border-green-500/20">
+                Save 20%
+              </Badge>
+            </button>
           </div>
         </section>
 
@@ -141,16 +171,33 @@ function Pricing() {
                     {tier.description}
                   </CardDescription>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-2">
+                  {tier.earlyAdopterDiscount && (
+                    <div className="space-y-1">
+                      <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 border-orange-500/20">
+                        {tier.earlyAdopterDiscount.badge}
+                      </Badge>
+                      <div className="text-sm text-muted-foreground line-through">
+                        {tier.earlyAdopterDiscount.originalPrice}/{tier.period}
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold">{tier.price}</span>
-                    {tier.priceNumeric && (
+                    <span className="text-4xl font-bold">
+                      {billingPeriod === "annual" && tier.annualPrice ? tier.annualPrice : tier.price}
+                    </span>
+                    {tier.priceNumeric !== null && tier.priceNumeric > 0 && (
                       <span className="text-lg text-muted-foreground">/{tier.period}</span>
                     )}
                   </div>
-                  {tier.priceNumeric && (
+                  {tier.priceNumeric !== null && tier.priceNumeric > 0 && (
                     <p className="text-sm text-muted-foreground">
-                      Billed monthly • Cancel anytime
+                      {billingPeriod === "annual" ? "Billed annually" : "Billed monthly"} • Cancel anytime
+                    </p>
+                  )}
+                  {tier.priceNumeric === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      No credit card required
                     </p>
                   )}
                 </div>
@@ -168,14 +215,16 @@ function Pricing() {
               </CardContent>
 
               <CardFooter>
-                {tier.name === "Starter" ? (
+                {tier.name === "Free" ? (
                   <Button
-                    disabled
+                    asChild
                     className="w-full"
                     variant="secondary"
                     aria-label="Free plan - no payment required"
                   >
-                    Current Plan
+                    <Link to={session ? "/dashboard" : "/login"}>
+                      {session ? "Go to Dashboard" : "Start Free"}
+                    </Link>
                   </Button>
                 ) : tier.name === "Enterprise" ? (
                   <Button
@@ -218,6 +267,24 @@ function Pricing() {
             </div>
           </section>
         )}
+
+        {/* Refund Policy Section */}
+        <section className="max-w-3xl mx-auto">
+          <Card className="border-green-500/20 bg-green-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-green-500" />
+                14-Day Money-Back Guarantee
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                We're confident you'll love Cronicorn. If you're not completely satisfied with Premium 
+                for any reason, contact us within 14 days for a full refund—no questions asked.
+              </p>
+            </CardContent>
+          </Card>
+        </section>
 
         {/* FAQ Section */}
         <section className="space-y-8">
