@@ -7,6 +7,7 @@ import { ErrorState } from "../../components/composed/error-state";
 import { PageSkeleton } from "../../components/skeletons/page-skeleton";
 import { GridLayout } from "../../components/primitives/grid-layout";
 import { ExecutionTimelineChart } from "../../components/dashboard-new/execution-timeline-chart";
+import { ExecutionDurationChart } from "../../components/dashboard-new/execution-duration-chart";
 import { FilterBar } from "../../components/dashboard-new/filter-bar";
 import { JobHealthChart } from "../../components/dashboard-new/job-health-chart";
 import { SchedulingIntelligenceChart } from "../../components/dashboard-new/scheduling-intelligence-chart";
@@ -154,12 +155,13 @@ function DashboardPage() {
 
 
       <GridLayout cols={1} lg={2}>
-        <ExecutionTimelineChart
-          data={dashboardData?.endpointTimeSeries || []}
+
+        <AISessionsChart
+          data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
           timeRange={filters.timeRange}
         />
-        <AISessionsChart
+        <AITokensChart
           data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
           timeRange={filters.timeRange}
@@ -167,11 +169,17 @@ function DashboardPage() {
       </GridLayout>
 
       <GridLayout cols={1} lg={2}>
-        <AITokensChart
-          data={dashboardData?.aiSessionTimeSeries || []}
+        <ExecutionTimelineChart
+          data={dashboardData?.endpointTimeSeries || []}
           chartConfig={endpointChartConfig}
           timeRange={filters.timeRange}
         />
+        <ExecutionDurationChart
+          data={dashboardData?.endpointTimeSeries || []}
+          chartConfig={endpointChartConfig}
+          timeRange={filters.timeRange}
+        />
+
       </GridLayout>
     </>
   );

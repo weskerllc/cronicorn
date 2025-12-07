@@ -22,9 +22,22 @@ type EndpointStat = {
     id: string;
     name: string;
     runs: number;
+    totalDurationMs: number;
     sessions: number;
     tokens: number;
 };
+
+/**
+ * Format milliseconds to a human-readable duration string.
+ */
+function formatDuration(ms: number): string {
+    if (ms === 0) return "—";
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.round((ms % 60000) / 1000);
+    return `${minutes}m ${seconds}s`;
+}
 
 export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMappings, chartConfig, onEndpointClick }: EndpointTableProps) {
     const navigate = useNavigate();
@@ -33,13 +46,14 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
         const stats = new Map<string, EndpointStat>();
 
         endpointTimeSeries.forEach(point => {
-            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, sessions: 0, tokens: 0 };
+            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, totalDurationMs: 0, sessions: 0, tokens: 0 };
             existing.runs += point.success + point.failure;
+            existing.totalDurationMs += point.totalDurationMs;
             stats.set(point.endpointId, existing);
         });
 
         aiSessionTimeSeries.forEach(point => {
-            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, sessions: 0, tokens: 0 };
+            const existing = stats.get(point.endpointId) || { id: point.endpointId, name: point.endpointName, runs: 0, totalDurationMs: 0, sessions: 0, tokens: 0 };
             existing.sessions += point.sessionCount;
             existing.tokens += point.totalTokens;
             stats.set(point.endpointId, existing);
@@ -79,6 +93,15 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
             cell: ({ row }) => (
                 <div className=" font-medium">
                     {row.original.runs.toLocaleString()}
+                </div>
+            ),
+        },
+        {
+            accessorKey: "totalDurationMs",
+            header: "Duration",
+            cell: ({ row }) => (
+                <div className="text-muted-foreground">
+                    {formatDuration(row.original.totalDurationMs)}
                 </div>
             ),
         },

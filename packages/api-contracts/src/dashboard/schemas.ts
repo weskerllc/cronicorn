@@ -167,6 +167,10 @@ export const DashboardStatsResponseSchema = z.object({
         description: "Number of failed runs for this endpoint on this date",
         example: 1,
       }),
+      totalDurationMs: z.number().int().nonnegative().openapi({
+        description: "Total execution duration in milliseconds for this endpoint on this date",
+        example: 45230,
+      }),
     }),
   ).openapi({
     description: "Time-series data for run activity grouped by endpoint (filtered by query params)",
