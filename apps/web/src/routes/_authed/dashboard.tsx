@@ -7,11 +7,13 @@ import { ErrorState } from "../../components/composed/error-state";
 import { PageSkeleton } from "../../components/skeletons/page-skeleton";
 import { GridLayout } from "../../components/primitives/grid-layout";
 import { ExecutionTimelineChart } from "../../components/dashboard-new/execution-timeline-chart";
+import { ExecutionDurationChart } from "../../components/dashboard-new/execution-duration-chart";
 import { FilterBar } from "../../components/dashboard-new/filter-bar";
 import { JobHealthChart } from "../../components/dashboard-new/job-health-chart";
 import { SchedulingIntelligenceChart } from "../../components/dashboard-new/scheduling-intelligence-chart";
 import { PageHeader } from "../../components/composed/page-header";
 import { AISessionsChart } from "../../components/dashboard-new/ai-sessions-chart";
+import { AITokensChart } from "../../components/dashboard-new/ai-tokens-chart";
 import { EndpointTable } from "../../components/dashboard-new/endpoint-table";
 import { dashboardStatsQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";
@@ -153,16 +155,31 @@ function DashboardPage() {
 
 
       <GridLayout cols={1} lg={2}>
-        <ExecutionTimelineChart
-          data={dashboardData?.endpointTimeSeries || []}
-          chartConfig={endpointChartConfig}
-          timeRange={filters.timeRange}
-        />
+
         <AISessionsChart
           data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
           timeRange={filters.timeRange}
         />
+        <AITokensChart
+          data={dashboardData?.aiSessionTimeSeries || []}
+          chartConfig={endpointChartConfig}
+          timeRange={filters.timeRange}
+        />
+      </GridLayout>
+
+      <GridLayout cols={1} lg={2}>
+        <ExecutionTimelineChart
+          data={dashboardData?.endpointTimeSeries || []}
+          chartConfig={endpointChartConfig}
+          timeRange={filters.timeRange}
+        />
+        <ExecutionDurationChart
+          data={dashboardData?.endpointTimeSeries || []}
+          chartConfig={endpointChartConfig}
+          timeRange={filters.timeRange}
+        />
+
       </GridLayout>
     </>
   );

@@ -370,6 +370,7 @@ export class InMemoryRunsRepo implements RunsRepo {
       endpointName: string;
       success: number;
       failure: number;
+      totalDurationMs: number;
     }>> {
     // Stub implementation for in-memory repo
     return [];
