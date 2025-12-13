@@ -189,7 +189,7 @@ export class DrizzleRunsRepo implements RunsRepo {
     successCount: number;
     failureCount: number;
   }>> {
-    // Build WHERE conditions
+    // Build WHERE conditions for jobs (not runs)
     const whereConditions = [
       eq(jobs.userId, userId),
       ne(jobs.status, "archived"), // Exclude archived jobs
@@ -199,13 +199,13 @@ export class DrizzleRunsRepo implements RunsRepo {
       ),
     ];
 
-    // Add date filter if provided
+    // Build LEFT JOIN condition with optional date filter
+    // This ensures jobs are always included, but only runs matching the filter are counted
+    let runsJoinCondition = eq(runs.endpointId, jobEndpoints.id);
     if (filters?.sinceDate) {
-      whereConditions.push(
-        or(
-          isNull(runs.startedAt), // Include jobs with no runs
-          gte(runs.startedAt, filters.sinceDate),
-        ),
+      runsJoinCondition = and(
+        eq(runs.endpointId, jobEndpoints.id),
+        gte(runs.startedAt, filters.sinceDate),
       );
     }
 
@@ -218,7 +218,7 @@ export class DrizzleRunsRepo implements RunsRepo {
       })
       .from(jobs)
       .leftJoin(jobEndpoints, eq(jobEndpoints.jobId, jobs.id))
-      .leftJoin(runs, eq(runs.endpointId, jobEndpoints.id))
+      .leftJoin(runs, runsJoinCondition)
       .where(and(...whereConditions))
       .groupBy(jobs.id, jobs.name);
 
