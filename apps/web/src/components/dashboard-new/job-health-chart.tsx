@@ -16,28 +16,11 @@ import {
     PaginationPrevious,
 } from "@cronicorn/ui-library/components/pagination";
 import { useMemo, useState } from "react";
-import { Bar, BarChart, LabelList, Rectangle, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Rectangle, XAxis, YAxis } from "recharts";
 import { DashboardCard } from "./dashboard-card";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 
 import type { JobHealthItem } from "@cronicorn/api-contracts/dashboard";
-
-/**
- * Formats a number for compact display in charts
- * @param value - The number to format
- * @returns Formatted string (e.g., "1.2k", "3.5M")
- */
-function formatCompactNumber(value: number): string {
-    if (value >= 1_000_000) {
-        const millions = value / 1_000_000;
-        return millions >= 100 ? `${Math.floor(millions)}M` : `${millions.toFixed(1)}M`;
-    }
-    if (value >= 1_000) {
-        const thousands = value / 1_000;
-        return thousands >= 100 ? `${Math.floor(thousands)}k` : `${thousands.toFixed(1)}k`;
-    }
-    return value.toString();
-}
 
 const chartConfig = {
     successCount: {
@@ -176,8 +159,10 @@ export function JobHealthChart({
                         tickLine={false}
                         tickMargin={10}
                         axisLine={false}
-                        tickFormatter={(value) => value.slice(0, 5)}
-                        hide
+                        width={120}
+                        tickFormatter={(value: string) =>
+                            value.length > 12 ? `${value.slice(0, 12)}...` : value
+                        }
                     />
                     <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                     <ChartLegend content={<ChartLegendContent className="pb-2" />} />
@@ -203,36 +188,7 @@ export function JobHealthChart({
                                 />
                             )
                         }}
-                    >
-                        <LabelList
-                            dataKey="jobName"
-                            position="top"
-                            fill="var(--color-foreground)"
-                            fontSize={12}
-                            content={(props: any) => {
-                                const { x, y, value } = props;
-                                return (
-                                    <text
-                                        x={x}
-                                        y={y ? y - 4 : 0}
-                                        fill="var(--color-foreground)"
-                                        fontSize={12}
-                                        textAnchor="start"
-                                    >
-                                        {value}
-                                    </text>
-                                );
-                            }}
-                        />
-                        <LabelList
-                            dataKey="successCount"
-                            position="right"
-                            offset={8}
-                            fill="var(--color-foreground)"
-                            fontSize={12}
-                            formatter={(value: number) => formatCompactNumber(value)}
-                        />
-                    </Bar>
+                    />
                     <Bar
                         dataKey="failureCount"
                         stackId="a"
