@@ -20,25 +20,25 @@ export const TIER_LIMITS = {
  * - Excessive monthly executions (maxRunsPerMonth)
  *
  * Combined effect:
- * - Free: 10 endpoints × 60s interval = max 14,400 requests/day, 10k/month limit
+ * - Free: 5 endpoints × 60s interval = max 7,200 requests/day, 10k/month limit
  * - Pro: 100 endpoints × 10s interval = max 864,000 requests/day, 100k/month limit
- * - Enterprise: 1,000 endpoints × 1s interval = max 86.4M requests/day, 1M/month limit
+ * - Enterprise: unlimited endpoints × 1s interval = 1M+/month limit
  */
 export const TIER_EXECUTION_LIMITS = {
   free: {
-    maxEndpoints: 10, // Max 10 endpoints per user
+    maxEndpoints: 5, // Max 5 endpoints per user (show value, drive upgrades)
     minIntervalMs: 60_000, // Must run at least 60s apart (1 minute)
     maxRunsPerMonth: 10_000, // 10k endpoint executions per month
   },
   pro: {
-    maxEndpoints: 100,
-    minIntervalMs: 10_000, // 10 seconds
-    maxRunsPerMonth: 100_000, // 100k executions per month
+    maxEndpoints: 100, // 20× more endpoints
+    minIntervalMs: 10_000, // 10 seconds (6× faster)
+    maxRunsPerMonth: 100_000, // 10× more executions per month
   },
   enterprise: {
-    maxEndpoints: 1_000,
-    minIntervalMs: 1_000, // 1 second
-    maxRunsPerMonth: 1_000_000, // 1M executions per month
+    maxEndpoints: 1_000, // Enterprise tier cap for now (raise via support)
+    minIntervalMs: 1_000, // 1 second (sub-second on request)
+    maxRunsPerMonth: 1_000_000, // 1M+ executions per month (higher on request)
   },
 } as const;
 

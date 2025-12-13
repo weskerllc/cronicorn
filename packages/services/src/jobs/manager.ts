@@ -343,6 +343,11 @@ export class JobsManager {
     }
 
     // Build JobEndpoint domain entity
+    const enforcedMinIntervalMs = Math.max(
+      input.minIntervalMs ?? executionLimits.minIntervalMs,
+      executionLimits.minIntervalMs,
+    );
+
     const endpoint: JobEndpoint = {
       id: nanoid(),
       jobId: input.jobId,
@@ -351,7 +356,7 @@ export class JobsManager {
       description: input.description,
       baselineCron: input.baselineCron,
       baselineIntervalMs: input.baselineIntervalMs,
-      minIntervalMs: input.minIntervalMs,
+      minIntervalMs: enforcedMinIntervalMs,
       maxIntervalMs: input.maxIntervalMs,
       nextRunAt: now, // Temporary: will calculate below
       failureCount: 0,

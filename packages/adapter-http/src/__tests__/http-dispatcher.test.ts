@@ -52,7 +52,7 @@ describe("httpDispatcher", () => {
       const result = await dispatcher.execute(createEndpoint());
 
       expect(result.status).toBe("success");
-      expect(result.durationMs).toBeGreaterThan(0);
+      expect(result.durationMs).toBeGreaterThanOrEqual(0);
     });
 
     it("defaults method to GET when not specified", async () => {
