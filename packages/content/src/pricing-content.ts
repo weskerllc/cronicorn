@@ -16,16 +16,16 @@ export type PricingFAQ = {
 /** Feature highlights for pricing page */
 export const pricingFeatures: PricingFeature[] = [
   {
-    title: "AI-Powered Intelligence",
-    description: "Smart scheduling that learns from your patterns",
+    title: "AI-powered scheduling",
+    description: "Adaptive scheduling with soft token limits per tier",
   },
   {
-    title: "Enterprise Security",
-    description: "Bank-grade encryption and compliance ready",
+    title: "Built-in guardrails",
+    description: "Tier-based caps on endpoints and minimum intervals",
   },
   {
-    title: "99.9% Uptime",
-    description: "Reliable infrastructure you can depend on",
+    title: "Start free, upgrade later",
+    description: "Begin with core features and scale when ready",
   },
 ];
 
@@ -41,7 +41,7 @@ export const pricingFAQs: PricingFAQ[] = [
   },
   {
     question: "What happens if I exceed my limits?",
-    answer: "If you approach your plan limits, you'll be notified with plenty of time to upgrade. Your existing endpoints will continue working while you decide.",
+    answer: "If you reach your plan limits, execution defers to the next month. Your existing endpoints continue working unchanged. You can upgrade anytime to increase your limits and resume execution.",
   },
   {
     question: "Do you offer annual discounts?",
@@ -53,7 +53,7 @@ export const pricingFAQs: PricingFAQ[] = [
   },
   {
     question: "Is there an SLA for Enterprise customers?",
-    answer: "Yes, Enterprise customers receive a 99.9% uptime SLA with dedicated support and priority issue resolution.",
+    answer: "Enterprise is tailored. Tell us about your workload and we’ll discuss the right availability and support options—no blanket SLA promises here.",
   },
   {
     question: "Can I cancel at any time?",
@@ -61,7 +61,7 @@ export const pricingFAQs: PricingFAQ[] = [
   },
   {
     question: "How are AI tokens calculated?",
-    answer: "AI tokens measure the intelligence used for adaptive scheduling. Free tier includes 100k tokens/month (enough for ~5 endpoints with AI). Premium multiplies this 10× to 1M tokens.",
+    answer: "AI tokens measure the intelligence used for adaptive scheduling. Limits are soft: Free includes 100k tokens/month and Premium 1M/month, with usage counted after each AI analysis session.",
   },
 ];
 

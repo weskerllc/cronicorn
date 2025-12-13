@@ -1,5 +1,5 @@
 // packages/scheduler/src/scheduler.ts
-import { planNextRun } from "@cronicorn/domain";
+import { getRunsLimit, planNextRun } from "@cronicorn/domain";
 
 import type { SchedulerDeps } from "./deps.js";
 
@@ -43,6 +43,12 @@ export class Scheduler implements IScheduler {
 
     // Calculate the source before execution (what schedule triggered this run)
     const prePlan = planNextRun(now, ep, cron);
+
+    const deferUntil = await this.checkRunLimit(ep.tenantId, endpointId, now);
+    if (deferUntil) {
+      await jobs.setNextRunAtIfEarlier(endpointId, deferUntil);
+      return;
+    }
 
     const runId = await runs.create({
       endpointId,
@@ -128,5 +134,52 @@ export class Scheduler implements IScheduler {
       this.d.logger.info({ count, olderThanMs }, "Cleaned up zombie runs");
     }
     return count;
+  }
+
+  /**
+   * Guard monthly execution limits before dispatch (Execution Metering).
+   *
+   * **Purpose**: Enforce soft monthly execution limits per subscription tier to prevent
+   * unbilled runaway executions. This is the core of "execution metering."
+   *
+   * **Limits**:
+   * - Free: 10,000 runs/month
+   * - Pro: 100,000 runs/month
+   * - Enterprise: 1,000,000 runs/month
+   *
+   * **Behavior** (Soft Limit + Deferral):
+   * When a tenant's monthly run count reaches or exceeds their tier limit:
+   * 1. Do NOT execute the endpoint
+   * 2. Defer the run to the start of the next month (1st at 00:00 UTC)
+   * 3. Log a warning with tenant/tier/counts for ops visibility
+   *
+   * If metrics lookup fails, proceed with execution (fail-open, prioritizes availability).
+   *
+   * **Usage by UI/API**:
+   * - GET /subscriptions/usage returns totalRuns vs totalRunsLimit
+   * - Scheduler silently defers; users see increased "next run" timestamp
+   * - No explicit "quota exceeded" error returned to user (deferral is transparent)
+   *
+   * @param tenantId - User/tenant ID
+   * @param endpointId - Endpoint ID (for logging)
+   * @param now - Current time (injected Clock)
+   * @returns Date to defer to (start of next month) if limit exceeded; null if OK to proceed
+   */
+  private async checkRunLimit(tenantId: string, endpointId: string, now: Date): Promise<Date | null> {
+    try {
+      const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      const metrics = await this.d.runs.getFilteredMetrics({ userId: tenantId, sinceDate: startOfMonth });
+      const userTier = await this.d.jobs.getUserTier(tenantId);
+      const runsLimit = getRunsLimit(userTier);
+      if (metrics.totalRuns >= runsLimit) {
+        const startOfNextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+        this.d.logger.warn({ tenantId, endpointId, userTier, totalRuns: metrics.totalRuns, runsLimit }, "Monthly run limit exceeded — skipping execution and deferring to next month");
+        return startOfNextMonth;
+      }
+    }
+    catch (err) {
+      this.d.logger.error({ err }, "Failed to check monthly run limits — proceeding with execution");
+    }
+    return null;
   }
 }

@@ -303,7 +303,7 @@ describe("jobsManager", () => {
       vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(10);
 
       await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
-        /Endpoint limit reached.*free tier allows maximum 10 endpoints.*Upgrade to Pro/i,
+        /Endpoint limit reached: free tier allows maximum 5 endpoints. Upgrade to Pro for 100 endpoints or Enterprise for 1,000 endpoints./i,
       );
     });
 
@@ -466,7 +466,7 @@ describe("jobsManager", () => {
       vi.mocked(mockJobsRepo.countEndpointsByUser).mockResolvedValue(10);
 
       await expect(manager.addEndpointToJob("user-1", input)).rejects.toThrow(
-        /Endpoint limit reached.*free tier allows maximum 10 endpoints.*Upgrade to Pro/i,
+        /Endpoint limit reached: free tier allows maximum 5 endpoints. Upgrade to Pro for 100 endpoints or Enterprise for 1,000 endpoints./i,
       );
     });
   });

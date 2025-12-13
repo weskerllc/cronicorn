@@ -36,7 +36,7 @@ export const TIER_EXECUTION_LIMITS = {
     maxRunsPerMonth: 100_000, // 10× more executions per month
   },
   enterprise: {
-    maxEndpoints: 999_999, // Effectively unlimited
+    maxEndpoints: 1_000, // Enterprise tier cap for now (raise via support)
     minIntervalMs: 1_000, // 1 second (sub-second on request)
     maxRunsPerMonth: 1_000_000, // 1M+ executions per month (higher on request)
   },
