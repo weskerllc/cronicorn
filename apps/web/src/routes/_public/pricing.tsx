@@ -105,8 +105,8 @@ function Pricing() {
             <button
               onClick={() => setBillingPeriod("monthly")}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${billingPeriod === "monthly"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               aria-pressed={billingPeriod === "monthly"}
             >
@@ -115,8 +115,8 @@ function Pricing() {
             <button
               onClick={() => setBillingPeriod("annual")}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${billingPeriod === "annual"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               aria-pressed={billingPeriod === "annual"}
             >
@@ -275,22 +275,22 @@ function Pricing() {
           </div>
         </section>
 
-        {/* Trust Indicators */}
+        {/* Trust Indicators (kept honest) */}
         <section className="text-center space-y-6 py-8">
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold">{pricingText.testimonials.heading}</h2>
+            <h2 className="text-2xl font-bold">Built to keep you in control</h2>
             <div className="flex justify-center gap-8 text-sm text-muted-foreground">
               <div className="flex flex-col items-center">
-                <span className="text-2xl font-bold text-primary">99.9%</span>
-                <span>Uptime SLA</span>
+                <span className="text-2xl font-bold text-primary">Transparent</span>
+                <span>Clear limits by tier</span>
               </div>
               <div className="flex flex-col items-center">
-                <span className="text-2xl font-bold text-primary">24/7</span>
-                <span>Support Available</span>
+                <span className="text-2xl font-bold text-primary">Secure</span>
+                <span>Encryption in transit by default</span>
               </div>
               <div className="flex flex-col items-center">
-                <span className="text-2xl font-bold text-primary">SOC 2</span>
-                <span>Compliant</span>
+                <span className="text-2xl font-bold text-primary">Talk with us</span>
+                <span>Enterprise terms via sales</span>
               </div>
             </div>
           </div>

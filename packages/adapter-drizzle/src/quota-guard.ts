@@ -10,12 +10,11 @@ import { aiAnalysisSessions, jobEndpoints, user } from "./schema.js";
  *
  * Implements soft-limit token quota checking by:
  * 1. Querying user tier from database
- * 2. Summing token usage from aiAnalysisSessions for current month
- * 3. Comparing usage against tier limit
+ * 2. Summing token usage from aiAnalysisSessions for current month (recorded per analysis session)
+ * 3. Comparing usage against tier limit (100k free, 1M pro, enterprise by contract)
  *
- * **Soft Limit Behavior**: Multiple concurrent operations may check quota
- * simultaneously before any records usage, potentially allowing 10-20% burst
- * overrun. This is acceptable for cost-aware scenarios.
+ * **Soft Limit Behavior**: Concurrent checks may allow brief burst overrun before
+ * usage lands. This is intentional and matches pricing copy.
  *
  * **Performance**: Uses JOIN to aggregate usage across all endpoints for a tenant.
  * Consider adding index on aiAnalysisSessions.analyzedAt for large datasets.
