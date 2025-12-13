@@ -256,12 +256,7 @@ export type RunsRepo = {
    */
   getJobHealthDistribution: (userId: string, filters?: {
     sinceDate?: Date;
-  }) => Promise<Array<{
-    jobId: string;
-    jobName: string;
-    successCount: number;
-    failureCount: number;
-  }>>;
+  }) => Promise<Array<{ jobId: string; jobName: string; successCount: number; failureCount: number }>>;
 
   /**
    * Get aggregated metrics for filtered runs.
