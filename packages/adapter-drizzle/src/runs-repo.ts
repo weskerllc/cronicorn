@@ -181,12 +181,33 @@ export class DrizzleRunsRepo implements RunsRepo {
     };
   }
 
-  async getJobHealthDistribution(userId: string): Promise<Array<{
-    jobId: string;
-    jobName: string;
-    successCount: number;
-    failureCount: number;
-  }>> {
+  async getJobHealthDistribution(userId: string, filters?: {
+    sinceDate?: Date;
+  }): Promise<Array<{
+      jobId: string;
+      jobName: string;
+      successCount: number;
+      failureCount: number;
+    }>> {
+    // Build WHERE conditions for jobs (not runs)
+    const whereConditions = [
+      eq(jobs.userId, userId),
+      ne(jobs.status, "archived"), // Exclude archived jobs
+      or(
+        isNull(jobEndpoints.id), // No endpoints yet
+        isNull(jobEndpoints.archivedAt), // Or endpoint not archived
+      ),
+    ];
+
+    // Build LEFT JOIN condition with optional date filter
+    // This ensures jobs are always included, but only runs matching the filter are counted
+    const runsJoinCondition = filters?.sinceDate
+      ? and(
+        eq(runs.endpointId, jobEndpoints.id),
+        gte(runs.startedAt, filters.sinceDate),
+      )!
+      : eq(runs.endpointId, jobEndpoints.id);
+
     const results = await this.tx
       .select({
         jobId: jobs.id,
@@ -196,15 +217,8 @@ export class DrizzleRunsRepo implements RunsRepo {
       })
       .from(jobs)
       .leftJoin(jobEndpoints, eq(jobEndpoints.jobId, jobs.id))
-      .leftJoin(runs, eq(runs.endpointId, jobEndpoints.id))
-      .where(and(
-        eq(jobs.userId, userId),
-        ne(jobs.status, "archived"), // Exclude archived jobs
-        or(
-          isNull(jobEndpoints.id), // No endpoints yet
-          isNull(jobEndpoints.archivedAt), // Or endpoint not archived
-        ),
-      ))
+      .leftJoin(runs, runsJoinCondition)
+      .where(and(...whereConditions))
       .groupBy(jobs.id, jobs.name);
 
     return results.map(row => ({
