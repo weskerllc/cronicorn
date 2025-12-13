@@ -184,11 +184,11 @@ export class DrizzleRunsRepo implements RunsRepo {
   async getJobHealthDistribution(userId: string, filters?: {
     sinceDate?: Date;
   }): Promise<Array<{
-    jobId: string;
-    jobName: string;
-    successCount: number;
-    failureCount: number;
-  }>> {
+      jobId: string;
+      jobName: string;
+      successCount: number;
+      failureCount: number;
+    }>> {
     // Build WHERE conditions for jobs (not runs)
     const whereConditions = [
       eq(jobs.userId, userId),
@@ -201,13 +201,12 @@ export class DrizzleRunsRepo implements RunsRepo {
 
     // Build LEFT JOIN condition with optional date filter
     // This ensures jobs are always included, but only runs matching the filter are counted
-    let runsJoinCondition = eq(runs.endpointId, jobEndpoints.id);
-    if (filters?.sinceDate) {
-      runsJoinCondition = and(
+    const runsJoinCondition = filters?.sinceDate
+      ? and(
         eq(runs.endpointId, jobEndpoints.id),
         gte(runs.startedAt, filters.sinceDate),
-      );
-    }
+      )!
+      : eq(runs.endpointId, jobEndpoints.id);
 
     const results = await this.tx
       .select({

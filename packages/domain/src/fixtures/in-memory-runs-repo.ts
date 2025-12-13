@@ -303,11 +303,11 @@ export class InMemoryRunsRepo implements RunsRepo {
   async getJobHealthDistribution(_userId: string, _filters?: {
     sinceDate?: Date;
   }): Promise<Array<{
-    jobId: string;
-    jobName: string;
-    successCount: number;
-    failureCount: number;
-  }>> {
+      jobId: string;
+      jobName: string;
+      successCount: number;
+      failureCount: number;
+    }>> {
     // Stub implementation for in-memory repo
     // Real implementation is in DrizzleRunsRepo with SQL aggregation
     return [];
