@@ -300,7 +300,9 @@ export class InMemoryRunsRepo implements RunsRepo {
   // Dashboard Aggregation Methods (Phase 3)
   // ============================================================================
 
-  async getJobHealthDistribution(_userId: string): Promise<Array<{
+  async getJobHealthDistribution(_userId: string, _filters?: {
+    sinceDate?: Date;
+  }): Promise<Array<{
     jobId: string;
     jobName: string;
     successCount: number;

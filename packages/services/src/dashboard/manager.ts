@@ -154,8 +154,8 @@ export class DashboardManager {
       this.getEndpointsStats(userId),
       this.calculateOverallSuccessRate(userId, days),
       this.getRecentActivity(userId, now),
-      // New aggregated queries
-      this.runsRepo.getJobHealthDistribution(userId),
+      // New aggregated queries - now respects time filter
+      this.runsRepo.getJobHealthDistribution(userId, { sinceDate: filters.sinceDate }),
       this.runsRepo.getFilteredMetrics(filters),
       // sourceDistribution should NOT be filtered by source (only by jobId and sinceDate)
       // This allows it to show the full distribution while other charts are filtered

@@ -181,12 +181,34 @@ export class DrizzleRunsRepo implements RunsRepo {
     };
   }
 
-  async getJobHealthDistribution(userId: string): Promise<Array<{
+  async getJobHealthDistribution(userId: string, filters?: {
+    sinceDate?: Date;
+  }): Promise<Array<{
     jobId: string;
     jobName: string;
     successCount: number;
     failureCount: number;
   }>> {
+    // Build WHERE conditions
+    const whereConditions = [
+      eq(jobs.userId, userId),
+      ne(jobs.status, "archived"), // Exclude archived jobs
+      or(
+        isNull(jobEndpoints.id), // No endpoints yet
+        isNull(jobEndpoints.archivedAt), // Or endpoint not archived
+      ),
+    ];
+
+    // Add date filter if provided
+    if (filters?.sinceDate) {
+      whereConditions.push(
+        or(
+          isNull(runs.startedAt), // Include jobs with no runs
+          gte(runs.startedAt, filters.sinceDate),
+        ),
+      );
+    }
+
     const results = await this.tx
       .select({
         jobId: jobs.id,
@@ -197,14 +219,7 @@ export class DrizzleRunsRepo implements RunsRepo {
       .from(jobs)
       .leftJoin(jobEndpoints, eq(jobEndpoints.jobId, jobs.id))
       .leftJoin(runs, eq(runs.endpointId, jobEndpoints.id))
-      .where(and(
-        eq(jobs.userId, userId),
-        ne(jobs.status, "archived"), // Exclude archived jobs
-        or(
-          isNull(jobEndpoints.id), // No endpoints yet
-          isNull(jobEndpoints.archivedAt), // Or endpoint not archived
-        ),
-      ))
+      .where(and(...whereConditions))
       .groupBy(jobs.id, jobs.name);
 
     return results.map(row => ({
