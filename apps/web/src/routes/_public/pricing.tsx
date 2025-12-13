@@ -5,18 +5,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@cronicorn/ui-library/components/accordion";
-import { AlertCircle, Check, Clock, Shield, Star, Zap } from "lucide-react";
+import { AlertCircle, Check, Shield, Star } from "lucide-react";
 
-import { business, metaDescriptions, pageTitles, pricing, pricingFAQs, pricingFeatures, pricingText } from "@cronicorn/content";
+import { business, metaDescriptions, pageTitles, pricing, pricingFAQs, pricingText } from "@cronicorn/content";
 import { useSession } from "@/lib/auth-client";
 import { createFAQSchema, createProductSchema, createSEOHead } from "@/lib/seo";
-
-// Icon map for pricing features
-const featureIconMap: Record<string, React.ReactNode> = {
-  "AI-Powered Intelligence": <Zap className="w-5 h-5 text-primary" />,
-  "Enterprise Security": <Shield className="w-5 h-5 text-primary" />,
-  "99.9% Uptime": <Clock className="w-5 h-5 text-primary" />,
-};
 
 export const Route = createFileRoute("/_public/pricing")({
   head: () => {
@@ -44,6 +37,7 @@ function Pricing() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
   const handleCheckout = async (tier: "pro" | "enterprise") => {
     if (!session) {
@@ -79,24 +73,58 @@ function Pricing() {
     }
   };
 
-  const features = pricingFeatures;
   const faqs = pricingFAQs;
 
   return (
     <>
-      <main className="max-w-7xl mx-auto space-y-16 p-8" role="main">
+      <main className="max-w-5xl mx-auto space-y-16 px-6 py-12" role="main">
         {/* Hero Section */}
         <section className="text-center space-y-6">
-          <div className="space-y-4">
-            <Badge variant="secondary" className="mb-4">
-              💎 Transparent Pricing
+          <div className="space-y-3">
+            <Badge variant="default" className="mx-auto bg-linear-to-r from-orange-500 to-pink-500 text-white border-0">
+              🎉 Early Adopter: 35% off Premium forever
             </Badge>
-            <h1 className="text-4xl lg:text-5xl font-bold">
-              Choose Your Plan
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight">
+              Pricing made simple
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              {pricingText.hero.subtitle}
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Start free, upgrade when ready. Transparent plans built for fast teams.
             </p>
+          </div>
+
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <Shield className="w-4 h-4" aria-hidden="true" />
+              14-day money-back guarantee
+            </div>
+            <p className="text-sm text-muted-foreground">Annual billing saves 20% instantly.</p>
+          </div>
+
+          {/* Billing Period Toggle */}
+          <div className="flex items-center justify-center gap-3 pt-4">
+            <button
+              onClick={() => setBillingPeriod("monthly")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${billingPeriod === "monthly"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              aria-pressed={billingPeriod === "monthly"}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingPeriod("annual")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${billingPeriod === "annual"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              aria-pressed={billingPeriod === "annual"}
+            >
+              Annual
+              <Badge variant="secondary" className="ml-2 bg-green-500/10 text-green-600 border-green-500/20">
+                Save 20%
+              </Badge>
+            </button>
           </div>
         </section>
 
@@ -107,21 +135,8 @@ function Pricing() {
           </Alert>
         )}
 
-        {/* Features Overview */}
-        <section className="grid md:grid-cols-3 gap-6 py-8">
-          {features.map((feature, index) => (
-            <div key={index} className="text-center space-y-3">
-              <div className="flex justify-center">
-                {featureIconMap[feature.title]}
-              </div>
-              <h3 className="font-semibold">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground">{feature.description}</p>
-            </div>
-          ))}
-        </section>
-
         {/* Pricing Grid */}
-        <section className="grid lg:grid-cols-3 gap-8" aria-label="Pricing plans">
+        <section className="grid lg:grid-cols-3 gap-6" aria-label="Pricing plans">
           {pricing.map((tier) => (
             <Card
               key={tier.name}
@@ -141,16 +156,28 @@ function Pricing() {
                     {tier.description}
                   </CardDescription>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-2">
+                  {tier.earlyAdopterDiscount && (
+                    <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 border-orange-500/20">
+                      {tier.earlyAdopterDiscount.badge}
+                    </Badge>
+                  )}
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold">{tier.price}</span>
-                    {tier.priceNumeric && (
+                    <span className="text-4xl font-bold">
+                      {billingPeriod === "annual" && tier.annualPrice ? tier.annualPrice : tier.price}
+                    </span>
+                    {tier.priceNumeric !== null && tier.priceNumeric > 0 && (
                       <span className="text-lg text-muted-foreground">/{tier.period}</span>
                     )}
                   </div>
-                  {tier.priceNumeric && (
+                  {tier.priceNumeric !== null && tier.priceNumeric > 0 && (
                     <p className="text-sm text-muted-foreground">
-                      Billed monthly • Cancel anytime
+                      {billingPeriod === "annual" ? "Billed annually" : "Billed monthly"} • Cancel anytime
+                    </p>
+                  )}
+                  {tier.priceNumeric === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      No credit card required
                     </p>
                   )}
                 </div>
@@ -168,14 +195,16 @@ function Pricing() {
               </CardContent>
 
               <CardFooter>
-                {tier.name === "Starter" ? (
+                {tier.name === "Free" ? (
                   <Button
-                    disabled
+                    asChild
                     className="w-full"
                     variant="secondary"
                     aria-label="Free plan - no payment required"
                   >
-                    Current Plan
+                    <Link to={session ? "/dashboard" : "/login"}>
+                      {session ? "Go to Dashboard" : "Start Free"}
+                    </Link>
                   </Button>
                 ) : tier.name === "Enterprise" ? (
                   <Button
@@ -204,20 +233,22 @@ function Pricing() {
           ))}
         </section>
 
-        {/* Call to Action for Non-Authenticated Users */}
-        {!session && (
-          <section className="text-center space-y-4 py-8 bg-muted/30 rounded-lg">
-            <h2 className="text-2xl font-semibold">Ready to Get Started?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              {pricingText.cta.subtitle}
-            </p>
-            <div className="flex justify-center gap-4">
-              <Button asChild size="lg">
-                <Link to="/login">Sign In with GitHub</Link>
-              </Button>
-            </div>
-          </section>
-        )}
+        {/* Refund Policy Highlight */}
+        <section className="max-w-3xl mx-auto">
+          <Card className="border-green-500/30 bg-green-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 justify-center">
+                <Shield className="w-5 h-5 text-green-500" />
+                14-day money-back guarantee
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center text-muted-foreground">
+                Try Premium with zero risk. If you’re not happy in the first 14 days, email us for a full refund—no questions asked.
+              </p>
+            </CardContent>
+          </Card>
+        </section>
 
         {/* FAQ Section */}
         <section className="space-y-8">
