@@ -247,17 +247,16 @@ export type RunsRepo = {
 
   /**
    * Get aggregated job health distribution.
-   * Returns success/failure counts grouped by job (unfiltered except userId).
+   * Returns success/failure counts grouped by job, optionally filtered by time range.
    *
    * @param userId - The user ID
+   * @param filters - Optional filter criteria
+   * @param filters.sinceDate - Only count runs since this date (optional)
    * @returns Array of jobs with run counts
    */
-  getJobHealthDistribution: (userId: string) => Promise<Array<{
-    jobId: string;
-    jobName: string;
-    successCount: number;
-    failureCount: number;
-  }>>;
+  getJobHealthDistribution: (userId: string, filters?: {
+    sinceDate?: Date;
+  }) => Promise<Array<{ jobId: string; jobName: string; successCount: number; failureCount: number }>>;
 
   /**
    * Get aggregated metrics for filtered runs.

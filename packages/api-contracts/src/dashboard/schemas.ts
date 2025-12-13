@@ -87,7 +87,7 @@ export const DashboardStatsResponseSchema = z.object({
       }),
     }),
   ).openapi({
-    description: "Job health distribution (unfiltered - shows all jobs)",
+    description: "Job health distribution (filtered by time range)",
   }),
 
   filteredMetrics: z.object({
