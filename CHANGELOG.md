@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/weskerllc/cronicorn/compare/v1.16.0...v1.16.1) (2025-12-13)
+
+
+### Bug Fixes
+
+* Apply time filter to "Runs Per Job" chart ([#83](https://github.com/weskerllc/cronicorn/issues/83)) ([76eeecb](https://github.com/weskerllc/cronicorn/commit/76eeecbc72c5b4a391d2356b0304a2ff5bf1b76c))
+
 # [1.16.0](https://github.com/weskerllc/cronicorn/compare/v1.15.1...v1.16.0) (2025-12-07)
 
 
