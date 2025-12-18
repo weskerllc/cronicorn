@@ -1,5 +1,6 @@
 import { Outlet, createFileRoute, isRedirect, redirect } from "@tanstack/react-router";
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { SidebarInset, SidebarProvider } from "@cronicorn/ui-library/components/sidebar";
 import { AppSidebar } from "../components/nav/app-sidebar";
@@ -7,6 +8,9 @@ import { SiteHeader } from "../components/nav/site-header";
 import { AuthLayoutSkeleton } from "../components/skeletons/auth-layout-skeleton";
 import { PageSkeleton } from "../components/skeletons/page-skeleton";
 import { getSession } from "../lib/auth-client";
+import { UsageWarningBanner } from "../components/composed/usage-warning-banner";
+import { usageQueryOptions } from "../lib/api-client/queries/subscriptions.queries";
+import { getMostCriticalWarning } from "../lib/usage-helpers";
 
 export const Route = createFileRoute("/_authed")({
   // Disable SSR for authenticated routes since we need client-side session
@@ -57,6 +61,23 @@ function AuthenticatedLayout() {
   // This is the TanStack Router recommended pattern for sharing auth state
   const { session } = Route.useRouteContext();
 
+  // Fetch usage data to show warnings when limits are near/reached
+  // Using useQuery (not useSuspenseQuery) to avoid blocking the layout render
+  const { data: usage } = useQuery({
+    ...usageQueryOptions(),
+    // Refetch every 2 minutes to keep warnings up-to-date
+    refetchInterval: 120000,
+  });
+
+  // Calculate if we should show a warning banner
+  const warning = usage
+    ? getMostCriticalWarning([
+        { used: usage.aiCallsUsed, limit: usage.aiCallsLimit, label: "AI Usage" },
+        { used: usage.endpointsUsed, limit: usage.endpointsLimit, label: "Endpoints" },
+        { used: usage.totalRuns, limit: usage.totalRunsLimit, label: "Total Runs" },
+      ])
+    : null;
+
   return (
     <SidebarProvider
       style={{
@@ -73,6 +94,7 @@ function AuthenticatedLayout() {
       <SidebarInset>
         <SiteHeader />
         <div className="@container/main flex flex-1 flex-col gap-4 p-4 sm:p-6 sm:gap-6">
+          {warning && <UsageWarningBanner warning={warning} />}
           <React.Suspense fallback={<PageSkeleton />}>
             <Outlet />
           </React.Suspense>
