@@ -40,7 +40,7 @@ export function ActivityEventItem({ event }: { event: ActivityEvent }) {
 
     return (
         <Link
-            to={isRun ? "/runs/$id" : "/endpoints/$id"}
+            to={isRun ? "/runs/$id" : "/endpoints/$id/ai-sessions"}
             params={{ id: isRun ? event.id : event.endpointId }}
             preload={false}
             className={cn(
