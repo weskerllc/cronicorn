@@ -148,9 +148,9 @@ Failure streak: ${health.failureStreak}, Avg duration: ${health.avgDurationMs ? 
 ## Tools
 
 **Query:**
-- \`get_latest_response\` — Current response body and status
-- \`get_response_history\` — Recent responses (limit: 1-10, default 10; offset for pagination)
-- \`get_sibling_latest_responses\` — Other endpoints in this job
+- \`get_latest_response\` — Current response preview (ask for full body only when necessary)
+- \`get_response_history\` — Recent responses (default 5, metadata-only; set includeBodies=true for truncated payloads)
+- \`get_sibling_latest_responses\` — Other endpoints in this job (includeResponses=true for raw payloads)
 
 **Actions:**
 - \`propose_interval\` — Change frequency (intervalMs, ttlMinutes?, reason?)
@@ -287,6 +287,31 @@ export class AIPlanner {
         toolsCalled: session.toolCalls.map(tc => tc.tool),
         reasoning: safeReasoning.slice(0, 150) + (safeReasoning.length > 150 ? "..." : ""),
         tokens: session.tokenUsage,
+      });
+
+      const toolTelemetry = session.toolCalls.map((tc) => {
+        const argChars = JSON.stringify(tc.args ?? null).length;
+        const resultChars = JSON.stringify(tc.result ?? null).length;
+        const approxTokens = Math.ceil((argChars + resultChars) / 4);
+        return {
+          tool: tc.tool,
+          argChars,
+          resultChars,
+          approxTokens,
+        };
+      });
+
+      const aggregated = toolTelemetry.reduce<Record<string, { count: number; approxTokens: number }>>((acc, entry) => {
+        if (!acc[entry.tool])
+          acc[entry.tool] = { count: 0, approxTokens: 0 };
+        acc[entry.tool].count += 1;
+        acc[entry.tool].approxTokens += entry.approxTokens;
+        return acc;
+      }, {});
+
+      console.warn(`[AI Analysis][telemetry] ${endpoint.name}:`, {
+        tokenUsage: session.tokenUsage,
+        perTool: aggregated,
       });
     }
   }
