@@ -81,7 +81,7 @@ function Pricing() {
         {/* Hero Section */}
         <section className="text-center space-y-6">
           <div className="space-y-3">
-            <Badge variant="default" className="mx-auto bg-linear-to-r from-orange-500 to-pink-500 text-white border-0">
+            <Badge variant="default" className="mx-auto bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0">
               🎉 Early Adopter: 35% off Premium forever
             </Badge>
             <h1 className="text-4xl lg:text-5xl font-bold tracking-tight">
