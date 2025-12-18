@@ -49,6 +49,26 @@ function truncateResponseBody(
   return { value: responseBody, wasTruncated: false };
 }
 
+function summarizeResponseBody(responseBody: unknown, maxLength = 200): string | null {
+  if (responseBody === null || typeof responseBody === "undefined")
+    return null;
+
+  if (typeof responseBody === "string")
+    return responseBody.length <= maxLength ? responseBody : `${responseBody.slice(0, maxLength)}...[truncated]`;
+
+  if (typeof responseBody === "object") {
+    try {
+      const str = JSON.stringify(responseBody);
+      return str.length <= maxLength ? str : `${str.slice(0, maxLength)}...[truncated]`;
+    }
+    catch {
+      return "[unserializable object]";
+    }
+  }
+
+  return String(responseBody).slice(0, maxLength);
+}
+
 /**
  * Create endpoint-scoped tools for AI to control scheduling.
  *
@@ -201,20 +221,28 @@ export function createToolsForEndpoint(
           };
         }
 
+        const { value, wasTruncated } = truncateResponseBody(result.responseBody, 500);
+        const preview = summarizeResponseBody(result.responseBody);
+
         return {
           found: true,
-          responseBody: result.responseBody,
+          responseBody: value,
           timestamp: result.timestamp.toISOString(),
           status: result.status,
+          responsePreview: preview,
+          tokenSavingNote: wasTruncated
+            ? "Response body truncated at 500 chars to reduce token usage"
+            : undefined,
         };
       },
     }),
 
     get_response_history: tool({
-      description: "Get recent response bodies from this endpoint to identify trends (e.g., increasing error rates, growing queue sizes, performance degradation). 10 records is usually sufficient for analysis. Responses are returned newest-first.",
+      description: "Get recent responses to identify trends. Bodies are omitted by default to keep costs low—set includeBodies=true when you really need the raw payloads. Responses are returned newest-first.",
       schema: z.object({
-        limit: z.number().int().min(1).max(10).default(10).describe("Number of recent responses to retrieve (max 10, default 10)"),
+        limit: z.number().int().min(1).max(10).default(5).describe("Number of recent responses to retrieve (max 10, default 5)"),
         offset: z.number().int().min(0).default(0).describe("Number of newest responses to skip for pagination (0 = start from most recent)"),
+        includeBodies: z.boolean().default(false).describe("Set true to include truncated response bodies (defaults to metadata only)"),
       }),
       execute: async (args) => {
         const history = await runs.getResponseHistory(endpointId, args.limit, args.offset);
@@ -232,15 +260,27 @@ export function createToolsForEndpoint(
 
         // Truncate response bodies to prevent token overflow
         let anyTruncated = false;
+        let lastSignature: string | null = null;
         const truncatedResponses = history.map((r) => {
-          const { value, wasTruncated } = truncateResponseBody(r.responseBody);
+          const signature = JSON.stringify(r.responseBody ?? null);
+          const isDuplicate = signature === lastSignature;
+          if (!isDuplicate)
+            lastSignature = signature;
+
+          const preview = summarizeResponseBody(r.responseBody);
+          const { value, wasTruncated } = args.includeBodies
+            ? truncateResponseBody(r.responseBody, 500)
+            : { value: undefined, wasTruncated: false };
           if (wasTruncated)
             anyTruncated = true;
+
           return {
-            responseBody: value,
+            responseBody: args.includeBodies ? value : undefined,
+            responsePreview: preview,
             timestamp: r.timestamp.toISOString(),
             status: r.status,
             durationMs: r.durationMs,
+            duplicateOfNewer: isDuplicate || undefined,
           };
         });
 
@@ -258,21 +298,25 @@ export function createToolsForEndpoint(
           hasMore,
           responses: truncatedResponses,
           hint: hasMore
-            ? "More history exists if needed, but 10 records is usually sufficient for trend analysis"
+            ? "More history exists if needed, but smaller batches (<=5) keep token usage low"
             : args.offset > 0
               ? "Reached end of history"
               : undefined,
-          tokenSavingNote: anyTruncated
-            ? "Response bodies truncated at 1000 chars to prevent token overflow"
-            : undefined,
+          tokenSavingNote: args.includeBodies
+            ? anyTruncated
+              ? "Response bodies truncated at 500 chars to prevent token overflow"
+              : undefined
+            : "Response bodies omitted by default. Set includeBodies=true only when necessary.",
         };
       },
     }),
 
     get_sibling_latest_responses: tool({
-      description: "Get latest responses from all sibling endpoints in the same job, including their health status, schedule info, and active AI hints. Use this for coordinating across endpoints (e.g., ETL pipeline dependencies, cross-endpoint monitoring).",
-      schema: z.object({}),
-      execute: async () => {
+      description: "Get latest responses from sibling endpoints. Metadata is returned by default; set includeResponses=true only when you need the raw payloads.",
+      schema: z.object({
+        includeResponses: z.boolean().default(false).describe("Set true to include truncated response bodies"),
+      }),
+      execute: async (args) => {
         const now = clock.now();
 
         // Get sibling responses
@@ -293,6 +337,10 @@ export function createToolsForEndpoint(
         // Combine response data with endpoint info
         const enrichedSiblings = siblingResponses.map((response) => {
           const endpoint = siblingEndpoints.find(ep => ep.id === response.endpointId);
+          const { value, wasTruncated } = args.includeResponses
+            ? truncateResponseBody(response.responseBody, 400)
+            : { value: undefined, wasTruncated: false };
+          const preview = summarizeResponseBody(response.responseBody);
 
           // Build schedule info
           const scheduleInfo = endpoint
@@ -320,17 +368,24 @@ export function createToolsForEndpoint(
           return {
             endpointId: response.endpointId,
             endpointName: response.endpointName,
-            responseBody: response.responseBody,
+            responseBody: args.includeResponses ? value : undefined,
+            responsePreview: preview,
             timestamp: response.timestamp.toISOString(),
             status: response.status,
             schedule: scheduleInfo,
             aiHints,
+            tokenSavingNote: args.includeResponses && wasTruncated
+              ? "Response truncated at 400 chars"
+              : undefined,
           };
         });
 
         return {
           count: enrichedSiblings.length,
           siblings: enrichedSiblings,
+          note: args.includeResponses
+            ? undefined
+            : "Response bodies omitted by default to minimize token usage",
         };
       },
     }),
