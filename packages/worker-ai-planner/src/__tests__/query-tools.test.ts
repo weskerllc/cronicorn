@@ -64,6 +64,8 @@ describe("query tools", () => {
         responseBody: { queueDepth: 42, status: "healthy" },
         timestamp: "2025-01-15T11:30:00.000Z",
         status: "success",
+        responsePreview: "{\"queueDepth\":42,\"status\":\"healthy\"}",
+        tokenSavingNote: undefined,
       });
     });
 
@@ -111,6 +113,8 @@ describe("query tools", () => {
         responseBody: null,
         timestamp: "2025-01-15T11:30:00.000Z",
         status: "failed",
+        responsePreview: null,
+        tokenSavingNote: undefined,
       });
     });
   });
@@ -142,34 +146,37 @@ describe("query tools", () => {
 
       // Mock both the main call and the hasMore check
       mockRuns.getResponseHistory
-        .mockResolvedValueOnce(mockHistory) // Main call: limit=10 (new default), offset=0
-        .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=10
+        .mockResolvedValueOnce(mockHistory) // Main call: limit=5 (new default), offset=0
+        .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=5
 
       const result = await callTool(tools, "get_response_history", {});
 
-      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 10, 0);
-      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 1, 10);
+      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 5, 0);
+      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 1, 5);
       expect(result).toMatchObject({
         count: 2,
         hasMore: false,
         pagination: {
           offset: 0,
-          limit: 10,
+          limit: 5,
         },
         responses: [
           {
-            responseBody: { value: 100 },
+            responseBody: undefined,
+            responsePreview: "{\"value\":100}",
             timestamp: "2025-01-15T11:50:00.000Z",
             status: "success",
             durationMs: 150,
           },
           {
-            responseBody: { value: 95 },
+            responseBody: undefined,
+            responsePreview: "{\"value\":95}",
             timestamp: "2025-01-15T11:40:00.000Z",
             status: "success",
             durationMs: 142,
           },
         ],
+        tokenSavingNote: "Response bodies omitted by default. Set includeBodies=true only when necessary.",
       });
     });
 
@@ -240,8 +247,8 @@ describe("query tools", () => {
           nextOffset: 2,
         },
         responses: [
-          { responseBody: { iteration: 1 } },
-          { responseBody: { iteration: 2 } },
+          { responseBody: undefined, responsePreview: "{\"iteration\":1}" },
+          { responseBody: undefined, responsePreview: "{\"iteration\":2}" },
         ],
       });
 
@@ -277,9 +284,9 @@ describe("query tools", () => {
           nextOffset: undefined,
         },
         responses: [
-          { responseBody: { iteration: 3 } },
-          { responseBody: { iteration: 4 } },
-          { responseBody: { iteration: 5 } },
+          { responseBody: undefined, responsePreview: "{\"iteration\":3}" },
+          { responseBody: undefined, responsePreview: "{\"iteration\":4}" },
+          { responseBody: undefined, responsePreview: "{\"iteration\":5}" },
         ],
       });
 
@@ -344,7 +351,7 @@ describe("query tools", () => {
         .mockResolvedValueOnce(mockHistory) // Main call: limit=3, offset=0
         .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=3
 
-      const result = await callTool(tools, "get_response_history", { limit: 3 });
+      const result = await callTool(tools, "get_response_history", { limit: 3, includeBodies: true });
 
       // @ts-expect-error result is unknown from callTool helper
       expect(result.count).toBe(3);
@@ -384,7 +391,11 @@ describe("query tools", () => {
       const result1 = await callTool(tools, "get_response_history", { limit: 1 });
 
       // @ts-expect-error result is unknown
-      expect(result1.tokenSavingNote).toBeUndefined();
+      expect(result1.tokenSavingNote).toBe("Response bodies omitted by default. Set includeBodies=true only when necessary.");
+      // @ts-expect-error result is unknown
+      expect(result1.responses[0].responseBody).toBeUndefined();
+      // @ts-expect-error result is unknown
+      expect(result1.responses[0].responsePreview).toBe("{\"status\":\"ok\",\"count\":10}");
 
       // Test 2: Long response body (> 1000 chars) - truncation occurs
       const longBody = "x".repeat(1500); // 1500 character string
@@ -401,12 +412,33 @@ describe("query tools", () => {
         .mockResolvedValueOnce(longHistory)
         .mockResolvedValueOnce([]);
 
-      const result2 = await callTool(tools, "get_response_history", { limit: 1 });
+      const result2 = await callTool(tools, "get_response_history", { limit: 1, includeBodies: true });
 
       // @ts-expect-error result is unknown
-      expect(result2.tokenSavingNote).toBe("Response bodies truncated at 1000 chars to prevent token overflow");
+      expect(result2.tokenSavingNote).toBe("Response bodies truncated at 500 chars to prevent token overflow");
       // @ts-expect-error result is unknown
       expect(result2.responses[0].responseBody).toContain("...[truncated]");
+
+      // Test 3: Include bodies without truncation - note should be undefined
+      const mediumHistory = [
+        {
+          responseBody: { ok: true },
+          timestamp: new Date("2025-01-15T11:45:00Z"),
+          status: "success",
+          durationMs: 120,
+        },
+      ];
+
+      mockRuns.getResponseHistory
+        .mockResolvedValueOnce(mediumHistory)
+        .mockResolvedValueOnce([]);
+
+      const result3 = await callTool(tools, "get_response_history", { limit: 1, includeBodies: true });
+
+      // @ts-expect-error result is unknown
+      expect(result3.tokenSavingNote).toBeUndefined();
+      // @ts-expect-error result is unknown
+      expect(result3.responses[0].responseBody).toEqual({ ok: true });
     });
   });
 
@@ -471,7 +503,7 @@ describe("query tools", () => {
         clock: mockClock,
       });
 
-      const result = await callTool(tools, "get_sibling_latest_responses", {});
+      const result = await callTool(tools, "get_sibling_latest_responses", { includeResponses: true });
 
       expect(mockRuns.getSiblingLatestResponses).toHaveBeenCalledWith(jobId, endpointId);
       expect(mockJobs.listEndpointsByJob).toHaveBeenCalledWith(jobId);
@@ -511,7 +543,7 @@ describe("query tools", () => {
         clock: mockClock,
       });
 
-      const result = await callTool(tools, "get_sibling_latest_responses", {});
+      const result = await callTool(tools, "get_sibling_latest_responses", { includeResponses: true });
 
       expect(result).toEqual({
         count: 0,
@@ -552,7 +584,7 @@ describe("query tools", () => {
         clock: mockClock,
       });
 
-      const result = await callTool(tools, "get_sibling_latest_responses", {});
+      const result = await callTool(tools, "get_sibling_latest_responses", { includeResponses: true });
 
       // @ts-expect-error result is unknown from callTool helper
       expect(result.count).toBe(1);
