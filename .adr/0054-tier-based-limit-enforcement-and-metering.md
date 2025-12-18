@@ -63,20 +63,24 @@ User creates endpoint → Check endpoint count → If >= limit, throw error → 
 
 **Test Coverage:** `packages/services/src/jobs/__tests__/manager.test.ts`
 
-#### B. Minimum Interval (Hard Limit - Clamp)
+#### B. Minimum Interval (Hard Limit - Reject for Baseline, Clamp for Guardrails)
 
 **Enforcement Points:**
-1. `JobsManager.createEndpoint()` - Clamp baselineIntervalMs to >= minIntervalMs
+1. `JobsManager.createEndpoint()` - **Rejects** if `baselineIntervalMs` < tier minimum, **Clamps** `minIntervalMs` guardrail to tier minimum
 2. `Scheduler.planNextRun()` - Clamp calculated interval to min/max bounds
 3. `Governor` domain policy - Enforce [lastRunAt+min, lastRunAt+max] window
 
-**Behavior:** Silently clamp to minimum if user attempts shorter interval
+**Behavior:** 
+- **Baseline interval**: Reject with 400 error if below tier minimum (fail-fast)
+- **Guardrails**: Clamp `minIntervalMs` to tier minimum (silent enforcement)
 
 ```
-User sets interval=5s, min=60s → Clamp to 60s → Endpoint runs at 60s intervals
+User sets baselineIntervalMs=5s, tier min=60s → Reject with 400 error + upgrade message
+User sets minIntervalMs=5s, tier min=60s → Clamp to 60s (guardrail enforcement)
 ```
 
-**Why clamping vs rejection:** Prevents admin friction; user's intent (frequent checking) is still honored within limits.
+**Why reject baseline:** User explicitly requests interval; rejecting provides clear feedback and upgrade path.
+**Why clamp guardrails:** Optional safety constraint; clamping prevents accidental misconfiguration.
 
 **Test Coverage:** `packages/services/src/jobs/__tests__/manager.test.ts`, scheduler timing tests
 

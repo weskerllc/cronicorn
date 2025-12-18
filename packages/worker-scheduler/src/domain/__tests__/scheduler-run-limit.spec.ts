@@ -323,7 +323,7 @@ describe("scheduler - execution metering (monthly run limits)", () => {
       expect(dispatcher.execute).not.toHaveBeenCalled();
     });
 
-    it("should logs warning when limit exceeded", async () => {
+    it("should log warning when limit exceeded", async () => {
       vi.mocked(runs.getFilteredMetrics).mockResolvedValue({
         totalRuns: 10_000,
         successCount: 10_000,
@@ -335,6 +335,14 @@ describe("scheduler - execution metering (monthly run limits)", () => {
 
       // Verify the endpoint was not executed
       expect(dispatcher.execute).not.toHaveBeenCalled();
+      
+      // Verify warning was logged
+      const warnLogs = logger.getLogsByLevel("warn");
+      expect(warnLogs.length).toBeGreaterThan(0);
+      const limitWarning = warnLogs.find(log => 
+        log.msg?.includes("Monthly run limit exceeded")
+      );
+      expect(limitWarning).toBeDefined();
     });
   });
 
