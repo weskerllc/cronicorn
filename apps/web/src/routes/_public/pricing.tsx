@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@cronicorn/ui-library/components/accordion";
 import { AlertCircle, Check, Shield, Star } from "lucide-react";
 
-import { business, metaDescriptions, pageTitles, pricing, pricingFAQs, pricingText } from "@cronicorn/content";
+import { business, metaDescriptions, pageTitles, pricing, pricingFAQs } from "@cronicorn/content";
 import { useSession } from "@/lib/auth-client";
 import { createFAQSchema, createProductSchema, createSEOHead } from "@/lib/seo";
 
