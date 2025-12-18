@@ -1,3 +1,11 @@
+## [1.16.2](https://github.com/weskerllc/cronicorn/compare/v1.16.1...v1.16.2) (2025-12-18)
+
+
+### Bug Fixes
+
+* Add global warning banner for tier limit visibility ([#86](https://github.com/weskerllc/cronicorn/issues/86)) ([97aec05](https://github.com/weskerllc/cronicorn/commit/97aec05bbd648b6c6bcf6813d0948a5064a425f5))
+* AI Tool payload budgeting ([f897569](https://github.com/weskerllc/cronicorn/commit/f8975696943cdede7f74eb45840b1d97a0411c92))
+
 ## [1.16.1](https://github.com/weskerllc/cronicorn/compare/v1.16.0...v1.16.1) (2025-12-13)
 
 
