@@ -36,8 +36,7 @@
         "failTitle": false,
         "labels": false,
         "releasedLabels": false,
-        "addReleases": "bottom",
-        "releaseBodyTemplate": "<%= nextRelease.notes %>\n\n---\n\n## 🐳 Docker Images\n\n| Service | Image |\n|---------|-------|\n| API | [`ghcr.io/weskerllc/cronicorn/api:<%= nextRelease.version %>`](https://github.com/weskerllc/cronicorn/pkgs/container/cronicorn%2Fapi) |\n| Scheduler | [`ghcr.io/weskerllc/cronicorn/scheduler:<%= nextRelease.version %>`](https://github.com/weskerllc/cronicorn/pkgs/container/cronicorn%2Fscheduler) |\n| AI Planner | [`ghcr.io/weskerllc/cronicorn/ai-planner:<%= nextRelease.version %>`](https://github.com/weskerllc/cronicorn/pkgs/container/cronicorn%2Fai-planner) |\n| Web | [`ghcr.io/weskerllc/cronicorn/web:<%= nextRelease.version %>`](https://github.com/weskerllc/cronicorn/pkgs/container/cronicorn%2Fweb) |\n| Docs | [`ghcr.io/weskerllc/cronicorn/docs:<%= nextRelease.version %>`](https://github.com/weskerllc/cronicorn/pkgs/container/cronicorn%2Fdocs) |\n| Migrator | [`ghcr.io/weskerllc/cronicorn/migrator:<%= nextRelease.version %>`](https://github.com/weskerllc/cronicorn/pkgs/container/cronicorn%2Fmigrator) |"
+        "addReleases": "bottom"
       }
     ]
   ]
