@@ -335,12 +335,12 @@ describe("scheduler - execution metering (monthly run limits)", () => {
 
       // Verify the endpoint was not executed
       expect(dispatcher.execute).not.toHaveBeenCalled();
-      
+
       // Verify warning was logged
       const warnLogs = logger.getLogsByLevel("warn");
       expect(warnLogs.length).toBeGreaterThan(0);
-      const limitWarning = warnLogs.find(log => 
-        log.msg?.includes("Monthly run limit exceeded")
+      const limitWarning = warnLogs.find(log =>
+        log.msg?.includes("Monthly run limit exceeded"),
       );
       expect(limitWarning).toBeDefined();
     });
