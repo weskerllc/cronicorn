@@ -166,9 +166,10 @@ POST /jobs/{jobId}/endpoints
 POST /jobs/{jobId}/endpoints
   { baselineIntervalMs: 5_000 }
 → JobsManager validates
-→ Clamp to minIntervalMs: Math.max(5_000, 60_000) = 60_000
-→ Endpoint created with 60s interval (silently)
-→ User sees nextRunAt 60s away, not 5s
+→ JobsManager validates
+→ baselineIntervalMs (5_000) < minIntervalMs (60_000)
+→ Throw error: "Minimum interval for free tier is 60 seconds"
+→ API returns 400
 ```
 
 #### Example 3: Free User Hits 10k Monthly Runs on Jan 31
