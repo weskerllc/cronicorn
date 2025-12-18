@@ -26,7 +26,7 @@ export function UsageWarningBanner({ warning }: UsageWarningBannerProps) {
 
   const isCritical = warning.level === "critical";
   const Icon = isCritical ? IconAlertCircle : IconAlertTriangle;
-  const variant = isCritical ? "destructive" : "default";
+  // const variant = isCritical ? "destructive" : "default";
 
   const percentage = formatUsagePercentage(warning.metric.used, warning.metric.limit);
   const title = isCritical
@@ -34,30 +34,29 @@ export function UsageWarningBanner({ warning }: UsageWarningBannerProps) {
     : `${warning.metric.label} nearing limit`;
 
   return (
-    <Alert variant={variant} className="relative">
+    <Alert className='bg-primary text-primary-foreground flex justify-between border-none'>
       <Icon className="h-4 w-4" />
-      <AlertTitle>{title}</AlertTitle>
-      <AlertDescription>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span>
-            You've used {warning.metric.used.toLocaleString()} of {warning.metric.limit.toLocaleString()} ({percentage}). 
-            {isCritical && " New operations may be blocked."}
-          </span>
-          <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to="/usage">View Usage</Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDismissed(true)}
-              aria-label="Dismiss warning"
-            >
-              <IconX className="h-4 w-4" />
-            </Button>
-          </div>
+      <div className='flex flex-1 flex-col gap-4'>
+        <div className='flex-1 flex-col justify-center gap-1'>
+          <AlertTitle>{title}</AlertTitle>
+          <AlertDescription className='text-primary-foreground/80'>
+            You've used {warning.metric.used.toLocaleString()} of {warning.metric.limit.toLocaleString()} ({percentage}).
+            {isCritical && " New operations may be blocked."}          </AlertDescription>
         </div>
-      </AlertDescription>
+        <div className='flex items-center gap-4'>
+          <Button asChild className='bg-secondary/10 focus-visible:bg-secondary/20 hover:bg-secondary/20 h-7 cursor-pointer rounded-md px-2'>
+            <Link to="/usage">View Usage</Link>
+          </Button>
+          <Button variant='secondary' asChild className='h-7 cursor-pointer rounded-md px-2'>
+            <Link to="/pricing">View Plans</Link>
+          </Button>
+        </div>
+      </div>
+      <button className='size-5 cursor-pointer' onClick={() => setDismissed(true)}>
+        <IconX className='size-5' />
+        <span className='sr-only'>Close</span>
+      </button>
     </Alert>
+
   );
 }
