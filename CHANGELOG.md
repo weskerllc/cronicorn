@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/weskerllc/cronicorn/compare/v1.17.0...v1.17.1) (2025-12-19)
+
+
+### Bug Fixes
+
+* Pricing page bug with subcription api route ([9212585](https://github.com/weskerllc/cronicorn/commit/9212585f7cf72e76f84a757252143626fc42aabb))
+
 # [1.17.0](https://github.com/weskerllc/cronicorn/compare/v1.16.2...v1.17.0) (2025-12-19)
 
 
