@@ -32,7 +32,7 @@
 6. **Limited dashboard regression tests**: Refund helper logic is unit-tested, but the `/dashboard/plan` component still lacks UI-level coverage; add component or Playwright tests once the harness is ready
 
 ### Migration Notes
-- Backfill script `0019_backfill_refund_status.sql` marks all existing Pro users as `refund_status='expired'`
-- This prevents retroactive refund claims for users subscribed before feature launch
-- New Pro subscriptions get `refund_status='eligible'` on first payment
+- TODO: Add a backfill SQL migration that marks all existing Pro users as `refund_status='expired'`
+- This migration must run before enabling refunds in production to prevent retroactive refund claims for users subscribed before feature launch
+- New Pro subscriptions already get `refund_status='eligible'` on first payment via application logic
 
