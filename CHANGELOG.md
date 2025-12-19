@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/weskerllc/cronicorn/compare/v1.16.2...v1.17.0) (2025-12-19)
+
+
+### Features
+
+* Implement cost-aligned pricing with early adopter incentives ([#81](https://github.com/weskerllc/cronicorn/issues/81)) ([8959edb](https://github.com/weskerllc/cronicorn/commit/8959edbb25e0f23628f3e414153692c11da411c2))
+
 ## [1.16.2](https://github.com/weskerllc/cronicorn/compare/v1.16.1...v1.16.2) (2025-12-18)
 
 
