@@ -1,4 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
@@ -9,6 +10,7 @@ import { AlertCircle, Check, Shield, Star } from "lucide-react";
 
 import { business, metaDescriptions, pageTitles, pricing, pricingFAQs } from "@cronicorn/content";
 import { useSession } from "@/lib/auth-client";
+import { createCheckoutSession } from "@/lib/api-client/queries/subscriptions.queries";
 import { createFAQSchema, createProductSchema, createSEOHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/_public/pricing")({
@@ -35,9 +37,18 @@ export const Route = createFileRoute("/_public/pricing")({
 function Pricing() {
   const { data: session } = useSession();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
+  const checkoutMutation = useMutation({
+    mutationFn: (tier: "pro" | "enterprise") => createCheckoutSession({ tier }),
+    onSuccess: (data) => {
+      window.location.href = data.checkoutUrl;
+    },
+    onError: (err) => {
+      console.error("Checkout error:", err);
+    },
+  });
+  const checkoutErrorMessage = checkoutMutation.error && checkoutMutation.error instanceof Error
+    ? checkoutMutation.error.message : null;
 
   const handleCheckout = async (tier: "pro" | "enterprise") => {
     if (!session) {
@@ -45,32 +56,7 @@ function Pricing() {
       return;
     }
 
-    setLoading(tier);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/subscriptions/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ tier }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      window.location.href = data.checkoutUrl;
-    }
-    catch (err) {
-      console.error("Checkout error:", err);
-      setError(err instanceof Error ? err.message : "Failed to create checkout session");
-      setLoading(null);
-    }
+    await checkoutMutation.mutateAsync(tier);
   };
 
   const faqs = pricingFAQs;
@@ -128,10 +114,10 @@ function Pricing() {
           </div>
         </section>
 
-        {error && (
+        {checkoutErrorMessage && (
           <Alert variant="destructive" role="alert">
             <AlertCircle className="size-4" aria-hidden="true" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{checkoutErrorMessage}</AlertDescription>
           </Alert>
         )}
 
@@ -221,11 +207,11 @@ function Pricing() {
                 ) : (
                   <Button
                     onClick={() => handleCheckout("pro")}
-                    disabled={!session || loading === "pro"}
+                    disabled={!session || checkoutMutation.isPending}
                     className="w-full"
-                    aria-label={loading === "pro" ? "Processing..." : session ? `Subscribe to ${tier.name} plan` : "Sign in to subscribe"}
+                    aria-label={checkoutMutation.isPending ? "Processing..." : session ? `Subscribe to ${tier.name} plan` : "Sign in to subscribe"}
                   >
-                    {loading === "pro" ? "Processing..." : session ? tier.cta : "Sign in to subscribe"}
+                    {checkoutMutation.isPending ? "Processing..." : session ? tier.cta : "Sign in to subscribe"}
                   </Button>
                 )}
               </CardFooter>
