@@ -4,28 +4,37 @@
 
 **HTTP Job Scheduler that adapts to your system**
 
-*Stop writing complex scheduling logic.*<br>
-*Rate limit fallbacks, conditional retries, adaptive intervals—describe what you want in plain language.*<br>
-*Cronicorn learns and adapts within your rules. Every decision auditable.*
-
+<p align="center">
+Stop writing complex scheduling logic. Cronicorn executes the policy you describe while keeping every decision auditable.
 <br>
 
-<img src=".github/images/timeline-animation.gif" alt="Cronicorn AI Adaptation" width="700">
+From rate limit fallbacks, conditional retries, to adaptive intervals—describe what you want in plain language.
+</p>
 
-**5-min health check → issue detected → AI tightens to 30s → resolved → back to 5-min**
+<p align="center">
+  <img src=".github/images/timeline-animation.gif" alt="Cronicorn AI Adaptation" width="640">
+  <br>
+  <em>Flash sale surge → AI tightens to 30s + cache warming → stabilizes → back to 5-min</em>
+</p>
 
-<br>
+<p align="center">
+  <a href="https://cronicorn.com"><strong>Start Now (Free) →</strong></a>
+</p>
 
-### [Start Now (Free) →](https://cronicorn.com)
+<p align="center">
+  <small>
+   <a href="https://docs.cronicorn.com/mcp-server">🤖 MCP Server</a> ·
+    <a href="https://docs.cronicorn.com">📖 Docs</a> ·
+    <a href="https://cronicorn.com/api/reference">🎮 API Playground</a> ·
+    <a href="https://docs.cronicorn.com/self-hosting">🐳 Self-Host</a> ·
+    <a href="https://github.com/weskerllc/cronicorn/issues/new">💬 Support</a>
+  </small>
+</p>
 
-<div align="center">
-
-**[🤖 MCP Server](https://docs.cronicorn.com/mcp-server)** • **[📖 Docs](https://docs.cronicorn.com)** • **[🎮 API Playground](https://cronicorn.com/api/reference)** • **[🐳 Self-Host](https://docs.cronicorn.com/self-hosting)** • **[💬 Support](https://github.com/weskerllc/cronicorn/issues/new)**
-
-<br>
-
-[![Build Status](https://img.shields.io/github/actions/workflow/status/weskerllc/cronicorn/ci.yml?branch=main)](https://github.com/weskerllc/cronicorn/actions)
-[![Version](https://img.shields.io/npm/v/@cronicorn/mcp-server)](https://www.npmjs.com/package/@cronicorn/mcp-server)
-[![Downloads](https://img.shields.io/npm/dm/@cronicorn/mcp-server)](https://www.npmjs.com/package/@cronicorn/mcp-server)
+<p align="center" style="margin-top: 10px;">
+  <a href="https://github.com/weskerllc/cronicorn/actions"><img src="https://img.shields.io/github/actions/workflow/status/weskerllc/cronicorn/ci.yml?branch=main" alt="Build Status"></a>
+  <a href="https://www.npmjs.com/package/@cronicorn/mcp-server"><img src="https://img.shields.io/npm/v/@cronicorn/mcp-server" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@cronicorn/mcp-server"><img src="https://img.shields.io/npm/dm/@cronicorn/mcp-server" alt="npm downloads"></a>
+</p>
 
 </div>
