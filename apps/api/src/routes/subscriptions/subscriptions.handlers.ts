@@ -117,9 +117,9 @@ export const handleRequestRefund: AppRouteHandler<typeof routes.requestRefund> =
   catch (error) {
     // User not eligible - return 400
     if (error instanceof Error && (
-      error.message.includes("eligible") ||
-      error.message.includes("expired") ||
-      error.message.includes("already")
+      error.message.includes("eligible")
+      || error.message.includes("expired")
+      || error.message.includes("already")
     )) {
       throw new HTTPException(400, { message: error.message });
     }

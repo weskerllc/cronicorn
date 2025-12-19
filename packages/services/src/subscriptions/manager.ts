@@ -79,10 +79,12 @@ export class SubscriptionsManager {
 
     // Calculate refund eligibility
     const now = new Date();
-    const isEligibleForRefund = user.tier === "pro"
+    const isEligibleForRefund = Boolean(
+      user.tier === "pro"
       && user.refundStatus === "eligible"
       && user.refundWindowExpiresAt
-      && user.refundWindowExpiresAt > now;
+      && user.refundWindowExpiresAt > now,
+    );
 
     // Return tier and subscription details
     // Note: subscriptionStatus and endsAt are on user table but not returned by getUserById
@@ -105,6 +107,8 @@ export class SubscriptionsManager {
    * Validates eligibility, issues refund, cancels subscription, and downgrades to free tier.
    *
    * @param input - Refund request parameters
+   * @param input.userId - User ID requesting the refund
+   * @param input.reason - Optional reason for the refund
    * @returns Refund details
    */
   async requestRefund(input: { userId: string; reason?: string }): Promise<{ refundId: string; status: string }> {
