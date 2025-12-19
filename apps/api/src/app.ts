@@ -2,6 +2,7 @@ import { CronParserAdapter } from "@cronicorn/adapter-cron";
 import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { cors } from "hono/cors";
+import { logger } from "hono/logger";
 
 import type { Auth } from "./auth/config.js";
 import type { Env } from "./lib/config.js";
@@ -51,6 +52,10 @@ export async function createApp(
   // Create main OpenAPI app
   // eslint-disable-next-line ts/consistent-type-assertions
   const app = createRouter().basePath("/api") as AppOpenAPI;
+
+  if (config.LOG_LEVEL === "debug") {
+    app.use("*", logger());
+  }
 
   // Configure CORS globally to allow direct requests from web app (no proxy)
   app.use(
