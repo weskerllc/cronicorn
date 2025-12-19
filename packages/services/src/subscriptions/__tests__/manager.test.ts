@@ -57,6 +57,8 @@ describe("subscriptionsManager", () => {
       createPortalSession: vi.fn(),
       verifyWebhook: vi.fn(),
       extractTierFromSubscription: vi.fn(),
+      issueRefund: vi.fn(),
+      cancelSubscriptionNow: vi.fn(),
     };
 
     manager = new SubscriptionsManager({
@@ -381,6 +383,156 @@ describe("subscriptionsManager", () => {
 
         expect(mockJobsRepo.updateUserSubscription).not.toHaveBeenCalled();
       });
+    });
+  });
+});
+
+  describe("requestRefund", () => {
+    it("should issue refund for eligible Pro user within 14-day window", async () => {
+      const now = new Date("2025-01-15T00:00:00Z");
+      const activatedAt = new Date("2025-01-10T00:00:00Z");
+      const expiresAt = new Date("2025-01-24T00:00:00Z");
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "eligible",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+      vi.mocked(mockPaymentProvider.issueRefund).mockResolvedValue({
+        refundId: "re_test_123",
+        status: "succeeded",
+      });
+      vi.mocked(mockPaymentProvider.cancelSubscriptionNow).mockResolvedValue();
+
+      const result = await manager.requestRefund({
+        userId: "user_123",
+        reason: "Not satisfied",
+      });
+
+      expect(result.refundId).toBe("re_test_123");
+      expect(result.status).toBe("succeeded");
+
+      // Verify refund was issued
+      expect(mockPaymentProvider.issueRefund).toHaveBeenCalledWith({
+        paymentIntentId: "pi_test_456",
+        reason: "requested_by_customer",
+        metadata: {
+          userId: "user_123",
+          userReason: "Not satisfied",
+        },
+      });
+
+      // Verify subscription was canceled
+      expect(mockPaymentProvider.cancelSubscriptionNow).toHaveBeenCalledWith("sub_123");
+
+      // Verify database was updated
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
+        tier: "free",
+        subscriptionStatus: "canceled",
+        stripeSubscriptionId: undefined,
+        refundStatus: "issued",
+        refundIssuedAt: expect.any(Date),
+        refundReason: "Not satisfied",
+      });
+    });
+
+    it("should reject refund for non-Pro tier", async () => {
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "free" as const,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        subscriptionActivatedAt: null,
+        refundWindowExpiresAt: null,
+        lastPaymentIntentId: null,
+        lastInvoiceId: null,
+        refundStatus: null,
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+
+      await expect(
+        manager.requestRefund({ userId: "user_123", reason: "Test" })
+      ).rejects.toThrow("Only Pro tier is eligible for refunds");
+    });
+
+    it("should reject refund if already issued", async () => {
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: new Date("2025-01-10T00:00:00Z"),
+        refundWindowExpiresAt: new Date("2025-01-24T00:00:00Z"),
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "issued",
+        refundIssuedAt: new Date("2025-01-12T00:00:00Z"),
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+
+      await expect(
+        manager.requestRefund({ userId: "user_123" })
+      ).rejects.toThrow("Refund already issued");
+    });
+
+    it("should reject refund if window expired", async () => {
+      const now = new Date("2025-02-01T00:00:00Z");
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: new Date("2025-01-10T00:00:00Z"),
+        refundWindowExpiresAt: new Date("2025-01-24T00:00:00Z"), // Expired
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "eligible",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+
+      await expect(
+        manager.requestRefund({ userId: "user_123" })
+      ).rejects.toThrow("Refund window has expired");
+    });
+
+    it("should reject refund if no payment intent found", async () => {
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: new Date("2025-01-10T00:00:00Z"),
+        refundWindowExpiresAt: new Date("2025-01-24T00:00:00Z"),
+        lastPaymentIntentId: null, // Missing
+        lastInvoiceId: null,
+        refundStatus: "eligible",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+
+      await expect(
+        manager.requestRefund({ userId: "user_123" })
+      ).rejects.toThrow("No payment intent found");
     });
   });
 });
