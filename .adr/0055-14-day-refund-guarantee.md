@@ -217,6 +217,7 @@ Implementation:
 2. ✅ Run backfill `0019_backfill_refund_status.sql` (marks existing Pro users as expired)
 3. ✅ Deploy API with new `/subscriptions/refund` endpoint
 4. ✅ Update web UI to show refund CTA (Phase 9)
+  - Implemented on dashboard plan route (`apps/web/src/routes/_authed/plan.tsx`) with inline countdown, confirmation dialog, and API wiring to `/subscriptions/refund`
 
 **Future Enhancements**:
 - Add admin override endpoint: `POST /admin/subscriptions/:userId/refund`

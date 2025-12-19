@@ -321,9 +321,23 @@ export class SubscriptionsManager {
     // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Payment succeeded: user=${user.id}`);
 
-    await this.deps.jobsRepo.updateUserSubscription(user.id, {
+    const updatePayload: {
+      subscriptionStatus: "active";
+      lastPaymentIntentId?: string;
+      lastInvoiceId?: string;
+    } = {
       subscriptionStatus: "active",
-    });
+    };
+
+    if (typeof invoice.payment_intent === "string" && invoice.payment_intent.length > 0) {
+      updatePayload.lastPaymentIntentId = invoice.payment_intent;
+    }
+
+    if (typeof invoice.id === "string" && invoice.id.length > 0) {
+      updatePayload.lastInvoiceId = invoice.id;
+    }
+
+    await this.deps.jobsRepo.updateUserSubscription(user.id, updatePayload);
   }
 
   /**

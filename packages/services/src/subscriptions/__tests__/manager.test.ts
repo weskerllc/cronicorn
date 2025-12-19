@@ -372,7 +372,7 @@ describe("subscriptionsManager", () => {
     });
 
     describe("invoice.payment_succeeded", () => {
-      it("should mark subscription as active", async () => {
+      it("should mark subscription as active and capture payment intent", async () => {
         const mockUser = createMockUser({
           id: "user_123",
           email: "test@example.com",
@@ -385,6 +385,8 @@ describe("subscriptionsManager", () => {
           type: "invoice.payment_succeeded",
           data: {
             customer: "cus_123",
+            payment_intent: "pi_456",
+            id: "in_456",
           },
         };
 
@@ -392,6 +394,8 @@ describe("subscriptionsManager", () => {
 
         expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
           subscriptionStatus: "active",
+          lastPaymentIntentId: "pi_456",
+          lastInvoiceId: "in_456",
         });
       });
     });
