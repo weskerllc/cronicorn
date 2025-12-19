@@ -77,6 +77,13 @@ export class SubscriptionsManager {
       throw new Error(`User not found: ${userId}`);
     }
 
+    // Calculate refund eligibility
+    const now = new Date();
+    const isEligibleForRefund = user.tier === "pro"
+      && user.refundStatus === "eligible"
+      && user.refundWindowExpiresAt
+      && user.refundWindowExpiresAt > now;
+
     // Return tier and subscription details
     // Note: subscriptionStatus and endsAt are on user table but not returned by getUserById
     // For MVP, just return tier - can enhance later
@@ -84,7 +91,90 @@ export class SubscriptionsManager {
       tier: user.tier,
       status: null, // TODO: Add to getUserById return type
       endsAt: null, // TODO: Add to getUserById return type
+      refundEligibility: {
+        eligible: isEligibleForRefund,
+        expiresAt: user.refundWindowExpiresAt,
+        status: user.refundStatus,
+      },
     };
+  }
+
+  /**
+   * Request a refund for Pro subscription within 14-day window.
+   *
+   * Validates eligibility, issues refund, cancels subscription, and downgrades to free tier.
+   *
+   * @param input - Refund request parameters
+   * @returns Refund details
+   */
+  async requestRefund(input: { userId: string; reason?: string }): Promise<{ refundId: string; status: string }> {
+    const { userId, reason } = input;
+
+    // 1. Get user details
+    const user = await this.deps.jobsRepo.getUserById(userId);
+
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+
+    // 2. Validate eligibility
+    if (user.tier !== "pro") {
+      throw new Error("Only Pro tier is eligible for refunds");
+    }
+
+    if (user.refundStatus === "issued") {
+      throw new Error("Refund already issued for this subscription");
+    }
+
+    const now = new Date();
+    if (!user.refundWindowExpiresAt || user.refundWindowExpiresAt <= now) {
+      throw new Error("Refund window has expired (must be within 14 days of first payment)");
+    }
+
+    if (!user.lastPaymentIntentId) {
+      throw new Error("No payment intent found for refund");
+    }
+
+    // 3. Issue refund via payment provider
+    // eslint-disable-next-line no-console
+    console.log(`[SubscriptionsManager] Issuing refund for user ${userId}, payment intent ${user.lastPaymentIntentId}`);
+
+    const refundResult = await this.deps.paymentProvider.issueRefund({
+      paymentIntentId: user.lastPaymentIntentId,
+      reason: "requested_by_customer",
+      metadata: {
+        userId,
+        userReason: reason || "14-day money-back guarantee",
+      },
+    });
+
+    // 4. Cancel subscription immediately to prevent future billing
+    if (user.stripeSubscriptionId) {
+      // eslint-disable-next-line no-console
+      console.log(`[SubscriptionsManager] Canceling subscription ${user.stripeSubscriptionId} for user ${userId}`);
+      await this.deps.paymentProvider.cancelSubscriptionNow(user.stripeSubscriptionId);
+    }
+
+    // 5. Update database: downgrade to free, record refund
+    await this.deps.jobsRepo.updateUserSubscription(userId, {
+      tier: "free",
+      subscriptionStatus: "canceled",
+      stripeSubscriptionId: undefined, // Clear subscription ID
+      refundStatus: "issued",
+      refundIssuedAt: now,
+      refundReason: reason || "14-day money-back guarantee",
+    });
+
+    // 6. Emit log event for analytics/audit
+    // eslint-disable-next-line no-console
+    console.log(`[SubscriptionsManager] Refund issued`, {
+      userId,
+      refundId: refundResult.refundId,
+      amount: "full",
+      reason: reason || "14-day money-back guarantee",
+    });
+
+    return refundResult;
   }
 
   /**
@@ -138,12 +228,21 @@ export class SubscriptionsManager {
     // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Checkout completed: user=${userId}, tier=${tier}, customer=${session.customer}`);
 
+    // Calculate refund window (14 days from now)
+    const now = new Date();
+    const refundWindowExpiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
+
     await this.deps.jobsRepo.updateUserSubscription(userId, {
       tier,
       stripeCustomerId: session.customer,
       stripeSubscriptionId: session.subscription,
       subscriptionStatus: "active",
       subscriptionEndsAt: null, // Will be set by subscription events
+      subscriptionActivatedAt: now,
+      refundWindowExpiresAt,
+      lastPaymentIntentId: session.payment_intent,
+      lastInvoiceId: session.invoice,
+      refundStatus: tier === "pro" ? "eligible" : "expired", // Only Pro tier gets refund window
     });
   }
 
@@ -205,6 +304,13 @@ export class SubscriptionsManager {
 
     if (!user) {
       console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${invoice.customer}`);
+      return;
+    }
+
+    // Skip if user already refunded (idempotency check)
+    if (user.refundStatus === "issued") {
+      // eslint-disable-next-line no-console
+      console.log(`[SubscriptionsManager] Ignoring payment_succeeded for refunded user: ${user.id}`);
       return;
     }
 

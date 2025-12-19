@@ -7,6 +7,7 @@ const router = createRouter()
   .openapi(routes.createCheckout, handlers.handleCreateCheckout)
   .openapi(routes.createPortal, handlers.handleCreatePortal)
   .openapi(routes.getStatus, handlers.handleGetStatus)
-  .openapi(routes.getUsage, handlers.handleGetUsage);
+  .openapi(routes.getUsage, handlers.handleGetUsage)
+  .openapi(routes.requestRefund, handlers.handleRequestRefund);
 
 export default router;
