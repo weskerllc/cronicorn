@@ -25,6 +25,15 @@ export const user = pgTable("user", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status"), // 'active' | 'trialing' | 'canceled' | 'past_due' | 'incomplete'
   subscriptionEndsAt: timestamp("subscription_ends_at", { mode: "date" }),
+
+  // Refund guarantee fields (14-day money-back)
+  subscriptionActivatedAt: timestamp("subscription_activated_at", { mode: "date" }), // First successful payment timestamp
+  refundWindowExpiresAt: timestamp("refund_window_expires_at", { mode: "date" }), // Activation + 14 days
+  lastPaymentIntentId: text("last_payment_intent_id"), // Payment intent for refund
+  lastInvoiceId: text("last_invoice_id"), // Invoice reference
+  refundStatus: text("refund_status"), // 'eligible' | 'requested' | 'issued' | 'expired'
+  refundIssuedAt: timestamp("refund_issued_at", { mode: "date" }), // When refund was issued
+  refundReason: text("refund_reason"), // User-provided or system reason
 });
 
 /**

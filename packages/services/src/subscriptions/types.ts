@@ -19,4 +19,9 @@ export type SubscriptionStatus = {
   tier: "free" | "pro" | "enterprise";
   status: string | null;
   endsAt: Date | null;
+  refundEligibility?: {
+    eligible: boolean;
+    expiresAt: Date | null;
+    status: string | null;
+  };
 };

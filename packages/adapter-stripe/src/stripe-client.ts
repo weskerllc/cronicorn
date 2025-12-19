@@ -166,6 +166,43 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   /**
+   * Issue a refund for a payment.
+   *
+   * @param params - Refund parameters
+   * @returns Refund ID and status
+   */
+  async issueRefund(params: {
+    paymentIntentId: string;
+    amountCents?: number;
+    reason?: "requested_by_customer" | "duplicate" | "fraudulent";
+    metadata?: Record<string, string>;
+  }): Promise<{ refundId: string; status: string }> {
+    const refund = await this.stripe.refunds.create({
+      payment_intent: params.paymentIntentId,
+      amount: params.amountCents,
+      reason: params.reason,
+      metadata: params.metadata,
+    });
+
+    return {
+      refundId: refund.id,
+      status: refund.status,
+    };
+  }
+
+  /**
+   * Cancel subscription immediately (no grace period).
+   *
+   * @param subscriptionId - Stripe subscription ID
+   */
+  async cancelSubscriptionNow(subscriptionId: string): Promise<void> {
+    await this.stripe.subscriptions.cancel(subscriptionId, {
+      prorate: false,
+      invoice_now: false,
+    });
+  }
+
+  /**
    * Map Stripe price ID back to tier.
    *
    * @deprecated Use extractTierFromSubscription instead for port compliance
