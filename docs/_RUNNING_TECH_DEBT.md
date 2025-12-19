@@ -29,6 +29,7 @@
 3. **No partial refunds**: Always full amount (may want admin capability for partial refunds)
 4. **Enterprise excluded**: Manual process required (should have approval workflow in future)
 5. **No refund rate analytics**: Can't track % of users who request refunds (add to dashboard)
+6. **Limited dashboard regression tests**: Refund helper logic is unit-tested, but the `/dashboard/plan` component still lacks UI-level coverage; add component or Playwright tests once the harness is ready
 
 ### Migration Notes
 - Backfill script `0019_backfill_refund_status.sql` marks all existing Pro users as `refund_status='expired'`
