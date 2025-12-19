@@ -16,6 +16,46 @@ describe("subscriptionsManager", () => {
   let mockJobsRepo: JobsRepo;
   let mockPaymentProvider: PaymentProvider;
 
+  // Helper to create complete user mock with all refund fields
+  const createMockUser = (overrides: Partial<{
+    id: string;
+    email: string;
+    tier: "free" | "pro" | "enterprise";
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    subscriptionActivatedAt: Date | null;
+    refundWindowExpiresAt: Date | null;
+    lastPaymentIntentId: string | null;
+    lastInvoiceId: string | null;
+    refundStatus: string | null;
+    refundIssuedAt: Date | null;
+  }>) => ({
+    id: "user_123",
+    email: "test@example.com",
+    tier: "free" as const,
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    subscriptionActivatedAt: null,
+    refundWindowExpiresAt: null,
+    lastPaymentIntentId: null,
+    lastInvoiceId: null,
+    refundStatus: null,
+    refundIssuedAt: null,
+    ...overrides,
+  });
+
+  // Helper to create user from webhook lookup (fewer fields)
+  const createMockWebhookUser = (overrides: Partial<{
+    id: string;
+    email: string;
+    refundStatus: string | null;
+  }>) => ({
+    id: "user_123",
+    email: "test@example.com",
+    refundStatus: null,
+    ...overrides,
+  });
+
   beforeEach(() => {
     // Mock JobsRepo
     mockJobsRepo = {
@@ -70,12 +110,12 @@ describe("subscriptionsManager", () => {
 
   describe("createCheckout", () => {
     it("should create checkout session for new subscriber", async () => {
-      const mockUser = {
+      const mockUser = createMockUser({
         id: "user_123",
         email: "test@example.com",
-        tier: "free" as const,
+        tier: "free",
         stripeCustomerId: null,
-      };
+      });
 
       vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
       vi.mocked(mockPaymentProvider.createCheckoutSession).mockResolvedValue({
@@ -101,12 +141,12 @@ describe("subscriptionsManager", () => {
     });
 
     it("should reuse existing Stripe customer", async () => {
-      const mockUser = {
+      const mockUser = createMockUser({
         id: "user_123",
         email: "test@example.com",
-        tier: "pro" as const,
+        tier: "pro",
         stripeCustomerId: "cus_existing_123",
-      };
+      });
 
       vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
       vi.mocked(mockPaymentProvider.createCheckoutSession).mockResolvedValue({
@@ -137,12 +177,12 @@ describe("subscriptionsManager", () => {
 
   describe("createPortal", () => {
     it("should create portal session for subscriber", async () => {
-      const mockUser = {
+      const mockUser = createMockUser({
         id: "user_123",
         email: "test@example.com",
-        tier: "pro" as const,
+        tier: "pro",
         stripeCustomerId: "cus_123",
-      };
+      });
 
       vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
       vi.mocked(mockPaymentProvider.createPortalSession).mockResolvedValue({
@@ -161,12 +201,12 @@ describe("subscriptionsManager", () => {
     });
 
     it("should throw error if user has no subscription", async () => {
-      const mockUser = {
+      const mockUser = createMockUser({
         id: "user_123",
         email: "test@example.com",
-        tier: "free" as const,
+        tier: "free",
         stripeCustomerId: null,
-      };
+      });
 
       vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
 
@@ -178,12 +218,12 @@ describe("subscriptionsManager", () => {
 
   describe("getSubscriptionStatus", () => {
     it("should return subscription status", async () => {
-      const mockUser = {
+      const mockUser = createMockUser({
         id: "user_123",
         email: "test@example.com",
-        tier: "pro" as const,
+        tier: "pro",
         stripeCustomerId: "cus_123",
-      };
+      });
 
       vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
 
@@ -193,6 +233,11 @@ describe("subscriptionsManager", () => {
         tier: "pro",
         status: null,
         endsAt: null,
+        refundEligibility: {
+          eligible: false,
+          expiresAt: null,
+          status: null,
+        },
       });
     });
   });
@@ -214,13 +259,18 @@ describe("subscriptionsManager", () => {
 
         await manager.handleWebhookEvent(event);
 
-        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", expect.objectContaining({
           tier: "pro",
           stripeCustomerId: "cus_123",
           stripeSubscriptionId: "sub_123",
           subscriptionStatus: "active",
           subscriptionEndsAt: null,
-        });
+          subscriptionActivatedAt: expect.any(Date),
+          refundWindowExpiresAt: expect.any(Date),
+          lastPaymentIntentId: undefined,
+          lastInvoiceId: undefined,
+          refundStatus: "eligible",
+        }));
       });
 
       it("should throw error if metadata is missing", async () => {
@@ -240,13 +290,13 @@ describe("subscriptionsManager", () => {
 
     describe("customer.subscription.updated", () => {
       it("should update subscription details", async () => {
-        const mockUser = {
+        const mockUser = createMockUser({
           id: "user_123",
           email: "test@example.com",
-          tier: "pro" as const,
-        };
+          tier: "pro",
+        });
 
-        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(mockUser);
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(createMockWebhookUser({ id: mockUser.id, email: mockUser.email }));
         vi.mocked(mockPaymentProvider.extractTierFromSubscription).mockReturnValue("enterprise");
 
         const event = {
@@ -296,13 +346,13 @@ describe("subscriptionsManager", () => {
 
     describe("customer.subscription.deleted", () => {
       it("should downgrade user to free tier", async () => {
-        const mockUser = {
+        const mockUser = createMockUser({
           id: "user_123",
           email: "test@example.com",
-          tier: "pro" as const,
-        };
+          tier: "pro",
+        });
 
-        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(mockUser);
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(createMockWebhookUser({ id: mockUser.id, email: mockUser.email }));
 
         const event = {
           type: "customer.subscription.deleted",
@@ -323,13 +373,13 @@ describe("subscriptionsManager", () => {
 
     describe("invoice.payment_succeeded", () => {
       it("should mark subscription as active", async () => {
-        const mockUser = {
+        const mockUser = createMockUser({
           id: "user_123",
           email: "test@example.com",
-          tier: "pro" as const,
-        };
+          tier: "pro",
+        });
 
-        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(mockUser);
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(createMockWebhookUser({ id: mockUser.id, email: mockUser.email }));
 
         const event = {
           type: "invoice.payment_succeeded",
@@ -348,13 +398,13 @@ describe("subscriptionsManager", () => {
 
     describe("invoice.payment_failed", () => {
       it("should mark subscription as past_due", async () => {
-        const mockUser = {
+        const mockUser = createMockUser({
           id: "user_123",
           email: "test@example.com",
-          tier: "pro" as const,
-        };
+          tier: "pro",
+        });
 
-        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(mockUser);
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(createMockWebhookUser({ id: mockUser.id, email: mockUser.email }));
 
         const event = {
           type: "invoice.payment_failed",
@@ -385,13 +435,12 @@ describe("subscriptionsManager", () => {
       });
     });
   });
-});
 
   describe("requestRefund", () => {
     it("should issue refund for eligible Pro user within 14-day window", async () => {
-      const now = new Date("2025-01-15T00:00:00Z");
-      const activatedAt = new Date("2025-01-10T00:00:00Z");
-      const expiresAt = new Date("2025-01-24T00:00:00Z");
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days after activation
 
       const mockUser = {
         id: "user_123",
@@ -464,7 +513,7 @@ describe("subscriptionsManager", () => {
       vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
 
       await expect(
-        manager.requestRefund({ userId: "user_123", reason: "Test" })
+        manager.requestRefund({ userId: "user_123", reason: "Test" }),
       ).rejects.toThrow("Only Pro tier is eligible for refunds");
     });
 
@@ -486,12 +535,12 @@ describe("subscriptionsManager", () => {
       vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
 
       await expect(
-        manager.requestRefund({ userId: "user_123" })
+        manager.requestRefund({ userId: "user_123" }),
       ).rejects.toThrow("Refund already issued");
     });
 
     it("should reject refund if window expired", async () => {
-      const now = new Date("2025-02-01T00:00:00Z");
+      const _now = new Date("2025-02-01T00:00:00Z");
       const mockUser = {
         id: "user_123",
         email: "test@example.com",
@@ -509,19 +558,23 @@ describe("subscriptionsManager", () => {
       vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
 
       await expect(
-        manager.requestRefund({ userId: "user_123" })
+        manager.requestRefund({ userId: "user_123" }),
       ).rejects.toThrow("Refund window has expired");
     });
 
     it("should reject refund if no payment intent found", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days after activation
+
       const mockUser = {
         id: "user_123",
         email: "test@example.com",
         tier: "pro" as const,
         stripeCustomerId: "cus_123",
         stripeSubscriptionId: "sub_123",
-        subscriptionActivatedAt: new Date("2025-01-10T00:00:00Z"),
-        refundWindowExpiresAt: new Date("2025-01-24T00:00:00Z"),
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
         lastPaymentIntentId: null, // Missing
         lastInvoiceId: null,
         refundStatus: "eligible",
@@ -531,7 +584,7 @@ describe("subscriptionsManager", () => {
       vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
 
       await expect(
-        manager.requestRefund({ userId: "user_123" })
+        manager.requestRefund({ userId: "user_123" }),
       ).rejects.toThrow("No payment intent found");
     });
   });

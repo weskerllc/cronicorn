@@ -368,13 +368,29 @@ export class InMemoryJobsRepo implements JobsRepo {
   }
 
   // Subscription management methods (not implemented in fixture)
-  async getUserById(_userId: string): Promise<{ id: string; email: string; tier: "free" | "pro" | "enterprise"; stripeCustomerId: string | null } | null> {
+  async getUserById(_userId: string): Promise<{
+    id: string;
+    email: string;
+    tier: "free" | "pro" | "enterprise";
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    subscriptionActivatedAt: Date | null;
+    refundWindowExpiresAt: Date | null;
+    lastPaymentIntentId: string | null;
+    lastInvoiceId: string | null;
+    refundStatus: string | null;
+    refundIssuedAt: Date | null;
+  } | null> {
     // In-memory fixture: return minimal user for testing
     // Real tests should mock this method
     return null;
   }
 
-  async getUserByStripeCustomerId(_customerId: string): Promise<{ id: string; email: string; tier: "free" | "pro" | "enterprise" } | null> {
+  async getUserByStripeCustomerId(_customerId: string): Promise<{
+    id: string;
+    email: string;
+    refundStatus: string | null;
+  } | null> {
     // In-memory fixture: not implemented
     return null;
   }
@@ -387,6 +403,13 @@ export class InMemoryJobsRepo implements JobsRepo {
       stripeSubscriptionId?: string;
       subscriptionStatus?: string;
       subscriptionEndsAt?: Date | null;
+      subscriptionActivatedAt?: Date;
+      refundWindowExpiresAt?: Date;
+      lastPaymentIntentId?: string;
+      lastInvoiceId?: string;
+      refundStatus?: string;
+      refundIssuedAt?: Date;
+      refundReason?: string;
     },
   ): Promise<void> {
     // In-memory fixture: no-op

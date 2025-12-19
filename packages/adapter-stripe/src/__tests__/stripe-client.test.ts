@@ -249,7 +249,6 @@ describe("stripePaymentProvider", () => {
       expect(tier).toBeNull();
     });
   });
-});
 
   describe("issueRefund", () => {
     it("should issue refund for payment intent", async () => {

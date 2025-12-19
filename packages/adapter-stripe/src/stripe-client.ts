@@ -169,6 +169,10 @@ export class StripePaymentProvider implements PaymentProvider {
    * Issue a refund for a payment.
    *
    * @param params - Refund parameters
+   * @param params.paymentIntentId - Stripe payment intent ID to refund
+   * @param params.amountCents - Optional amount in cents (defaults to full refund)
+   * @param params.reason - Reason for the refund
+   * @param params.metadata - Additional metadata to attach to the refund
    * @returns Refund ID and status
    */
   async issueRefund(params: {
@@ -186,7 +190,7 @@ export class StripePaymentProvider implements PaymentProvider {
 
     return {
       refundId: refund.id,
-      status: refund.status,
+      status: refund.status ?? "pending",
     };
   }
 
