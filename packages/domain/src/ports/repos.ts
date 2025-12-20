@@ -180,7 +180,7 @@ export type JobsRepo = {
   updateUserSubscription: (userId: string, patch: {
     tier?: "free" | "pro" | "enterprise";
     stripeCustomerId?: string;
-    stripeSubscriptionId?: string;
+    stripeSubscriptionId?: string | null;
     subscriptionStatus?: string;
     subscriptionEndsAt?: Date | null;
     subscriptionActivatedAt?: Date;

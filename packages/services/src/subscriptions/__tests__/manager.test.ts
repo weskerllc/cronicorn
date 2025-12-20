@@ -3,6 +3,11 @@ import type { JobsRepo, PaymentProvider } from "@cronicorn/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SubscriptionsManager } from "../manager.js";
+import {
+  RefundAlreadyProcessedError,
+  RefundExpiredError,
+  RefundNotEligibleError,
+} from "../errors.js";
 
 /**
  * Unit tests for SubscriptionsManager
@@ -488,11 +493,19 @@ describe("subscriptionsManager", () => {
       // Verify subscription was canceled
       expect(mockPaymentProvider.cancelSubscriptionNow).toHaveBeenCalledWith("sub_123");
 
-      // Verify database was updated
-      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
+      // Verify database was updated (should be called twice - once for "requested", once for "issued")
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledTimes(2);
+      
+      // First call: Mark as "requested"
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(1, "user_123", {
+        refundStatus: "requested",
+      });
+      
+      // Second call: Mark as "issued" with full details
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(2, "user_123", {
         tier: "free",
         subscriptionStatus: "canceled",
-        stripeSubscriptionId: undefined,
+        stripeSubscriptionId: null,
         refundStatus: "issued",
         refundIssuedAt: expect.any(Date),
         refundReason: "Not satisfied",
@@ -518,7 +531,7 @@ describe("subscriptionsManager", () => {
 
       await expect(
         manager.requestRefund({ userId: "user_123", reason: "Test" }),
-      ).rejects.toThrow("Only Pro tier is eligible for refunds");
+      ).rejects.toThrow(RefundNotEligibleError);
     });
 
     it("should reject refund if already issued", async () => {
@@ -540,7 +553,7 @@ describe("subscriptionsManager", () => {
 
       await expect(
         manager.requestRefund({ userId: "user_123" }),
-      ).rejects.toThrow("Refund already issued");
+      ).rejects.toThrow(RefundAlreadyProcessedError);
     });
 
     it("should reject refund if window expired", async () => {
@@ -563,7 +576,7 @@ describe("subscriptionsManager", () => {
 
       await expect(
         manager.requestRefund({ userId: "user_123" }),
-      ).rejects.toThrow("Refund window has expired");
+      ).rejects.toThrow(RefundExpiredError);
     });
 
     it("should reject refund if no payment intent found", async () => {
@@ -589,7 +602,7 @@ describe("subscriptionsManager", () => {
 
       await expect(
         manager.requestRefund({ userId: "user_123" }),
-      ).rejects.toThrow("No payment intent found");
+      ).rejects.toThrow(RefundNotEligibleError);
     });
   });
 });

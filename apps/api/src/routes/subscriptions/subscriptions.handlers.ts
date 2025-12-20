@@ -4,6 +4,12 @@ import type { AppRouteHandler } from "../../types.js";
 import type * as routes from "./subscriptions.routes.js";
 
 import { getAuthContext } from "../../auth/middleware.js";
+import {
+  RefundAlreadyProcessedError,
+  RefundConcurrencyError,
+  RefundExpiredError,
+  RefundNotEligibleError,
+} from "@cronicorn/services/subscriptions/errors";
 
 /**
  * Route Handlers for Subscription Management
@@ -115,14 +121,12 @@ export const handleRequestRefund: AppRouteHandler<typeof routes.requestRefund> =
     return c.json(result, 200);
   }
   catch (error) {
-    // User not eligible / refund cannot be processed for business-rule reasons - return 400
+    // Business rule violations - return 400
     if (
-      error instanceof Error
-      && (
-        error.name === "RefundNotEligibleError"
-        || error.name === "RefundExpiredError"
-        || error.name === "RefundAlreadyProcessedError"
-      )
+      error instanceof RefundNotEligibleError
+      || error instanceof RefundExpiredError
+      || error instanceof RefundAlreadyProcessedError
+      || error instanceof RefundConcurrencyError
     ) {
       throw new HTTPException(400, { message: error.message });
     }
