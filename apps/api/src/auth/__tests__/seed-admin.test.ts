@@ -17,6 +17,7 @@ import { seedAdminUser } from "../seed-admin.js";
 
 const testConfig: Env = {
   NODE_ENV: "test",
+  LOG_LEVEL: "debug",
   PORT: 3000,
   DATABASE_URL: "postgres://test",
   API_URL: "http://localhost:3000",

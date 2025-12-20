@@ -26,6 +26,7 @@ const getJson = async (res: Response): Promise<any> => await res.json();
 const mockUserId = "test-user-1";
 const testConfig: Env = {
   NODE_ENV: "test",
+  LOG_LEVEL: "debug",
   PORT: 3000,
   DATABASE_URL: "postgres://test",
   API_URL: "http://localhost:3000",

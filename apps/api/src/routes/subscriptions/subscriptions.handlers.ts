@@ -3,7 +3,7 @@ import {
   RefundConcurrencyError,
   RefundExpiredError,
   RefundNotEligibleError,
-} from "@cronicorn/services/subscriptions/errors";
+} from "@cronicorn/services";
 import { HTTPException } from "hono/http-exception";
 
 import type { AppRouteHandler } from "../../types.js";
@@ -49,13 +49,17 @@ export const handleCreatePortal: AppRouteHandler<typeof routes.createPortal> = a
     return c.json(result, 200);
   }
   catch (error) {
-    // User has no subscription - return 400
-    if (error instanceof Error && error.message.includes("no active subscription")) {
-      throw new HTTPException(400, { message: error.message });
+    if (error instanceof Error) {
+      // User has no subscription - return 400
+      if (error.message.includes("no active subscription")) {
+        throw new HTTPException(400, { message: error.message });
+      }
+
+      throw new HTTPException(500, { message: error.message });
     }
 
     throw new HTTPException(500, {
-      message: error instanceof Error ? error.message : "Failed to create portal session",
+      message: "Failed to create portal session",
     });
   }
 };
