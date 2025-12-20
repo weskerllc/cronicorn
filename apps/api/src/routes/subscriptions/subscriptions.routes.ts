@@ -4,6 +4,8 @@ import {
   CreatePortalRequestSchema,
   CreatePortalResponseSchema,
   ErrorSchema,
+  RequestRefundRequestSchema,
+  RequestRefundResponseSchema,
   SubscriptionStatusResponseSchema,
   UsageResponseSchema,
 } from "@cronicorn/api-contracts/subscriptions";
@@ -168,6 +170,61 @@ export const getUsage = createRoute({
       content: {
         "application/json": {
           schema: UsageResponseSchema,
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized - authentication required",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+    500: {
+      description: "Internal server error",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+  },
+  security: [{ cookieAuth: [] }],
+});
+
+// ==================== POST /subscriptions/refund ====================
+
+export const requestRefund = createRoute({
+  method: "post",
+  path: "/subscriptions/refund",
+  tags: ["subscriptions"],
+  hide: true,
+  summary: "Request 14-Day Money-Back Refund",
+  description: "Request a full refund for Pro subscription within 14 days of first payment",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: RequestRefundRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Refund issued successfully",
+      content: {
+        "application/json": {
+          schema: RequestRefundResponseSchema,
+        },
+      },
+    },
+    400: {
+      description: "Not eligible for refund (wrong tier, window expired, already refunded, etc.)",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
         },
       },
     },

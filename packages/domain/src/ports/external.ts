@@ -81,4 +81,30 @@ export type PaymentProvider = {
    * @returns Tier name or null if tier cannot be determined
    */
   extractTierFromSubscription: (subscriptionData: unknown) => "pro" | "enterprise" | null;
+
+  /**
+   * Issue a refund for a payment.
+   *
+   * Refunds the full amount for the specified payment intent.
+   * Used for 14-day money-back guarantee implementation.
+   *
+   * @param params - Refund parameters
+   * @returns Refund ID and status from payment provider
+   */
+  issueRefund: (params: {
+    paymentIntentId: string;
+    amountCents?: number; // Optional: defaults to full amount
+    reason?: "requested_by_customer" | "duplicate" | "fraudulent";
+    metadata?: Record<string, string>;
+  }) => Promise<{ refundId: string; status: string }>;
+
+  /**
+   * Cancel subscription immediately (no grace period).
+   *
+   * Cancels the subscription effective immediately, preventing future charges.
+   * Used when issuing refunds to ensure no additional billing.
+   *
+   * @param subscriptionId - Stripe subscription ID
+   */
+  cancelSubscriptionNow: (subscriptionId: string) => Promise<void>;
 };

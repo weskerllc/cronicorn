@@ -148,6 +148,13 @@ export type JobsRepo = {
     email: string;
     tier: "free" | "pro" | "enterprise";
     stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    subscriptionActivatedAt: Date | null;
+    refundWindowExpiresAt: Date | null;
+    lastPaymentIntentId: string | null;
+    lastInvoiceId: string | null;
+    refundStatus: string | null;
+    refundIssuedAt: Date | null;
   } | null>;
 
   /**
@@ -159,6 +166,7 @@ export type JobsRepo = {
   getUserByStripeCustomerId: (customerId: string) => Promise<{
     id: string;
     email: string;
+    refundStatus: string | null;
   } | null>;
 
   /**
@@ -172,9 +180,16 @@ export type JobsRepo = {
   updateUserSubscription: (userId: string, patch: {
     tier?: "free" | "pro" | "enterprise";
     stripeCustomerId?: string;
-    stripeSubscriptionId?: string;
+    stripeSubscriptionId?: string | null;
     subscriptionStatus?: string;
     subscriptionEndsAt?: Date | null;
+    subscriptionActivatedAt?: Date;
+    refundWindowExpiresAt?: Date;
+    lastPaymentIntentId?: string;
+    lastInvoiceId?: string;
+    refundStatus?: string;
+    refundIssuedAt?: Date;
+    refundReason?: string;
   }) => Promise<void>;
 
   /**
