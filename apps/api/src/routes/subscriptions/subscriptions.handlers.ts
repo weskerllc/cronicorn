@@ -115,12 +115,15 @@ export const handleRequestRefund: AppRouteHandler<typeof routes.requestRefund> =
     return c.json(result, 200);
   }
   catch (error) {
-    // User not eligible - return 400
-    if (error instanceof Error && (
-      error.message.includes("eligible")
-      || error.message.includes("expired")
-      || error.message.includes("already")
-    )) {
+    // User not eligible / refund cannot be processed for business-rule reasons - return 400
+    if (
+      error instanceof Error
+      && (
+        error.name === "RefundNotEligibleError"
+        || error.name === "RefundExpiredError"
+        || error.name === "RefundAlreadyProcessedError"
+      )
+    ) {
       throw new HTTPException(400, { message: error.message });
     }
 
