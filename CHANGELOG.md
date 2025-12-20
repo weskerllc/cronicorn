@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/weskerllc/cronicorn/compare/v1.17.1...v1.18.0) (2025-12-20)
+
+
+### Features
+
+* Implement 14-day money-back guarantee for Pro subscriptions ([#91](https://github.com/weskerllc/cronicorn/issues/91)) ([b7275c2](https://github.com/weskerllc/cronicorn/commit/b7275c2f9d7c1b289ce6bebe55683dec22814200))
+
 ## [1.17.1](https://github.com/weskerllc/cronicorn/compare/v1.17.0...v1.17.1) (2025-12-19)
 
 
