@@ -127,6 +127,13 @@
       "when": 1764873009618,
       "tag": "0017_green_daredevil",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1766173074337,
+      "tag": "0018_yielding_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }

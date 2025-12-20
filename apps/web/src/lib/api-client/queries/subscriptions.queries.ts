@@ -10,7 +10,7 @@ type SuccessResponse<T> = Exclude<T, { message: string } | { error: string }>;
 // ==================== Query Functions ====================
 
 const $getStatus = apiClient.api.subscriptions.status.$get;
-type GetSubscriptionStatusResponse = SuccessResponse<InferResponseType<typeof $getStatus>>;
+export type GetSubscriptionStatusResponse = SuccessResponse<InferResponseType<typeof $getStatus>>;
 
 export async function getSubscriptionStatus(): Promise<GetSubscriptionStatusResponse> {
   const resp = await apiClient.api.subscriptions.status.$get({ param: {} });
@@ -61,6 +61,23 @@ export async function createPortalSession(): Promise<CreatePortalResponse> {
   const resp = await apiClient.api.subscriptions.portal.$post({
     param: {},
     json: {},
+  });
+  const json = await resp.json();
+
+  if ("error" in json) {
+    throw new Error(json.error);
+  }
+  return json;
+}
+
+const $requestRefund = apiClient.api.subscriptions.refund.$post;
+type RequestRefundRequest = InferRequestType<typeof $requestRefund>["json"];
+type RequestRefundResponse = SuccessResponse<InferResponseType<typeof $requestRefund>>;
+
+export async function requestRefund(data?: RequestRefundRequest): Promise<RequestRefundResponse> {
+  const resp = await apiClient.api.subscriptions.refund.$post({
+    param: {},
+    json: data ?? {},
   });
   const json = await resp.json();
 

@@ -1,5 +1,7 @@
 import type { CreateCheckoutInput, CreatePortalInput, SubscriptionDeps, SubscriptionStatus } from "./types.js";
 
+import { RefundAlreadyProcessedError, RefundConcurrencyError, RefundExpiredError, RefundNotEligibleError } from "./errors.js";
+
 /**
  * SubscriptionsManager - Business logic for subscription management.
  *
@@ -77,6 +79,15 @@ export class SubscriptionsManager {
       throw new Error(`User not found: ${userId}`);
     }
 
+    // Calculate refund eligibility
+    const now = new Date();
+    const isEligibleForRefund = Boolean(
+      user.tier === "pro"
+      && user.refundStatus === "eligible"
+      && user.refundWindowExpiresAt
+      && user.refundWindowExpiresAt > now,
+    );
+
     // Return tier and subscription details
     // Note: subscriptionStatus and endsAt are on user table but not returned by getUserById
     // For MVP, just return tier - can enhance later
@@ -84,7 +95,117 @@ export class SubscriptionsManager {
       tier: user.tier,
       status: null, // TODO: Add to getUserById return type
       endsAt: null, // TODO: Add to getUserById return type
+      refundEligibility: {
+        eligible: isEligibleForRefund,
+        expiresAt: user.refundWindowExpiresAt,
+        status: user.refundStatus,
+      },
     };
+  }
+
+  /**
+   * Request a refund for Pro subscription within 14-day window.
+   *
+   * Validates eligibility, issues refund, cancels subscription, and downgrades to free tier.
+   *
+   * @param input - Refund request parameters
+   * @param input.userId - User ID requesting the refund
+   * @param input.reason - Optional reason for the refund
+   * @returns Refund details
+   */
+  async requestRefund(input: { userId: string; reason?: string }): Promise<{ refundId: string; status: string }> {
+    const { userId, reason } = input;
+
+    // 1. Get user details
+    const user = await this.deps.jobsRepo.getUserById(userId);
+
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+
+    // 2. Validate eligibility
+    if (user.tier !== "pro") {
+      throw new RefundNotEligibleError("Only Pro tier is eligible for refunds");
+    }
+
+    if (user.refundStatus === "issued") {
+      throw new RefundAlreadyProcessedError("Refund already issued for this subscription");
+    }
+
+    if (user.refundStatus === "requested") {
+      throw new RefundConcurrencyError("Refund is already being processed for this subscription");
+    }
+
+    const now = new Date();
+    if (!user.refundWindowExpiresAt || user.refundWindowExpiresAt <= now) {
+      throw new RefundExpiredError("Refund window has expired (must be within 14 days of first payment)");
+    }
+
+    if (!user.lastPaymentIntentId) {
+      throw new RefundNotEligibleError("No payment intent found for refund");
+    }
+
+    // 3. Optimistic lock: Mark as "requested" to prevent concurrent refund attempts
+    // This update will only succeed if refundStatus is still "eligible"
+    try {
+      await this.deps.jobsRepo.updateUserSubscription(userId, {
+        refundStatus: "requested",
+      });
+    }
+    catch {
+      // If update fails, another request may have already started processing
+      throw new RefundConcurrencyError("Unable to process refund - another request may be in progress");
+    }
+
+    try {
+      // 4. Issue refund via payment provider
+    // eslint-disable-next-line no-console
+      console.log(`[SubscriptionsManager] Issuing refund for user ${userId}, payment intent ${user.lastPaymentIntentId}`);
+
+      const refundResult = await this.deps.paymentProvider.issueRefund({
+        paymentIntentId: user.lastPaymentIntentId,
+        reason: "requested_by_customer",
+        metadata: {
+          userId,
+          userReason: reason || "14-day money-back guarantee",
+        },
+      });
+
+      // 5. Cancel subscription immediately to prevent future billing
+      if (user.stripeSubscriptionId) {
+      // eslint-disable-next-line no-console
+        console.log(`[SubscriptionsManager] Canceling subscription ${user.stripeSubscriptionId} for user ${userId}`);
+        await this.deps.paymentProvider.cancelSubscriptionNow(user.stripeSubscriptionId);
+      }
+
+      // 6. Update database: downgrade to free, record refund
+      await this.deps.jobsRepo.updateUserSubscription(userId, {
+        tier: "free",
+        subscriptionStatus: "canceled",
+        stripeSubscriptionId: null, // Clear subscription ID
+        refundStatus: "issued",
+        refundIssuedAt: now,
+        refundReason: reason || "14-day money-back guarantee",
+      });
+
+      // 7. Emit log event for analytics/audit
+      // eslint-disable-next-line no-console
+      console.log(`[SubscriptionsManager] Refund issued`, {
+        userId,
+        refundId: refundResult.refundId,
+        amount: "full",
+        reason: reason || "14-day money-back guarantee",
+      });
+
+      return refundResult;
+    }
+    catch (error) {
+      // Rollback: Reset status back to "eligible" if refund processing failed
+      await this.deps.jobsRepo.updateUserSubscription(userId, {
+        refundStatus: "eligible",
+      });
+      throw error;
+    }
   }
 
   /**
@@ -138,12 +259,21 @@ export class SubscriptionsManager {
     // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Checkout completed: user=${userId}, tier=${tier}, customer=${session.customer}`);
 
+    // Calculate refund window (14 days from now)
+    const now = new Date();
+    const refundWindowExpiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
+
     await this.deps.jobsRepo.updateUserSubscription(userId, {
       tier,
       stripeCustomerId: session.customer,
       stripeSubscriptionId: session.subscription,
       subscriptionStatus: "active",
       subscriptionEndsAt: null, // Will be set by subscription events
+      subscriptionActivatedAt: now,
+      refundWindowExpiresAt,
+      lastPaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : undefined,
+      lastInvoiceId: typeof session.invoice === "string" ? session.invoice : undefined,
+      refundStatus: tier === "pro" ? "eligible" : "expired", // Only Pro tier gets refund window
     });
   }
 
@@ -208,12 +338,33 @@ export class SubscriptionsManager {
       return;
     }
 
+    // Skip if user already refunded (idempotency check)
+    if (user.refundStatus === "issued") {
+      // eslint-disable-next-line no-console
+      console.log(`[SubscriptionsManager] Ignoring payment_succeeded for refunded user: ${user.id}`);
+      return;
+    }
+
     // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Payment succeeded: user=${user.id}`);
 
-    await this.deps.jobsRepo.updateUserSubscription(user.id, {
+    const updatePayload: {
+      subscriptionStatus: "active";
+      lastPaymentIntentId?: string;
+      lastInvoiceId?: string;
+    } = {
       subscriptionStatus: "active",
-    });
+    };
+
+    if (typeof invoice.payment_intent === "string" && invoice.payment_intent.length > 0) {
+      updatePayload.lastPaymentIntentId = invoice.payment_intent;
+    }
+
+    if (typeof invoice.id === "string" && invoice.id.length > 0) {
+      updatePayload.lastInvoiceId = invoice.id;
+    }
+
+    await this.deps.jobsRepo.updateUserSubscription(user.id, updatePayload);
   }
 
   /**

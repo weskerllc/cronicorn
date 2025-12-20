@@ -249,4 +249,82 @@ describe("stripePaymentProvider", () => {
       expect(tier).toBeNull();
     });
   });
+
+  describe("issueRefund", () => {
+    it("should issue refund for payment intent", async () => {
+      const mockRefund = {
+        id: "re_test_123",
+        status: "succeeded",
+      };
+
+      mockStripe.refunds = {
+        create: vi.fn().mockResolvedValue(mockRefund),
+      };
+
+      const result = await provider.issueRefund({
+        paymentIntentId: "pi_test_456",
+        reason: "requested_by_customer",
+        metadata: { userId: "user_789" },
+      });
+
+      expect(result).toEqual({
+        refundId: "re_test_123",
+        status: "succeeded",
+      });
+
+      expect(mockStripe.refunds.create).toHaveBeenCalledWith({
+        payment_intent: "pi_test_456",
+        amount: undefined,
+        reason: "requested_by_customer",
+        metadata: { userId: "user_789" },
+      });
+    });
+
+    it("should issue partial refund when amount specified", async () => {
+      const mockRefund = {
+        id: "re_test_123",
+        status: "succeeded",
+      };
+
+      mockStripe.refunds = {
+        create: vi.fn().mockResolvedValue(mockRefund),
+      };
+
+      await provider.issueRefund({
+        paymentIntentId: "pi_test_456",
+        amountCents: 2000,
+        reason: "duplicate",
+      });
+
+      expect(mockStripe.refunds.create).toHaveBeenCalledWith({
+        payment_intent: "pi_test_456",
+        amount: 2000,
+        reason: "duplicate",
+        metadata: undefined,
+      });
+    });
+  });
+
+  describe("cancelSubscriptionNow", () => {
+    it("should cancel subscription immediately without proration", async () => {
+      mockStripe.subscriptions = {
+        cancel: vi.fn().mockResolvedValue({ id: "sub_test_123", status: "canceled" }),
+      };
+
+      await provider.cancelSubscriptionNow("sub_test_123");
+
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledWith("sub_test_123", {
+        prorate: false,
+        invoice_now: false,
+      });
+    });
+
+    it("should handle cancellation errors", async () => {
+      mockStripe.subscriptions = {
+        cancel: vi.fn().mockRejectedValue(new Error("Stripe API error")),
+      };
+
+      await expect(provider.cancelSubscriptionNow("sub_invalid")).rejects.toThrow("Stripe API error");
+    });
+  });
 });

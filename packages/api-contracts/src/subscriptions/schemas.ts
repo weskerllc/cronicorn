@@ -38,6 +38,40 @@ export const SubscriptionStatusResponseSchema = z.object({
     description: "Subscription end date (ISO 8601)",
     example: "2025-11-16T00:00:00Z",
   }),
+  refundEligibility: z.object({
+    eligible: z.boolean().openapi({
+      description: "Whether user is eligible for 14-day money-back refund",
+      example: true,
+    }),
+    expiresAt: z.string().nullable().openapi({
+      description: "Refund window expiration date (ISO 8601)",
+      example: "2025-11-30T00:00:00Z",
+    }),
+    status: z.string().nullable().openapi({
+      description: "Refund status (eligible, issued, expired)",
+      example: "eligible",
+    }),
+  }).optional().openapi({
+    description: "Refund eligibility information (14-day money-back guarantee)",
+  }),
+});
+
+export const RequestRefundRequestSchema = z.object({
+  reason: z.string().optional().openapi({
+    description: "Optional reason for requesting refund",
+    example: "Not satisfied with the service",
+  }),
+});
+
+export const RequestRefundResponseSchema = z.object({
+  refundId: z.string().openapi({
+    description: "Stripe refund ID",
+    example: "re_1234567890",
+  }),
+  status: z.string().openapi({
+    description: "Refund status from Stripe",
+    example: "succeeded",
+  }),
 });
 
 export const UsageResponseSchema = z.object({

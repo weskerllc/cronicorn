@@ -755,6 +755,13 @@ export class DrizzleJobsRepo implements JobsRepo {
     email: string;
     tier: "free" | "pro" | "enterprise";
     stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    subscriptionActivatedAt: Date | null;
+    refundWindowExpiresAt: Date | null;
+    lastPaymentIntentId: string | null;
+    lastInvoiceId: string | null;
+    refundStatus: string | null;
+    refundIssuedAt: Date | null;
   } | null> {
     const result = await this.tx
       .select({
@@ -762,6 +769,13 @@ export class DrizzleJobsRepo implements JobsRepo {
         email: user.email,
         tier: user.tier,
         stripeCustomerId: user.stripeCustomerId,
+        stripeSubscriptionId: user.stripeSubscriptionId,
+        subscriptionActivatedAt: user.subscriptionActivatedAt,
+        refundWindowExpiresAt: user.refundWindowExpiresAt,
+        lastPaymentIntentId: user.lastPaymentIntentId,
+        lastInvoiceId: user.lastInvoiceId,
+        refundStatus: user.refundStatus,
+        refundIssuedAt: user.refundIssuedAt,
       })
       .from(user)
       .where(eq(user.id, userId))
@@ -779,17 +793,26 @@ export class DrizzleJobsRepo implements JobsRepo {
       email: row.email,
       tier,
       stripeCustomerId: row.stripeCustomerId ?? null,
+      stripeSubscriptionId: row.stripeSubscriptionId ?? null,
+      subscriptionActivatedAt: row.subscriptionActivatedAt ?? null,
+      refundWindowExpiresAt: row.refundWindowExpiresAt ?? null,
+      lastPaymentIntentId: row.lastPaymentIntentId ?? null,
+      lastInvoiceId: row.lastInvoiceId ?? null,
+      refundStatus: row.refundStatus ?? null,
+      refundIssuedAt: row.refundIssuedAt ?? null,
     };
   }
 
   async getUserByStripeCustomerId(customerId: string): Promise<{
     id: string;
     email: string;
+    refundStatus: string | null;
   } | null> {
     const result = await this.tx
       .select({
         id: user.id,
         email: user.email,
+        refundStatus: user.refundStatus,
       })
       .from(user)
       .where(eq(user.stripeCustomerId, customerId))
@@ -799,15 +822,26 @@ export class DrizzleJobsRepo implements JobsRepo {
       return null;
     }
 
-    return result[0];
+    return {
+      id: result[0].id,
+      email: result[0].email,
+      refundStatus: result[0].refundStatus ?? null,
+    };
   }
 
   async updateUserSubscription(userId: string, patch: {
     tier?: "free" | "pro" | "enterprise";
     stripeCustomerId?: string;
-    stripeSubscriptionId?: string;
+    stripeSubscriptionId?: string | null;
     subscriptionStatus?: string;
     subscriptionEndsAt?: Date | null;
+    subscriptionActivatedAt?: Date;
+    refundWindowExpiresAt?: Date;
+    lastPaymentIntentId?: string;
+    lastInvoiceId?: string;
+    refundStatus?: string;
+    refundIssuedAt?: Date;
+    refundReason?: string;
   }): Promise<void> {
     const now = this.now();
 
@@ -830,6 +864,27 @@ export class DrizzleJobsRepo implements JobsRepo {
     }
     if (patch.subscriptionEndsAt !== undefined) {
       updates.subscriptionEndsAt = patch.subscriptionEndsAt;
+    }
+    if (patch.subscriptionActivatedAt !== undefined) {
+      updates.subscriptionActivatedAt = patch.subscriptionActivatedAt;
+    }
+    if (patch.refundWindowExpiresAt !== undefined) {
+      updates.refundWindowExpiresAt = patch.refundWindowExpiresAt;
+    }
+    if (patch.lastPaymentIntentId !== undefined) {
+      updates.lastPaymentIntentId = patch.lastPaymentIntentId;
+    }
+    if (patch.lastInvoiceId !== undefined) {
+      updates.lastInvoiceId = patch.lastInvoiceId;
+    }
+    if (patch.refundStatus !== undefined) {
+      updates.refundStatus = patch.refundStatus;
+    }
+    if (patch.refundIssuedAt !== undefined) {
+      updates.refundIssuedAt = patch.refundIssuedAt;
+    }
+    if (patch.refundReason !== undefined) {
+      updates.refundReason = patch.refundReason;
     }
 
     await this.tx
