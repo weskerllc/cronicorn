@@ -1,4 +1,5 @@
 import type { CreateCheckoutInput, CreatePortalInput, SubscriptionDeps, SubscriptionStatus } from "./types.js";
+import { RefundAlreadyProcessedError, RefundConcurrencyError, RefundExpiredError, RefundNotEligibleError } from "./errors.js";
 
 /**
  * SubscriptionsManager - Business logic for subscription management.
@@ -123,23 +124,40 @@ export class SubscriptionsManager {
 
     // 2. Validate eligibility
     if (user.tier !== "pro") {
-      throw new Error("Only Pro tier is eligible for refunds");
+      throw new RefundNotEligibleError("Only Pro tier is eligible for refunds");
     }
 
     if (user.refundStatus === "issued") {
-      throw new Error("Refund already issued for this subscription");
+      throw new RefundAlreadyProcessedError("Refund already issued for this subscription");
+    }
+
+    if (user.refundStatus === "requested") {
+      throw new RefundConcurrencyError("Refund is already being processed for this subscription");
     }
 
     const now = new Date();
     if (!user.refundWindowExpiresAt || user.refundWindowExpiresAt <= now) {
-      throw new Error("Refund window has expired (must be within 14 days of first payment)");
+      throw new RefundExpiredError("Refund window has expired (must be within 14 days of first payment)");
     }
 
     if (!user.lastPaymentIntentId) {
-      throw new Error("No payment intent found for refund");
+      throw new RefundNotEligibleError("No payment intent found for refund");
     }
 
-    // 3. Issue refund via payment provider
+    // 3. Optimistic lock: Mark as "requested" to prevent concurrent refund attempts
+    // This update will only succeed if refundStatus is still "eligible"
+    try {
+      await this.deps.jobsRepo.updateUserSubscription(userId, {
+        refundStatus: "requested",
+      });
+    }
+    catch {
+      // If update fails, another request may have already started processing
+      throw new RefundConcurrencyError("Unable to process refund - another request may be in progress");
+    }
+
+    try {
+      // 4. Issue refund via payment provider
     // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Issuing refund for user ${userId}, payment intent ${user.lastPaymentIntentId}`);
 
@@ -152,14 +170,14 @@ export class SubscriptionsManager {
       },
     });
 
-    // 4. Cancel subscription immediately to prevent future billing
+    // 5. Cancel subscription immediately to prevent future billing
     if (user.stripeSubscriptionId) {
       // eslint-disable-next-line no-console
       console.log(`[SubscriptionsManager] Canceling subscription ${user.stripeSubscriptionId} for user ${userId}`);
       await this.deps.paymentProvider.cancelSubscriptionNow(user.stripeSubscriptionId);
     }
 
-    // 5. Update database: downgrade to free, record refund
+    // 6. Update database: downgrade to free, record refund
     await this.deps.jobsRepo.updateUserSubscription(userId, {
       tier: "free",
       subscriptionStatus: "canceled",
@@ -169,7 +187,7 @@ export class SubscriptionsManager {
       refundReason: reason || "14-day money-back guarantee",
     });
 
-    // 6. Emit log event for analytics/audit
+    // 7. Emit log event for analytics/audit
     // eslint-disable-next-line no-console
     console.log(`[SubscriptionsManager] Refund issued`, {
       userId,
@@ -179,6 +197,14 @@ export class SubscriptionsManager {
     });
 
     return refundResult;
+    }
+    catch (error) {
+      // Rollback: Reset status back to "eligible" if refund processing failed
+      await this.deps.jobsRepo.updateUserSubscription(userId, {
+        refundStatus: "eligible",
+      });
+      throw error;
+    }
   }
 
   /**
@@ -244,8 +270,8 @@ export class SubscriptionsManager {
       subscriptionEndsAt: null, // Will be set by subscription events
       subscriptionActivatedAt: now,
       refundWindowExpiresAt,
-      lastPaymentIntentId: session.payment_intent,
-      lastInvoiceId: session.invoice,
+      lastPaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : undefined,
+      lastInvoiceId: typeof session.invoice === "string" ? session.invoice : undefined,
       refundStatus: tier === "pro" ? "eligible" : "expired", // Only Pro tier gets refund window
     });
   }

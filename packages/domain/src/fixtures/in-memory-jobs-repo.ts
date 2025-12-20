@@ -400,7 +400,7 @@ export class InMemoryJobsRepo implements JobsRepo {
     _update: {
       tier?: "free" | "pro" | "enterprise";
       stripeCustomerId?: string;
-      stripeSubscriptionId?: string;
+      stripeSubscriptionId?: string | null;
       subscriptionStatus?: string;
       subscriptionEndsAt?: Date | null;
       subscriptionActivatedAt?: Date;
