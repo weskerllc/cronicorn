@@ -163,7 +163,7 @@ export class SubscriptionsManager {
     await this.deps.jobsRepo.updateUserSubscription(userId, {
       tier: "free",
       subscriptionStatus: "canceled",
-      stripeSubscriptionId: undefined, // Clear subscription ID
+      stripeSubscriptionId: null, // Clear subscription ID
       refundStatus: "issued",
       refundIssuedAt: now,
       refundReason: reason || "14-day money-back guarantee",
