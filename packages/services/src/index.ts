@@ -14,6 +14,6 @@
 export * from "./dashboard/manager.js";
 export * from "./dashboard/types.js";
 export * from "./jobs/manager.js";
+export * from "./subscriptions/errors.js";
 export * from "./subscriptions/manager.js";
 export * from "./subscriptions/types.js";
-export * from "./subscriptions/errors.js";

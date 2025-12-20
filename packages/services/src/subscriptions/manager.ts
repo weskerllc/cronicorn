@@ -1,4 +1,5 @@
 import type { CreateCheckoutInput, CreatePortalInput, SubscriptionDeps, SubscriptionStatus } from "./types.js";
+
 import { RefundAlreadyProcessedError, RefundConcurrencyError, RefundExpiredError, RefundNotEligibleError } from "./errors.js";
 
 /**
@@ -159,44 +160,44 @@ export class SubscriptionsManager {
     try {
       // 4. Issue refund via payment provider
     // eslint-disable-next-line no-console
-    console.log(`[SubscriptionsManager] Issuing refund for user ${userId}, payment intent ${user.lastPaymentIntentId}`);
+      console.log(`[SubscriptionsManager] Issuing refund for user ${userId}, payment intent ${user.lastPaymentIntentId}`);
 
-    const refundResult = await this.deps.paymentProvider.issueRefund({
-      paymentIntentId: user.lastPaymentIntentId,
-      reason: "requested_by_customer",
-      metadata: {
-        userId,
-        userReason: reason || "14-day money-back guarantee",
-      },
-    });
+      const refundResult = await this.deps.paymentProvider.issueRefund({
+        paymentIntentId: user.lastPaymentIntentId,
+        reason: "requested_by_customer",
+        metadata: {
+          userId,
+          userReason: reason || "14-day money-back guarantee",
+        },
+      });
 
-    // 5. Cancel subscription immediately to prevent future billing
-    if (user.stripeSubscriptionId) {
+      // 5. Cancel subscription immediately to prevent future billing
+      if (user.stripeSubscriptionId) {
       // eslint-disable-next-line no-console
-      console.log(`[SubscriptionsManager] Canceling subscription ${user.stripeSubscriptionId} for user ${userId}`);
-      await this.deps.paymentProvider.cancelSubscriptionNow(user.stripeSubscriptionId);
-    }
+        console.log(`[SubscriptionsManager] Canceling subscription ${user.stripeSubscriptionId} for user ${userId}`);
+        await this.deps.paymentProvider.cancelSubscriptionNow(user.stripeSubscriptionId);
+      }
 
-    // 6. Update database: downgrade to free, record refund
-    await this.deps.jobsRepo.updateUserSubscription(userId, {
-      tier: "free",
-      subscriptionStatus: "canceled",
-      stripeSubscriptionId: null, // Clear subscription ID
-      refundStatus: "issued",
-      refundIssuedAt: now,
-      refundReason: reason || "14-day money-back guarantee",
-    });
+      // 6. Update database: downgrade to free, record refund
+      await this.deps.jobsRepo.updateUserSubscription(userId, {
+        tier: "free",
+        subscriptionStatus: "canceled",
+        stripeSubscriptionId: null, // Clear subscription ID
+        refundStatus: "issued",
+        refundIssuedAt: now,
+        refundReason: reason || "14-day money-back guarantee",
+      });
 
-    // 7. Emit log event for analytics/audit
-    // eslint-disable-next-line no-console
-    console.log(`[SubscriptionsManager] Refund issued`, {
-      userId,
-      refundId: refundResult.refundId,
-      amount: "full",
-      reason: reason || "14-day money-back guarantee",
-    });
+      // 7. Emit log event for analytics/audit
+      // eslint-disable-next-line no-console
+      console.log(`[SubscriptionsManager] Refund issued`, {
+        userId,
+        refundId: refundResult.refundId,
+        amount: "full",
+        reason: reason || "14-day money-back guarantee",
+      });
 
-    return refundResult;
+      return refundResult;
     }
     catch (error) {
       // Rollback: Reset status back to "eligible" if refund processing failed

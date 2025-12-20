@@ -2,12 +2,12 @@ import type { JobsRepo, PaymentProvider } from "@cronicorn/domain";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SubscriptionsManager } from "../manager.js";
 import {
   RefundAlreadyProcessedError,
   RefundExpiredError,
   RefundNotEligibleError,
 } from "../errors.js";
+import { SubscriptionsManager } from "../manager.js";
 
 /**
  * Unit tests for SubscriptionsManager
@@ -495,12 +495,12 @@ describe("subscriptionsManager", () => {
 
       // Verify database was updated (should be called twice - once for "requested", once for "issued")
       expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledTimes(2);
-      
+
       // First call: Mark as "requested"
       expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(1, "user_123", {
         refundStatus: "requested",
       });
-      
+
       // Second call: Mark as "issued" with full details
       expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(2, "user_123", {
         tier: "free",
