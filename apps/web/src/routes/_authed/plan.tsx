@@ -56,12 +56,15 @@ function RouteComponent() {
       setRefundFeedback(null);
     },
     onSuccess: () => {
-      setRefundDialogOpen(false);
       setRefundReason("");
       setRefundFeedback({
         type: "success",
         message: "Refund issued. Your account will downgrade to Free shortly.",
       });
+      // Close dialog after showing success message briefly
+      setTimeout(() => {
+        setRefundDialogOpen(false);
+      }, 2000);
       void queryClient.invalidateQueries({ queryKey: ["subscriptions", "status"] });
     },
     onError: (error) => {
@@ -96,7 +99,8 @@ function RouteComponent() {
       ? "Less than 1 day left"
       : `${refundState.daysLeft} ${refundState.daysLeft === 1 ? "day" : "days"} left`;
   const trimmedRefundReason = refundReason.trim();
-  const refundConfirmDisabled = refundMutation.isPending || trimmedRefundReason.length === 0;
+  const MIN_REFUND_REASON_LENGTH = 10;
+  const refundConfirmDisabled = refundMutation.isPending || trimmedRefundReason.length < MIN_REFUND_REASON_LENGTH;
 
   return (
     <>
@@ -232,6 +236,10 @@ function RouteComponent() {
             if (!open) {
               setRefundReason("");
             }
+            else {
+              // Clear feedback when opening dialog to show fresh state
+              setRefundFeedback(null);
+            }
           }}
         >
           <AlertDialogContent>
@@ -243,8 +251,14 @@ function RouteComponent() {
               </AlertDialogDescription>
             </AlertDialogHeader>
 
+            {refundFeedback && (
+              <Alert variant={refundFeedback.type === "error" ? "destructive" : "default"}>
+                <AlertDescription>{refundFeedback.message}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="refund-reason">Share feedback (required)</Label>
+              <Label htmlFor="refund-reason">Share feedback (required, minimum 10 characters)</Label>
               <Textarea
                 id="refund-reason"
                 placeholder="Let us know why the plan didn’t work out"
@@ -252,11 +266,11 @@ function RouteComponent() {
                 onChange={(event) => setRefundReason(event.target.value)}
                 disabled={refundMutation.isPending}
                 required
-                aria-invalid={trimmedRefundReason.length === 0}
+                aria-invalid={trimmedRefundReason.length > 0 && trimmedRefundReason.length < MIN_REFUND_REASON_LENGTH}
                 rows={4}
               />
               <p className="text-xs text-muted-foreground">
-                Feedback is required and goes straight to the product team—be as candid as you’d like.
+                Feedback is required (at least 10 characters) and goes straight to the product team—be as candid as you’d like.
               </p>
             </div>
 
@@ -265,7 +279,7 @@ function RouteComponent() {
               <AlertDialogAction
                 disabled={refundConfirmDisabled}
                 onClick={() => {
-                  if (trimmedRefundReason.length === 0) {
+                  if (trimmedRefundReason.length < MIN_REFUND_REASON_LENGTH) {
                     return;
                   }
                   void refundMutation.mutateAsync({ reason: trimmedRefundReason });
