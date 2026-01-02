@@ -6,7 +6,7 @@ import { closeTestPool, expect, test } from "../tests/fixtures.js";
 
 /**
  * Tests for month boundary behavior in usage calculations.
- * 
+ *
  * These tests specifically verify that usage from the previous month
  * is NOT counted in the current month's usage, which is critical for
  * monthly quota reset functionality.
@@ -161,7 +161,7 @@ describe("usage month boundary", () => {
   test("month boundary works correctly across different timezones", async ({ tx }) => {
     // This test ensures that timezone-aware timestamps work correctly
     // even when records are created in different timezones
-    
+
     const jan1Clock = () => new Date("2026-01-01T12:00:00Z");
     const repo = new DrizzleJobsRepo(tx, jan1Clock);
 
@@ -201,7 +201,7 @@ describe("usage month boundary", () => {
     // This is Jan 1 04:59 AM UTC, but should still be counted as December in local time
     // However, since we're using UTC timestamps, this SHOULD be counted as January
     const dec31EstLate = new Date("2026-01-01T04:59:00Z"); // Dec 31 11:59 PM EST
-    
+
     // Record created on Jan 1 12:01 AM in EST
     // This is Jan 1 05:01 AM UTC
     const jan1EstEarly = new Date("2026-01-01T05:01:00Z"); // Jan 1 12:01 AM EST
