@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/weskerllc/cronicorn/compare/v1.18.0...v1.18.1) (2026-01-02)
+
+
+### Bug Fixes
+
+* Fix monthly usage reset by using timezone-aware timestamps ([#96](https://github.com/weskerllc/cronicorn/issues/96)) ([e7e6d45](https://github.com/weskerllc/cronicorn/commit/e7e6d45a57bd2f393d66890103d1974a24cca400))
+
 # [1.18.0](https://github.com/weskerllc/cronicorn/compare/v1.17.1...v1.18.0) (2025-12-20)
 
 
