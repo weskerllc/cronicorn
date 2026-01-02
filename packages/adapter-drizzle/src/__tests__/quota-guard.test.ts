@@ -467,7 +467,7 @@ describe("drizzleQuotaGuard", () => {
       // Simulate checking quota on January 1, 2026
       // Mock the "now" by checking if the guard correctly excludes December data
       const result = await guard.canProceed(testUserId);
-      
+
       // Should return true because December usage should NOT be counted in January
       // (Current test time is January 2026, so December 2025 should be excluded)
       expect(result).toBe(true);
