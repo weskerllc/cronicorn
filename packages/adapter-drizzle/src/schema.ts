@@ -15,8 +15,8 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull(),
   image: text("image"),
-  createdAt: timestamp("created_at").notNull(),
-  updatedAt: timestamp("updated_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   isAnonymous: boolean("is_anonymous").default(false),
   tier: text("tier").notNull().default("free"), // "free" | "pro" | "enterprise"
 
@@ -24,15 +24,15 @@ export const user = pgTable("user", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status"), // 'active' | 'trialing' | 'canceled' | 'past_due' | 'incomplete'
-  subscriptionEndsAt: timestamp("subscription_ends_at", { mode: "date" }),
+  subscriptionEndsAt: timestamp("subscription_ends_at", { mode: "date", withTimezone: true }),
 
   // Refund guarantee fields (14-day money-back)
-  subscriptionActivatedAt: timestamp("subscription_activated_at", { mode: "date" }), // First successful payment timestamp
-  refundWindowExpiresAt: timestamp("refund_window_expires_at", { mode: "date" }), // Activation + 14 days
+  subscriptionActivatedAt: timestamp("subscription_activated_at", { mode: "date", withTimezone: true }), // First successful payment timestamp
+  refundWindowExpiresAt: timestamp("refund_window_expires_at", { mode: "date", withTimezone: true }), // Activation + 14 days
   lastPaymentIntentId: text("last_payment_intent_id"), // Payment intent for refund
   lastInvoiceId: text("last_invoice_id"), // Invoice reference
   refundStatus: text("refund_status"), // 'eligible' | 'requested' | 'issued' | 'expired'
-  refundIssuedAt: timestamp("refund_issued_at", { mode: "date" }), // When refund was issued
+  refundIssuedAt: timestamp("refund_issued_at", { mode: "date", withTimezone: true }), // When refund was issued
   refundReason: text("refund_reason"), // User-provided or system reason
 });
 
@@ -46,9 +46,9 @@ export const jobs = pgTable("jobs", {
   name: text("name").notNull(),
   description: text("description"),
   status: jobStatusEnum("status").notNull().default("active"),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull(),
-  archivedAt: timestamp("archived_at", { mode: "date" }),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull(),
+  archivedAt: timestamp("archived_at", { mode: "date", withTimezone: true }),
 });
 
 /**
@@ -71,8 +71,8 @@ export const jobEndpoints = pgTable("job_endpoints", {
 
   // AI hints (TTL-scoped)
   aiHintIntervalMs: integer("ai_hint_interval_ms"),
-  aiHintNextRunAt: timestamp("ai_hint_next_run_at", { mode: "date" }),
-  aiHintExpiresAt: timestamp("ai_hint_expires_at", { mode: "date" }),
+  aiHintNextRunAt: timestamp("ai_hint_next_run_at", { mode: "date", withTimezone: true }),
+  aiHintExpiresAt: timestamp("ai_hint_expires_at", { mode: "date", withTimezone: true }),
   aiHintReason: text("ai_hint_reason"),
 
   // Guardrails
@@ -80,14 +80,14 @@ export const jobEndpoints = pgTable("job_endpoints", {
   maxIntervalMs: integer("max_interval_ms"),
 
   // Pause control
-  pausedUntil: timestamp("paused_until", { mode: "date" }),
+  pausedUntil: timestamp("paused_until", { mode: "date", withTimezone: true }),
 
   // Archive control (soft delete)
-  archivedAt: timestamp("archived_at", { mode: "date" }),
+  archivedAt: timestamp("archived_at", { mode: "date", withTimezone: true }),
 
   // Runtime state
-  lastRunAt: timestamp("last_run_at", { mode: "date" }),
-  nextRunAt: timestamp("next_run_at", { mode: "date" }).notNull(),
+  lastRunAt: timestamp("last_run_at", { mode: "date", withTimezone: true }),
+  nextRunAt: timestamp("next_run_at", { mode: "date", withTimezone: true }).notNull(),
   failureCount: integer("failure_count").notNull().default(0),
 
   // Execution config (dispatcher may use these)
@@ -100,7 +100,7 @@ export const jobEndpoints = pgTable("job_endpoints", {
   maxResponseSizeKb: integer("max_response_size_kb"), // Max response body size to store (default: 100 KB)
 
   // Adapter-specific (not in domain entity)
-  _lockedUntil: timestamp("_locked_until", { mode: "date" }),
+  _lockedUntil: timestamp("_locked_until", { mode: "date", withTimezone: true }),
 }, table => ({
   jobIdIdx: index("job_endpoints_job_id_idx").on(table.jobId),
   nextRunAtIdx: index("job_endpoints_next_run_at_idx").on(table.nextRunAt),
@@ -116,8 +116,8 @@ export const runs = pgTable("runs", {
   status: text("status").notNull(), // "running" | "success" | "failed" | "canceled"
   attempt: integer("attempt").notNull(),
   source: text("source"), // Phase 3: What triggered this run (baseline, AI hint, manual, etc.)
-  startedAt: timestamp("started_at", { mode: "date" }).notNull(),
-  finishedAt: timestamp("finished_at", { mode: "date" }),
+  startedAt: timestamp("started_at", { mode: "date", withTimezone: true }).notNull(),
+  finishedAt: timestamp("finished_at", { mode: "date", withTimezone: true }),
   durationMs: integer("duration_ms"),
   errorMessage: text("error_message"),
   errorDetails: jsonb("error_details"),
@@ -140,10 +140,10 @@ export type RunInsert = typeof runs.$inferInsert;
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
-  expiresAt: timestamp("expires_at").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   token: text("token").notNull().unique(),
-  createdAt: timestamp("created_at").notNull(),
-  updatedAt: timestamp("updated_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
@@ -157,21 +157,21 @@ export const account = pgTable("account", {
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),
   idToken: text("id_token"),
-  accessTokenExpiresAt: timestamp("access_token_expires_at"),
-  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
   scope: text("scope"),
   password: text("password"),
-  createdAt: timestamp("created_at").notNull(),
-  updatedAt: timestamp("updated_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 });
 
 export const verification = pgTable("verification", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at"),
-  updatedAt: timestamp("updated_at"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
 });
 
 export const apiKey = pgTable("apikey", {
@@ -185,17 +185,17 @@ export const apiKey = pgTable("apikey", {
     .references(() => user.id, { onDelete: "cascade" }),
   refillInterval: integer("refill_interval"), // Interval to refill key in ms
   refillAmount: integer("refill_amount"), // Amount to refill remaining count
-  lastRefillAt: timestamp("last_refill_at", { mode: "date" }),
+  lastRefillAt: timestamp("last_refill_at", { mode: "date", withTimezone: true }),
   enabled: boolean("enabled").notNull().default(true),
   rateLimitEnabled: boolean("rate_limit_enabled").notNull().default(false),
   rateLimitTimeWindow: integer("rate_limit_time_window"), // Time window in ms
   rateLimitMax: integer("rate_limit_max"), // Max requests in time window
   requestCount: integer("request_count").notNull().default(0),
   remaining: integer("remaining"), // Remaining requests (null = unlimited)
-  lastRequest: timestamp("last_request", { mode: "date" }),
-  expiresAt: timestamp("expires_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  lastRequest: timestamp("last_request", { mode: "date", withTimezone: true }),
+  expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   permissions: text("permissions"), // JSON string of permissions
   metadata: jsonb("metadata").$type<Record<string, unknown>>(), // Any additional metadata
 });
@@ -207,12 +207,12 @@ export const apiKey = pgTable("apikey", {
 export const aiAnalysisSessions = pgTable("ai_analysis_sessions", {
   id: text("id").primaryKey(),
   endpointId: text("endpoint_id").notNull().references(() => jobEndpoints.id, { onDelete: "cascade" }),
-  analyzedAt: timestamp("analyzed_at", { mode: "date" }).notNull(),
+  analyzedAt: timestamp("analyzed_at", { mode: "date", withTimezone: true }).notNull(),
   toolCalls: jsonb("tool_calls").$type<Array<{ tool: string; args: unknown; result: unknown }>>(), // Tools called during analysis
   reasoning: text("reasoning"), // AI's explanation/decision
   tokenUsage: integer("token_usage"), // Total tokens consumed
   durationMs: integer("duration_ms"), // Analysis duration
-  nextAnalysisAt: timestamp("next_analysis_at", { mode: "date" }), // AI-scheduled next analysis time
+  nextAnalysisAt: timestamp("next_analysis_at", { mode: "date", withTimezone: true }), // AI-scheduled next analysis time
   endpointFailureCount: integer("endpoint_failure_count"), // Snapshot of failure count at analysis time
 }, table => ({
   endpointIdIdx: index("ai_sessions_endpoint_id_idx").on(table.endpointId),
@@ -229,15 +229,15 @@ export const deviceCodes = pgTable("device_codes", {
   deviceCode: text("device_code").notNull().unique(),
   userCode: text("user_code").notNull().unique(),
   clientId: text("client_id"),
-  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" })
+  expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
   userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
   status: text("status").notNull().default("pending"), // "pending" | "approved" | "denied" | "expired"
-  lastPolledAt: timestamp("last_polled_at", { mode: "date" }),
+  lastPolledAt: timestamp("last_polled_at", { mode: "date", withTimezone: true }),
   pollingInterval: integer("polling_interval"), // Polling interval in milliseconds
   scope: text("scope"), // OAuth scope
 });
@@ -248,9 +248,9 @@ export const oauthTokens = pgTable("oauth_tokens", {
   deviceCodeId: text("device_code_id").references(() => deviceCodes.id, { onDelete: "cascade" }),
   accessToken: text("access_token").notNull(),
   refreshToken: text("refresh_token"),
-  expiresAt: timestamp("expires_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" })
+  expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
