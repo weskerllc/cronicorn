@@ -39,7 +39,8 @@ function Pricing() {
   const navigate = useNavigate();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("annual");
   const checkoutMutation = useMutation({
-    mutationFn: (tier: "pro" | "enterprise") => createCheckoutSession({ tier }),
+    mutationFn: (vars: { tier: "pro" | "enterprise"; billingPeriod: "monthly" | "annual" }) =>
+      createCheckoutSession({ tier: vars.tier, billingPeriod: vars.billingPeriod }),
     onSuccess: (data) => {
       window.location.href = data.checkoutUrl;
     },
@@ -56,7 +57,7 @@ function Pricing() {
       return;
     }
 
-    await checkoutMutation.mutateAsync(tier);
+    await checkoutMutation.mutateAsync({ tier, billingPeriod });
   };
 
   const faqs = pricingFAQs;
@@ -67,10 +68,7 @@ function Pricing() {
         {/* Hero Section */}
         <section className="text-center space-y-6">
           <div className="space-y-3">
-            <Badge variant="default" className="mx-auto bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0">
-              🎉 Early Adopter - 38% Discount
-            </Badge>
-            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
+            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">
               Pricing made simple
             </h1>
             <div className="flex flex-col items-center gap-3">
@@ -78,7 +76,6 @@ function Pricing() {
                 <Shield className="w-4 h-4" aria-hidden="true" />
                 14-day money-back guarantee
               </div>
-
             </div>
           </div>
 
@@ -132,9 +129,8 @@ function Pricing() {
                 className={`relative ${tier.popular ? 'border-primary ring-2 ring-primary/20' : ''}`}
               >
                 {tier.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
-                    <Star className="w-3 h-3 mr-1" aria-hidden="true" />
-                    Most Popular
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0">
+                    🎉 Early Adopter - 38% Discount
                   </Badge>
                 )}
 
@@ -149,7 +145,7 @@ function Pricing() {
 
                     <div className="flex items-baseline justify-center gap-2">
                       {originalPrice && tier.priceNumeric !== null && tier.priceNumeric > 0 && (
-                        <span className="text-lg text-muted-foreground line-through">
+                        <span className="text-2xl font-medium text-muted-foreground line-through">
                           {originalPrice}
                         </span>
                       )}
@@ -287,16 +283,6 @@ function Pricing() {
           </div>
         </section>
 
-        {/* Test Mode Alert */}
-        <Alert className="max-w-2xl mx-auto">
-          <AlertDescription>
-            <p className="font-semibold mb-2">💳 Test Mode Active</p>
-            <p className="mb-2">
-              Use test card: <code className="bg-muted px-2 py-1 rounded">4242 4242 4242 4242</code>
-            </p>
-            <p>Any future expiry date and any 3-digit CVC</p>
-          </AlertDescription>
-        </Alert>
       </main>
     </>
   );
