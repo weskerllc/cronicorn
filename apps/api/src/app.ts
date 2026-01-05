@@ -46,6 +46,7 @@ export async function createApp(
   const stripeProvider = new StripePaymentProvider({
     secretKey: config.STRIPE_SECRET_KEY,
     proPriceId: config.STRIPE_PRICE_PRO,
+    proAnnualPriceId: config.STRIPE_PRICE_PRO_ANNUAL,
     enterprisePriceId: config.STRIPE_PRICE_ENTERPRISE,
   });
 

@@ -37,9 +37,10 @@ export const Route = createFileRoute("/_public/pricing")({
 function Pricing() {
   const { data: session } = useSession();
   const navigate = useNavigate();
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("annual");
   const checkoutMutation = useMutation({
-    mutationFn: (tier: "pro" | "enterprise") => createCheckoutSession({ tier }),
+    mutationFn: (vars: { tier: "pro" | "enterprise"; billingPeriod: "monthly" | "annual" }) =>
+      createCheckoutSession({ tier: vars.tier, billingPeriod: vars.billingPeriod }),
     onSuccess: (data) => {
       window.location.href = data.checkoutUrl;
     },
@@ -56,7 +57,7 @@ function Pricing() {
       return;
     }
 
-    await checkoutMutation.mutateAsync(tier);
+    await checkoutMutation.mutateAsync({ tier, billingPeriod });
   };
 
   const faqs = pricingFAQs;
@@ -67,24 +68,18 @@ function Pricing() {
         {/* Hero Section */}
         <section className="text-center space-y-6">
           <div className="space-y-3">
-            <Badge variant="default" className="mx-auto bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0">
-              🎉 Early Adopter: 35% off Premium forever
-            </Badge>
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight">
+            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">
               Pricing made simple
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Start free, upgrade when ready. Transparent plans built for fast teams.
-            </p>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 text-sm text-green-600">
+                <Shield className="w-4 h-4" aria-hidden="true" />
+                14-day money-back guarantee
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <Shield className="w-4 h-4" aria-hidden="true" />
-              14-day money-back guarantee
-            </div>
-            <p className="text-sm text-muted-foreground">Annual billing saves 20% instantly.</p>
-          </div>
+
 
           {/* Billing Period Toggle */}
           <div className="flex items-center justify-center gap-3 pt-4">
@@ -123,100 +118,106 @@ function Pricing() {
 
         {/* Pricing Grid */}
         <section className="grid lg:grid-cols-3 gap-6" aria-label="Pricing plans">
-          {pricing.map((tier) => (
-            <Card
-              key={tier.name}
-              className={`relative ${tier.popular ? 'border-primary ring-2 ring-primary/20' : ''}`}
-            >
-              {tier.popular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
-                  <Star className="w-3 h-3 mr-1" aria-hidden="true" />
-                  Most Popular
-                </Badge>
-              )}
+          {pricing.map((tier) => {
+            const isAnnual = billingPeriod === "annual" && tier.annualPrice;
+            const displayPrice = isAnnual ? tier.annualPrice : tier.price;
+            const originalPrice = tier.earlyAdopterDiscount?.originalPrice;
 
-              <CardHeader className="text-center space-y-4">
-                <div>
-                  <CardTitle className="text-2xl">{tier.name}</CardTitle>
-                  <CardDescription className="mt-2">
-                    {tier.description}
-                  </CardDescription>
-                </div>
-                <div className="space-y-2">
-                  {tier.earlyAdopterDiscount && (
-                    <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 border-orange-500/20">
-                      {tier.earlyAdopterDiscount.badge}
-                    </Badge>
-                  )}
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold">
-                      {billingPeriod === "annual" && tier.annualPrice ? tier.annualPrice : tier.price}
-                    </span>
+            return (
+              <Card
+                key={tier.name}
+                className={`relative ${tier.popular ? 'border-primary ring-2 ring-primary/20' : ''}`}
+              >
+                {tier.popular && (
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0">
+                    🎉 Early Adopter - 38% Discount
+                  </Badge>
+                )}
+
+                <CardHeader className="text-center space-y-4">
+                  <div>
+                    <CardTitle className="text-2xl">{tier.name}</CardTitle>
+                    <CardDescription className="mt-2">
+                      {tier.description}
+                    </CardDescription>
+                  </div>
+                  <div className="space-y-2">
+
+                    <div className="flex items-baseline justify-center gap-2">
+                      {originalPrice && tier.priceNumeric !== null && tier.priceNumeric > 0 && (
+                        <span className="text-2xl font-medium text-muted-foreground line-through">
+                          {originalPrice}
+                        </span>
+                      )}
+                      <span className="text-4xl font-bold">
+                        {displayPrice}
+                      </span>
+                      {tier.priceNumeric !== null && tier.priceNumeric > 0 && (
+                        <span className="text-lg text-muted-foreground">/{tier.period}</span>
+                      )}
+                    </div>
                     {tier.priceNumeric !== null && tier.priceNumeric > 0 && (
-                      <span className="text-lg text-muted-foreground">/{tier.period}</span>
+                      <p className="text-sm text-muted-foreground">
+                        {billingPeriod === "annual" ? "Billed annually" : "Billed monthly"} • Cancel anytime
+                      </p>
+                    )}
+                    {tier.priceNumeric === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No credit card required
+                      </p>
                     )}
                   </div>
-                  {tier.priceNumeric !== null && tier.priceNumeric > 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      {billingPeriod === "annual" ? "Billed annually" : "Billed monthly"} • Cancel anytime
-                    </p>
-                  )}
-                  {tier.priceNumeric === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      No credit card required
-                    </p>
-                  )}
-                </div>
-              </CardHeader>
+                </CardHeader>
 
-              <CardContent className="space-y-4">
-                <ul className="space-y-3" role="list">
-                  {tier.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-start gap-3">
-                      <Check className="size-4 text-green-500 mt-0.5 shrink-0" aria-hidden="true" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-3" role="list">
+                    {tier.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-start gap-3">
+                        <Check className="size-4 text-green-500 mt-0.5 shrink-0" aria-hidden="true" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
 
-              <CardFooter>
-                {tier.name === "Free" ? (
-                  <Button
-                    asChild
-                    className="w-full"
-                    variant="secondary"
-                    aria-label="Free plan - no payment required"
-                  >
-                    <Link to={session ? "/dashboard" : "/login"}>
-                      {session ? "Go to Dashboard" : "Start Free"}
-                    </Link>
-                  </Button>
-                ) : tier.name === "Enterprise" ? (
-                  <Button
-                    onClick={() => {
-                      // Handle enterprise contact
-                      window.location.href = `mailto:${business.contactPoint.email}?subject=Enterprise Plan Inquiry&body=Hi, I'm interested in the Enterprise plan for Cronicorn. Please send me more information.`;
-                    }}
-                    variant="outline"
-                    className="w-full"
-                    aria-label="Contact sales for Enterprise plan"
-                  >
-                    Contact Sales
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => handleCheckout("pro")}
-                    disabled={!session || checkoutMutation.isPending}
-                    className="w-full"
-                    aria-label={checkoutMutation.isPending ? "Processing..." : session ? `Subscribe to ${tier.name} plan` : "Sign in to subscribe"}
-                  >
-                    {checkoutMutation.isPending ? "Processing..." : session ? tier.cta : "Sign in to subscribe"}
-                  </Button>
-                )}
-              </CardFooter>
-            </Card>
-          ))}
+                <CardFooter>
+                  {tier.name === "Free" ? (
+                    <Button
+                      asChild
+                      className="w-full"
+                      variant="secondary"
+                      aria-label="Free plan - no payment required"
+                    >
+                      <Link to={session ? "/dashboard" : "/login"}>
+                        {session ? "Go to Dashboard" : "Start Free"}
+                      </Link>
+                    </Button>
+                  ) : tier.name === "Enterprise" ? (
+                    <Button
+                      onClick={() => {
+                        // Handle enterprise contact
+                        window.location.href = `mailto:${business.contactPoint.email}?subject=Enterprise Plan Inquiry&body=Hi, I'm interested in the Enterprise plan for Cronicorn. Please send me more information.`;
+                      }}
+                      variant="outline"
+                      className="w-full"
+                      aria-label="Contact sales for Enterprise plan"
+                    >
+                      Contact Sales
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleCheckout("pro")}
+                      disabled={!session || checkoutMutation.isPending}
+                      className="w-full"
+                      aria-label={checkoutMutation.isPending ? "Processing..." : session ? `Subscribe to ${tier.name} plan` : "Sign in to subscribe"}
+                    >
+                      {checkoutMutation.isPending ? "Processing..." : session ? tier.cta : "Sign in to subscribe"}
+                    </Button>
+                  )}
+                </CardFooter>
+              </Card>
+            );
+          })}
         </section>
 
         {/* Refund Policy Highlight */}
@@ -230,7 +231,7 @@ function Pricing() {
             </CardHeader>
             <CardContent>
               <p className="text-center text-muted-foreground">
-                Try Premium with zero risk. If you’re not happy in the first 14 days, email us for a full refund—no questions asked.
+                Try Pro with zero risk. If you're not happy in the first 14 days, email us for a full refund—no questions asked.
               </p>
             </CardContent>
           </Card>
@@ -282,16 +283,6 @@ function Pricing() {
           </div>
         </section>
 
-        {/* Test Mode Alert */}
-        <Alert className="max-w-2xl mx-auto">
-          <AlertDescription>
-            <p className="font-semibold mb-2">💳 Test Mode Active</p>
-            <p className="mb-2">
-              Use test card: <code className="bg-muted px-2 py-1 rounded">4242 4242 4242 4242</code>
-            </p>
-            <p>Any future expiry date and any 3-digit CVC</p>
-          </AlertDescription>
-        </Alert>
       </main>
     </>
   );
