@@ -36,3 +36,6 @@
 - This migration must run before enabling refunds in production to prevent retroactive refund claims for users subscribed before feature launch
 - New Pro subscriptions already get `refund_status='eligible'` on first payment via application logic
 
+### Pricing Checkout Gap (Early Adopter Annual)
+- Addressed: billingPeriod now flows UI → API → Stripe with `STRIPE_PRICE_PRO_ANNUAL`. Remaining action: set live annual price ID in prod secrets.
+

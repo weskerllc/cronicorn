@@ -24,6 +24,7 @@ const envSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1).default(DEV_STRIPE.SECRET_KEY),
   STRIPE_WEBHOOK_SECRET: z.string().min(1).default(DEV_STRIPE.WEBHOOK_SECRET),
   STRIPE_PRICE_PRO: z.string().min(1).default(DEV_STRIPE.PRICE_PRO),
+  STRIPE_PRICE_PRO_ANNUAL: z.string().min(1).default(DEV_STRIPE.PRICE_PRO_ANNUAL),
   STRIPE_PRICE_ENTERPRISE: z.string().min(1).default(DEV_STRIPE.PRICE_ENTERPRISE),
   BASE_URL: z.string().url("BASE_URL must be a valid URL").default(DEV_URLS.WEB),
 }).refine(

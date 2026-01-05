@@ -42,12 +42,12 @@ export const pricing: PricingTier[] = [
     cta: "Start Free",
   },
   {
-    name: "Premium",
+    name: "Early Adopter Pro",
     description: "Multiply your scheduling power with AI intelligence",
-    price: "$19",
-    priceNumeric: 19,
-    annualPrice: "$15.20",
-    annualPriceNumeric: 15.20,
+    price: "$24",
+    priceNumeric: 24,
+    annualPrice: "$19",
+    annualPriceNumeric: 19,
     currency: "USD",
     period: "month",
     features: [
@@ -56,11 +56,11 @@ export const pricing: PricingTier[] = [
       "10-second minimum interval",
     ],
     popular: true,
-    cta: "Start Premium",
+    cta: "Lock Early Adopter",
     earlyAdopterDiscount: {
-      originalPrice: "$29",
-      discountPercent: 35,
-      badge: "Early Adopter: 35% OFF",
+      originalPrice: "$39",
+      discountPercent: 38,
+      badge: "Early Adopter: 38% OFF",
     },
   },
   {

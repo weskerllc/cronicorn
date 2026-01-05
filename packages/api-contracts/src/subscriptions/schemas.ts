@@ -7,6 +7,10 @@ export const CreateCheckoutRequestSchema = z.object({
     description: "Subscription tier to purchase",
     example: "pro",
   }),
+  billingPeriod: z.enum(["monthly", "annual"]).default("monthly").openapi({
+    description: "Billing period for the subscription (monthly or annual)",
+    example: "annual",
+  }),
 });
 
 export const CreateCheckoutResponseSchema = z.object({

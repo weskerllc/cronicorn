@@ -12,6 +12,7 @@ import Stripe from "stripe";
 export type StripeConfig = {
   secretKey: string;
   proPriceId: string;
+  proAnnualPriceId?: string;
   enterprisePriceId: string;
 };
 
@@ -26,7 +27,7 @@ export type StripeConfig = {
  */
 export class StripePaymentProvider implements PaymentProvider {
   private stripe: Stripe;
-  private priceMap: Record<"pro" | "enterprise", string>;
+  private priceMap: Record<"pro" | "enterprise", { monthly: string; annual?: string }>;
   private reversePriceMap: Map<string, "pro" | "enterprise">;
 
   constructor(config: StripeConfig) {
@@ -36,13 +37,14 @@ export class StripePaymentProvider implements PaymentProvider {
     });
 
     this.priceMap = {
-      pro: config.proPriceId,
-      enterprise: config.enterprisePriceId,
+      pro: { monthly: config.proPriceId, annual: config.proAnnualPriceId },
+      enterprise: { monthly: config.enterprisePriceId },
     };
 
     // Build reverse map for webhook handlers
     this.reversePriceMap = new Map([
       [config.proPriceId, "pro"],
+      ...(config.proAnnualPriceId ? [[config.proAnnualPriceId, "pro"] as const] : []),
       [config.enterprisePriceId, "enterprise"],
     ]);
   }
@@ -51,18 +53,23 @@ export class StripePaymentProvider implements PaymentProvider {
    * Create Stripe Checkout Session for subscription.
    */
   async createCheckoutSession(params: CheckoutSessionParams): Promise<CheckoutSessionResult> {
+    const priceId = params.tier === "pro"
+      ? (params.billingPeriod === "annual" && this.priceMap.pro.annual ? this.priceMap.pro.annual : this.priceMap.pro.monthly)
+      : this.priceMap.enterprise.monthly;
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [
         {
-          price: this.priceMap[params.tier],
+          price: priceId,
           quantity: 1,
         },
       ],
       metadata: {
         userId: params.userId,
         tier: params.tier,
+        billingPeriod: params.billingPeriod ?? "monthly",
       },
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,

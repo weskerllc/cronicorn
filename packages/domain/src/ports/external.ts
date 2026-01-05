@@ -6,6 +6,7 @@ export type CheckoutSessionParams = {
   userId: string;
   userEmail: string;
   tier: "pro" | "enterprise";
+  billingPeriod?: "monthly" | "annual"; // Optional: defaults to monthly pricing
   successUrl: string;
   cancelUrl: string;
   existingCustomerId?: string; // Reuse existing Stripe customer if available

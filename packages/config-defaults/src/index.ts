@@ -86,6 +86,7 @@ export const DEV_STRIPE = {
   SECRET_KEY: "sk_test_dummy_key_for_local_dev_only",
   WEBHOOK_SECRET: "whsec_test_dummy_secret_for_local_dev",
   PRICE_PRO: "price_test_pro",
+  PRICE_PRO_ANNUAL: "price_test_pro_annual",
   PRICE_ENTERPRISE: "price_test_enterprise",
 } as const;
 
