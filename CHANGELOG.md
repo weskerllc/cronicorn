@@ -1,3 +1,10 @@
+## [1.18.3](https://github.com/weskerllc/cronicorn/compare/v1.18.2...v1.18.3) (2026-01-05)
+
+
+### Bug Fixes
+
+* Bump ([1b496c2](https://github.com/weskerllc/cronicorn/commit/1b496c27d24e0a85433e2af81e3bf91562a76228))
+
 ## [1.18.2](https://github.com/weskerllc/cronicorn/compare/v1.18.1...v1.18.2) (2026-01-05)
 
 
