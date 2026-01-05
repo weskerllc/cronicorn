@@ -1,92 +1,19 @@
 {
   "permissions": {
-    "bash": {
-      "allow": [
-        "ls",
-        "cat",
-        "head",
-        "tail",
-        "find",
-        "grep",
-        "git status",
-        "git log",
-        "git log:*",
-        "git diff",
-        "git diff:*",
-        "pnpm test",
-        "pnpm test:*",
-        "pnpm lint",
-        "pnpm lint:*",
-        "pnpm build",
-        "pnpm build:*",
-        "pnpm dev",
-        "pnpm dev:*",
-        "pnpm db",
-        "pnpm db:*",
-        "pnpm scenarios",
-        "pnpm scenarios:*"
-      ],
-      "deny": [
-        "rm -rf /",
-        "sudo:*",
-        "chmod:*",
-        "chown:*",
-        "docker rm:*",
-        "docker system prune",
-        "pnpm clean",
-        "git push --force:*",
-        "git reset --hard:*"
-      ]
-    },
-    "read": {
-      "allow": ["**"],
-      "deny": [
-        ".env",
-        ".env.*",
-        "secrets/**",
-        "**/*.key",
-        "**/*.pem"
-      ]
-    },
-    "edit": {
-      "allow": ["**"],
-      "deny": [
-        ".env",
-        ".env.*",
-        "pnpm-lock.yaml",
-        "**/migrations/**",
-        ".github/workflows/**"
-      ]
-    },
-    "write": {
-      "allow": ["**"],
-      "deny": [
-        ".env",
-        ".env.*",
-        "pnpm-lock.yaml",
-        ".github/workflows/**"
-      ]
-    }
-  },
-  "hooks": {
-    "postToolUse": {
-      "edit": [
-        {
-          "description": "Auto-format TypeScript files after editing",
-          "condition": "file.endsWith('.ts') || file.endsWith('.tsx')",
-          "command": "pnpm lint:fix"
-        }
-      ],
-      "write": [
-        {
-          "description": "Auto-format newly created TypeScript files",
-          "condition": "file.endsWith('.ts') || file.endsWith('.tsx')",
-          "command": "pnpm lint:fix"
-        }
-      ]
-    }
-  },
-  "environment": {
-    "NODE_ENV": "development"
+    "allow": [
+      "Bash",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs"
+    ],
+    "deny": [
+      "Bash(rm -rf /:*)",
+      "Bash(sudo:*)",
+      "Bash(chmod 777:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(docker system prune:*)",
+      "Bash(pnpm clean:*)",
+      "Bash(npm install -g:*)"
+    ]
   }
 }
