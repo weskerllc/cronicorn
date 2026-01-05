@@ -6,7 +6,7 @@ try {
 } catch (error) {
   console.error("Failed to hydrate application:", error);
   // Report to error tracking service if available
-  if (typeof window !== "undefined" && (window as any).reportError) {
-    (window as any).reportError(error);
+  if (typeof window !== "undefined" && "reportError" in window) {
+    window.reportError(error as Error);
   }
 }

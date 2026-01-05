@@ -7,18 +7,18 @@
 
 ### Implementation Summary
 - Created `app/` directory with required TanStack Start entry files:
-  - `app/client.tsx` - Client-side hydration entry point
-  - `app/ssr.tsx` - Server-side rendering entry point
-  - `app/router.tsx` - Router re-export for compatibility
+  - `app/client.tsx` - Client-side hydration entry point with error handling
+  - `app/ssr.tsx` - Server-side rendering entry point using default handler
 - Updated `tsconfig.json` to include `app/**/*.tsx` files
 - Verified build process and local server startup
 - No Dockerfile changes needed (already configured to copy `.output` directory)
 
 ### Key Learnings
 1. TanStack Start requires specific entry files in the `app/` directory
-2. The `StartClient` component does not take a router prop (auto-discovered)
+2. The `StartClient` component does not take a router prop (auto-discovered from file-based routing)
 3. The server entry uses the default handler from `@tanstack/react-start/server-entry`
 4. Build creates `.output/server/index.mjs` which is the production entry point
+5. Error handling in hydration prevents silent failures in production
 
 ### References
 - TanStack Start docs: https://tanstack.com/start/latest/docs/framework/react/quick-start
