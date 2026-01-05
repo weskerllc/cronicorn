@@ -213,6 +213,7 @@ Full list: https://stripe.com/docs/testing
 STRIPE_SECRET_KEY=sk_test_...          # From: https://dashboard.stripe.com/test/apikeys
 STRIPE_WEBHOOK_SECRET=whsec_...        # From: stripe listen command output
 STRIPE_PRICE_PRO=price_...             # From: setup script or Dashboard
+STRIPE_PRICE_PRO_ANNUAL=price_...      # From: setup script or Dashboard
 STRIPE_PRICE_ENTERPRISE=price_...      # From: setup script or Dashboard
 BASE_URL=http://localhost:5173         # For redirect URLs
 ```
