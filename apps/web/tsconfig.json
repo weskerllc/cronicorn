@@ -1,5 +1,5 @@
 {
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "src/vite-env.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "app/**/*.ts", "app/**/*.tsx", "vite.config.ts", "src/vite-env.d.ts"],
   "exclude": ["node_modules", "dist", ".tanstack"],
 
   "compilerOptions": {
