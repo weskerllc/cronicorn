@@ -1,4 +1,12 @@
 import { hydrateRoot } from "react-dom/client";
 import { StartClient } from "@tanstack/react-start/client";
 
-hydrateRoot(document, <StartClient />);
+try {
+  hydrateRoot(document, <StartClient />);
+} catch (error) {
+  console.error("Failed to hydrate application:", error);
+  // Report to error tracking service if available
+  if (typeof window !== "undefined" && (window as any).reportError) {
+    (window as any).reportError(error);
+  }
+}
