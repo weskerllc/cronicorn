@@ -2,70 +2,35 @@
 
 ## What This Project Is
 
-Cronicorn is an AI-powered cron job scheduler built with hexagonal architecture principles. It provides intelligent scheduling with adaptive intervals, real-time monitoring, and comprehensive API management.
+Cronicorn is an AI-powered HTTP job scheduler with a dual-worker architecture (Scheduler + AI Planner) built using hexagonal architecture principles.
 
-**Tech Stack:**
-- **Backend**: TypeScript 5.7, Node 24+, Hono (API), PostgreSQL 17, Drizzle ORM
-- **Frontend**: React 19, TanStack Start (SSR), Tailwind CSS 4, shadcn/ui
-- **Testing**: Vitest, Playwright
-- **Infrastructure**: Docker, pnpm workspaces (monorepo)
-- **AI**: OpenAI API (adaptive scheduling)
-- **Auth**: Better Auth
-- **Payments**: Stripe
+**Tech Stack:** TypeScript 5.7, Node 24+, React 19, TanStack Start, Hono, PostgreSQL 17, Drizzle ORM, Vitest, Playwright
 
-## Monorepo Structure
+**Key Characteristics:**
+- pnpm workspace monorepo (8 apps + 15 packages)
+- Hexagonal architecture (ports & adapters)
+- Transaction-per-test isolation
+- 63+ Architecture Decision Records
 
-This is a pnpm workspace monorepo with **8 apps** and **15 packages**.
+## Quick Reference
 
-### Apps (Deployable Services)
-- `@cronicorn/api` - Hono HTTP API server (REST + OpenAPI)
-- `@cronicorn/web` - TanStack Start SSR frontend
-- `@cronicorn/scheduler-app` - Background worker for job execution
-- `@cronicorn/ai-planner-app` - AI optimization engine
-- `@cronicorn/migrator` - Database migration runner
-- `@cronicorn/docs` - Docusaurus documentation site
-- `@cronicorn/mcp-server` - Model Context Protocol server (npm published)
-- `@cronicorn/e2e` - Playwright end-to-end tests
+**Detailed documentation available at:**
+- `docs/public/developers/quick-start.md` - Setup and commands
+- `docs/public/developers/workspace-structure.md` - Apps and packages overview
+- `docs/public/technical/system-architecture.md` - Dual-worker architecture
+- `docs/public/developers/quality-checks.md` - Testing and quality standards
+- `.adr/` - 63+ architectural decisions (see ADR-0002 for hexagonal architecture)
 
-### Packages (Shared Libraries)
+## Architecture Overview
 
-**Core Domain:**
-- `domain` - Pure business logic (no I/O, framework-free)
-- `services` - Business orchestration layer (managers)
+**Hexagonal Pattern:**
+- **Domain** (`packages/domain/**`) - Pure logic, no I/O
+- **Ports** - Interfaces (Clock, Cron, Dispatcher, JobsRepo, RunsRepo)
+- **Adapters** (`packages/adapter-*/**`) - Infrastructure implementations
+- **Services** (`packages/services/**`) - Business orchestration
+- **Composition Roots** (`apps/*/src/index.ts`) - Dependency wiring
 
-**Adapters (Infrastructure):**
-- `adapter-drizzle` - PostgreSQL repository implementation
-- `adapter-http` - HTTP client for webhook execution
-- `adapter-cron` - Cron expression parsing
-- `adapter-pino` - Structured logging
-- `adapter-ai` - OpenAI API client
-- `adapter-stripe` - Payment processing
-- `adapter-system-clock` - Time abstraction (for testing)
-
-**Workers:**
-- `worker-scheduler` - Main scheduling loop
-- `worker-ai-planner` - AI analysis engine
-
-**Shared:**
-- `ui-library` - Reusable React components (shadcn-style)
-- `api-contracts` - OpenAPI schemas & types
-- `config-defaults` - Default environment variables
-- `content` - Static assets (logos, etc.)
-
-## Architecture
-
-**Hexagonal (Ports & Adapters) Pattern:**
-- **Domain** (`packages/domain/**`) - Pure business logic, no I/O, only Zod allowed
-- **Ports** - Interfaces defined in domain (Clock, Cron, Dispatcher, JobsRepo, RunsRepo)
-- **Adapters** (`packages/adapter-*/**`) - Concrete implementations of ports
-- **Services** (`packages/services/**`) - Business layer that orchestrates multiple repositories
-- **Composition Roots** (`apps/*/src/index.ts`) - Wire dependencies together
-
-**Key Principles:**
-- Domain is pure and testable in isolation
-- All I/O goes through adapter implementations
-- Transaction-per-test for perfect database isolation
-- Vertical slices (features own their ports and repositories)
+**See `docs/public/technical/system-architecture.md` for full architecture details.**
 
 ## Common Commands
 
@@ -83,6 +48,7 @@ pnpm dev:ai-planner   # AI planner worker only
 pnpm db               # Start PostgreSQL (Docker)
 pnpm db:migrate       # Run database migrations
 pnpm scenarios        # Seed test data scenarios
+pnpm studio           # Database browser (Drizzle Studio)
 ```
 
 ### Build & Testing
@@ -99,62 +65,40 @@ pnpm lint             # Check for errors
 pnpm lint:fix         # Auto-fix and format
 ```
 
-### Scenarios
-```bash
-pnpm scenarios        # Interactive scenario selector
-pnpm scenarios:clean  # Clean baseline (no jobs)
-pnpm scenarios:test   # Test data for E2E
-```
+**See `docs/public/developers/quick-start.md` for complete command reference.**
 
 ## Key Locations
 
-- **/.adr/** - 63+ Architecture Decision Records (numbered 0001-0055)
-  - ADR-0002: Hexagonal Architecture Principles (important!)
+- **`.adr/`** - 63+ Architecture Decision Records
+  - ADR-0002: Hexagonal Architecture Principles
   - ADR-0009: Transaction-per-Test Pattern
-- **/docs/_RUNNING_TECH_DEBT.md** - MANDATORY tech debt logging (must log all TODOs here)
-- **/docs/public/developers/** - Developer guides (quality checks, workspace structure, quick start)
-- **.env** - Single environment file at root (loaded via dotenv-cli)
+- **`docs/_RUNNING_TECH_DEBT.md`** - Tech debt log (mandatory for all TODOs)
+- **`docs/public/developers/`** - Developer documentation
+- **`.env`** - Single environment file at root
 
 ## Conventions
 
 ### File Naming
-- **kebab-case** for all files (`job-manager.ts`, not `JobManager.ts`)
-- **PascalCase** for types (`JobsRepo`, `Clock`)
-- **camelCase** for functions (`claimDueEndpoints`)
-- **UPPER_SNAKE_CASE** for constants (`MAX_EXECUTION_TIME_MS`)
+- **kebab-case** for all files: `job-manager.ts`
+- **PascalCase** for types: `JobsRepo`, `Clock`
+- **camelCase** for functions: `claimDueEndpoints`
 
 ### Code Quality
-- **No console.log** - Use logger (Pino) instead (ESLint error)
-- **No any type** - Strict TypeScript everywhere
-- **No process.env** - Inject config through dependency injection
-- **Sorted imports** - Automatically enforced by ESLint (@antfu/eslint-config)
-- **Small files** - <150 lines per file preferred
+- **No console.log** - Use Pino logger (ESLint error)
+- **No any type** - Strict TypeScript
+- **No process.env** - Inject config via DI
+- **Small files** - <150 lines preferred
 
 ### Module System
 - **All packages**: `"type": "module"` (ESM)
-- **Apps use @/ alias** for imports
-- **Packages use @cronicorn/**** for cross-package imports
-- **Exports point to dist/**, never `src/`
-- **Types first in exports map**: `"types": "./dist/index.d.ts"` must come first
+- **Apps**: Use `@/` alias for imports
+- **Packages**: Use `@cronicorn/*` for cross-package imports
+- **Exports**: Point to `dist/`, never `src/`
 
 ### Git Workflow
-- **Conventional commits** for semantic-release (feat/fix/chore)
-- **Pre-commit hook** runs `pnpm lint:fix` automatically (.husky/pre-commit)
-- **semantic-release** on push to main (automated versioning)
-
-## Quality Checklist
-
-**Before Commit:**
-- [ ] `pnpm test` passes
-- [ ] Lint auto-fixed by pre-commit hook
-- [ ] `pnpm build:packages` succeeds
-
-**Before Merge:**
-- [ ] `pnpm test` + `pnpm test:e2e` pass
-- [ ] `pnpm build` succeeds
-- [ ] Zero lint warnings
-- [ ] ADR created if architectural change
-- [ ] Tech debt logged in `docs/_RUNNING_TECH_DEBT.md`
+- **Conventional commits** for semantic-release
+- **Pre-commit hook** runs `pnpm lint:fix` automatically
+- **Quality checks**: See `docs/public/developers/quality-checks.md`
 
 ## Important Patterns
 
@@ -188,7 +132,8 @@ const scheduler = new Scheduler({ clock, jobs });
 
 ## Need Help?
 
-- Architecture questions? Check `.adr/` folder (especially ADR-0002)
+- Architecture? See `docs/public/technical/system-architecture.md`
 - Dev workflow? See `docs/public/developers/quick-start.md`
 - Quality checks? See `docs/public/developers/quality-checks.md`
 - Workspace structure? See `docs/public/developers/workspace-structure.md`
+- Specific architectural decision? Check `.adr/` folder
