@@ -45,11 +45,11 @@ export const pricingFAQs: PricingFAQ[] = [
   },
   {
     question: "Do you offer annual discounts?",
-    answer: "Yes! Annual subscriptions receive a 20% discount (2 months free). Plus, early adopters get an additional 35% off Premium for life.",
+    answer: "Yes! Annual subscriptions receive a 20% discount (2 months free). Early Adopters lock Premium at $24/mo or $228/year (~$19/mo effective) for life.",
   },
   {
     question: "What's the Early Adopter Offer?",
-    answer: "Premium is normally $29/month, but early adopters get it for just $19/month (35% off) forever. This is a limited-time offer to thank our early supporters.",
+    answer: "Premium is normally $39/month, but early adopters lock $24/month (about 38% off) forever — or $228 billed annually (~$19/mo effective). Limited-time while in early access.",
   },
   {
     question: "Is there an SLA for Enterprise customers?",
