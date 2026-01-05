@@ -1,0 +1,68 @@
+# Build artifacts and dependencies
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+.cache/
+
+# Lock files (too large, not useful for context)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Test coverage reports
+coverage/
+.nyc_output/
+*.lcov
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+
+# Environment files (may contain secrets)
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Generated files
+.drizzle/
+.tanstack/
+
+# Large documentation assets (keep the markdown, skip images/videos)
+docs/**/*.mp4
+docs/**/*.mov
+docs/**/*.gif
+docs/**/*.png
+docs/**/*.jpg
+docs/**/*.jpeg
+docs/internal/archive/
+
+# Compiled TypeScript declaration maps
+*.d.ts.map
+
+# Playwright artifacts
+playwright-report/
+test-results/
+playwright/.cache/
+
+# Storybook
+storybook-static/
