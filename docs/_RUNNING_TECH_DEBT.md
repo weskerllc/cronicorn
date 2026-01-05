@@ -37,5 +37,5 @@
 - New Pro subscriptions already get `refund_status='eligible'` on first payment via application logic
 
 ### Pricing Checkout Gap (Early Adopter Annual)
-- The pricing UI now shows $24/mo and $228/yr (~$19/mo) Early Adopter Pro, but the checkout flow still always uses the single `STRIPE_PRICE_PRO` (monthly) price. To actually sell annual at $228, we need backend support: add a dedicated annual price ID to config, plumb billing period from UI to API, and choose the correct Stripe price when creating checkout sessions.
+- Addressed: billingPeriod now flows UI → API → Stripe with `STRIPE_PRICE_PRO_ANNUAL`. Remaining action: set live annual price ID in prod secrets.
 

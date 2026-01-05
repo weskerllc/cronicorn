@@ -22,7 +22,7 @@ export class SubscriptionsManager {
    * Create Stripe Checkout Session for user to subscribe.
    */
   async createCheckout(input: CreateCheckoutInput): Promise<{ checkoutUrl: string }> {
-    const { userId, tier } = input;
+    const { userId, tier, billingPeriod } = input;
 
     // Get user details
     const user = await this.deps.jobsRepo.getUserById(userId);
@@ -36,6 +36,7 @@ export class SubscriptionsManager {
       userId,
       userEmail: user.email,
       tier,
+      billingPeriod: billingPeriod ?? "monthly",
       successUrl: `${this.deps.baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${this.deps.baseUrl}/pricing`,
       existingCustomerId: user.stripeCustomerId ?? undefined,
@@ -159,7 +160,7 @@ export class SubscriptionsManager {
 
     try {
       // 4. Issue refund via payment provider
-    // eslint-disable-next-line no-console
+      // eslint-disable-next-line no-console
       console.log(`[SubscriptionsManager] Issuing refund for user ${userId}, payment intent ${user.lastPaymentIntentId}`);
 
       const refundResult = await this.deps.paymentProvider.issueRefund({
@@ -173,7 +174,7 @@ export class SubscriptionsManager {
 
       // 5. Cancel subscription immediately to prevent future billing
       if (user.stripeSubscriptionId) {
-      // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console
         console.log(`[SubscriptionsManager] Canceling subscription ${user.stripeSubscriptionId} for user ${userId}`);
         await this.deps.paymentProvider.cancelSubscriptionNow(user.stripeSubscriptionId);
       }

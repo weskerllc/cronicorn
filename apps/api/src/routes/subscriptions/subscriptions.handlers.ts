@@ -27,6 +27,7 @@ export const handleCreateCheckout: AppRouteHandler<typeof routes.createCheckout>
     const result = await subscriptionsManager.createCheckout({
       userId,
       tier: body.tier,
+      billingPeriod: body.billingPeriod,
     });
     return c.json(result, 200);
   }

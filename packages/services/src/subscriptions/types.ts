@@ -9,6 +9,7 @@ export type SubscriptionDeps = {
 export type CreateCheckoutInput = {
   userId: string;
   tier: "pro" | "enterprise";
+  billingPeriod?: "monthly" | "annual";
 };
 
 export type CreatePortalInput = {

@@ -33,7 +33,7 @@ export const pricingFeatures: PricingFeature[] = [
 export const pricingFAQs: PricingFAQ[] = [
   {
     question: "What's your refund policy?",
-    answer: "We offer a 14-day money-back guarantee, no questions asked. If you're not satisfied with Premium for any reason, contact us within 14 days for a full refund.",
+    answer: "We offer a 14-day money-back guarantee, no questions asked. If you're not satisfied with Early Adopter Pro for any reason, contact us within 14 days for a full refund.",
   },
   {
     question: "Can I change my plan at any time?",
@@ -45,11 +45,11 @@ export const pricingFAQs: PricingFAQ[] = [
   },
   {
     question: "Do you offer annual discounts?",
-    answer: "Yes! Annual subscriptions receive a 20% discount (2 months free). Early Adopters lock Premium at $24/mo or $228/year (~$19/mo effective) for life.",
+    answer: "Yes! Annual subscriptions receive a 20% discount (2 months free). Early Adopters lock Pro at $24/mo or $228/year (~$19/mo effective) for life.",
   },
   {
     question: "What's the Early Adopter Offer?",
-    answer: "Premium is normally $39/month, but early adopters lock $24/month (about 38% off) forever — or $228 billed annually (~$19/mo effective). Limited-time while in early access.",
+    answer: "Pro is normally $39/month, but early adopters lock $24/month (about 38% off) forever — or $228 billed annually (~$19/mo effective). Limited-time while in early access.",
   },
   {
     question: "Is there an SLA for Enterprise customers?",
