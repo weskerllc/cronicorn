@@ -1,4 +1,30 @@
 
+## TanStack Start Entry Files (Fixed - 2026-01-05)
+
+**Status**: ✅ Fixed  
+**Issue**: 502 Bad Gateway error on cronicorn.com production deployment  
+**Root Cause**: Missing required TanStack Start entry files (`app/client.tsx`, `app/ssr.tsx`)
+
+### Implementation Summary
+- Created `app/` directory with required TanStack Start entry files:
+  - `app/client.tsx` - Client-side hydration entry point
+  - `app/ssr.tsx` - Server-side rendering entry point
+  - `app/router.tsx` - Router re-export for compatibility
+- Updated `tsconfig.json` to include `app/**/*.tsx` files
+- Verified build process and local server startup
+- No Dockerfile changes needed (already configured to copy `.output` directory)
+
+### Key Learnings
+1. TanStack Start requires specific entry files in the `app/` directory
+2. The `StartClient` component does not take a router prop (auto-discovered)
+3. The server entry uses the default handler from `@tanstack/react-start/server-entry`
+4. Build creates `.output/server/index.mjs` which is the production entry point
+
+### References
+- TanStack Start docs: https://tanstack.com/start/latest/docs/framework/react/quick-start
+- Package: `@tanstack/react-start` v1.136.11
+- Deployment platform: Dokploy
+
 ## 14-Day Money-Back Guarantee (Implemented)
 
 **Status**: ✅ Core implementation complete  
