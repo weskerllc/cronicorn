@@ -43,6 +43,7 @@ function PublicLayout(
               title: "Product",
               links: [
                 { text: "Home", url: urls.product.home },
+                { text: "Live Demo", url: urls.product.demo },
                 { text: "Pricing", url: urls.product.pricing },
                 { text: "Get Started", url: urls.product.dashboard },
               ],

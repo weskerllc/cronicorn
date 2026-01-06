@@ -14,8 +14,9 @@ import { useSession } from "@/lib/auth-client";
 
 // Primary links - visible on all screen sizes
 const PRIMARY_NAV_LINKS = [
-    { href: urls.docs.base, label: "Docs" },
-    { href: urls.docs.mcpServer, label: "MCP Server" },
+    { href: urls.product.demo, label: "Demo", external: false },
+    { href: urls.docs.base, label: "Docs", external: true },
+    { href: urls.docs.mcpServer, label: "MCP Server", external: true },
 ] as const;
 
 // Secondary links - desktop only, moved to mobile menu
@@ -54,15 +55,25 @@ export default function HeaderSection() {
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center gap-6">
                     {PRIMARY_NAV_LINKS.map((link) => (
-                        <a
-                            key={link.href}
-                            href={link.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
-                        >
-                            {link.label}
-                        </a>
+                        link.external ? (
+                            <a
+                                key={link.href}
+                                href={link.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
+                            >
+                                {link.label}
+                            </a>
+                        ) : (
+                            <Link
+                                key={link.href}
+                                to={link.href}
+                                className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
+                            >
+                                {link.label}
+                            </Link>
+                        )
                     ))}
                     {SECONDARY_NAV_LINKS.map((link) => (
                         <a
@@ -100,15 +111,25 @@ export default function HeaderSection() {
 
                     {/* Primary links visible on mobile */}
                     {PRIMARY_NAV_LINKS.map((link) => (
-                        <a
-                            key={link.href}
-                            href={link.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
-                        >
-                            {link.label}
-                        </a>
+                        link.external ? (
+                            <a
+                                key={link.href}
+                                href={link.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
+                            >
+                                {link.label}
+                            </a>
+                        ) : (
+                            <Link
+                                key={link.href}
+                                to={link.href}
+                                className="text-foreground hover:text-foreground/80 transition-colors duration-150 text-sm font-medium cursor-pointer"
+                            >
+                                {link.label}
+                            </Link>
+                        )
                     ))}
 
                     <Separator orientation="vertical" className=" h-6 data-[orientation=vertical]:h-6" />

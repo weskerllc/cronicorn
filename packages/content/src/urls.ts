@@ -12,6 +12,7 @@ export const urls = {
     home: "/",
     pricing: "/pricing",
     faq: "/faq",
+    demo: "/demo",
     dashboard: "/dashboard",
     login: "/login",
   },
@@ -19,6 +20,7 @@ export const urls = {
   /** Documentation (on docs subdomain) */
   docs: {
     base: "https://docs.cronicorn.com",
+    quickStart: "https://docs.cronicorn.com/quick-start",
     quickstart: "https://docs.cronicorn.com/quick-start",
     useCases: "https://docs.cronicorn.com/use-cases",
     architecture: "https://docs.cronicorn.com/technical/system-architecture",

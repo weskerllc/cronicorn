@@ -12,6 +12,7 @@ export const metaDescriptions = {
   docs: "Complete documentation for adaptive scheduling with AI hints. Quick start guides, API reference. Get started with intelligent cron alternatives.",
   faq: "Get answers to common questions about Cronicorn's AI-powered job scheduling. Learn about adaptive intervals, workflow orchestration, and intelligent automation.",
   login: "Sign in to your Cronicorn account to access powerful AI-driven job scheduling, analytics, and automation tools.",
+  demo: "Try Cronicorn's intelligent scheduling without signup. Simulate real-world scenarios and see AI adaptation in action. Interactive demos for flash sales, system monitoring, and more.",
 } as const;
 
 /** Page titles for SEO (used with titleTemplate) */
@@ -19,6 +20,7 @@ export const pageTitles = {
   pricing: "Pricing Plans - Choose Your AI Scheduling Solution",
   login: "Login - Access Your AI Scheduling Dashboard",
   faq: "Frequently Asked Questions",
+  demo: "Live Demo - See Cronicorn in Action",
 } as const;
 
 /** SEO Keywords - Organized by priority tier */
