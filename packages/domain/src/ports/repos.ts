@@ -586,3 +586,33 @@ export type SessionsRepo = {
     total: number;
   }>;
 };
+
+/**
+ * Webhook Events repository.
+ * Tracks processed webhook events for idempotency (prevent duplicate processing).
+ *
+ * IMPORTANT: All operations MUST be used within a database transaction
+ * to ensure atomicity with webhook processing.
+ */
+export type WebhookEventsRepo = {
+  /**
+   * Check if a webhook event has already been processed.
+   *
+   * This should be called BEFORE processing the event to prevent duplicates.
+   *
+   * @param eventId - Stripe event ID (e.g., "evt_1234567890")
+   * @returns true if event was already processed, false otherwise
+   */
+  hasBeenProcessed: (eventId: string) => Promise<boolean>;
+
+  /**
+   * Record a webhook event as successfully processed.
+   *
+   * This should be called AFTER successful processing within the same transaction.
+   * If the event was already recorded, this is a no-op (idempotent).
+   *
+   * @param eventId - Stripe event ID (e.g., "evt_1234567890")
+   * @param eventType - Webhook event type (e.g., "checkout.session.completed")
+   */
+  recordProcessedEvent: (eventId: string, eventType: string) => Promise<void>;
+};

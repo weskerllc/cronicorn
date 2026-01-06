@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Alert, AlertDescription } from "@cronicorn/ui-library/components/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@cronicorn/ui-library/components/accordion";
-import { AlertCircle, Check, Shield, Star } from "lucide-react";
+import { AlertCircle, Check, Shield } from "lucide-react";
 
 import { business, metaDescriptions, pageTitles, pricing, pricingFAQs } from "@cronicorn/content";
 import { useSession } from "@/lib/auth-client";
