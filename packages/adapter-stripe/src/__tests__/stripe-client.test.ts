@@ -89,6 +89,7 @@ describe("stripePaymentProvider", () => {
         metadata: {
           userId: "user_123",
           tier: "pro",
+          billingPeriod: "monthly",
         },
         success_url: "https://app.example.com/success",
         cancel_url: "https://app.example.com/cancel",
@@ -129,6 +130,7 @@ describe("stripePaymentProvider", () => {
         metadata: {
           userId: "user_123",
           tier: "enterprise",
+          billingPeriod: "monthly",
         },
         success_url: "https://app.example.com/success",
         cancel_url: "https://app.example.com/cancel",
