@@ -12,7 +12,7 @@ import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboar
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
+import { formatTimeRangeTooltipLabel, getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
 
 interface AITokensChartProps {
     data: Array<AISessionTimeSeriesPoint>;
@@ -201,17 +201,14 @@ export function AITokensChart({
                                 });
 
                                 const date = new Date(Number(payload[0]?.payload?.date));
+                                const formattedDateLabel = formatTimeRangeTooltipLabel(date, timeRange);
 
                                 // If all values are zero, show "No activity" message
                                 if (filteredPayload.length === 0) {
                                     return (
                                         <div className="rounded-lg border bg-background p-2 shadow-sm">
                                             <div className="text-muted-foreground text-xs">
-                                                {date.toLocaleDateString("en-US", {
-                                                    month: "short",
-                                                    day: "numeric",
-                                                    year: "numeric",
-                                                })}
+                                                {formattedDateLabel}
                                             </div>
                                             <div className="text-muted-foreground mt-1 text-xs">No activity</div>
                                         </div>
@@ -222,11 +219,7 @@ export function AITokensChart({
                                     <ChartTooltipContent
                                         active={active}
                                         payload={filteredPayload}
-                                        label={date.toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric",
-                                        })}
+                                        label={formattedDateLabel}
                                         indicator="dot"
                                     />
                                 );
