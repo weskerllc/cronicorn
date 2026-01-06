@@ -2,25 +2,31 @@
 /* eslint-disable no-console */
 /* eslint-disable node/no-process-env */
 /**
- * Performance Testing Data Seeder
+ * E-Commerce Flash Sale Demo Data Seeder
  *
- * Creates large dataset to stress-test dashboard pagination and performance optimizations:
- * - 50 jobs (tests searchable job dropdowns)
- * - 250 endpoints (5 per job - tests backend pagination)
- * - Thousands of runs (tests timeline chart limiting to top 10)
- * - AI sessions for 30 endpoints (tests varied data distribution)
+ * Creates demo-optimized dataset for product video recording:
+ * - 7 days of historical data (Days 1-5: baseline, Day 6: flash sale, Day 7: recovery)
+ * - 4 jobs organized by tier (Operations, Diagnostics, Recovery, Alerts)
+ * - 11 endpoints across 4 tiers (Health, Investigation, Recovery, Alert)
+ * - ~22,000 runs showing complete AI adaptation cycle
+ * - 6 AI analysis sessions at key moments with transparent reasoning
  *
- * Showcases all dashboard features:
- * - Job Health Chart: Searchable combobox with 50 jobs
- * - Scheduling Intelligence: Mix of baseline, AI-driven, and clamped runs
- * - Execution Timeline: Limited to top 10 of 250 endpoints by run count
- * - Endpoint Table: Paginated view (20 per page) of all 250 endpoints
- * - Filtering: Multiple jobs/endpoints/statuses to filter
+ * Demonstrates:
+ * - Baseline credibility: 5 days of normal operations before flash sale
+ * - Complete adaptation cycle: degradation → AI adapts → recovery → hints expire
+ * - Visual timeline: Color-coded source attribution (baseline, AI, one-shot, clamped)
+ * - AI transparency: Every decision explained with reasoning
+ * - User control: Min/max constraints enforced throughout
  *
  * Run with: pnpm tsx apps/migrator/src/seed.ts
  *
- * NOTE: This script can run standalone (without the API). It will automatically
- * create the admin user if it doesn't exist using the ensureAdminUser utility.
+ * Flash Sale Timeline (Day 6, 12:00-13:00):
+ * - Minutes 0-4: Baseline (1000 visitors/min, 98% success)
+ * - Minutes 5-8: Surge (5000 visitors/min, AI tightens to 30s)
+ * - Minutes 9-12: Strain (5500 visitors/min, AI activates diagnostics)
+ * - Minutes 13-20: Critical (6000 visitors/min, AI pages oncall)
+ * - Minutes 21-39: Recovery (1500 visitors/min, AI confirms recovery)
+ * - Hour 13:00+: Hints expire, return to baseline
  */
 
 import { schema } from "@cronicorn/adapter-drizzle";
@@ -61,530 +67,635 @@ const pool = new Pool({
 
 const db = drizzle(pool, { schema });
 
-// Configurable seed size (dev-friendly defaults)
-const NUM_JOBS = Number.parseInt(process.env.SEED_NUM_JOBS || "5", 10); // Default: 5 jobs (was 50)
-const ENDPOINTS_PER_JOB = Number.parseInt(process.env.SEED_ENDPOINTS_PER_JOB || "3", 10); // Default: 3 per job (was 5)
+/* ============================================================================
+   FLASH SALE TYPES & CONSTANTS
+   ============================================================================ */
 
-// Flash Sale Timeline (simulate recent data - today's date)
-const NOW = new Date(); // Current time
-const SALE_END = new Date(NOW.getTime() - 1 * 60 * 60 * 1000); // Sale ended 1 hour ago
-const SALE_START = new Date(NOW.getTime() - 20 * 60 * 60 * 1000); // Sale started 20 hours ago (covers most of last 24h)
+type FlashSalePhase = "baseline" | "surge" | "strain" | "critical" | "recovery";
 
-// Time ranges for dashboard filtering tests
-const DAYS_AGO_45 = new Date(NOW.getTime() - 45 * 24 * 60 * 60 * 1000); // Older than 30 days
+type EndpointTier = "health" | "investigation" | "recovery" | "alert";
 
-// Generate jobs based on configuration
-function generateJobs() {
-  const jobs: Array<{ id: string; name: string; description: string; status: "active" | "paused" | "archived" }> = [];
-  const jobTypes = [
-    { prefix: "monitoring", name: "Monitoring", desc: "Real-time monitoring" },
-    { prefix: "health", name: "Health Checks", desc: "Infrastructure health" },
-    { prefix: "inventory", name: "Inventory Sync", desc: "Stock management" },
-    { prefix: "analytics", name: "Analytics", desc: "Data processing" },
-    { prefix: "alerts", name: "Alert System", desc: "Notification management" },
-  ];
+type EndpointConfig = {
+  id: string;
+  jobId: string;
+  name: string;
+  description: string;
+  url: string;
+  method: "GET" | "POST";
+  baselineIntervalMs: number;
+  minIntervalMs: number;
+  maxIntervalMs: number;
+  tier: EndpointTier;
+  pausedUntil?: Date | null;
+};
 
-  for (let i = 1; i <= NUM_JOBS; i++) {
-    const type = jobTypes[(i - 1) % jobTypes.length];
-    // Archive every 5th job to test archived job logic
-    const isArchived = i % 5 === 0;
-    jobs.push({
-      id: `job-${type.prefix}-${i}`,
-      name: `${type.name}${NUM_JOBS > 1 ? ` ${i}` : ""}${isArchived ? " (Archived)" : ""}`,
-      description: `${type.desc}${NUM_JOBS > 1 ? ` - Instance ${i}` : ""}`,
-      status: isArchived ? "archived" : "active",
-    });
-  }
+// Timeline constants
+const NOW = new Date();
+const FLASH_SALE_START = new Date(NOW.getTime() - 25 * 60 * 60 * 1000); // 25 hours ago (Day 6, 12:00)
+const FLASH_SALE_END = new Date(FLASH_SALE_START.getTime() + 60 * 60 * 1000); // Exactly +1 hour
+const SEVEN_DAYS_AGO = new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  return jobs;
-}
-
-const JOBS = generateJobs();
-
-// Generate endpoints per job based on configuration
-function generateEndpoints(jobs: ReturnType<typeof generateJobs>) {
-  type EndpointConfig = {
-    id: string;
-    jobId: string;
-    name: string;
-    url: string;
-    baselineIntervalMs: number;
-    minIntervalMs: number;
-    maxIntervalMs: number;
-    description: string;
-    pattern: string;
-    successRate: number;
-    archived: boolean;
-    jobStatus: "active" | "paused" | "archived";
-  };
-
-  const endpoints: EndpointConfig[] = [];
-  const patterns = ["adaptive-tight", "adaptive-tight", "adaptive-tight", "oneshot", "steady"];
-  const endpointTypes = [
-    { name: "API Health", url: "/health", baseline: 2 * 60 * 1000, successRate: 0.98 },
-    { name: "Database Check", url: "/db", baseline: 3 * 60 * 1000, successRate: 0.92 },
-    { name: "Cache Status", url: "/cache", baseline: 5 * 60 * 1000, successRate: 0.95 },
-    { name: "Queue Monitor", url: "/queue", baseline: 1 * 60 * 1000, successRate: 0.88 },
-    { name: "Metrics Collect", url: "/metrics", baseline: 10 * 60 * 1000, successRate: 0.99 },
-  ];
-
-  jobs.forEach((job, _jobIndex) => {
-    // Generate ENDPOINTS_PER_JOB endpoints for each job
-    for (let i = 0; i < ENDPOINTS_PER_JOB; i++) {
-      const type = endpointTypes[i % endpointTypes.length];
-      const pattern = patterns[i % patterns.length];
-
-      // Archive logic:
-      // - If job is archived, archive only first endpoint (to test mixed state)
-      // - For active jobs, archive every 7th endpoint
-      const isEndpointArchived = job.status === "archived"
-        ? i === 0 // First endpoint of archived job is also archived
-        : i % 7 === 0; // Every 7th endpoint of active jobs is archived
-
-      endpoints.push({
-        id: `ep-${job.id}-${i}`,
-        jobId: job.id,
-        name: `${type.name}${isEndpointArchived ? " (Archived)" : ""}`,
-        url: `https://api.example.com${type.url}`,
-        baselineIntervalMs: type.baseline,
-        minIntervalMs: Math.floor(type.baseline / 10), // 10% of baseline
-        maxIntervalMs: type.baseline * 3, // 3x baseline
-        description: `${type.name} for ${job.name}`,
-        pattern,
-        successRate: type.successRate,
-        archived: isEndpointArchived,
-        jobStatus: job.status,
-      });
-    }
-  });
-
-  return endpoints;
-}
-
-const ENDPOINTS = generateEndpoints(JOBS);
+/* ============================================================================
+   FLASH SALE PHASE LOGIC
+   ============================================================================ */
 
 /**
- * Generate realistic run data based on endpoint pattern
- * Includes runs across different time ranges for dashboard filtering tests:
- * - Last 24 hours
- * - Last 7 days
- * - Last 30 days
- * - Older than 30 days (45+ days ago)
+ * Get flash sale phase based on minute offset from sale start
  */
-function generateRuns(endpoint: typeof ENDPOINTS[0]): Array<schema.RunInsert> {
-  const runs: Array<schema.RunInsert> = [];
+function getFlashSalePhase(minuteOffset: number): FlashSalePhase {
+  if (minuteOffset <= 4)
+    return "baseline";
+  if (minuteOffset <= 8)
+    return "surge";
+  if (minuteOffset <= 12)
+    return "strain";
+  if (minuteOffset <= 20)
+    return "critical";
+  return "recovery";
+}
 
-  // Start time: Always start from 45 days ago to ensure we have data in all time ranges
-  // This ensures dashboard filters work correctly (24h, 7d, 30d, >30d)
-  const startTime = DAYS_AGO_45;
+/**
+ * Get traffic metrics for a specific minute offset in flash sale
+ * Based on FLASH_SALE_TIMELINE from scenarios.ts
+ */
+function getFlashSaleMetrics(minuteOffset: number) {
+  const phase = getFlashSalePhase(minuteOffset);
 
-  let currentTime = new Date(startTime.getTime());
-
-  const getInterval = (time: Date): number => {
-    const hour = time.getHours();
-    const isSaleHour = time >= SALE_START && time <= SALE_END;
-    const isPeakSurge = hour >= 9 && hour <= 11 && isSaleHour; // 9am-11am is peak
-
-    if (endpoint.pattern === "adaptive-tight") {
-      if (isPeakSurge)
-        return endpoint.minIntervalMs; // Tighten to min during surge
-      if (isSaleHour)
-        return endpoint.minIntervalMs * 3; // Moderately tight during sale
-      return endpoint.baselineIntervalMs; // Baseline otherwise
-    }
-
-    if (endpoint.pattern === "oneshot") {
-      // Fire a few one-shots during peak surge
-      if (isPeakSurge && Math.random() < 0.3)
-        return 15 * 60 * 1000; // Every 15 min during surge
-      return endpoint.baselineIntervalMs * 4; // Very sparse otherwise
-    }
-
-    return endpoint.baselineIntervalMs; // Steady pattern
+  const metrics = {
+    baseline: { traffic: 1000, ordersPerMin: 40, pageLoadMs: 800, inventoryLagMs: 100, dbQueryMs: 120 },
+    surge: { traffic: 5000, ordersPerMin: 180, pageLoadMs: 1800, inventoryLagMs: 250, dbQueryMs: 280 },
+    strain: { traffic: 5500, ordersPerMin: 160, pageLoadMs: 3200, inventoryLagMs: 450, dbQueryMs: 850 },
+    critical: { traffic: 6000, ordersPerMin: 120, pageLoadMs: 4500, inventoryLagMs: 600, dbQueryMs: 1200 },
+    recovery: { traffic: 1500, ordersPerMin: 50, pageLoadMs: 1100, inventoryLagMs: 150, dbQueryMs: 180 },
   };
 
-  const getSource = (time: Date): string => {
-    const hour = time.getHours();
-    const isSaleHour = time >= SALE_START && time <= SALE_END;
-    const isPeakSurge = hour >= 9 && hour <= 11 && isSaleHour;
+  return metrics[phase];
+}
 
-    if (endpoint.pattern === "oneshot" && isPeakSurge) {
-      return "ai-oneshot"; // One-shot AI intervention
-    }
+/* ============================================================================
+   JOBS DEFINITIONS (4 Jobs)
+   ============================================================================ */
 
-    if (endpoint.pattern === "adaptive-tight" && isPeakSurge) {
-      return Math.random() < 0.9 ? "ai-interval" : "clamped-min"; // Mostly AI (90%), some clamped
-    }
+const JOBS = [
+  {
+    id: "job-flash-sale-ops",
+    name: "Flash Sale Operations",
+    description: "Core operational health monitoring for e-commerce flash sale events",
+    status: "active" as const,
+  },
+  {
+    id: "job-flash-sale-diagnostics",
+    name: "Flash Sale Diagnostics",
+    description: "Deep diagnostic tools activated during performance degradation",
+    status: "active" as const,
+  },
+  {
+    id: "job-flash-sale-recovery",
+    name: "Flash Sale Recovery",
+    description: "Automated recovery actions triggered by AI during critical load",
+    status: "active" as const,
+  },
+  {
+    id: "job-flash-sale-alerts",
+    name: "Flash Sale Alerts",
+    description: "Escalation alerts for operations, support, and oncall teams",
+    status: "active" as const,
+  },
+];
 
-    if (endpoint.pattern === "adaptive-tight" && isSaleHour) {
-      return Math.random() < 0.7 ? "ai-interval" : "baseline-interval"; // More AI during sale (70%)
-    }
+/* ============================================================================
+   ENDPOINT DEFINITIONS (11 Endpoints across 4 Tiers)
+   ============================================================================ */
 
-    // Add some AI activity even during normal hours for adaptive endpoints
-    if (endpoint.pattern === "adaptive-tight" && Math.random() < 0.2) {
-      return "ai-interval"; // 20% AI even outside sale hours
-    }
+const ENDPOINTS: EndpointConfig[] = [
+  // Health Tier (3 endpoints - continuous monitoring)
+  {
+    id: "ep-traffic-monitor",
+    jobId: "job-flash-sale-ops",
+    tier: "health",
+    name: "Traffic Monitor",
+    description: "Real-time visitor traffic monitoring",
+    url: "https://api.ecommerce.example.com/metrics/traffic",
+    method: "GET",
+    baselineIntervalMs: 60_000, // 1 minute
+    minIntervalMs: 20_000, // 20 seconds
+    maxIntervalMs: 5 * 60_000, // 5 minutes
+  },
+  {
+    id: "ep-order-processor-health",
+    jobId: "job-flash-sale-ops",
+    tier: "health",
+    name: "Order Processor Health",
+    description: "Order processing pipeline health check",
+    url: "https://api.ecommerce.example.com/metrics/orders",
+    method: "GET",
+    baselineIntervalMs: 2 * 60_000, // 2 minutes
+    minIntervalMs: 60_000, // 1 minute
+    maxIntervalMs: 5 * 60_000, // 5 minutes
+  },
+  {
+    id: "ep-inventory-sync-check",
+    jobId: "job-flash-sale-ops",
+    tier: "health",
+    name: "Inventory Sync Check",
+    description: "Stock synchronization lag monitoring",
+    url: "https://api.ecommerce.example.com/metrics/inventory",
+    method: "GET",
+    baselineIntervalMs: 3 * 60_000, // 3 minutes
+    minIntervalMs: 30_000, // 30 seconds
+    maxIntervalMs: 10 * 60_000, // 10 minutes
+  },
 
-    return "baseline-interval"; // Default baseline
-  };
+  // Investigation Tier (2 endpoints - conditionally activated)
+  {
+    id: "ep-slow-page-analyzer",
+    jobId: "job-flash-sale-diagnostics",
+    tier: "investigation",
+    name: "Slow Page Analyzer",
+    description: "Deep page performance analysis (activated during degradation)",
+    url: "https://api.ecommerce.example.com/diagnostics/page-performance",
+    method: "POST",
+    baselineIntervalMs: 90_000, // 90 seconds when active
+    minIntervalMs: 60_000,
+    maxIntervalMs: 5 * 60_000,
+    pausedUntil: new Date("2099-01-01T00:00:00Z"), // Start paused
+  },
+  {
+    id: "ep-database-query-trace",
+    jobId: "job-flash-sale-diagnostics",
+    tier: "investigation",
+    name: "Database Query Trace",
+    description: "Query performance tracing (activated when DB slows)",
+    url: "https://api.ecommerce.example.com/diagnostics/db-queries",
+    method: "POST",
+    baselineIntervalMs: 2 * 60_000, // 2 minutes when active
+    minIntervalMs: 60_000,
+    maxIntervalMs: 5 * 60_000,
+    pausedUntil: new Date("2099-01-01T00:00:00Z"), // Start paused
+  },
+
+  // Recovery Tier (2 endpoints - one-shot actions with cooldowns)
+  {
+    id: "ep-cache-warmup",
+    jobId: "job-flash-sale-recovery",
+    tier: "recovery",
+    name: "Cache Warm Up",
+    description: "Preload product cache to reduce database load",
+    url: "https://api.ecommerce.example.com/recovery/cache-warmup",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 10 * 60_000,
+    pausedUntil: new Date("2099-01-01T00:00:00Z"), // Start paused
+  },
+  {
+    id: "ep-scale-checkout-workers",
+    jobId: "job-flash-sale-recovery",
+    tier: "recovery",
+    name: "Scale Checkout Workers",
+    description: "Horizontally scale checkout worker pool",
+    url: "https://api.ecommerce.example.com/recovery/scale-workers",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 15 * 60_000,
+    pausedUntil: new Date("2099-01-01T00:00:00Z"), // Start paused
+  },
+
+  // Alert Tier (4 endpoints - escalation alerts with cooldowns)
+  {
+    id: "ep-slack-operations",
+    jobId: "job-flash-sale-alerts",
+    tier: "alert",
+    name: "Slack Operations Alert",
+    description: "Alert operations team of performance degradation",
+    url: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 10 * 60_000,
+    pausedUntil: new Date("2099-01-01T00:00:00Z"), // Start paused
+  },
+  {
+    id: "ep-slack-customer-support",
+    jobId: "job-flash-sale-alerts",
+    tier: "alert",
+    name: "Slack Customer Support Alert",
+    description: "Escalate to customer support team for high-impact issues",
+    url: "https://hooks.slack.com/services/T00000000/B00000001/XXXXXXXXXXXXXXXXXXXX",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 15 * 60_000,
+    pausedUntil: new Date("2099-01-01T00:00:00Z"), // Start paused
+  },
+  {
+    id: "ep-emergency-oncall-page",
+    jobId: "job-flash-sale-alerts",
+    tier: "alert",
+    name: "Emergency Oncall Page",
+    description: "Page oncall engineer for critical system failure",
+    url: "https://api.pagerduty.com/incidents",
+    method: "POST",
+    baselineIntervalMs: 60_000,
+    minIntervalMs: 5_000,
+    maxIntervalMs: 2 * 60 * 60_000,
+    pausedUntil: new Date("2099-01-01T00:00:00Z"), // Start paused
+  },
+  {
+    id: "ep-performance-webhook",
+    jobId: "job-flash-sale-alerts",
+    tier: "alert",
+    name: "Performance Degradation Webhook",
+    description: "Generic webhook for third-party monitoring integrations",
+    url: "https://api.example.com/webhooks/performance",
+    method: "POST",
+    baselineIntervalMs: 5 * 60_000, // 5 minutes
+    minIntervalMs: 60_000,
+    maxIntervalMs: 15 * 60_000,
+    pausedUntil: new Date("2099-01-01T00:00:00Z"), // Start paused
+  },
+];
+
+/* ============================================================================
+   RUN GENERATION LOGIC
+   ============================================================================ */
+
+/**
+ * Generate runs for a single endpoint across 7-day timeline
+ */
+function generateRunsForEndpoint(endpoint: EndpointConfig): schema.RunInsert[] {
+  const runs: schema.RunInsert[] = [];
+  let currentTime = new Date(SEVEN_DAYS_AGO.getTime());
+
+  // Track last execution for recovery/alert tiers (cooldown logic)
+  let lastRecoveryExecution: Date | null = null;
+  let lastAlertExecution: Date | null = null;
 
   while (currentTime < NOW) {
-    const interval = getInterval(currentTime);
-    currentTime = new Date(currentTime.getTime() + interval);
+    // Determine if we're in flash sale window
+    const isFlashSaleWindow = currentTime >= FLASH_SALE_START && currentTime <= FLASH_SALE_END;
+    const minuteOffset = isFlashSaleWindow
+      ? Math.floor((currentTime.getTime() - FLASH_SALE_START.getTime()) / 60_000)
+      : -1;
 
+    // Non-health endpoints should only run during flash sale window
+    if (!isFlashSaleWindow && endpoint.tier !== "health") {
+      // Skip to flash sale start or end
+      if (currentTime < FLASH_SALE_START) {
+        currentTime = new Date(FLASH_SALE_START.getTime());
+      }
+      else {
+        break; // Past flash sale, done
+      }
+      continue;
+    }
+
+    // Get interval based on endpoint tier and flash sale phase
+    let interval = endpoint.baselineIntervalMs;
+    let source = "baseline-interval";
+
+    if (isFlashSaleWindow && minuteOffset >= 0) {
+      const phase = getFlashSalePhase(minuteOffset);
+      const metrics = getFlashSaleMetrics(minuteOffset);
+
+      // Tier-specific interval logic during flash sale
+      if (endpoint.tier === "health") {
+        // Health tier: Tighten during surge/strain/critical
+        if (phase === "critical") {
+          interval = endpoint.minIntervalMs; // 20-30s
+          source = Math.random() < 0.85 ? "ai-interval" : (Math.random() < 0.8 ? "baseline-interval" : "clamped-min");
+        }
+        else if (phase === "strain") {
+          interval = Math.floor(endpoint.baselineIntervalMs / 2); // 30s-90s
+          source = Math.random() < 0.80 ? "ai-interval" : (Math.random() < 0.9 ? "baseline-interval" : "clamped-min");
+        }
+        else if (phase === "surge") {
+          interval = Math.floor(endpoint.baselineIntervalMs * 0.6); // Moderately tight
+          source = Math.random() < 0.70 ? "ai-interval" : "baseline-interval";
+        }
+        else if (phase === "recovery") {
+          interval = Math.floor(endpoint.baselineIntervalMs * 0.8);
+          source = Math.random() < 0.60 ? "ai-interval" : "baseline-interval";
+        }
+      }
+      else if (endpoint.tier === "investigation") {
+        // Investigation tier: Activated during strain/critical only
+        if (phase === "strain" || phase === "critical") {
+          interval = endpoint.baselineIntervalMs; // Active
+          source = "ai-interval";
+        }
+        else {
+          // Not active during this phase, skip this iteration
+          currentTime = new Date(currentTime.getTime() + endpoint.baselineIntervalMs);
+          continue;
+        }
+      }
+      else if (endpoint.tier === "recovery") {
+        // Recovery tier: One-shot actions during critical with cooldowns
+        if (phase === "critical" || phase === "strain") {
+          const cooldownMs = 10 * 60 * 1000; // 10-minute cooldown
+          if (!lastRecoveryExecution || currentTime.getTime() - lastRecoveryExecution.getTime() >= cooldownMs) {
+            interval = 60_000; // Fire once, then cooldown
+            source = "ai-oneshot";
+            lastRecoveryExecution = currentTime;
+          }
+          else {
+            // On cooldown, skip
+            currentTime = new Date(currentTime.getTime() + cooldownMs / 2);
+            continue;
+          }
+        }
+        else {
+          // Not active during this phase, skip this iteration
+          currentTime = new Date(currentTime.getTime() + endpoint.baselineIntervalMs);
+          continue;
+        }
+      }
+      else if (endpoint.tier === "alert") {
+        // Alert tier: Escalation during critical with cooldowns
+        if (phase === "critical" || (phase === "strain" && metrics.pageLoadMs >= 3000)) {
+          const cooldownMs = endpoint.id === "ep-emergency-oncall-page" ? 2 * 60 * 60 * 1000 : 10 * 60 * 1000;
+          if (!lastAlertExecution || currentTime.getTime() - lastAlertExecution.getTime() >= cooldownMs) {
+            interval = 60_000; // Fire once, then cooldown
+            source = "ai-oneshot";
+            lastAlertExecution = currentTime;
+          }
+          else {
+            // On cooldown, skip this iteration
+            currentTime = new Date(currentTime.getTime() + 60_000);
+            continue;
+          }
+        }
+        else {
+          // Not active during this phase, skip this iteration
+          currentTime = new Date(currentTime.getTime() + endpoint.baselineIntervalMs);
+          continue;
+        }
+      }
+    }
+    else {
+      // Outside flash sale: Normal baseline with occasional AI hints (health tier only)
+      if (endpoint.tier === "health" && Math.random() < 0.05) {
+        source = "ai-interval";
+      }
+    }
+
+    // Advance time by interval
+    currentTime = new Date(currentTime.getTime() + interval);
     if (currentTime > NOW)
       break;
 
-    const isSuccess = Math.random() < endpoint.successRate;
+    // Determine success/failure based on phase
+    let successRate = 0.97; // Default outside flash sale
+    let avgDuration = 200; // ms
+
+    if (isFlashSaleWindow && minuteOffset >= 0) {
+      const phase = getFlashSalePhase(minuteOffset);
+      const phaseMetrics = {
+        baseline: { successRate: 0.98, avgDuration: 200 },
+        surge: { successRate: 0.92, avgDuration: 400 },
+        strain: { successRate: 0.85, avgDuration: 800 },
+        critical: { successRate: 0.60, avgDuration: 1500 },
+        recovery: { successRate: 0.95, avgDuration: 300 },
+      };
+      successRate = phaseMetrics[phase].successRate;
+      avgDuration = phaseMetrics[phase].avgDuration;
+    }
+
+    const isSuccess = Math.random() < successRate;
     const duration = isSuccess
-      ? Math.floor(100 + Math.random() * 300) // 100-400ms for success
-      : Math.floor(500 + Math.random() * 2000); // 500-2500ms for failures
+      ? Math.floor(avgDuration * (0.8 + Math.random() * 0.4)) // ±20% variance
+      : Math.floor(avgDuration * (2 + Math.random())); // Failures take 2-3x longer
+
+    // Create response body for health tier with flash sale metrics
+    let responseBody: Record<string, unknown> | null = null;
+    if (endpoint.tier === "health" && isFlashSaleWindow && minuteOffset >= 0) {
+      const metrics = getFlashSaleMetrics(minuteOffset);
+      responseBody = {
+        ...metrics,
+        timestamp: currentTime.toISOString(),
+      };
+    }
 
     runs.push({
       id: `run-${crypto.randomUUID()}`,
       endpointId: endpoint.id,
-      status: isSuccess ? "success" : "failure",
+      status: isSuccess ? "success" : "failed",
       attempt: 1,
-      source: getSource(currentTime),
+      source,
       startedAt: currentTime,
       finishedAt: new Date(currentTime.getTime() + duration),
       durationMs: duration,
       errorMessage: isSuccess ? null : "Connection timeout",
       statusCode: isSuccess ? 200 : 504,
+      responseBody,
     });
   }
 
   return runs;
 }
 
-/**
- * Generate AI analysis sessions (sparse - only during key moments)
- * Generate sessions for first half of endpoints to have varied data
- */
-function generateAISessions(endpoints: ReturnType<typeof generateEndpoints>): Array<typeof schema.aiAnalysisSessions.$inferInsert> {
+/* ============================================================================
+   AI SESSION DEFINITIONS (6 Sessions)
+   ============================================================================ */
+
+function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInsert> {
   const sessions: Array<typeof schema.aiAnalysisSessions.$inferInsert> = [];
 
-  // Prefer adaptive endpoints for heavy AI activity; others get light coverage
-  const adaptive = endpoints.filter(e => e.pattern === "adaptive-tight" && !e.archived);
-  const oneshot = endpoints.filter(e => e.pattern === "oneshot" && !e.archived);
-  const steady = endpoints.filter(e => e.pattern === "steady" && !e.archived);
-
-  // Pick subsets for different session intensities:
-  // - Ultra-heavy: 80-150 sessions (1-2 endpoints max)
-  // - Heavy: 30-60 sessions
-  // - Medium: 10-20 sessions
-  // - Light: 2-5 sessions
-  const ultraHeavyAdaptive = adaptive.slice(0, Math.min(2, adaptive.length));
-  const heavyAdaptive = adaptive.slice(ultraHeavyAdaptive.length, ultraHeavyAdaptive.length + Math.max(2, Math.floor(adaptive.length * 0.3)));
-  const mediumAdaptive = adaptive.slice(ultraHeavyAdaptive.length + heavyAdaptive.length, ultraHeavyAdaptive.length + heavyAdaptive.length + Math.floor(adaptive.length * 0.3));
-  const lightAdaptive = adaptive.filter(e => !ultraHeavyAdaptive.includes(e) && !heavyAdaptive.includes(e) && !mediumAdaptive.includes(e));
-
-  // Helper: build realistic tool call entries using tool names and schemas in packages/worker-ai-planner/src/tools.ts
+  // Helper for tool call objects
   const tc = {
-    getLatest: () => ({ tool: "get_latest_response", args: {}, result: { found: true, responseBody: { ok: true, errors: 0 }, timestamp: new Date().toISOString(), status: "success" } }),
-    getHistory: (limit: number, offset: number) => ({
-      tool: "get_response_history",
-      args: { limit, offset },
-      result: {
-        count: Math.max(0, limit - (offset % 2)),
-        pagination: {
-          offset,
-          limit,
-          nextOffset: offset + limit,
-        },
-        hasMore: true,
-        responses: Array.from({ length: limit }).map((_, i) => ({
-          responseBody: { ok: true, errors: i + offset },
-          timestamp: new Date(Date.now() - (i + offset + 1) * 300000).toISOString(),
-          status: "success",
-          durationMs: 200 + (i * 15),
-        })),
-        tokenSavingNote: "Response bodies truncated at 1000 chars to prevent token overflow",
-      },
+    getLatest: (result: Record<string, unknown>) => ({
+      tool: "get_latest_response",
+      args: {},
+      result: { found: true, ...result, timestamp: new Date().toISOString(), status: "success" },
     }),
-    siblings: () => ({
+    getHistory: (limit: number, responses: Array<Record<string, unknown>>) => ({
+      tool: "get_response_history",
+      args: { limit, offset: 0 },
+      result: { count: responses.length, responses, hasMore: false },
+    }),
+    siblings: (siblings: Array<{ endpointId: string; endpointName: string; responseBody: Record<string, unknown> }>) => ({
       tool: "get_sibling_latest_responses",
       args: {},
-      result: {
-        count: 2,
-        siblings: [
-          {
-            endpointId: "sib-1",
-            endpointName: "DB",
-            responseBody: { ok: true },
-            timestamp: new Date().toISOString(),
-            status: "success",
-          },
-          {
-            endpointId: "sib-2",
-            endpointName: "Cache",
-            responseBody: { ok: true },
-            timestamp: new Date().toISOString(),
-            status: "success",
-          },
-        ],
-      },
+      result: { count: siblings.length, siblings },
     }),
-    proposeInterval: (intervalMs: number, ttlMinutes: number, reason?: string) => ({ tool: "propose_interval", args: { intervalMs, ttlMinutes, reason }, result: `Adjusted interval to ${intervalMs}ms (expires in ${ttlMinutes} minutes)${reason ? `: ${reason}` : ""}` }),
-    proposeNext: (date: Date, ttlMinutes: number, reason?: string) => ({ tool: "propose_next_time", args: { nextRunAtIso: date.toISOString(), ttlMinutes, reason }, result: `Scheduled one-shot execution at ${date.toISOString()} (expires in ${ttlMinutes} minutes)${reason ? `: ${reason}` : ""}` }),
-    pauseUntil: (until: Date | null, reason?: string) => ({ tool: "pause_until", args: { untilIso: until ? until.toISOString() : null, reason }, result: until ? `Paused until ${until.toISOString()}${reason ? `: ${reason}` : ""}` : `Resumed execution${reason ? `: ${reason}` : ""}` }),
-    submit: (reasoning: string, actions: string[], confidence: "high" | "medium" | "low" = "high") => ({ tool: "submit_analysis", args: { reasoning, actions_taken: actions, confidence }, result: { status: "analysis_complete", reasoning, actions_taken: actions, confidence } }),
-  } as const;
+    proposeInterval: (intervalMs: number, ttlMinutes: number, reason: string) => ({
+      tool: "propose_interval",
+      args: { intervalMs, ttlMinutes, reason },
+      result: `Adjusted interval to ${intervalMs}ms (expires in ${ttlMinutes} minutes): ${reason}`,
+    }),
+    proposeNext: (nextRunInMs: number, ttlMinutes: number, reason: string) => ({
+      tool: "propose_next_time",
+      args: { nextRunInMs, ttlMinutes, reason },
+      result: `Scheduled one-shot execution in ${nextRunInMs}ms (expires in ${ttlMinutes} minutes): ${reason}`,
+    }),
+    pauseUntil: (untilIso: string | null, reason: string) => ({
+      tool: "pause_until",
+      args: { untilIso, reason },
+      result: untilIso ? `Paused until ${untilIso}: ${reason}` : `Resumed execution: ${reason}`,
+    }),
+    submit: (reasoning: string, actions: string[], confidence: "high" | "medium") => ({
+      tool: "submit_analysis",
+      args: { reasoning, actions_taken: actions, confidence },
+      result: { status: "analysis_complete" },
+    }),
+  };
 
-  // Utility to clamp a time into the sale window vicinity (kept for consistency)
-  // const aroundSale = (minutesOffset: number) => new Date(SALE_START.getTime() + minutesOffset * 60 * 1000);
-
-  // Ultra-heavy sessions: 80-150 per endpoint (simulates highly monitored critical endpoints)
-  ultraHeavyAdaptive.forEach((endpoint, idx) => {
-    const count = 80 + (idx * 35); // 80, 115, 150 etc
-    for (let i = 0; i < count; i++) {
-      // Distribute across all time ranges for realistic coverage
-      const daysAgo = Math.floor((i / count) * 45); // Spread across 45 days
-      const baseTime = new Date(DAYS_AGO_45.getTime() + daysAgo * 24 * 60 * 60 * 1000);
-      const minuteOffset = (i % 60) * 15 + (idx * 7); // Varied times throughout each day
-      const analyzedAt = new Date(baseTime.getTime() + minuteOffset * 60 * 1000);
-
-      const actions: string[] = [];
-      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [];
-
-      // Query patterns vary by position in sequence
-      toolCalls.push(tc.getLatest());
-      if (i % 3 === 0)
-        toolCalls.push(tc.getHistory(2, 0));
-      if (i % 5 === 0)
-        toolCalls.push(tc.getHistory(2, 2));
-      if (i % 7 === 0)
-        toolCalls.push(tc.siblings());
-
-      // Action logic based on position and time
-      const isRecentHour = analyzedAt >= new Date(NOW.getTime() - 2 * 60 * 60 * 1000);
-      const isDuringSale = analyzedAt >= SALE_START && analyzedAt <= SALE_END;
-      const isPeakTime = analyzedAt.getHours() >= 9 && analyzedAt.getHours() <= 11;
-
-      if (isDuringSale && isPeakTime && i % 4 === 0) {
-        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs / 5)), 90, "Peak surge - aggressive monitoring"));
-        actions.push("propose_interval");
-      }
-      else if (isDuringSale && i % 6 === 0) {
-        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs / 2)), 60, "Sale traffic sustained"));
-        actions.push("propose_interval");
-      }
-      else if (isRecentHour && i % 8 === 0) {
-        toolCalls.push(tc.proposeInterval(endpoint.baselineIntervalMs, 30, "Normalizing post-event"));
-        actions.push("propose_interval");
-      }
-      else if (i % 15 === 0) {
-        const soon = new Date(analyzedAt.getTime() + 10 * 60 * 1000);
-        toolCalls.push(tc.proposeNext(soon, 25, "Spot check"));
-        actions.push("propose_next_time");
-      }
-
-      // Occasional pause for maintenance
-      if (i % 50 === 0 && i > 0) {
-        const until = new Date(analyzedAt.getTime() + 15 * 60 * 1000);
-        toolCalls.push(tc.pauseUntil(until, "Scheduled maintenance"));
-        actions.push("pause_until");
-      }
-
-      const reasoning = actions.length > 0
-        ? `Active monitoring with ${actions.join(", ")} adjustment${actions.length > 1 ? "s" : ""}.`
-        : "Routine health check - metrics within expected range.";
-
-      toolCalls.push(tc.submit(reasoning, actions, actions.length ? "high" : "medium"));
-
-      sessions.push({
-        id: `session-${crypto.randomUUID()}`,
-        endpointId: endpoint.id,
-        analyzedAt,
-        toolCalls,
-        reasoning,
-        tokenUsage: 850 + (i % 30) * 15 + idx * 20,
-        durationMs: 230 + (i % 10) * 25,
-      });
-    }
+  // Session 1: Pre-Sale Analysis (Day 6, 11:45 - 15 min before sale)
+  const session1Time = new Date(FLASH_SALE_START.getTime() - 15 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session1Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 980, pageLoadMs: 780, trends: "stable" } }),
+      tc.getHistory(5, [
+        { responseBody: { visitors: 970, pageLoadMs: 790 }, status: "success" },
+        { responseBody: { visitors: 990, pageLoadMs: 770 }, status: "success" },
+        { responseBody: { visitors: 1010, pageLoadMs: 800 }, status: "success" },
+        { responseBody: { visitors: 980, pageLoadMs: 785 }, status: "success" },
+        { responseBody: { visitors: 1000, pageLoadMs: 795 }, status: "success" },
+      ]),
+      tc.submit("Normal traffic patterns detected. No action needed pre-flash-sale.", [], "high"),
+    ],
+    reasoning: "Normal traffic patterns detected. No action needed pre-flash-sale.",
+    tokenUsage: 650,
+    durationMs: 280,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 5 * 60_000),
   });
 
-  // Heavy sessions for selected adaptive endpoints (30-60 per endpoint)
-  heavyAdaptive.forEach((endpoint, idx) => {
-    const count = 30 + (idx % 31); // 30..60
-    for (let i = 0; i < count; i++) {
-      // Distribute more evenly across time ranges
-      const daysAgo = Math.floor((i / count) * 40); // Spread across 40 days
-      const baseTime = new Date(NOW.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-      const minuteOffset = (i % 48) * 20 + (idx * 5); // Throughout day
-      const analyzedAt = new Date(baseTime.getTime() - minuteOffset * 60 * 1000);
-
-      const phase = i % 5;
-
-      const actions: string[] = [];
-      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [];
-
-      // Query patterns
-      toolCalls.push(tc.getLatest());
-      if (i % 2 === 0)
-        toolCalls.push(tc.getHistory(2, 0));
-      if (i % 4 === 0)
-        toolCalls.push(tc.getHistory(2, 2));
-      if (i % 5 === 0)
-        toolCalls.push(tc.siblings());
-
-      // Actions based on phase and conditions
-      const isDuringSale = analyzedAt >= SALE_START && analyzedAt <= SALE_END;
-      const hour = analyzedAt.getHours();
-      const isPeakHours = hour >= 8 && hour <= 18;
-
-      if (phase === 1 || (isDuringSale && isPeakHours && i % 3 === 0)) {
-        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs / 3)), 90, "High activity period"));
-        actions.push("propose_interval");
-      }
-      else if (phase === 2 && i % 3 === 0) {
-        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs / 2)), 60, "Moderate adjustment"));
-        actions.push("propose_interval");
-      }
-      else if (phase === 3 && i % 4 === 0) {
-        toolCalls.push(tc.proposeInterval(endpoint.baselineIntervalMs, 40, "Returning to baseline"));
-        actions.push("propose_interval");
-      }
-      else if (i % 10 === 0) {
-        const soon = new Date(analyzedAt.getTime() + 8 * 60 * 1000);
-        toolCalls.push(tc.proposeNext(soon, 25, "Scheduled check"));
-        actions.push("propose_next_time");
-      }
-
-      if (i % 25 === 0 && i > 0) {
-        const until = new Date(analyzedAt.getTime() + 12 * 60 * 1000);
-        toolCalls.push(tc.pauseUntil(until, "Maintenance window"));
-        actions.push("pause_until");
-      }
-
-      const reasoning = actions.length > 0
-        ? `Adjusted scheduling based on traffic analysis (${actions.join(", ")}).`
-        : "Monitoring - no adjustments needed at this time.";
-      toolCalls.push(tc.submit(reasoning, actions, actions.length ? "high" : "medium"));
-
-      sessions.push({
-        id: `session-${crypto.randomUUID()}`,
-        endpointId: endpoint.id,
-        analyzedAt,
-        toolCalls,
-        reasoning,
-        tokenUsage: 900 + (idx * 17) + i * 25,
-        durationMs: 250 + (i % 5) * 60,
-      });
-    }
+  // Session 2: Surge Detection (Day 6, 12:06 - Minute 6 of sale)
+  const session2Time = new Date(FLASH_SALE_START.getTime() + 6 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session2Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 5100, pageLoadMs: 1850, ordersPerMin: 185, trends: "spiking" } }),
+      tc.getHistory(3, [
+        { responseBody: { visitors: 5000, pageLoadMs: 1800, ordersPerMin: 180 }, status: "success" },
+        { responseBody: { visitors: 3200, pageLoadMs: 1200, ordersPerMin: 140 }, status: "success" },
+        { responseBody: { visitors: 1100, pageLoadMs: 850, ordersPerMin: 45 }, status: "success" },
+      ]),
+      tc.proposeInterval(30_000, 60, "Traffic surge detected (+400%)—tightening monitoring to 30s"),
+      tc.submit("Traffic surge from 1000 to 5100 visitors/min detected. Tightening health check intervals to 30s for proactive monitoring during flash sale peak.", ["propose_interval"], "high"),
+    ],
+    reasoning: "Traffic surge from 1000 to 5100 visitors/min detected. Tightening health check intervals to 30s for proactive monitoring during flash sale peak.",
+    tokenUsage: 1250,
+    durationMs: 420,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 10 * 60_000),
   });
 
-  // Medium sessions for adaptive endpoints (10-20 per)
-  mediumAdaptive.forEach((endpoint, idx) => {
-    const count = 10 + (idx % 11); // 10..20
-    for (let i = 0; i < count; i++) {
-      const daysAgo = Math.floor((i / count) * 30);
-      const baseTime = new Date(NOW.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-      const analyzedAt = new Date(baseTime.getTime() - (i * 90 + idx * 7) * 60 * 1000);
-
-      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [tc.getLatest()];
-      if (i % 2 === 0)
-        toolCalls.push(tc.getHistory(2, 0));
-      if (i % 4 === 0)
-        toolCalls.push(tc.siblings());
-
-      const actions: string[] = [];
-      if (i % 3 === 0) {
-        toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs * 0.7)), 50, "Load adjustment"));
-        actions.push("propose_interval");
-      }
-
-      const reasoning = actions.length ? "Regular optimization cycle." : "Metrics stable.";
-      toolCalls.push(tc.submit(reasoning, actions, "medium"));
-
-      sessions.push({
-        id: `session-${crypto.randomUUID()}`,
-        endpointId: endpoint.id,
-        analyzedAt,
-        toolCalls,
-        reasoning,
-        tokenUsage: 650 + idx * 12,
-        durationMs: 210 + i * 15,
-      });
-    }
+  // Session 3: Critical Escalation (Day 6, 12:15 - Minute 15)
+  const session3Time = new Date(FLASH_SALE_START.getTime() + 15 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-slow-page-analyzer",
+    analyzedAt: session3Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { avgPageLoadMs: 4600, p95Ms: 6200, bottleneck: "database" } }),
+      tc.siblings([
+        {
+          endpointId: "ep-order-processor-health",
+          endpointName: "Order Processor Health",
+          responseBody: { ordersPerMin: 118, failureRate: 0.15 },
+        },
+        {
+          endpointId: "ep-inventory-sync-check",
+          endpointName: "Inventory Sync Check",
+          responseBody: { lagMs: 620, queueDepth: 850 },
+        },
+      ]),
+      tc.pauseUntil(null, "Activating cache warmup recovery action"),
+      tc.proposeNext(5_000, 5, "Execute cache warmup immediately to reduce database load"),
+      tc.submit("CRITICAL: Page load times at 4600ms (p95: 6200ms). Orders degraded to 118/min. Activating emergency recovery: cache warmup, oncall escalation.", ["pause_until", "propose_next_time"], "high"),
+    ],
+    reasoning: "CRITICAL: Page load times at 4600ms (p95: 6200ms). Orders degraded to 118/min. Activating emergency recovery: cache warmup, oncall escalation.",
+    tokenUsage: 1850,
+    durationMs: 520,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 20 * 60_000),
   });
 
-  // Light sessions for remaining adaptive endpoints (2-5 per)
-  lightAdaptive.forEach((endpoint, idx) => {
-    const count = 2 + (idx % 4);
-    for (let i = 0; i < count; i++) {
-      const analyzedAt = new Date(NOW.getTime() - (90 + i * 45 + idx * 5) * 60 * 1000);
-      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [tc.getLatest(), tc.getHistory(2, 0)];
-      const reasoning = "Stable with occasional AI interval tuning.";
-      toolCalls.push(tc.proposeInterval(Math.max(endpoint.minIntervalMs, Math.floor(endpoint.baselineIntervalMs * 0.75)), 45, "Slight increase in load"));
-      toolCalls.push(tc.submit(reasoning, ["propose_interval"], "medium"));
-      sessions.push({
-        id: `session-${crypto.randomUUID()}`,
-        endpointId: endpoint.id,
-        analyzedAt,
-        toolCalls,
-        reasoning,
-        tokenUsage: 600 + idx * 10,
-        durationMs: 220 + i * 40,
-      });
-    }
+  // Session 4: Recovery Confirmation (Day 6, 12:28 - Minute 28)
+  const session4Time = new Date(FLASH_SALE_START.getTime() + 28 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session4Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 1400, pageLoadMs: 1050, ordersPerMin: 55, trends: "declining" } }),
+      tc.getHistory(5, [
+        { responseBody: { visitors: 1400, pageLoadMs: 1050 }, status: "success" },
+        { responseBody: { visitors: 1450, pageLoadMs: 1100 }, status: "success" },
+        { responseBody: { visitors: 1500, pageLoadMs: 1150 }, status: "success" },
+        { responseBody: { visitors: 1800, pageLoadMs: 1400 }, status: "success" },
+        { responseBody: { visitors: 2200, pageLoadMs: 1800 }, status: "success" },
+      ]),
+      tc.proposeInterval(60_000, 30, "Traffic normalized to 1400 visitors/min—returning to baseline 1-minute checks"),
+      tc.submit("Recovery confirmed. Traffic declining to 1400/min, page load improved to 1050ms. Returning health checks to baseline 1-minute intervals.", ["propose_interval"], "high"),
+    ],
+    reasoning: "Recovery confirmed. Traffic declining to 1400/min, page load improved to 1050ms. Returning health checks to baseline 1-minute intervals.",
+    tokenUsage: 1100,
+    durationMs: 380,
+    nextAnalysisAt: new Date(FLASH_SALE_END.getTime() + 5 * 60_000),
   });
 
-  // Oneshoot-focused sessions: prefer propose_next_time during peaks (5-12 per endpoint)
-  oneshot.slice(0, Math.max(2, Math.floor(oneshot.length * 0.5))).forEach((endpoint, idx) => {
-    const count = 5 + (idx % 8); // 5..12
-    for (let i = 0; i < count; i++) {
-      const daysAgo = Math.floor((i / count) * 20);
-      const baseTime = new Date(NOW.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-      const analyzedAt = new Date(baseTime.getTime() - (i * 180 + idx * 13) * 60 * 1000);
-      const soon = new Date(analyzedAt.getTime() + 10 * 60 * 1000);
-      const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [
-        tc.getLatest(),
-        tc.getHistory(2, 0),
-        tc.proposeNext(soon, 30, "Investigate spike via one-shot"),
-        tc.submit("One-shot scheduled to inspect spike.", ["propose_next_time"], "medium"),
-      ];
-      sessions.push({
-        id: `session-${crypto.randomUUID()}`,
-        endpointId: endpoint.id,
-        analyzedAt,
-        toolCalls,
-        reasoning: "One-shot scheduled to inspect spike.",
-        tokenUsage: 500 + idx * 12,
-        durationMs: 200 + i * 30,
-      });
-    }
+  // Session 5: Hint Expiration (Day 6, 13:05 - 5 min after sale)
+  const session5Time = new Date(FLASH_SALE_END.getTime() + 5 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session5Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 1050, pageLoadMs: 820, ordersPerMin: 42, trends: "stable" } }),
+      tc.submit("Flash sale event concluded. All AI hints expired (60-min TTL). Traffic returned to baseline levels (1050/min). Baseline schedules fully resumed.", [], "high"),
+    ],
+    reasoning: "Flash sale event concluded. All AI hints expired (60-min TTL). Traffic returned to baseline levels (1050/min). Baseline schedules fully resumed.",
+    tokenUsage: 750,
+    durationMs: 290,
+    nextAnalysisAt: new Date(FLASH_SALE_END.getTime() + 19 * 60 * 60_000), // Next day, 8am
   });
 
-  // Steady endpoints: rare actions, mostly observation
-  steady.slice(0, Math.min(5, steady.length)).forEach((endpoint, idx) => {
-    const analyzedAt = new Date(NOW.getTime() - (idx * 6 + 2) * 60 * 60 * 1000);
-    const toolCalls: Array<{ tool: string; args: unknown; result: unknown }> = [tc.getLatest(), tc.getHistory(2, 0), tc.submit("No action needed; metrics steady.", [], "high")];
-    sessions.push({
-      id: `session-${crypto.randomUUID()}`,
-      endpointId: endpoint.id,
-      analyzedAt,
-      toolCalls,
-      reasoning: "No action needed; metrics steady.",
-      tokenUsage: 350 + idx * 8,
-      durationMs: 180 + idx * 20,
-    });
+  // Session 6: Post-Event Analysis (Day 7, 08:00 - Next morning)
+  const session6Time = new Date(FLASH_SALE_END.getTime() + 19 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session6Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 920, pageLoadMs: 780, ordersPerMin: 38, trends: "stable" } }),
+      tc.getHistory(10, [
+        { responseBody: { visitors: 920, pageLoadMs: 780 }, status: "success" },
+        { responseBody: { visitors: 930, pageLoadMs: 790 }, status: "success" },
+        { responseBody: { visitors: 910, pageLoadMs: 770 }, status: "success" },
+        { responseBody: { visitors: 950, pageLoadMs: 800 }, status: "success" },
+        { responseBody: { visitors: 940, pageLoadMs: 785 }, status: "success" },
+        { responseBody: { visitors: 960, pageLoadMs: 795 }, status: "success" },
+        { responseBody: { visitors: 930, pageLoadMs: 790 }, status: "success" },
+        { responseBody: { visitors: 920, pageLoadMs: 775 }, status: "success" },
+        { responseBody: { visitors: 940, pageLoadMs: 805 }, status: "success" },
+        { responseBody: { visitors: 950, pageLoadMs: 790 }, status: "success" },
+      ]),
+      tc.submit("Post-event stability confirmed. All metrics returned to normal baseline ranges. No action needed.", [], "high"),
+    ],
+    reasoning: "Post-event stability confirmed. All metrics returned to normal baseline ranges. No action needed.",
+    tokenUsage: 680,
+    durationMs: 250,
+    nextAnalysisAt: new Date(session6Time.getTime() + 24 * 60 * 60_000), // +1 day
   });
 
   return sessions;
 }
 
-async function seed() {
-  console.log("🌱 Seeding demo data...\n");
-  console.log("📊 Configuration:");
-  console.log(`  • Jobs: ${NUM_JOBS}`);
-  console.log(`  • Endpoints per job: ${ENDPOINTS_PER_JOB}`);
-  console.log(`  • Total endpoints: ${NUM_JOBS * ENDPOINTS_PER_JOB}`);
-  console.log(`  • Historical data: 45+ days of runs`);
-  console.log("");
+/* ============================================================================
+   MAIN SEED FUNCTION
+   ============================================================================ */
 
-  // 1. Ensure admin user exists (creates if needed, returns existing if already created)
-  // This allows seed to run standalone without requiring the API to be started first.
+async function seed() {
+  console.log("🌱 Seeding e-commerce flash sale demo data...\n");
+
+  // 1. Ensure admin user exists
   const adminEmail = process.env.ADMIN_USER_EMAIL || DEV_AUTH.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_USER_PASSWORD || DEV_AUTH.ADMIN_PASSWORD;
   const adminName = process.env.ADMIN_USER_NAME || DEV_AUTH.ADMIN_NAME;
@@ -595,28 +706,21 @@ async function seed() {
     password: adminPassword,
     name: adminName,
   });
-  console.log(`✓ Admin user ready (ID: ${DEMO_USER_ID})\n`);
+  console.log(`✓ Admin user ensured: ${adminEmail}\n`);
 
-  // Calculate summary stats once
-  const archivedJobsCount = JOBS.filter(j => j.status === "archived").length;
-  const archivedEndpointsCount = ENDPOINTS.filter(e => e.archived).length;
-  const archivedJobEndpointsCount = ENDPOINTS.filter(e => e.jobStatus === "archived").length;
-  const archivedJobNonArchivedEndpointsCount = ENDPOINTS.filter(e => e.jobStatus === "archived" && !e.archived).length;
-
-  // 2. Create jobs (batch insert)
+  // 2. Create jobs
   console.log("📦 Creating jobs...");
   const jobsToInsert = JOBS.map(job => ({
     ...job,
     userId: DEMO_USER_ID,
-    status: job.status,
-    createdAt: new Date(SALE_START.getTime() - 7 * 24 * 60 * 60 * 1000), // Created 1 week before
+    createdAt: SEVEN_DAYS_AGO,
     updatedAt: NOW,
-    archivedAt: job.status === "archived" ? new Date(NOW.getTime() - 3 * 24 * 60 * 60 * 1000) : null, // Archived 3 days ago
+    archivedAt: null,
   }));
   await db.insert(schema.jobs).values(jobsToInsert).onConflictDoNothing();
-  console.log(`✓ Created ${JOBS.length} jobs (${archivedJobsCount} archived)\n`);
+  console.log(`✓ 4 jobs created\n`);
 
-  // 3. Create endpoints (batch insert)
+  // 3. Create endpoints
   console.log("🎯 Creating endpoints...");
   const endpointsToInsert = ENDPOINTS.map(endpoint => ({
     id: endpoint.id,
@@ -625,36 +729,33 @@ async function seed() {
     name: endpoint.name,
     description: endpoint.description,
     url: endpoint.url,
-    method: "GET" as const,
+    method: endpoint.method,
     baselineIntervalMs: endpoint.baselineIntervalMs,
     minIntervalMs: endpoint.minIntervalMs,
     maxIntervalMs: endpoint.maxIntervalMs,
     timeoutMs: 5000,
-    lastRunAt: endpoint.archived ? new Date(NOW.getTime() - 5 * 24 * 60 * 60 * 1000) : new Date(NOW.getTime() - 60000),
+    lastRunAt: new Date(NOW.getTime() - 60000),
     nextRunAt: new Date(NOW.getTime() + endpoint.baselineIntervalMs),
     failureCount: 0,
-    archivedAt: endpoint.archived ? new Date(NOW.getTime() - 2 * 24 * 60 * 60 * 1000) : null,
+    pausedUntil: endpoint.pausedUntil || null,
+    archivedAt: null,
   }));
   await db.insert(schema.jobEndpoints).values(endpointsToInsert).onConflictDoNothing();
-  console.log(`✓ Created ${ENDPOINTS.length} endpoints (${archivedEndpointsCount} archived)`);
-  console.log(`  • ${archivedJobEndpointsCount} endpoints in archived jobs`);
-  console.log(`  • ${archivedJobNonArchivedEndpointsCount} non-archived endpoints in archived jobs (for testing)\n`);
+  console.log(`✓ 11 endpoints created\n`);
 
-  // 4. Generate and insert runs (optimized: generate all first, then parallel batch insert)
-  console.log("⚡ Generating runs...");
-  const startGenTime = Date.now();
-
-  // Generate all runs upfront (CPU-bound, no async needed)
+  // 4. Generate runs
+  console.log("⚡ Generating runs for 7-day timeline...");
   const allRuns: schema.RunInsert[] = [];
-  for (const endpoint of ENDPOINTS) {
-    const runs = generateRuns(endpoint);
-    allRuns.push(...runs);
-  }
-  console.log(`  ✓ Generated ${allRuns.length} runs in ${Date.now() - startGenTime}ms`);
 
-  // Batch insert with parallelization (5 concurrent batches of 500)
-  console.log("  ⏳ Inserting runs...");
-  const startInsertTime = Date.now();
+  for (const endpoint of ENDPOINTS) {
+    const runs = generateRunsForEndpoint(endpoint);
+    allRuns.push(...runs);
+    console.log(`  → ${endpoint.name}: ${runs.length} runs`);
+  }
+  console.log(`✓ Generated ${allRuns.length} runs\n`);
+
+  // 5. Batch insert runs
+  console.log("⏳ Batch inserting runs (concurrency: 5, batch size: 500)...");
   await batchInsertWithConcurrency(
     allRuns,
     500, // batch size
@@ -663,50 +764,33 @@ async function seed() {
       await db.insert(schema.runs).values(batch).onConflictDoNothing();
     },
   );
-  console.log(`  ✓ Inserted ${allRuns.length} runs in ${Date.now() - startInsertTime}ms`);
-  console.log(`\n✓ Total runs: ${allRuns.length}\n`);
-  const totalRuns = allRuns.length;
+  console.log(`✓ Inserted ${allRuns.length} runs in 45 batches\n`);
 
-  // 5. Create AI analysis sessions
+  // 6. Create AI sessions
   console.log("🤖 Creating AI analysis sessions...");
-  const sessions = generateAISessions(ENDPOINTS);
-  if (sessions.length > 0) {
-    await db.insert(schema.aiAnalysisSessions).values(sessions).onConflictDoNothing();
-  }
-  console.log(`✓ Created ${sessions.length} AI sessions\n`);
+  const sessions = generateAISessions();
+  await db.insert(schema.aiAnalysisSessions).values(sessions).onConflictDoNothing();
+  console.log(`✓ 6 AI analysis sessions created\n`);
 
-  // 6. Summary
+  // 7. Summary
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("✨ Seed complete!\n");
-  console.log("📊 Dashboard Data Summary:");
-  console.log(`  • ${JOBS.length} jobs created (${archivedJobsCount} archived)`);
-  console.log(`  • ${ENDPOINTS.length} endpoints created (${archivedEndpointsCount} archived)`);
-  console.log(`  • ${archivedJobNonArchivedEndpointsCount} non-archived endpoints in archived jobs (testing logic)`);
-  console.log(`  • ${totalRuns} runs generated (45+ days of data)`);
-  console.log(`  • ${sessions.length} AI analysis sessions`);
-
-  console.log("\n🎯 Dashboard Features:");
-  console.log(`  • ${JOBS.length} jobs test searchable job dropdowns`);
-  console.log(`  • ${ENDPOINTS.length} endpoints test backend pagination`);
-  console.log("  • Timeline charts limited to top 10 endpoints");
-  console.log("  • Endpoint table shows 20 per page with pagination");
-  console.log("  • Runs distributed across all time ranges:");
-  console.log("    - Last 24 hours (for real-time monitoring)");
-  console.log("    - Last 7 days (for weekly trends)");
-  console.log("    - Last 30 days (for monthly analysis)");
-  console.log("    - 30-45 days ago (for historical comparison)");
-  console.log("  • AI sessions range from 2-150 per endpoint:");
-  console.log("    - Ultra-heavy: 80-150 sessions (1-2 critical endpoints)");
-  console.log("    - Heavy: 30-60 sessions (selected adaptive endpoints)");
-  console.log("    - Medium: 10-20 sessions (many adaptive endpoints)");
-  console.log("    - Light: 2-12 sessions (steady/oneshot endpoints)");
-
-  console.log("\n📈 Environment Variables:");
-  console.log("  • SEED_NUM_JOBS - Number of jobs to create (default: 5)");
-  console.log("  • SEED_ENDPOINTS_PER_JOB - Endpoints per job (default: 3)");
-  console.log("\n💡 Example for performance testing:");
-  console.log("  SEED_NUM_JOBS=50 SEED_ENDPOINTS_PER_JOB=5 pnpm seed");
-  console.log("\n🔗 Navigate to /dashboard to see the results!");
+  console.log("✨ E-Commerce Flash Sale Demo Seed Complete!\n");
+  console.log("📊 Timeline Summary:");
+  console.log("  • Days 1-5: Normal operations (baseline establishment)");
+  console.log("  • Day 6, 12:00-13:00: Flash sale event (complete adaptation cycle)");
+  console.log("  • Day 7: Post-event stabilization\n");
+  console.log("📦 Data Created:");
+  console.log(`  • ${JOBS.length} jobs (ops, diagnostics, recovery, alerts)`);
+  console.log(`  • ${ENDPOINTS.length} endpoints (4 tiers: health, investigation, recovery, alert)`);
+  console.log(`  • ${allRuns.length} runs (~7 days of execution history)`);
+  console.log(`  • ${sessions.length} AI analysis sessions (surge → critical → recovery → expiration)\n`);
+  console.log("🎯 Demo Features:");
+  console.log("  • Baseline credibility: 5 days of normal ops before flash sale");
+  console.log("  • Complete adaptation cycle: degradation → AI adapts → recovery → hints expire");
+  console.log("  • Visual timeline: Color-coded source attribution (baseline, AI interval, AI one-shot, clamped)");
+  console.log("  • AI transparency: 6 sessions showing reasoning at key moments");
+  console.log("  • User control: Min/max constraints enforced throughout\n");
+  console.log("🔗 Navigate to /dashboard to see the flash sale timeline!");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
   await pool.end();
