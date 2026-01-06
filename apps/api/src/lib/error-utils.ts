@@ -127,6 +127,14 @@ export function handleErrorResponse(
     throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: errorMessage });
   }
 
+  if (errorMessage.toLowerCase().match(/limit.*reached/)) {
+    throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: errorMessage });
+  }
+
+  if (errorMessage.toLowerCase().match(/too short|too long|below minimum|exceeds maximum|must be in the future/)) {
+    throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: errorMessage });
+  }
+
   // Default case - return appropriate status based on options or 500
   if (options?.defaultStatus === HttpStatusCodes.BAD_REQUEST) {
     throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: defaultMessage });
