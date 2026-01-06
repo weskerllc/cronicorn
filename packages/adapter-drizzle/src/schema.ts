@@ -255,3 +255,25 @@ export const oauthTokens = pgTable("oauth_tokens", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+
+/**
+ * Webhook Events table.
+ * Tracks processed webhook events for idempotency (prevent duplicate processing).
+ *
+ * Stripe can send duplicate webhook events, especially during retries.
+ * This table ensures we only process each event once.
+ */
+export const webhookEvents = pgTable("webhook_events", {
+  // Stripe event ID (e.g., "evt_1234567890")
+  eventId: text("event_id").primaryKey(),
+  eventType: text("event_type").notNull(), // e.g., "checkout.session.completed"
+  processedAt: timestamp("processed_at", { mode: "date", withTimezone: true }).notNull(),
+  status: text("status").notNull(), // "processed" | "failed"
+  errorMessage: text("error_message"), // Error details if processing failed
+}, table => ({
+  processedAtIdx: index("webhook_events_processed_at_idx").on(table.processedAt),
+  eventTypeIdx: index("webhook_events_event_type_idx").on(table.eventType),
+}));
+
+export type WebhookEventRow = typeof webhookEvents.$inferSelect;
+export type WebhookEventInsert = typeof webhookEvents.$inferInsert;

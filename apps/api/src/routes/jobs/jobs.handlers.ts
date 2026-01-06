@@ -4,6 +4,7 @@ import type { AppRouteHandler } from "../../types.js";
 import type * as routes from "./jobs.routes.js";
 
 import { getAuthContext } from "../../auth/middleware.js";
+import { handleErrorResponse } from "../../lib/error-utils.js";
 import * as mappers from "./jobs.mappers.js";
 
 // ==================== Job Lifecycle Handlers ====================
@@ -55,11 +56,12 @@ export const updateJob: AppRouteHandler<routes.UpdateJobRoute> = async (c) => {
       return c.json(mappers.mapJobToResponse(job), HTTPStatusCodes.OK);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Update failed";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "updateJob",
+        userId,
+      }, {
+        defaultMessage: "Update failed",
+      });
     }
   });
 };
@@ -74,11 +76,12 @@ export const archiveJob: AppRouteHandler<routes.ArchiveJobRoute> = async (c) => 
       return c.json(mappers.mapJobToResponse(job), HTTPStatusCodes.OK);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Archive failed";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "archiveJob",
+        userId,
+      }, {
+        defaultMessage: "Archive failed",
+      });
     }
   });
 };
@@ -93,11 +96,12 @@ export const pauseJob: AppRouteHandler<routes.PauseJobRoute> = async (c) => {
       return c.json(mappers.mapJobToResponse(job), HTTPStatusCodes.OK);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Pause failed";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "pauseJob",
+        userId,
+      }, {
+        defaultMessage: "Pause failed",
+      });
     }
   });
 };
@@ -112,11 +116,12 @@ export const resumeJob: AppRouteHandler<routes.ResumeJobRoute> = async (c) => {
       return c.json(mappers.mapJobToResponse(job), HTTPStatusCodes.OK);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Resume failed";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "resumeJob",
+        userId,
+      }, {
+        defaultMessage: "Resume failed",
+      });
     }
   });
 };
@@ -134,14 +139,12 @@ export const addEndpoint: AppRouteHandler<routes.AddEndpointRoute> = async (c) =
       return c.json(mappers.mapEndpointToResponse(endpoint), HTTPStatusCodes.CREATED);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Create failed";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      if (message.includes("ValidationError") || message.includes("Endpoint limit reached") || message.includes("Interval too short")) {
-        return c.json({ message }, HTTPStatusCodes.BAD_REQUEST);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "addEndpoint",
+        userId,
+      }, {
+        defaultMessage: "Create failed",
+      });
     }
   });
 };
@@ -157,11 +160,12 @@ export const updateEndpoint: AppRouteHandler<routes.UpdateEndpointRoute> = async
       return c.json(mappers.mapEndpointToResponse(endpoint), HTTPStatusCodes.OK);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Update failed";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "updateEndpoint",
+        userId,
+      }, {
+        defaultMessage: "Update failed",
+      });
     }
   });
 };
@@ -176,12 +180,12 @@ export const deleteEndpoint: AppRouteHandler<routes.DeleteEndpointRoute> = async
       return c.body(null, HTTPStatusCodes.NO_CONTENT);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Delete failed";
-      // TODO: Remove anywhere that is checking for message content as below in favor of better typed error messages
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "deleteEndpoint",
+        userId,
+      }, {
+        defaultMessage: "Delete failed",
+      });
     }
   });
 };
@@ -196,11 +200,12 @@ export const archiveEndpoint: AppRouteHandler<routes.ArchiveEndpointRoute> = asy
       return c.json(mappers.mapEndpointToResponse(archived), HTTPStatusCodes.OK);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Archive failed";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "archiveEndpoint",
+        userId,
+      }, {
+        defaultMessage: "Archive failed",
+      });
     }
   });
 };
@@ -218,11 +223,12 @@ export const getEndpoint: AppRouteHandler<routes.GetEndpointRoute> = async (c) =
       return c.json(mappers.mapEndpointToResponse(endpoint), HTTPStatusCodes.OK);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Fetch failed";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "getEndpoint",
+        userId,
+      }, {
+        defaultMessage: "Fetch failed",
+      });
     }
   });
 };
@@ -240,11 +246,12 @@ export const listEndpoints: AppRouteHandler<routes.ListEndpointsRoute> = async (
       );
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "List failed";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "listEndpoints",
+        userId,
+      }, {
+        defaultMessage: "List failed",
+      });
     }
   });
 };
@@ -262,14 +269,12 @@ export const applyIntervalHint: AppRouteHandler<routes.ApplyIntervalHintRoute> =
       return c.body(null, HTTPStatusCodes.NO_CONTENT);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to apply hint";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      if (message.includes("ValidationError") || message.includes("below minimum") || message.includes("exceeds maximum")) {
-        return c.json({ message }, HTTPStatusCodes.BAD_REQUEST);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "applyIntervalHint",
+        userId,
+      }, {
+        defaultMessage: "Failed to apply hint",
+      });
     }
   });
 };
@@ -285,14 +290,12 @@ export const scheduleOneShot: AppRouteHandler<routes.ScheduleOneShotRoute> = asy
       return c.body(null, HTTPStatusCodes.NO_CONTENT);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to schedule";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      if (message.includes("ValidationError") || message.includes("must be in the future")) {
-        return c.json({ message }, HTTPStatusCodes.BAD_REQUEST);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "scheduleOneShot",
+        userId,
+      }, {
+        defaultMessage: "Failed to schedule",
+      });
     }
   });
 };
@@ -308,11 +311,12 @@ export const pauseEndpoint: AppRouteHandler<routes.PauseEndpointRoute> = async (
       return c.body(null, HTTPStatusCodes.NO_CONTENT);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to pause/resume";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "pauseEndpoint",
+        userId,
+      }, {
+        defaultMessage: "Failed to pause/resume",
+      });
     }
   });
 };
@@ -327,11 +331,12 @@ export const clearHints: AppRouteHandler<routes.ClearHintsRoute> = async (c) => 
       return c.body(null, HTTPStatusCodes.NO_CONTENT);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to clear hints";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "clearHints",
+        userId,
+      }, {
+        defaultMessage: "Failed to clear hints",
+      });
     }
   });
 };
@@ -346,11 +351,12 @@ export const resetFailures: AppRouteHandler<routes.ResetFailuresRoute> = async (
       return c.body(null, HTTPStatusCodes.NO_CONTENT);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to reset failures";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "resetFailures",
+        userId,
+      }, {
+        defaultMessage: "Failed to reset failures",
+      });
     }
   });
 };
@@ -392,11 +398,12 @@ export const getHealthSummary: AppRouteHandler<routes.GetHealthSummaryRoute> = a
       return c.json(mappers.mapHealthSummaryToResponse(summary), HTTPStatusCodes.OK);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to get health summary";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "getHealthSummary",
+        userId,
+      }, {
+        defaultMessage: "Failed to get health summary",
+      });
     }
   });
 };
@@ -414,11 +421,12 @@ export const listSessions: AppRouteHandler<routes.ListSessionsRoute> = async (c)
       return c.json(result, HTTPStatusCodes.OK);
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to list sessions";
-      if (message.includes("not found") || message.includes("unauthorized")) {
-        return c.json({ message }, HTTPStatusCodes.NOT_FOUND);
-      }
-      throw error;
+      return handleErrorResponse(c, error, {
+        operation: "listSessions",
+        userId,
+      }, {
+        defaultMessage: "Failed to list sessions",
+      });
     }
   });
 };

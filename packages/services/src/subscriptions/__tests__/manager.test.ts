@@ -1,5 +1,4 @@
-import type { JobsRepo, PaymentProvider } from "@cronicorn/domain";
-
+import { FakeLogger, type JobsRepo, type PaymentProvider } from "@cronicorn/domain";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -20,6 +19,7 @@ describe("subscriptionsManager", () => {
   let manager: SubscriptionsManager;
   let mockJobsRepo: JobsRepo;
   let mockPaymentProvider: PaymentProvider;
+  let logger: FakeLogger;
 
   // Helper to create complete user mock with all refund fields
   const createMockUser = (overrides: Partial<{
@@ -105,10 +105,12 @@ describe("subscriptionsManager", () => {
       issueRefund: vi.fn(),
       cancelSubscriptionNow: vi.fn(),
     };
+    logger = new FakeLogger();
 
     manager = new SubscriptionsManager({
       jobsRepo: mockJobsRepo,
       paymentProvider: mockPaymentProvider,
+      logger,
       baseUrl: "http://localhost:5173",
     });
   });

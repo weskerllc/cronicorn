@@ -30,6 +30,7 @@ const testConfig: Env = {
   STRIPE_SECRET_KEY: "sk_test_fake_key_for_testing",
   STRIPE_WEBHOOK_SECRET: "whsec_test_fake_secret",
   STRIPE_PRICE_PRO: "price_test_pro",
+  STRIPE_PRICE_PRO_ANNUAL: "price_test_pro_annual",
   STRIPE_PRICE_ENTERPRISE: "price_test_enterprise",
   BASE_URL: "http://localhost:5173",
 };
