@@ -141,7 +141,16 @@ function PrivacyPolicy() {
               Data Retention
             </h2>
             <p className="text-muted-foreground leading-relaxed">
-              We retain your information for as long as your account is active or as needed to provide services.
+              We retain your information according to the following schedule:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li><strong>Account Data:</strong> Retained while your account is active and for 90 days after account closure</li>
+              <li><strong>Job Execution Logs:</strong> Retained for 90 days from execution date</li>
+              <li><strong>Payment Records:</strong> Retained for 7 years to comply with tax and financial regulations</li>
+              <li><strong>Support Communications:</strong> Retained for 2 years after last interaction</li>
+              <li><strong>Security Logs:</strong> Retained for 1 year for security and fraud prevention</li>
+            </ul>
+            <p className="text-muted-foreground leading-relaxed mt-4">
               You may request deletion of your account and associated data at any time by contacting us at{" "}
               <a
                 href={`mailto:${business.contactPoint.email}`}
@@ -149,7 +158,8 @@ function PrivacyPolicy() {
               >
                 {business.contactPoint.email}
               </a>
-              .
+              . Please note that we may retain certain information as required by law or for legitimate business purposes
+              (such as preventing fraud or enforcing our Terms).
             </p>
           </section>
 
@@ -167,6 +177,8 @@ function PrivacyPolicy() {
               <li><strong>Deletion:</strong> Request deletion of your personal data</li>
               <li><strong>Portability:</strong> Request transfer of your data in a machine-readable format</li>
               <li><strong>Objection:</strong> Object to certain processing activities</li>
+              <li><strong>Restriction:</strong> Request restriction of processing in certain circumstances</li>
+              <li><strong>Withdraw Consent:</strong> Withdraw consent for processing based on consent</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
               To exercise these rights, please contact us at{" "}
@@ -176,8 +188,117 @@ function PrivacyPolicy() {
               >
                 {business.contactPoint.email}
               </a>
-              .
+              . We will respond to your request within 30 days.
             </p>
+          </section>
+
+          {/* GDPR-Specific Rights (EU Users) */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-semibold text-foreground">
+              Additional Rights for European Users (GDPR)
+            </h2>
+            <p className="text-muted-foreground leading-relaxed">
+              If you are located in the European Economic Area (EEA), United Kingdom, or Switzerland, you have
+              additional rights under the General Data Protection Regulation (GDPR):
+            </p>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-medium text-foreground mb-2">
+                  Legal Basis for Processing
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  We process your personal data based on the following legal grounds:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+                  <li><strong>Contract Performance:</strong> Processing necessary to provide our services</li>
+                  <li><strong>Legitimate Interests:</strong> Improving our services, fraud prevention, security</li>
+                  <li><strong>Legal Obligations:</strong> Compliance with applicable laws and regulations</li>
+                  <li><strong>Consent:</strong> Where you have given explicit consent (you may withdraw at any time)</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-medium text-foreground mb-2">
+                  International Data Transfers
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Your personal data may be transferred to and processed in the United States and other countries
+                  where our service providers operate. We ensure appropriate safeguards are in place through:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+                  <li>Standard Contractual Clauses approved by the European Commission</li>
+                  <li>Adequacy decisions where applicable</li>
+                  <li>Other legally approved transfer mechanisms</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-medium text-foreground mb-2">
+                  Right to Lodge a Complaint
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  You have the right to lodge a complaint with your local data protection authority if you believe
+                  we have not complied with applicable data protection laws.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* CCPA-Specific Rights (California Users) */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-semibold text-foreground">
+              Additional Rights for California Residents (CCPA/CPRA)
+            </h2>
+            <p className="text-muted-foreground leading-relaxed">
+              If you are a California resident, you have additional rights under the California Consumer Privacy Act
+              (CCPA) and California Privacy Rights Act (CPRA):
+            </p>
+            <div className="space-y-4">
+              <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+                <li><strong>Right to Know:</strong> Request disclosure of personal information we collect, use, and disclose</li>
+                <li><strong>Right to Delete:</strong> Request deletion of personal information we have collected</li>
+                <li><strong>Right to Correct:</strong> Request correction of inaccurate personal information</li>
+                <li><strong>Right to Opt-Out:</strong> Opt-out of the sale or sharing of personal information (Note: We do not sell personal information)</li>
+                <li><strong>Right to Limit:</strong> Limit the use and disclosure of sensitive personal information</li>
+                <li><strong>Right to Non-Discrimination:</strong> Not be discriminated against for exercising your privacy rights</li>
+              </ul>
+              <p className="text-muted-foreground leading-relaxed mt-4">
+                <strong>Categories of Personal Information We Collect:</strong> Identifiers (name, email, IP address),
+                commercial information (subscription details), internet activity (usage logs), and inferences (scheduling preferences).
+              </p>
+              <p className="text-muted-foreground leading-relaxed mt-4">
+                <strong>We Do Not Sell Personal Information:</strong> We do not sell your personal information to third parties
+                and have not sold personal information in the preceding 12 months.
+              </p>
+              <p className="text-muted-foreground leading-relaxed mt-4">
+                To exercise your California privacy rights, contact us at{" "}
+                <a
+                  href={`mailto:${business.contactPoint.email}`}
+                  className="text-primary hover:underline"
+                >
+                  {business.contactPoint.email}
+                </a>
+                . We will verify your identity before processing your request.
+              </p>
+            </div>
+          </section>
+
+          {/* Data Breach Notification */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-semibold text-foreground">
+              Data Breach Notification
+            </h2>
+            <p className="text-muted-foreground leading-relaxed">
+              In the event of a data breach that affects your personal information, we will notify you and applicable
+              regulatory authorities within 72 hours of becoming aware of the breach, as required by law. Our
+              notification will include:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li>The nature of the breach and types of data affected</li>
+              <li>Likely consequences of the breach</li>
+              <li>Measures taken or proposed to address the breach</li>
+              <li>Contact information for further inquiries</li>
+            </ul>
           </section>
 
           {/* Cookies and Tracking */}
