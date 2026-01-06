@@ -623,7 +623,12 @@ This rubric should evolve based on:
 **Seed Data Location:** `apps/migrator/src/seed.ts`
 **Total Runtime:** 105 seconds (1:45)
 
-**Note:** This script uses the flash sale scenario as a **visual demonstration** of how adaptive scheduling works. The narration frames it as one example that applies to any dynamic system (API monitoring, CI/CD, data pipelines, etc.).
+**Note:** This script provides **two alternative narration tracks** for the same visual demo. Choose based on your target audience:
+
+- **Track A (DevOps/SRE)**: Focuses on monitoring, incidents, system reliability
+- **Track B (Solo Builders)**: Focuses on API limits, dynamic data fetching, resource constraints
+
+Both use the same visual demonstration (flash sale timeline). Only the narration changes to frame the problem differently.
 
 ### Pre-Recording Setup
 
@@ -654,13 +659,21 @@ pnpm tsx apps/migrator/src/seed.ts
 - Quick pan across timeline showing the flash sale spike (Day 6, 12:00-13:00)
 - Zoom slightly into the critical phase (minutes 13-20) showing red/failed runs
 
-**Narration:**
+**Narration - Track A (DevOps/SRE):**
 > "Your system's workload just changed dramatically. Maybe it's a traffic surge, a deployment, or a data pipeline spike. Your monitoring? Still on the same rigid schedule—checking every 5 minutes whether things are calm or on fire."
 
-**On-screen text (3 seconds each):**
+**Narration - Track B (Solo Builders):**
+> "You're building an app with multiple data sources—APIs with rate limits, web scrapers that only run during live events, calculations that depend on fresh data. Cron jobs? They run on fixed schedules, burning through your API quota or missing time-sensitive windows entirely."
+
+**On-screen text - Track A:**
 - "System load: 6x increase"
 - "Health checks: Still every 5 minutes"
 - "Static schedules miss dynamic problems"
+
+**On-screen text - Track B:**
+- "API rate limit: 100 calls/hour"
+- "Cron: Runs every 5 minutes (wasteful)"
+- "Static schedules waste quota & miss opportunities"
 
 **What to capture:**
 - Timeline visualization clearly showing baseline (green) vs critical (red) periods
@@ -680,13 +693,21 @@ pnpm tsx apps/migrator/src/seed.ts
   - AI one-shot: Purple dots (recovery/alert actions)
   - Clamped-min: Orange dots (critical phase)
 
-**Narration:**
+**Narration - Track A (DevOps/SRE):**
 > "Cronicorn is an AI-powered job scheduler that adapts to your system's reality. Instead of rigid schedules, it watches what's happening and adjusts automatically—tightening during incidents, relaxing during recovery. Every decision is transparent. You stay in control."
 
-**On-screen text:**
+**Narration - Track B (Solo Builders):**
+> "Cronicorn is an AI-powered job scheduler that adapts to your data's reality. Scraping live sports scores? It checks frequently during games, backs off when nothing's happening. Hitting rate limits? It automatically throttles. Need to run calculations when data's fresh? It detects changes and triggers workflows. Every decision is transparent. You control the limits."
+
+**On-screen text - Track A:**
 - "Schedules adapt to system reality"
 - "Every decision explained"
 - "You control the boundaries"
+
+**On-screen text - Track B:**
+- "Schedules adapt to data availability"
+- "Respects your rate limits"
+- "You control min/max frequency"
 
 **What to capture:**
 - Full timeline showing 7-day view (establish baseline credibility)
@@ -705,8 +726,11 @@ pnpm tsx apps/migrator/src/seed.ts
   - Runs: Green dots, evenly spaced
   - Success rate: 95-98%
 
-**Narration:**
+**Narration - Track A (DevOps/SRE):**
 > "Let's watch it work. Here's an e-commerce monitoring job during a flash sale. For five days, the system's running smoothly—baseline schedules, checking every minute. 98% success rate. Everything's calm."
+
+**Narration - Track B (Solo Builders):**
+> "Let's see it in action. Imagine you're building a fantasy sports app. For five days, no games are scheduled—so your stats scraper checks once per minute just to stay fresh. Baseline schedule. Low activity. Everything's calm."
 
 **On-screen highlights:**
 - Circle the baseline interval: "1 minute baseline"
@@ -737,11 +761,17 @@ pnpm tsx apps/migrator/src/seed.ts
 - Show **AI Session #2** panel opening
 - Highlight the tool call: `propose_interval(30000, 60)`
 
-**Narration:**
+**Narration - Track A (DevOps/SRE):**
 > "Then the workload changes. Traffic jumps 5x. The AI notices immediately—and here's the key: it shows you exactly what it's thinking. 'Traffic surge detected—tightening monitoring to 30 seconds.' Same pattern works for database spikes, CI failures, API rate limits—any dynamic system."
+
+**Narration - Track B (Solo Builders):**
+> "Then game day hits. Your API starts returning live scores—activity jumps 5x. The AI notices immediately and shows you exactly why it's adjusting: 'Activity surge detected—tightening to 30 seconds to catch live updates.' Same pattern works for price drops, trending topics, user uploads—any time-sensitive data."
 
 **AI Reasoning visible on screen:**
 > "Traffic surge from 1,000 to 5,100 visitors/min detected. Tightening health check intervals to 30 seconds for proactive monitoring during flash sale peak."
+
+**Alternative on-screen text for Track B:**
+> "Activity surge detected: 1,000 → 5,100 requests/min. Tightening to 30s to capture live updates while respecting rate limits."
 
 **On-screen highlights:**
 - Circle the **AI Session** entry at **12:06**
@@ -769,8 +799,11 @@ pnpm tsx apps/migrator/src/seed.ts
   3. **Cache Warmup** - purple one-shot execution
   4. **Emergency Oncall Page** - purple one-shot execution
 
-**Narration:**
+**Narration - Track A (DevOps/SRE):**
 > "As things get critical—success rate drops to 60%—watch the coordinated response. AI tightens monitoring to your minimum constraint. It activates diagnostics that were paused. It triggers recovery actions. And it escalates when needed. All automatic. All transparent."
+
+**Narration - Track B (Solo Builders):**
+> "Peak activity—multiple games happening simultaneously. Watch the coordinated response. AI maxes out your scraping frequency while staying under rate limits. It triggers your player image refresh job—but only for players currently playing. It queues your ratings calculation for when games finish. All automatic. All within your API quota."
 
 **On-screen highlights:**
 - **Traffic Monitor**: "Interval: 20s (min constraint enforced)"
@@ -809,8 +842,11 @@ pnpm tsx apps/migrator/src/seed.ts
 - Show metrics improving in response bodies
 - Jump to **Day 6, 13:05** - hint expiration moment
 
-**Narration:**
+**Narration - Track A (DevOps/SRE):**
 > "As the system recovers, AI detects the improvement and loosens back to baseline. Then—60 minutes later—all AI adjustments expire automatically. Your baseline schedules resume. No manual intervention. No runaway automation. It adapts, then gets out of the way."
+
+**Narration - Track B (Solo Builders):**
+> "Games finish. AI detects the drop in activity and loosens back to baseline checking. Then—60 minutes later—all adjustments expire automatically. Your scraper goes back to its hourly schedule. No wasted API calls. No manual intervention. It optimizes during peak activity, then gets out of the way."
 
 **On-screen highlights:**
 - **Minute 28** (12:28): "AI Session #4: Recovery confirmed"
@@ -842,8 +878,11 @@ pnpm tsx apps/migrator/src/seed.ts
 - Show **AI Sessions** list panel with all 6 sessions visible
 - Quick highlight of **source attribution** legend
 
-**Narration:**
+**Narration - Track A (DevOps/SRE):**
 > "Three things make this different: One—every decision is transparent. You saw exactly why the schedule changed. Two—you set the boundaries. AI operates within your min and max constraints. Three—it works perfectly without AI. Your baseline schedules always continue."
+
+**Narration - Track B (Solo Builders):**
+> "Three things make this different: One—you see exactly why it's spending your API quota. Every decision explained. Two—you set the rate limits. Minimum 20 seconds, maximum 5 minutes. AI never burns through your quota. Three—it works perfectly without AI. Your baseline schedules always run."
 
 **On-screen text:**
 - "✓ Every decision explained"
@@ -866,8 +905,11 @@ pnpm tsx apps/migrator/src/seed.ts
 - Fade to **Cronicorn logo** on clean background
 - **CTA overlay** appears
 
-**Narration:**
-> "Stop fighting rigid schedules that can't adapt to your system's reality. Whether you're monitoring APIs, running CI pipelines, or processing data—Cronicorn adjusts automatically. Start scheduling smarter."
+**Narration - Track A (DevOps/SRE):**
+> "Stop fighting rigid schedules that can't adapt to your system's reality. Whether you're monitoring production, running CI pipelines, or syncing data—Cronicorn adjusts automatically. Start scheduling smarter."
+
+**Narration - Track B (Solo Builders):**
+> "Stop wasting API quota on static cron jobs. Whether you're scraping live data, fetching social feeds, or processing webhooks—Cronicorn optimizes automatically. Built for indie developers who need smart scheduling without the DevOps complexity. Start building smarter."
 
 **On-screen text (large, clear):**
 ```
@@ -999,7 +1041,104 @@ No credit card required
 
 ---
 
-**Script Version:** 1.0
+---
+
+## 🎯 TRACK B: SOLO BUILDER USE CASES
+
+**Why This Matters:** Indie developers and solo app builders represent a massive untapped audience. They face the same adaptive scheduling challenges but frame them differently:
+
+### Real-World Solo Builder Scenarios
+
+**1. Fantasy Sports App (Main Example)**
+- **Stats Scraper**: Checks frequently during live games (every 20s), backs off when no games (hourly)
+- **Player Images**: Fetches from Google Images API with 100 calls/hour limit—AI throttles to stay under quota
+- **Ratings Calculator**: Runs only after new game data detected (not on fixed schedule)
+- **Injury Updates**: Checks during games, pauses during off-season
+
+**2. Content Aggregator / Newsletter App**
+- **RSS Feed Scraper**: Checks popular blogs every 5 minutes, inactive blogs every 6 hours
+- **Image Optimizer**: Processes new images immediately, skips when no new content
+- **Email Sender**: Batches sends to respect SendGrid rate limits (10k/hour)
+- **Dead Link Checker**: Runs weekly unless engagement drops (then increases to catch issues)
+
+**3. Price Tracking / Deal Finder**
+- **Product Scraper**: Checks frequently during sales seasons, weekly during quiet periods
+- **Price Drop Detector**: Increases frequency when Black Friday approaches
+- **Stock Checker**: Pings APIs every minute for hot items, hourly for others
+- **Deal Notifier**: Triggers webhook only when thresholds hit (not on schedule)
+
+**4. Social Media Dashboard**
+- **Twitter API**: Respects 500 calls/15min limit—AI automatically throttles
+- **Instagram Scraper**: Backs off when rate limited, resumes when window resets
+- **Trending Topics**: Checks every 2 minutes during peak hours, hourly at night
+- **Sentiment Analyzer**: Processes only when new posts detected (not fixed schedule)
+
+**5. Data Pipeline / ETL App**
+- **Source API**: Fetches new records frequently during business hours, backs off at night
+- **Transform Job**: Runs only when input data changes (not every 5 minutes)
+- **Database Sync**: Increases frequency when backlog grows, throttles when caught up
+- **Export Job**: Batches efficiently to avoid overwhelming downstream systems
+
+### How the Demo Translates
+
+| Demo Visual | DevOps Interpretation | Solo Builder Interpretation |
+|-------------|----------------------|----------------------------|
+| "Traffic surge" | System under load | Live games started / hot product dropped |
+| "Tighten to 30s" | Catch incidents faster | Capture live updates / maximize freshness |
+| "Activate diagnostics" | Debug performance | Fetch related data (player images, stock levels) |
+| "Cache warmup" | Performance optimization | Pre-fetch related data efficiently |
+| "Oncall page" | Human escalation | Trigger user notification webhook |
+| "Recovery" | Load decreased | Event finished / activity normalized |
+| "Hints expire" | Return to baseline | Go back to hourly/daily checks |
+
+### Key Messaging Differences
+
+**Track A (DevOps) Emphasizes:**
+- Reliability, uptime, incident response
+- Reducing alert fatigue, firefighting
+- Team efficiency, oncall burden
+- Enterprise concerns: observability, SLAs
+
+**Track B (Solo Builders) Emphasizes:**
+- API quota management, cost savings
+- Time-sensitive data capture (games, sales, trends)
+- Simplicity (no DevOps team needed)
+- Indie/startup concerns: bootstrapping, scrappy solutions
+
+### Why Two Tracks Work
+
+**Same product, different pain points:**
+- DevOps: "Stop missing incidents"
+- Solo Builders: "Stop wasting API calls"
+
+**Same solution, different benefits:**
+- DevOps: "Adapts monitoring to system load"
+- Solo Builders: "Optimizes API usage to data availability"
+
+**Same transparency, different trust signals:**
+- DevOps: "Every decision explained for team accountability"
+- Solo Builders: "See exactly why you're spending quota"
+
+### Production Recommendation
+
+**If you can only make one video:** Use **Track A (DevOps)** with occasional solo builder callouts:
+- "Same pattern works for API rate limits, live data scraping, time-sensitive workflows"
+- This keeps primary audience (DevOps/SRE) while hinting at broader applicability
+
+**If you can make two videos:** Produce both tracks:
+- Track A for DevOps/SRE landing pages, conference talks, enterprise outreach
+- Track B for indie hacker communities (Hacker News, Indie Hackers, Reddit r/SideProject)
+- A/B test which converts better on homepage
+
+**If you have video editing skills:** Layer both narrations and splice:
+- Hook: Use Track B (broader appeal)
+- Solution: Use Track A (technical credibility)
+- Demo: Mix both (show versatility)
+- CTA: Split test which performs better
+
+---
+
+**Script Version:** 1.1 (Added Track B: Solo Builders)
 **Based on Seed Data:** `apps/migrator/src/seed.ts` (commit: [pending])
-**Ready for:** Production recording
-**Estimated Edit Time:** 3-5 hours (depending on polish level)
+**Ready for:** Production recording (choose Track A or Track B, or record both)
+**Estimated Edit Time:** 3-5 hours per track (6-10 hours for both)
