@@ -12,6 +12,7 @@
   "dependencies": {
     "@cronicorn/adapter-drizzle": "workspace:*",
     "@cronicorn/config-defaults": "workspace:*",
+    "@cronicorn/domain": "workspace:*",
     "@noble/hashes": "^1.7.1",
     "drizzle-orm": "catalog:",
     "pg": "^8.13.1"
