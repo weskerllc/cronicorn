@@ -15,13 +15,19 @@ export default function HeroSection() {
 
                 {/* CTA Section */}
                 <div className="flex flex-col gap-4 justify-center lg:justify-start w-full items-center lg:items-start pt-2">
-                    <div className="flex gap-4 justify-center lg:justify-start w-full items-center">
+                    <div className="flex gap-4 justify-center lg:justify-start w-full items-center flex-wrap">
                         <a
                             href={urls.product.login}
                             className="group px-5 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-base hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
                         >
                             Get Started
                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                        </a>
+                        <a
+                            href={urls.product.demo}
+                            className="px-5 py-2 border-2 border-primary/30 text-primary rounded-lg font-semibold text-base hover:border-primary hover:bg-primary/5 transition-all duration-200"
+                        >
+                            Try Demo
                         </a>
                         <a
                             href={urls.github.repo}
