@@ -614,3 +614,531 @@ This rubric should evolve based on:
 ---
 
 **Key Takeaway**: This rubric emphasizes **problem-first storytelling**, **transparent AI demonstration**, and **technical respect** for the DevOps/SRE audience. A successful Cronicorn demo video should make engineers think "this solves my exact problem" within the first 15 seconds and show them exactly how within the next 75 seconds.
+
+---
+
+## 🎥 SHOT-BY-SHOT PRODUCTION SCRIPT
+
+**Demo Scenario:** E-Commerce Flash Sale (one example of adaptive scheduling)
+**Seed Data Location:** `apps/migrator/src/seed.ts`
+**Total Runtime:** 105 seconds (1:45)
+
+**Note:** This script provides **two alternative narration tracks** for the same visual demo. Choose based on your target audience:
+
+- **Track A (DevOps/SRE)**: Focuses on monitoring, incidents, system reliability
+- **Track B (Solo Builders)**: Focuses on API limits, dynamic data fetching, resource constraints
+
+Both use the same visual demonstration (flash sale timeline). Only the narration changes to frame the problem differently.
+
+### Pre-Recording Setup
+
+**Run the seed script:**
+```bash
+pnpm db:reset
+pnpm db:migrate
+pnpm tsx apps/migrator/src/seed.ts
+```
+
+**What this creates:**
+- 1 job: "E-Commerce Flash Sale Demo" (all 11 endpoints)
+- 18,566 runs over 7 days
+- 6 AI analysis sessions with transparent reasoning
+- Complete flash sale cycle: Day 6, 12:00-13:00 (25 hours ago from now)
+
+**Dashboard navigation:**
+- Open `/dashboard`
+- Select job: "E-Commerce Flash Sale Demo"
+- Timeline will show 7 days of data with visible spike at Day 6, 12:00-13:00
+
+---
+
+### SHOT 1: Hook & Problem (0-12 seconds)
+
+**Visual:**
+- Start on **dashboard homepage** showing the job dropdown
+- Quick pan across timeline showing the flash sale spike (Day 6, 12:00-13:00)
+- Zoom slightly into the critical phase (minutes 13-20) showing red/failed runs
+
+**Narration - Track A (DevOps/SRE):**
+> "Your system's workload just changed dramatically. Maybe it's a traffic surge, a deployment, or a data pipeline spike. Your monitoring? Still on the same rigid schedule—checking every 5 minutes whether things are calm or on fire."
+
+**Narration - Track B (Solo Builders):**
+> "You're building an app with multiple data sources—APIs with rate limits, web scrapers that only run during live events, calculations that depend on fresh data. Cron jobs? They run on fixed schedules, burning through your API quota or missing time-sensitive windows entirely."
+
+**On-screen text - Track A:**
+- "System load: 6x increase"
+- "Health checks: Still every 5 minutes"
+- "Static schedules miss dynamic problems"
+
+**On-screen text - Track B:**
+- "API rate limit: 100 calls/hour"
+- "Cron: Runs every 5 minutes (wasteful)"
+- "Static schedules waste quota & miss opportunities"
+
+**What to capture:**
+- Timeline visualization clearly showing baseline (green) vs critical (red) periods
+- Visible clustering of runs during flash sale window
+- Success rate drop visible in timeline (baseline: mostly green, critical: lots of red)
+
+---
+
+### SHOT 2: Solution Introduction (12-27 seconds)
+
+**Visual:**
+- Cut to **Cronicorn logo** briefly (2 seconds)
+- Transition to **dashboard overview** showing the full 7-day timeline
+- Highlight the **source attribution colors**:
+  - Baseline interval: Green dots (days 1-5)
+  - AI interval: Blue dots (flash sale window)
+  - AI one-shot: Purple dots (recovery/alert actions)
+  - Clamped-min: Orange dots (critical phase)
+
+**Narration - Track A (DevOps/SRE):**
+> "Cronicorn is an AI-powered job scheduler that adapts to your system's reality. Instead of rigid schedules, it watches what's happening and adjusts automatically—tightening during incidents, relaxing during recovery. Every decision is transparent. You stay in control."
+
+**Narration - Track B (Solo Builders):**
+> "Cronicorn is an AI-powered job scheduler that adapts to your data's reality. Scraping live sports scores? It checks frequently during games, backs off when nothing's happening. Hitting rate limits? It automatically throttles. Need to run calculations when data's fresh? It detects changes and triggers workflows. Every decision is transparent. You control the limits."
+
+**On-screen text - Track A:**
+- "Schedules adapt to system reality"
+- "Every decision explained"
+- "You control the boundaries"
+
+**On-screen text - Track B:**
+- "Schedules adapt to data availability"
+- "Respects your rate limits"
+- "You control min/max frequency"
+
+**What to capture:**
+- Full timeline showing 7-day view (establish baseline credibility)
+- Color legend visible (if UI shows it) or add annotation explaining colors
+- Smooth pan from left (Day 1 baseline) to center (Day 6 flash sale) to right (Day 7 recovery)
+
+---
+
+### SHOT 3A: Baseline Credibility (27-35 seconds)
+
+**Visual:**
+- Zoom into **Days 1-5** on timeline
+- Show **Traffic Monitor endpoint** details:
+  - Name: "Traffic Monitor"
+  - Baseline interval: 60,000ms (1 minute)
+  - Runs: Green dots, evenly spaced
+  - Success rate: 95-98%
+
+**Narration - Track A (DevOps/SRE):**
+> "Let's watch it work. Here's an e-commerce monitoring job during a flash sale. For five days, the system's running smoothly—baseline schedules, checking every minute. 98% success rate. Everything's calm."
+
+**Narration - Track B (Solo Builders):**
+> "Let's see it in action. Imagine you're building a fantasy sports app. For five days, no games are scheduled—so your stats scraper checks once per minute just to stay fresh. Baseline schedule. Low activity. Everything's calm."
+
+**On-screen highlights:**
+- Circle the baseline interval: "1 minute baseline"
+- Arrow pointing to response body metrics: "1,000 visitors/min, 800ms page load"
+- Success indicators: "98% success"
+
+**What to capture:**
+- Click on **Traffic Monitor** endpoint to show details panel
+- Scroll to show **response body** with metrics:
+  ```json
+  {
+    "traffic": 1000,
+    "ordersPerMin": 40,
+    "pageLoadMs": 800,
+    "inventoryLagMs": 100,
+    "dbQueryMs": 120
+  }
+  ```
+- Show latest run timestamp from Days 1-5
+
+---
+
+### SHOT 3B: Surge Detection (35-50 seconds)
+
+**Visual:**
+- Pan timeline to **Day 6, 12:05-12:08** (Surge phase)
+- Zoom into **minute 6** specifically (12:06)
+- Show **AI Session #2** panel opening
+- Highlight the tool call: `propose_interval(30000, 60)`
+
+**Narration - Track A (DevOps/SRE):**
+> "Then the workload changes. Traffic jumps 5x. The AI notices immediately—and here's the key: it shows you exactly what it's thinking. 'Traffic surge detected—tightening monitoring to 30 seconds.' Same pattern works for database spikes, CI failures, API rate limits—any dynamic system."
+
+**Narration - Track B (Solo Builders):**
+> "Then game day hits. Your API starts returning live scores—activity jumps 5x. The AI notices immediately and shows you exactly why it's adjusting: 'Activity surge detected—tightening to 30 seconds to catch live updates.' Same pattern works for price drops, trending topics, user uploads—any time-sensitive data."
+
+**AI Reasoning visible on screen:**
+> "Traffic surge from 1,000 to 5,100 visitors/min detected. Tightening health check intervals to 30 seconds for proactive monitoring during flash sale peak."
+
+**Alternative on-screen text for Track B:**
+> "Activity surge detected: 1,000 → 5,100 requests/min. Tightening to 30s to capture live updates while respecting rate limits."
+
+**On-screen highlights:**
+- Circle the **AI Session** entry at **12:06**
+- Highlight the tool call: `propose_interval(30000, 60)`
+- Arrow showing: "1 minute → 30 seconds (2x faster)"
+- Show response body changing: "traffic: 5100, pageLoadMs: 1850"
+
+**What to capture:**
+- Click on **AI Session** from timeline (if clickable) or navigate to AI sessions panel
+- Show full reasoning text
+- Show **tool calls** section with `get_latest_response`, `get_response_history`, `propose_interval`
+- Token usage: 1,250 tokens
+- Duration: 420ms
+
+---
+
+### SHOT 3C: Critical Response & Multi-Tier Actions (50-68 seconds)
+
+**Visual:**
+- Pan timeline to **Day 6, 12:13-12:20** (Critical phase)
+- Show timeline changing colors: Blue (AI interval) → Orange (clamped-min) → Purple (one-shot)
+- Split screen or quick cuts between:
+  1. **Traffic Monitor** - interval clamped to 20 seconds (min constraint)
+  2. **Slow Page Analyzer** - activated (was paused, now running)
+  3. **Cache Warmup** - purple one-shot execution
+  4. **Emergency Oncall Page** - purple one-shot execution
+
+**Narration - Track A (DevOps/SRE):**
+> "As things get critical—success rate drops to 60%—watch the coordinated response. AI tightens monitoring to your minimum constraint. It activates diagnostics that were paused. It triggers recovery actions. And it escalates when needed. All automatic. All transparent."
+
+**Narration - Track B (Solo Builders):**
+> "Peak activity—multiple games happening simultaneously. Watch the coordinated response. AI maxes out your scraping frequency while staying under rate limits. It triggers your player image refresh job—but only for players currently playing. It queues your ratings calculation for when games finish. All automatic. All within your API quota."
+
+**On-screen highlights:**
+- **Traffic Monitor**: "Interval: 20s (min constraint enforced)"
+- **Slow Page Analyzer**: "Status: ACTIVATED (was paused)"
+- **Cache Warmup**: "Triggered: One-shot recovery action"
+- **Emergency Oncall**: "Paged oncall: Critical threshold"
+
+**What to capture:**
+- Show **AI Session #3** at **12:15**:
+  - Tool call: `pause_until(null)` - unpausing Slow Page Analyzer
+  - Tool call: `propose_next_time(5000, 5)` - cache warmup in 5 seconds
+  - Reasoning: "CRITICAL: Page load times at 4600ms..."
+- Show endpoint list with **4 tiers** visible:
+  - Health (3): Continuous, tightened
+  - Investigation (2): Now active (was paused)
+  - Recovery (2): One-shot actions (purple dots)
+  - Alert (4): Escalation (purple dots)
+- Response body metrics at critical peak:
+  ```json
+  {
+    "traffic": 6000,
+    "pageLoadMs": 4500,
+    "ordersPerMin": 120,
+    "inventoryLagMs": 600,
+    "dbQueryMs": 1200
+  }
+  ```
+
+---
+
+### SHOT 3D: Recovery & Automatic Reversion (68-85 seconds)
+
+**Visual:**
+- Pan timeline to **Day 6, 12:21-12:39** (Recovery phase)
+- Show colors shifting back: Orange → Blue → Green
+- Show metrics improving in response bodies
+- Jump to **Day 6, 13:05** - hint expiration moment
+
+**Narration - Track A (DevOps/SRE):**
+> "As the system recovers, AI detects the improvement and loosens back to baseline. Then—60 minutes later—all AI adjustments expire automatically. Your baseline schedules resume. No manual intervention. No runaway automation. It adapts, then gets out of the way."
+
+**Narration - Track B (Solo Builders):**
+> "Games finish. AI detects the drop in activity and loosens back to baseline checking. Then—60 minutes later—all adjustments expire automatically. Your scraper goes back to its hourly schedule. No wasted API calls. No manual intervention. It optimizes during peak activity, then gets out of the way."
+
+**On-screen highlights:**
+- **Minute 28** (12:28): "AI Session #4: Recovery confirmed"
+- Show tool call: `propose_interval(60000, 30)` - back to 1 minute
+- **Minute 65** (13:05): "AI Session #5: Hints expired"
+- Show reasoning: "All AI hints expired (60-min TTL). Baseline schedules fully resumed."
+- **Day 7, 08:00**: "AI Session #6: Stability confirmed"
+
+**What to capture:**
+- Show **AI Session #4** reasoning: "Recovery confirmed. Traffic declining to 1,400/min, page load improved to 1,050ms..."
+- Show timeline return to green (baseline-interval source)
+- Show **AI Session #5** with TTL expiration message
+- Pan to Day 7 showing normal baseline pattern restored
+
+**Metrics to show:**
+- Recovery phase: traffic: 1500, pageLoadMs: 1100, ordersPerMin: 50
+- Post-expiration: traffic: 1050, pageLoadMs: 820, ordersPerMin: 42
+
+---
+
+### SHOT 4: Key Differentiators (85-95 seconds)
+
+**Visual:**
+- Cut to **endpoint configuration view** showing:
+  - **Traffic Monitor** endpoint details
+  - Min interval: 20,000ms (20 seconds)
+  - Max interval: 300,000ms (5 minutes)
+  - Baseline interval: 60,000ms (1 minute)
+- Show **AI Sessions** list panel with all 6 sessions visible
+- Quick highlight of **source attribution** legend
+
+**Narration - Track A (DevOps/SRE):**
+> "Three things make this different: One—every decision is transparent. You saw exactly why the schedule changed. Two—you set the boundaries. AI operates within your min and max constraints. Three—it works perfectly without AI. Your baseline schedules always continue."
+
+**Narration - Track B (Solo Builders):**
+> "Three things make this different: One—you see exactly why it's spending your API quota. Every decision explained. Two—you set the rate limits. Minimum 20 seconds, maximum 5 minutes. AI never burns through your quota. Three—it works perfectly without AI. Your baseline schedules always run."
+
+**On-screen text:**
+- "✓ Every decision explained"
+- "✓ Min/max constraints enforced"
+- "✓ Works without AI"
+
+**What to capture:**
+- Show **min/max constraint fields** in endpoint configuration
+- Show **all 6 AI sessions** in list view with timestamps
+- Show **baseline interval** field highlighted
+- Optional: Show AI toggle or configuration (if exists in UI)
+
+---
+
+### SHOT 5: Call-to-Action (95-105 seconds)
+
+**Visual:**
+- Cut back to **dashboard overview** with full 7-day timeline
+- Zoom out slightly to show complete story: baseline → surge → recovery
+- Fade to **Cronicorn logo** on clean background
+- **CTA overlay** appears
+
+**Narration - Track A (DevOps/SRE):**
+> "Stop fighting rigid schedules that can't adapt to your system's reality. Whether you're monitoring production, running CI pipelines, or syncing data—Cronicorn adjusts automatically. Start scheduling smarter."
+
+**Narration - Track B (Solo Builders):**
+> "Stop wasting API quota on static cron jobs. Whether you're scraping live data, fetching social feeds, or processing webhooks—Cronicorn optimizes automatically. Built for indie developers who need smart scheduling without the DevOps complexity. Start building smarter."
+
+**On-screen text (large, clear):**
+```
+Get Early Access
+cronicorn.com
+No credit card required
+```
+
+**Secondary text (smaller, bottom):**
+```
+14-day free trial • Set up in 5 minutes
+```
+
+**What to capture:**
+- Final pan of complete timeline showing the full adaptation cycle
+- Clean fade to logo and CTA
+- CTA visible for 5-8 seconds before fade out
+
+---
+
+### POST-PRODUCTION CHECKLIST
+
+**Annotations to Add:**
+- [ ] **Timeline colors legend**: Add persistent legend explaining source types
+  - Green = Baseline interval
+  - Blue = AI-adjusted interval
+  - Purple = AI one-shot action
+  - Orange = Clamped to min/max
+- [ ] **Metrics callouts**: Add animated boxes around key metrics when mentioned
+- [ ] **AI reasoning highlights**: Box or highlight AI session reasoning text for readability
+- [ ] **Timeline scrubber**: Optional: Add timestamp indicator showing current moment being discussed
+- [ ] **Endpoint tier badges**: Add visual indicators for Health/Investigation/Recovery/Alert tiers
+
+**Transitions:**
+- Smooth pan/zoom on timeline (no cuts within timeline shots)
+- Quick fade transitions between major sections (1-2 frames)
+- No flashy effects—keep professional/developer tool aesthetic
+
+**Audio:**
+- Narration: "Senior engineer explaining to colleague" tone
+- Background music: Optional subtle ambient (if used, keep very low volume)
+- Sound effects: Minimal—only if needed for emphasis (e.g., alert sound on oncall page)
+
+**Text overlays:**
+- Font: Sans-serif (Inter, SF Pro, or similar)
+- Size: Large enough to read at 1080p on laptop (minimum 24px equivalent)
+- Colors: Brand blue (#3B82F6) for highlights, white for text
+- Duration: 3-5 seconds per text overlay (long enough to read twice)
+
+**Branding:**
+- Logo appears: Start (2 seconds) and End (5-8 seconds)
+- Brand colors: Use blue accent consistently
+- No heavy branding during demo (keep focus on product)
+
+---
+
+### SEED DATA REFERENCE (Quick Lookup)
+
+**Important:** These are the specific metrics used in the demo scenario (e-commerce flash sale). The **narration** should reference these visually but **speak to the general concept** of adaptive scheduling that applies to any use case.
+
+**Timeline Structure:**
+- **Days 1-5**: Baseline establishment (5 days before workload change)
+- **Day 6, 12:00-13:00**: Workload surge event (60 minutes)
+- **Day 7**: Post-event stabilization
+
+**Flash Sale Phases (Day 6, 12:00-13:00):**
+| Phase | Minutes | Traffic | Success | Page Load | AI Action |
+|-------|---------|---------|---------|-----------|-----------|
+| Baseline | 0-4 | 1,000/min | 98% | 800ms | None |
+| Surge | 5-8 | 5,000/min | 92% | 1,800ms | → 30s intervals |
+| Strain | 9-12 | 5,500/min | 85% | 3,200ms | Activate diagnostics |
+| Critical | 13-20 | 6,000/min | 60% | 4,500ms | Cache + Oncall |
+| Recovery | 21-39 | 1,500/min | 95% | 1,100ms | → Baseline |
+| Post-Sale | 40+ | 1,050/min | 98% | 820ms | Hints expire |
+
+**AI Sessions (6 total):**
+1. **11:45** (Pre-sale): "Normal patterns, no action needed"
+2. **12:06** (Surge): `propose_interval(30000)` - "Tightening to 30s"
+3. **12:15** (Critical): `pause_until(null)`, `propose_next_time` - "Emergency recovery"
+4. **12:28** (Recovery): `propose_interval(60000)` - "Back to baseline"
+5. **13:05** (Expiration): "All hints expired (60-min TTL)"
+6. **Day 7, 08:00** (Stability): "Post-event stability confirmed"
+
+**Endpoints to Feature:**
+- **Traffic Monitor** (Health): 10,112 runs, 1min baseline → 20s min
+- **Slow Page Analyzer** (Investigation): 8 runs, activated during strain
+- **Cache Warmup** (Recovery): 2 runs, one-shot actions with 10min cooldown
+- **Emergency Oncall Page** (Alert): 1 run, 2-hour cooldown
+
+**Run Counts (Total: 18,566):**
+- Health tier: 18,541 runs (continuous monitoring)
+- Investigation: 14 runs (flash sale only)
+- Recovery: 4 runs (one-shot with cooldowns)
+- Alert: 7 runs (one-shot with cooldowns)
+
+**Source Distribution (During Flash Sale):**
+- Baseline: 15-40% (depending on phase)
+- AI Interval: 60-85% (majority during active adaptation)
+- AI One-shot: 5-10% (recovery/alert actions)
+- Clamped-min: ~5% (critical phase)
+
+---
+
+### RECORDING TIPS
+
+**Screen Recording Settings:**
+- Resolution: 1920x1080 (1080p minimum)
+- Frame rate: 30fps (60fps if smooth panning is critical)
+- Software: QuickTime (macOS), OBS Studio, or similar
+- Cursor: Smooth, deliberate movements (not erratic)
+- Hide unnecessary UI: Browser bookmarks bar, dock (if possible)
+
+**Dashboard Prep:**
+- Clear any notification badges or distractions
+- Ensure browser is full-screen or zoomed appropriately
+- Have all panels/views pre-navigated (practice run first)
+- Consider multiple takes per shot (choose best later)
+
+**Timing the Recording:**
+- Seed data is relative to "NOW" so timing is consistent
+- Flash sale always appears at Day 6, 12:00-13:00 (25 hours ago)
+- Run seed script fresh before recording to ensure clean data
+
+**Multiple Takes Strategy:**
+- Record each SHOT separately (easier to edit)
+- Record 2-3 takes of each shot
+- Keep recording even if you make small mistakes (fix in post)
+- Record timeline pans slowly (speed up in post if needed)
+
+---
+
+---
+
+## 🎯 TRACK B: SOLO BUILDER USE CASES
+
+**Why This Matters:** Indie developers and solo app builders represent a massive untapped audience. They face the same adaptive scheduling challenges but frame them differently:
+
+### Real-World Solo Builder Scenarios
+
+**1. Fantasy Sports App (Main Example)**
+- **Stats Scraper**: Checks frequently during live games (every 20s), backs off when no games (hourly)
+- **Player Images**: Fetches from Google Images API with 100 calls/hour limit—AI throttles to stay under quota
+- **Ratings Calculator**: Runs only after new game data detected (not on fixed schedule)
+- **Injury Updates**: Checks during games, pauses during off-season
+
+**2. Content Aggregator / Newsletter App**
+- **RSS Feed Scraper**: Checks popular blogs every 5 minutes, inactive blogs every 6 hours
+- **Image Optimizer**: Processes new images immediately, skips when no new content
+- **Email Sender**: Batches sends to respect SendGrid rate limits (10k/hour)
+- **Dead Link Checker**: Runs weekly unless engagement drops (then increases to catch issues)
+
+**3. Price Tracking / Deal Finder**
+- **Product Scraper**: Checks frequently during sales seasons, weekly during quiet periods
+- **Price Drop Detector**: Increases frequency when Black Friday approaches
+- **Stock Checker**: Pings APIs every minute for hot items, hourly for others
+- **Deal Notifier**: Triggers webhook only when thresholds hit (not on schedule)
+
+**4. Social Media Dashboard**
+- **Twitter API**: Respects 500 calls/15min limit—AI automatically throttles
+- **Instagram Scraper**: Backs off when rate limited, resumes when window resets
+- **Trending Topics**: Checks every 2 minutes during peak hours, hourly at night
+- **Sentiment Analyzer**: Processes only when new posts detected (not fixed schedule)
+
+**5. Data Pipeline / ETL App**
+- **Source API**: Fetches new records frequently during business hours, backs off at night
+- **Transform Job**: Runs only when input data changes (not every 5 minutes)
+- **Database Sync**: Increases frequency when backlog grows, throttles when caught up
+- **Export Job**: Batches efficiently to avoid overwhelming downstream systems
+
+### How the Demo Translates
+
+| Demo Visual | DevOps Interpretation | Solo Builder Interpretation |
+|-------------|----------------------|----------------------------|
+| "Traffic surge" | System under load | Live games started / hot product dropped |
+| "Tighten to 30s" | Catch incidents faster | Capture live updates / maximize freshness |
+| "Activate diagnostics" | Debug performance | Fetch related data (player images, stock levels) |
+| "Cache warmup" | Performance optimization | Pre-fetch related data efficiently |
+| "Oncall page" | Human escalation | Trigger user notification webhook |
+| "Recovery" | Load decreased | Event finished / activity normalized |
+| "Hints expire" | Return to baseline | Go back to hourly/daily checks |
+
+### Key Messaging Differences
+
+**Track A (DevOps) Emphasizes:**
+- Reliability, uptime, incident response
+- Reducing alert fatigue, firefighting
+- Team efficiency, oncall burden
+- Enterprise concerns: observability, SLAs
+
+**Track B (Solo Builders) Emphasizes:**
+- API quota management, cost savings
+- Time-sensitive data capture (games, sales, trends)
+- Simplicity (no DevOps team needed)
+- Indie/startup concerns: bootstrapping, scrappy solutions
+
+### Why Two Tracks Work
+
+**Same product, different pain points:**
+- DevOps: "Stop missing incidents"
+- Solo Builders: "Stop wasting API calls"
+
+**Same solution, different benefits:**
+- DevOps: "Adapts monitoring to system load"
+- Solo Builders: "Optimizes API usage to data availability"
+
+**Same transparency, different trust signals:**
+- DevOps: "Every decision explained for team accountability"
+- Solo Builders: "See exactly why you're spending quota"
+
+### Production Recommendation
+
+**If you can only make one video:** Use **Track A (DevOps)** with occasional solo builder callouts:
+- "Same pattern works for API rate limits, live data scraping, time-sensitive workflows"
+- This keeps primary audience (DevOps/SRE) while hinting at broader applicability
+
+**If you can make two videos:** Produce both tracks:
+- Track A for DevOps/SRE landing pages, conference talks, enterprise outreach
+- Track B for indie hacker communities (Hacker News, Indie Hackers, Reddit r/SideProject)
+- A/B test which converts better on homepage
+
+**If you have video editing skills:** Layer both narrations and splice:
+- Hook: Use Track B (broader appeal)
+- Solution: Use Track A (technical credibility)
+- Demo: Mix both (show versatility)
+- CTA: Split test which performs better
+
+---
+
+**Script Version:** 1.1 (Added Track B: Solo Builders)
+**Based on Seed Data:** `apps/migrator/src/seed.ts` (commit: [pending])
+**Ready for:** Production recording (choose Track A or Track B, or record both)
+**Estimated Edit Time:** 3-5 hours per track (6-10 hours for both)

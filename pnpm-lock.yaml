@@ -289,6 +289,9 @@ importers:
       '@cronicorn/config-defaults':
         specifier: workspace:*
         version: link:../../packages/config-defaults
+      '@cronicorn/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@noble/hashes':
         specifier: ^1.7.1
         version: 1.8.0
