@@ -1,31 +1,45 @@
 export default function BackgroundEffects() {
     return (
         <>
-            {/* Optimized blur gradients - reduced blur and animation on mobile */}
+            {/* Enhanced blur gradients with improved blending for high-res displays */}
+            {/* Larger overlapping areas and increased blur to eliminate hard edges */}
             <div
-                className="not-dark:opacity-40 absolute top-0 left-0 w-1/4 h-96 bg-gradient-to-br from-background/50 via-secondary/40 to-background/25 blur-2xl md:blur-3xl will-change-[opacity]"
-                style={{ 
+                className="not-dark:opacity-40 absolute -top-24 -left-24 w-[40%] h-[800px] blur-[80px] md:blur-[120px] will-change-transform"
+                style={{
                     animation: "pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                    background: "radial-gradient(ellipse at center, hsl(var(--secondary) / 0.3) 0%, hsl(var(--secondary) / 0.15) 40%, transparent 70%)",
+                    transform: "translate3d(0, 0, 0)",
+                    backfaceVisibility: "hidden" as const,
                 }}
             />
             <div
-                className="not-dark:opacity-40 absolute top-0 left-1/4 w-1/3 h-[28rem] bg-gradient-to-br from-blue-500/10 via-blue-600/10 to-transparent blur-2xl md:blur-3xl will-change-[opacity]"
-                style={{ 
+                className="not-dark:opacity-40 absolute -top-32 left-[20%] w-[45%] h-[900px] blur-[100px] md:blur-[140px] will-change-transform"
+                style={{
                     animation: "pulse 7s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-                    animationDelay: "2s"
+                    animationDelay: "2s",
+                    background: "radial-gradient(ellipse at center, hsl(217 91% 60% / 0.08) 0%, hsl(221 83% 53% / 0.05) 35%, transparent 65%)",
+                    transform: "translate3d(0, 0, 0)",
+                    backfaceVisibility: "hidden" as const,
                 }}
             />
             <div
-                className="not-dark:opacity-40 absolute top-0 right-1/4 w-1/3 h-80 bg-gradient-to-bl from-pink-500/25 via-purple-500/20 to-transparent blur-2xl md:blur-3xl will-change-[opacity]"
-                style={{ 
+                className="not-dark:opacity-40 absolute -top-32 right-[15%] w-[45%] h-[850px] blur-[90px] md:blur-[130px] will-change-transform"
+                style={{
                     animation: "pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-                    animationDelay: "1.5s"
+                    animationDelay: "1.5s",
+                    background: "radial-gradient(ellipse at center, hsl(330 81% 60% / 0.12) 0%, hsl(280 87% 65% / 0.08) 35%, transparent 65%)",
+                    transform: "translate3d(0, 0, 0)",
+                    backfaceVisibility: "hidden" as const,
                 }}
             />
 
-            {/* Fade mask overlay - creates smooth transition at bottom */}
+            {/* Multi-layer fade mask for smoother transitions */}
+            {/* Uses viewport units to ensure fade completes within first screen regardless of page height */}
             <div
-                className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-transparent via-transparent to-background pointer-events-none"
+                className="absolute top-0 left-0 w-full h-full min-h-screen pointer-events-none"
+                style={{
+                    background: "linear-gradient(to bottom, transparent 0, transparent 30vh, hsl(var(--background) / 0.2) 50vh, hsl(var(--background) / 0.5) 70vh, hsl(var(--background) / 0.8) 85vh, hsl(var(--background)) 100vh)",
+                }}
             />
 
             {/* Decorative dots - hidden on mobile for performance */}
