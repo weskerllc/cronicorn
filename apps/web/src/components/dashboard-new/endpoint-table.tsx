@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ChartStyle } from "@cronicorn/ui-library/components/chart";
+import { ScrollArea } from "@cronicorn/ui-library/components/scroll-area";
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint, EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
@@ -140,9 +141,10 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
         <DashboardCard
             title="Endpoints"
             description={description}
+            className="h-[400px]"
         >
             {endpointStats.length === 0 ? null : (
-                <>
+                <ScrollArea className="h-full w-full">
                     <ChartStyle id="endpoint-table" config={chartConfig} />
                     <div data-chart="endpoint-table" className="w-full">
                         <DataTable
@@ -158,7 +160,7 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
                             containerClassName="h-full flex flex-col"
                         />
                     </div>
-                </>
+                </ScrollArea>
             )}
         </DashboardCard>
     );
