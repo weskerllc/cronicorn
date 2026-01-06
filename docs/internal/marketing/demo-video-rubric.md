@@ -623,12 +623,13 @@ This rubric should evolve based on:
 **Seed Data Location:** `apps/migrator/src/seed.ts`
 **Total Runtime:** 105 seconds (1:45)
 
-**Note:** This script provides **two alternative narration tracks** for the same visual demo. Choose based on your target audience:
+**Note:** This script uses a **unified narration track** that appeals to both DevOps/SRE engineers and solo builders. The narration uses inclusive, general language while the visuals show a monitoring scenario. This approach:
 
-- **Track A (DevOps/SRE)**: Focuses on monitoring, incidents, system reliability
-- **Track B (Solo Builders)**: Focuses on API limits, dynamic data fetching, resource constraints
+- **Shows:** Monitoring use case (Track A visuals - familiar to DevOps)
+- **Says:** General adaptive scheduling language (works for all audiences)
+- **Signals:** Multiple use cases explicitly (monitoring, scraping, pipelines, workflows)
 
-Both use the same visual demonstration (flash sale timeline). Only the narration changes to frame the problem differently.
+The result: DevOps sees a familiar scenario they trust. Solo builders hear inclusive language and see themselves mentioned. Everyone understands Cronicorn as a versatile scheduling backbone.
 
 ### Pre-Recording Setup
 
@@ -659,21 +660,13 @@ pnpm tsx apps/migrator/src/seed.ts
 - Quick pan across timeline showing the flash sale spike (Day 6, 12:00-13:00)
 - Zoom slightly into the critical phase (minutes 13-20) showing red/failed runs
 
-**Narration - Track A (DevOps/SRE):**
-> "Your system's workload just changed dramatically. Maybe it's a traffic surge, a deployment, or a data pipeline spike. Your monitoring? Still on the same rigid schedule—checking every 5 minutes whether things are calm or on fire."
+**Narration:**
+> "Your workload just spiked. Could be a traffic surge, a live event, maybe a pipeline going nuts. But your scheduled jobs? They're still running every 5 minutes like nothing happened."
 
-**Narration - Track B (Solo Builders):**
-> "You're building an app with multiple data sources—APIs with rate limits, web scrapers that only run during live events, calculations that depend on fresh data. Cron jobs? They run on fixed schedules, burning through your API quota or missing time-sensitive windows entirely."
-
-**On-screen text - Track A:**
-- "System load: 6x increase"
-- "Health checks: Still every 5 minutes"
-- "Static schedules miss dynamic problems"
-
-**On-screen text - Track B:**
-- "API rate limit: 100 calls/hour"
-- "Cron: Runs every 5 minutes (wasteful)"
-- "Static schedules waste quota & miss opportunities"
+**On-screen text:**
+- "Workload: 6x increase"
+- "Scheduled jobs: Still every 5 minutes"
+- "Static schedules can't adapt"
 
 **What to capture:**
 - Timeline visualization clearly showing baseline (green) vs critical (red) periods
@@ -693,21 +686,13 @@ pnpm tsx apps/migrator/src/seed.ts
   - AI one-shot: Purple dots (recovery/alert actions)
   - Clamped-min: Orange dots (critical phase)
 
-**Narration - Track A (DevOps/SRE):**
-> "Cronicorn is an AI-powered job scheduler that adapts to your system's reality. Instead of rigid schedules, it watches what's happening and adjusts automatically—tightening during incidents, relaxing during recovery. Every decision is transparent. You stay in control."
+**Narration:**
+> "Meet Cronicorn. It's a job scheduler that actually adapts to what's happening. Instead of rigid schedules, it watches your workload and adjusts on the fly. Things heating up? It tightens. Things calm down? It backs off. And here's the thing—every decision is transparent. You're always in control."
 
-**Narration - Track B (Solo Builders):**
-> "Cronicorn is an AI-powered job scheduler that adapts to your data's reality. Scraping live sports scores? It checks frequently during games, backs off when nothing's happening. Hitting rate limits? It automatically throttles. Need to run calculations when data's fresh? It detects changes and triggers workflows. Every decision is transparent. You control the limits."
-
-**On-screen text - Track A:**
-- "Schedules adapt to system reality"
+**On-screen text:**
+- "Schedules adapt to what's happening"
 - "Every decision explained"
-- "You control the boundaries"
-
-**On-screen text - Track B:**
-- "Schedules adapt to data availability"
-- "Respects your rate limits"
-- "You control min/max frequency"
+- "You set the boundaries"
 
 **What to capture:**
 - Full timeline showing 7-day view (establish baseline credibility)
@@ -726,11 +711,8 @@ pnpm tsx apps/migrator/src/seed.ts
   - Runs: Green dots, evenly spaced
   - Success rate: 95-98%
 
-**Narration - Track A (DevOps/SRE):**
-> "Let's watch it work. Here's an e-commerce monitoring job during a flash sale. For five days, the system's running smoothly—baseline schedules, checking every minute. 98% success rate. Everything's calm."
-
-**Narration - Track B (Solo Builders):**
-> "Let's see it in action. Imagine you're building a fantasy sports app. For five days, no games are scheduled—so your stats scraper checks once per minute just to stay fresh. Baseline schedule. Low activity. Everything's calm."
+**Narration:**
+> "Let's see it in action. This is a monitoring job tracking an e-commerce site. For five days, everything's smooth. Baseline schedule, checking every minute. 98% success rate. Nice and calm."
 
 **On-screen highlights:**
 - Circle the baseline interval: "1 minute baseline"
@@ -761,17 +743,11 @@ pnpm tsx apps/migrator/src/seed.ts
 - Show **AI Session #2** panel opening
 - Highlight the tool call: `propose_interval(30000, 60)`
 
-**Narration - Track A (DevOps/SRE):**
-> "Then the workload changes. Traffic jumps 5x. The AI notices immediately—and here's the key: it shows you exactly what it's thinking. 'Traffic surge detected—tightening monitoring to 30 seconds.' Same pattern works for database spikes, CI failures, API rate limits—any dynamic system."
-
-**Narration - Track B (Solo Builders):**
-> "Then game day hits. Your API starts returning live scores—activity jumps 5x. The AI notices immediately and shows you exactly why it's adjusting: 'Activity surge detected—tightening to 30 seconds to catch live updates.' Same pattern works for price drops, trending topics, user uploads—any time-sensitive data."
+**Narration:**
+> "Then things change. Activity jumps 5x. The AI catches it immediately. And here's what's cool—it shows you exactly why it's adjusting. 'Surge detected. Tightening to 30 seconds.' This same pattern works for monitoring, scraping, pipelines... basically anything that needs to adapt."
 
 **AI Reasoning visible on screen:**
-> "Traffic surge from 1,000 to 5,100 visitors/min detected. Tightening health check intervals to 30 seconds for proactive monitoring during flash sale peak."
-
-**Alternative on-screen text for Track B:**
-> "Activity surge detected: 1,000 → 5,100 requests/min. Tightening to 30s to capture live updates while respecting rate limits."
+> "Traffic surge detected: 1,000 → 5,100 requests/min. Tightening to 30 seconds to catch issues faster."
 
 **On-screen highlights:**
 - Circle the **AI Session** entry at **12:06**
@@ -799,11 +775,8 @@ pnpm tsx apps/migrator/src/seed.ts
   3. **Cache Warmup** - purple one-shot execution
   4. **Emergency Oncall Page** - purple one-shot execution
 
-**Narration - Track A (DevOps/SRE):**
-> "As things get critical—success rate drops to 60%—watch the coordinated response. AI tightens monitoring to your minimum constraint. It activates diagnostics that were paused. It triggers recovery actions. And it escalates when needed. All automatic. All transparent."
-
-**Narration - Track B (Solo Builders):**
-> "Peak activity—multiple games happening simultaneously. Watch the coordinated response. AI maxes out your scraping frequency while staying under rate limits. It triggers your player image refresh job—but only for players currently playing. It queues your ratings calculation for when games finish. All automatic. All within your API quota."
+**Narration:**
+> "Now things are getting critical. Watch how it responds. The AI maxes out at your minimum constraint. It wakes up related jobs that were paused. Triggers one-shot actions. Escalates when it needs to. All automatic. All visible."
 
 **On-screen highlights:**
 - **Traffic Monitor**: "Interval: 20s (min constraint enforced)"
@@ -842,11 +815,8 @@ pnpm tsx apps/migrator/src/seed.ts
 - Show metrics improving in response bodies
 - Jump to **Day 6, 13:05** - hint expiration moment
 
-**Narration - Track A (DevOps/SRE):**
-> "As the system recovers, AI detects the improvement and loosens back to baseline. Then—60 minutes later—all AI adjustments expire automatically. Your baseline schedules resume. No manual intervention. No runaway automation. It adapts, then gets out of the way."
-
-**Narration - Track B (Solo Builders):**
-> "Games finish. AI detects the drop in activity and loosens back to baseline checking. Then—60 minutes later—all adjustments expire automatically. Your scraper goes back to its hourly schedule. No wasted API calls. No manual intervention. It optimizes during peak activity, then gets out of the way."
+**Narration:**
+> "Things start recovering. The AI sees it and eases back to baseline. Then 60 minutes later, all the AI adjustments expire automatically. Your baseline schedule takes over again. No manual tweaking. No runaway automation. It just... adapts and gets out of your way."
 
 **On-screen highlights:**
 - **Minute 28** (12:28): "AI Session #4: Recovery confirmed"
@@ -877,17 +847,31 @@ pnpm tsx apps/migrator/src/seed.ts
   - Baseline interval: 60,000ms (1 minute)
 - Show **AI Sessions** list panel with all 6 sessions visible
 - Quick highlight of **source attribution** legend
+- **[OPTIONAL]** Show use cases callout (see next section)
 
-**Narration - Track A (DevOps/SRE):**
-> "Three things make this different: One—every decision is transparent. You saw exactly why the schedule changed. Two—you set the boundaries. AI operates within your min and max constraints. Three—it works perfectly without AI. Your baseline schedules always continue."
-
-**Narration - Track B (Solo Builders):**
-> "Three things make this different: One—you see exactly why it's spending your API quota. Every decision explained. Two—you set the rate limits. Minimum 20 seconds, maximum 5 minutes. AI never burns through your quota. Three—it works perfectly without AI. Your baseline schedules always run."
+**Narration:**
+> "So what makes this different? First, it's completely transparent. You saw exactly why every schedule changed. Second, you set the boundaries. The AI stays within your min and max constraints. And third, it works fine without AI. Your baseline schedules always run no matter what."
 
 **On-screen text:**
 - "✓ Every decision explained"
 - "✓ Min/max constraints enforced"
 - "✓ Works without AI"
+
+**[OPTIONAL] Use Cases Diversity Callout:**
+
+If you want to explicitly signal versatility, add this 2-3 second visual callout during this shot:
+
+**On-screen text (animated bullet points):**
+```
+Use Cronicorn for:
+• System monitoring & health checks
+• Live data scraping & API fetching
+• ETL pipelines & data syncing
+• Webhook processing & event handling
+• CI/CD workflows & deployments
+```
+
+**Note:** This is optional but recommended if you want to maximize appeal to both DevOps and solo builder audiences. The callout takes 2-3 seconds and appears while the narration plays.
 
 **What to capture:**
 - Show **min/max constraint fields** in endpoint configuration
@@ -905,11 +889,8 @@ pnpm tsx apps/migrator/src/seed.ts
 - Fade to **Cronicorn logo** on clean background
 - **CTA overlay** appears
 
-**Narration - Track A (DevOps/SRE):**
-> "Stop fighting rigid schedules that can't adapt to your system's reality. Whether you're monitoring production, running CI pipelines, or syncing data—Cronicorn adjusts automatically. Start scheduling smarter."
-
-**Narration - Track B (Solo Builders):**
-> "Stop wasting API quota on static cron jobs. Whether you're scraping live data, fetching social feeds, or processing webhooks—Cronicorn optimizes automatically. Built for indie developers who need smart scheduling without the DevOps complexity. Start building smarter."
+**Narration:**
+> "Stop fighting rigid schedules. Whether you're monitoring systems, scraping live data, running pipelines, or orchestrating workflows—Cronicorn just adapts. Time to schedule smarter."
 
 **On-screen text (large, clear):**
 ```
@@ -1043,9 +1024,18 @@ No credit card required
 
 ---
 
-## 🎯 TRACK B: SOLO BUILDER USE CASES
+## 🎯 UNIFIED NARRATION: APPEALING TO BOTH AUDIENCES
 
-**Why This Matters:** Indie developers and solo app builders represent a massive untapped audience. They face the same adaptive scheduling challenges but frame them differently:
+**Why This Matters:** The unified narration approach appeals to both DevOps/SRE engineers and solo builders simultaneously. Instead of choosing between audiences, we use inclusive language that lets each viewer see themselves in the product.
+
+**The Strategy:**
+- **Visuals:** Show familiar DevOps monitoring scenario (builds credibility with technical audience)
+- **Language:** Use general terms that apply to all scheduling use cases
+- **Explicit Mentions:** Name multiple use cases (monitoring, scraping, pipelines, workflows) so no one feels excluded
+
+### Original Track B Context (For Reference)
+
+Indie developers and solo app builders represent a massive untapped audience. They face the same adaptive scheduling challenges but frame them differently:
 
 ### Real-World Solo Builder Scenarios
 
@@ -1105,40 +1095,89 @@ No credit card required
 - Simplicity (no DevOps team needed)
 - Indie/startup concerns: bootstrapping, scrappy solutions
 
-### Why Two Tracks Work
+### Why the Unified Approach Works
 
-**Same product, different pain points:**
-- DevOps: "Stop missing incidents"
-- Solo Builders: "Stop wasting API calls"
+**Same product, universal language:**
+- Everyone: "Stop fighting rigid schedules"
+- Inclusive: "Schedules adapt to your reality"
 
-**Same solution, different benefits:**
-- DevOps: "Adapts monitoring to system load"
-- Solo Builders: "Optimizes API usage to data availability"
+**Same solution, broad applicability:**
+- Universal: "Adapts to what's happening"
+- Inclusive: Works for monitoring, scraping, pipelines, workflows
 
-**Same transparency, different trust signals:**
-- DevOps: "Every decision explained for team accountability"
-- Solo Builders: "See exactly why you're spending quota"
+**Same transparency, universal trust:**
+- Everyone: "Every decision explained"
+- Universal: "You set the boundaries"
+
+**Key Advantage:** No viewer feels excluded. DevOps engineers see a familiar scenario. Solo builders hear inclusive language and see their use cases mentioned explicitly.
 
 ### Production Recommendation
 
-**If you can only make one video:** Use **Track A (DevOps)** with occasional solo builder callouts:
-- "Same pattern works for API rate limits, live data scraping, time-sensitive workflows"
-- This keeps primary audience (DevOps/SRE) while hinting at broader applicability
+**Primary Strategy (Recommended):** Use the **Unified Narration** approach documented above:
+- Shows monitoring scenario (builds technical credibility)
+- Uses inclusive language throughout (welcomes all audiences)
+- Explicitly lists multiple use cases (no one feels excluded)
+- Single video appeals to both DevOps and solo builders
 
-**If you can make two videos:** Produce both tracks:
-- Track A for DevOps/SRE landing pages, conference talks, enterprise outreach
-- Track B for indie hacker communities (Hacker News, Indie Hackers, Reddit r/SideProject)
-- A/B test which converts better on homepage
+**Benefits:**
+- ✅ No need to maintain two separate videos
+- ✅ Works across all marketing channels (homepage, social, docs)
+- ✅ DevOps viewers trust the technical scenario
+- ✅ Solo builders see themselves in the language and use case mentions
+- ✅ Positions Cronicorn as versatile scheduling backbone (not niche tool)
 
-**If you have video editing skills:** Layer both narrations and splice:
-- Hook: Use Track B (broader appeal)
-- Solution: Use Track A (technical credibility)
-- Demo: Mix both (show versatility)
-- CTA: Split test which performs better
+**Alternative: Audience-Specific Videos (Optional)**
+
+If you want to create targeted variations for specific channels:
+
+**DevOps-Focused Version:**
+- Use unified narration but emphasize monitoring terminology in CTA
+- Target: Conference talks, DevOps blogs, enterprise outreach
+
+**Solo Builder-Focused Version:**
+- Use unified narration but emphasize scraping/API terminology in CTA
+- Target: Indie Hacker communities, r/SideProject, Product Hunt
+
+**Note:** The unified approach is recommended for most use cases. Only create audience-specific versions if you have distribution channels that clearly segment these audiences.
+
+### Key Language Patterns (Quick Reference)
+
+**✅ DO: Sound conversational and natural**
+- Use contractions: "it's", "you're", "don't", "can't"
+- Short, punchy sentences
+- Natural pauses and flow
+- Talk like you're explaining to a friend
+- "Things heating up? It tightens." not "When conditions warrant, it adjusts parameters"
+
+**✅ DO: Use inclusive, general terms**
+- "Your workload" (not "your system" or "your API")
+- "Scheduled jobs" (not "health checks" or "scrapers")
+- "Things change" / "Activity jumps" (not "traffic surges" or "live events")
+- "It just adapts" (not "adapts to load" or "adapts to data")
+- "Things heating up" / "getting critical" (not "during incidents" or "during games")
+- "Related jobs" / "wakes up jobs" (not "diagnostics" or "scrapers")
+- "Things recover" / "eases back" (not "system stabilizes" or "games finish")
+
+**❌ DON'T: Sound robotic or overly formal**
+- Avoid: Formal structures like "One—first feature. Two—second feature."
+- Avoid: Perfect grammar at the expense of natural flow
+- Avoid: Corporate buzzwords or marketing speak
+
+**❌ DON'T: Use domain-specific language**
+- Avoid: "health checks," "observability" (too DevOps-specific)
+- Avoid: "API quota," "rate limits" (too solo-builder-specific)
+- Avoid: "production," "incidents," "oncall" (enterprise-focused)
+
+**🎯 DO: Explicitly list use cases**
+- Mention multiple use cases: "monitoring, scraping, pipelines, workflows"
+- Use casual transitions: "basically anything that needs to adapt"
+- In CTA, list 3-4 concrete examples
+
+This ensures the narration feels natural while appealing to both DevOps engineers and solo builders.
 
 ---
 
-**Script Version:** 1.1 (Added Track B: Solo Builders)
-**Based on Seed Data:** `apps/migrator/src/seed.ts` (commit: [pending])
-**Ready for:** Production recording (choose Track A or Track B, or record both)
-**Estimated Edit Time:** 3-5 hours per track (6-10 hours for both)
+**Script Version:** 1.3 (Unified Narration - Natural, Conversational Language)
+**Based on Seed Data:** `apps/migrator/src/seed.ts`
+**Ready for:** Production recording (single unified track)
+**Estimated Edit Time:** 3-5 hours (single video with broad appeal)
