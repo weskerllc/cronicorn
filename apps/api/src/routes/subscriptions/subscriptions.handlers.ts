@@ -10,6 +10,7 @@ import type { AppRouteHandler } from "../../types.js";
 import type * as routes from "./subscriptions.routes.js";
 
 import { getAuthContext } from "../../auth/middleware.js";
+import { handleErrorResponse } from "../../lib/error-utils.js";
 
 /**
  * Route Handlers for Subscription Management
@@ -32,8 +33,11 @@ export const handleCreateCheckout: AppRouteHandler<typeof routes.createCheckout>
     return c.json(result, 200);
   }
   catch (error) {
-    throw new HTTPException(500, {
-      message: error instanceof Error ? error.message : "Failed to create checkout session",
+    return handleErrorResponse(c, error, {
+      operation: "createCheckout",
+      userId,
+    }, {
+      defaultMessage: "Failed to create checkout session",
     });
   }
 };
@@ -50,17 +54,11 @@ export const handleCreatePortal: AppRouteHandler<typeof routes.createPortal> = a
     return c.json(result, 200);
   }
   catch (error) {
-    if (error instanceof Error) {
-      // User has no subscription - return 400
-      if (error.message.includes("no active subscription")) {
-        throw new HTTPException(400, { message: error.message });
-      }
-
-      throw new HTTPException(500, { message: error.message });
-    }
-
-    throw new HTTPException(500, {
-      message: "Failed to create portal session",
+    return handleErrorResponse(c, error, {
+      operation: "createPortal",
+      userId,
+    }, {
+      defaultMessage: "Failed to create portal session",
     });
   }
 };
@@ -77,8 +75,11 @@ export const handleGetStatus: AppRouteHandler<typeof routes.getStatus> = async (
     return c.json(result, 200);
   }
   catch (error) {
-    throw new HTTPException(500, {
-      message: error instanceof Error ? error.message : "Failed to get subscription status",
+    return handleErrorResponse(c, error, {
+      operation: "getSubscriptionStatus",
+      userId,
+    }, {
+      defaultMessage: "Failed to get subscription status",
     });
   }
 };
@@ -103,8 +104,11 @@ export const handleGetUsage: AppRouteHandler<typeof routes.getUsage> = async (c)
       if (error instanceof HTTPException) {
         throw error;
       }
-      throw new HTTPException(500, {
-        message: error instanceof Error ? error.message : "Failed to get usage data",
+      return handleErrorResponse(c, error, {
+        operation: "getUsage",
+        userId,
+      }, {
+        defaultMessage: "Failed to get usage data",
       });
     }
   });
@@ -126,18 +130,27 @@ export const handleRequestRefund: AppRouteHandler<typeof routes.requestRefund> =
     return c.json(result, 200);
   }
   catch (error) {
-    // Business rule violations - return 400
+    // Business rule violations - these errors have safe, user-facing messages
     if (
       error instanceof RefundNotEligibleError
       || error instanceof RefundExpiredError
       || error instanceof RefundAlreadyProcessedError
       || error instanceof RefundConcurrencyError
     ) {
-      throw new HTTPException(400, { message: error.message });
+      return handleErrorResponse(c, error, {
+        operation: "requestRefund",
+        userId,
+      }, {
+        defaultStatus: 400,
+      });
     }
 
-    throw new HTTPException(500, {
-      message: error instanceof Error ? error.message : "Failed to process refund",
+    // Generic errors - sanitize before returning
+    return handleErrorResponse(c, error, {
+      operation: "requestRefund",
+      userId,
+    }, {
+      defaultMessage: "Failed to process refund",
     });
   }
 };

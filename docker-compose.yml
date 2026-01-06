@@ -5,8 +5,8 @@ services:
     restart: ${DB_RESTART:-unless-stopped}
     networks:
       - cronicorn
-    ports:
-      - "${DB_PORT:-5432}:5432"
+    # SECURITY: Database port NOT exposed to host - only accessible within Docker network
+    # For local development debugging, use: docker exec -it cronicorn-db psql -U user -d db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}

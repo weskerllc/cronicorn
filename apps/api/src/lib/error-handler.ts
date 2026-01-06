@@ -3,6 +3,8 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { ZodError } from "zod";
 
+import { logger } from "./logger.js";
+
 /**
  * Maps domain errors to HTTP status codes and responses.
  * Follows the principle: domain throws, adapters/routes catch and translate.
@@ -35,11 +37,11 @@ export function errorHandler(err: Error, c: Context) {
   // or caught and translated in route handlers
 
   // Fallback: log and return generic 500
-  console.error("Unhandled error:", err);
+  // SECURITY: Only log detailed error server-side, return generic message to client
+  logger.error({ err, path: c.req.path, method: c.req.method }, "Unhandled error");
   return c.json(
     {
       error: "Internal server error",
-      message: err.message,
     },
     500,
   );
