@@ -152,7 +152,7 @@ function TermsOfService() {
                   5.3 Price Changes
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  We may change our pricing with 30 days' notice. Price changes will apply to subsequent
+                  We may change our pricing with reasonable advance notice. Price changes will apply to subsequent
                   billing periods. Your continued use of the Service after price changes constitutes acceptance
                   of the new pricing.
                 </p>
@@ -368,69 +368,28 @@ function TermsOfService() {
             </p>
           </section>
 
-          {/* Dispute Resolution and Arbitration */}
+          {/* Dispute Resolution */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">
-              14. Dispute Resolution and Arbitration
+              14. Dispute Resolution
             </h2>
             <div className="space-y-4">
-              <div>
-                <h3 className="text-xl font-medium text-foreground mb-2">
-                  14.1 Informal Resolution
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Before filing a claim, you agree to contact us at{" "}
-                  <a
-                    href={`mailto:${business.contactPoint.email}`}
-                    className="text-primary hover:underline"
-                  >
-                    {business.contactPoint.email}
-                  </a>
-                  {" "}and attempt to resolve the dispute informally for at least 30 days. Most disputes can be
-                  resolved this way.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-medium text-foreground mb-2">
-                  14.2 Binding Arbitration
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  If we cannot resolve a dispute informally, any dispute arising out of or relating to these Terms
-                  or the Service will be resolved through binding arbitration administered by the American Arbitration
-                  Association (AAA) under its Commercial Arbitration Rules. The arbitration will be conducted in
-                  San Francisco, California, or remotely via videoconference at your option.
-                </p>
-                <p className="text-muted-foreground leading-relaxed mt-2">
-                  The arbitrator's decision will be final and binding. Judgment on the award may be entered in any
-                  court having jurisdiction. This clause does not preclude either party from seeking provisional
-                  remedies in aid of arbitration, including injunctive relief, from a court of appropriate jurisdiction.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-medium text-foreground mb-2">
-                  14.3 Class Action Waiver
-                </h3>
-                <div className="bg-muted/50 border border-border rounded-lg p-6">
-                  <p className="text-muted-foreground leading-relaxed uppercase">
-                    YOU AND {business.legalName.toUpperCase()} AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY
-                    IN YOUR OR ITS INDIVIDUAL CAPACITY AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS
-                    OR REPRESENTATIVE PROCEEDING. Unless both you and {business.legalName} agree otherwise, the arbitrator
-                    may not consolidate more than one person's claims and may not otherwise preside over any form of a
-                    representative or class proceeding.
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-medium text-foreground mb-2">
-                  14.4 Exceptions to Arbitration
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Either party may seek equitable relief in court for infringement or other misuse of intellectual
-                  property rights (such as trademarks, trade secrets, copyrights, or patents), or bring claims in
-                  small claims court if the claim qualifies.
+              <p className="text-muted-foreground leading-relaxed">
+                Before filing any legal claim, you agree to contact us at{" "}
+                <a
+                  href={`mailto:${business.contactPoint.email}`}
+                  className="text-primary hover:underline"
+                >
+                  {business.contactPoint.email}
+                </a>
+                {" "}and attempt to resolve the dispute informally. Most disputes can be resolved through direct
+                communication.
+              </p>
+              <div className="bg-muted/50 border border-border rounded-lg p-6">
+                <p className="text-muted-foreground leading-relaxed uppercase">
+                  <strong>CLASS ACTION WAIVER:</strong> YOU AND {business.legalName.toUpperCase()} AGREE THAT EACH MAY
+                  BRING CLAIMS AGAINST THE OTHER ONLY IN AN INDIVIDUAL CAPACITY AND NOT AS A PLAINTIFF OR CLASS MEMBER
+                  IN ANY PURPORTED CLASS OR REPRESENTATIVE PROCEEDING. YOU AGREE TO WAIVE ANY RIGHT TO A JURY TRIAL.
                 </p>
               </div>
             </div>
@@ -530,9 +489,9 @@ function TermsOfService() {
             </h2>
             <p className="text-muted-foreground leading-relaxed">
               We reserve the right to modify these Terms at any time. We will notify users of material changes
-              by email or through the Service at least 30 days before the changes take effect. Your continued use
-              of the Service after changes become effective constitutes acceptance of the modified Terms. If you
-              do not agree to the modified Terms, you must stop using the Service.
+              by email or through the Service. Your continued use of the Service after changes become effective
+              constitutes acceptance of the modified Terms. If you do not agree to the modified Terms, you must
+              stop using the Service.
             </p>
           </section>
 
