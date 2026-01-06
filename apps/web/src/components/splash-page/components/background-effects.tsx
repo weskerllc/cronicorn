@@ -34,10 +34,11 @@ export default function BackgroundEffects() {
             />
 
             {/* Multi-layer fade mask for smoother transitions */}
+            {/* Uses viewport units to ensure fade completes within first screen regardless of page height */}
             <div
                 className="absolute top-0 left-0 w-full h-full min-h-screen pointer-events-none"
                 style={{
-                    background: "linear-gradient(to bottom, transparent 0%, transparent 30%, hsl(var(--background) / 0.2) 50%, hsl(var(--background) / 0.5) 70%, hsl(var(--background) / 0.8) 85%, hsl(var(--background)) 95%)",
+                    background: "linear-gradient(to bottom, transparent 0, transparent 30vh, hsl(var(--background) / 0.2) 50vh, hsl(var(--background) / 0.5) 70vh, hsl(var(--background) / 0.8) 85vh, hsl(var(--background)) 100vh)",
                 }}
             />
 
