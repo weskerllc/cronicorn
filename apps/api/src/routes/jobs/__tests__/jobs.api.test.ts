@@ -902,7 +902,7 @@ describe("jobs API", () => {
 
       expect(res11.status).toBe(400); // Bad request due to quota limit
       const errorData = await getJson(res11);
-      expect(errorData.message).toMatch(/Endpoint limit reached.*free tier allows maximum 5 endpoints/i);
+      expect(errorData.error).toMatch(/Endpoint limit reached.*free tier allows maximum 5 endpoints/i);
 
       // Also verify trying to add to job2 fails
       const res11job2 = await app.request(`/api/jobs/${job2.id}/endpoints`, {
@@ -918,7 +918,7 @@ describe("jobs API", () => {
 
       expect(res11job2.status).toBe(400);
       const errorData2 = await getJson(res11job2);
-      expect(errorData2.message).toMatch(/Endpoint limit reached.*free tier allows maximum 5 endpoints/i);
+      expect(errorData2.error).toMatch(/Endpoint limit reached.*free tier allows maximum 5 endpoints/i);
     });
   });
 });

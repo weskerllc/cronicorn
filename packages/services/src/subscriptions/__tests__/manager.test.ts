@@ -141,6 +141,7 @@ describe("subscriptionsManager", () => {
         userId: "user_123",
         userEmail: "test@example.com",
         tier: "pro",
+        billingPeriod: "monthly",
         successUrl: "http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}",
         cancelUrl: "http://localhost:5173/pricing",
         existingCustomerId: undefined,
