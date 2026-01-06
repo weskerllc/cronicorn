@@ -100,13 +100,13 @@ export function NavUser({ user }: NavUserProps) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link to="/usage">
+                <Link to="/usage" preload={false}>
                   <IconChartBar />
                   Usage
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/plan">
+                <Link to="/plan" preload={false}>
                   <IconCreditCard />
                   Billing
                 </Link>
