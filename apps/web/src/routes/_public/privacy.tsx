@@ -141,15 +141,10 @@ function PrivacyPolicy() {
               Data Retention
             </h2>
             <p className="text-muted-foreground leading-relaxed">
-              We retain your information according to the following schedule:
+              We retain your information for as long as your account is active or as reasonably needed to provide
+              our services, comply with legal obligations, resolve disputes, and enforce our agreements. Different
+              types of data may be retained for different periods based on their purpose and legal requirements.
             </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li><strong>Account Data:</strong> Retained while your account is active and for 90 days after account closure</li>
-              <li><strong>Job Execution Logs:</strong> Retained for 90 days from execution date</li>
-              <li><strong>Payment Records:</strong> Retained for 7 years to comply with tax and financial regulations</li>
-              <li><strong>Support Communications:</strong> Retained for 2 years after last interaction</li>
-              <li><strong>Security Logs:</strong> Retained for 1 year for security and fraud prevention</li>
-            </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
               You may request deletion of your account and associated data at any time by contacting us at{" "}
               <a
@@ -158,8 +153,9 @@ function PrivacyPolicy() {
               >
                 {business.contactPoint.email}
               </a>
-              . Please note that we may retain certain information as required by law or for legitimate business purposes
-              (such as preventing fraud or enforcing our Terms).
+              . We will delete your data within a reasonable timeframe, except where we are required by law to
+              retain certain information (such as payment records for tax purposes) or for legitimate business
+              purposes (such as preventing fraud or enforcing our Terms).
             </p>
           </section>
 
@@ -188,7 +184,7 @@ function PrivacyPolicy() {
               >
                 {business.contactPoint.email}
               </a>
-              . We will respond to your request within 30 days.
+              . We will respond to your request within a reasonable timeframe as required by applicable law.
             </p>
           </section>
 
@@ -223,13 +219,10 @@ function PrivacyPolicy() {
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
                   Your personal data may be transferred to and processed in the United States and other countries
-                  where our service providers operate. We ensure appropriate safeguards are in place through:
+                  where our service providers operate. We take steps to ensure your data is protected in accordance
+                  with applicable data protection laws, including through contractual safeguards with our service
+                  providers.
                 </p>
-                <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-                  <li>Standard Contractual Clauses approved by the European Commission</li>
-                  <li>Adequacy decisions where applicable</li>
-                  <li>Other legally approved transfer mechanisms</li>
-                </ul>
               </div>
 
               <div>
@@ -290,15 +283,9 @@ function PrivacyPolicy() {
             </h2>
             <p className="text-muted-foreground leading-relaxed">
               In the event of a data breach that affects your personal information, we will notify you and applicable
-              regulatory authorities within 72 hours of becoming aware of the breach, as required by law. Our
-              notification will include:
+              regulatory authorities as required by law. Our notification will include information about the nature
+              of the breach, the data affected, potential consequences, and steps we are taking to address it.
             </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>The nature of the breach and types of data affected</li>
-              <li>Likely consequences of the breach</li>
-              <li>Measures taken or proposed to address the breach</li>
-              <li>Contact information for further inquiries</li>
-            </ul>
           </section>
 
           {/* Cookies and Tracking */}
