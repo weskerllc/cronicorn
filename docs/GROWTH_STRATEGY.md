@@ -76,6 +76,9 @@ Use this proven structure ([Dev.to successful posts](https://dev.to/)):
 
 **Get Your First 3-5 Users** ([Cold outreach best practices](https://www.smartlead.ai/blog/cold-email-outreach-best-practices))
 
+**Why Personal Outreach First?**
+[Data shows](https://dev.to/sharanjit_singh_4282ed028/how-to-get-your-first-100-users-as-a-solo-founder-no-ads-55hm): 10,000 HN visitors → 30 signups vs. 200 personal outreach visitors → 50 signups. Quality > quantity for first users.
+
 **Morning: Identify 10 Prospects** (30 min)
 Who are your first users? Pick people who:
 - Have cron job pain (DevOps engineers, backend devs, CTOs of small startups)
@@ -666,8 +669,9 @@ Examples:
 **Best for:** Technical content, tutorials, founder stories
 
 **Timing:**
-- **Day:** Tuesday-Thursday (peak developer traffic)
-- **Time:** 9-11 AM EST (when developers check feeds)
+- **Day:** Monday-Thursday ([peak engagement days](https://dev.to/daolf/-what-is-the-best-time-to-post-on-devto-a-data-backed-answer--1kob), Wed/Thu had most top posts)
+- **Time:** 9 AM - 12 PM EST (optimal window)
+- **Tip:** Don't post exactly on the hour (avoids scheduled content flood)
 
 **Content That Works:**
 1. **"Why I Built X"** - Personal story + technical decisions
