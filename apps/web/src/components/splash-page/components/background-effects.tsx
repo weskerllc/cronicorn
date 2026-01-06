@@ -35,9 +35,9 @@ export default function BackgroundEffects() {
 
             {/* Multi-layer fade mask for smoother transitions */}
             <div
-                className="absolute top-0 left-0 w-full h-[700px] pointer-events-none"
+                className="absolute top-0 left-0 w-full h-full min-h-screen pointer-events-none"
                 style={{
-                    background: "linear-gradient(to bottom, transparent 0%, transparent 40%, hsl(var(--background) / 0.3) 65%, hsl(var(--background) / 0.7) 85%, hsl(var(--background)) 100%)",
+                    background: "linear-gradient(to bottom, transparent 0%, transparent 30%, hsl(var(--background) / 0.2) 50%, hsl(var(--background) / 0.5) 70%, hsl(var(--background) / 0.8) 85%, hsl(var(--background)) 95%)",
                 }}
             />
 
