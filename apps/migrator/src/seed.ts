@@ -6,14 +6,15 @@
  *
  * Creates demo-optimized dataset for product video recording:
  * - 7 days of historical data (Days 1-5: baseline, Day 6: flash sale, Day 7: recovery)
- * - 4 jobs organized by tier (Operations, Diagnostics, Recovery, Alerts)
+ * - 1 job containing 11 endpoints (all share same job for AI coordination via get_sibling_latest_responses)
  * - 11 endpoints across 4 tiers (Health, Investigation, Recovery, Alert)
- * - ~22,000 runs showing complete AI adaptation cycle
+ * - ~18,500 runs showing complete AI adaptation cycle
  * - 6 AI analysis sessions at key moments with transparent reasoning
  *
  * Demonstrates:
  * - Baseline credibility: 5 days of normal operations before flash sale
  * - Complete adaptation cycle: degradation → AI adapts → recovery → hints expire
+ * - AI coordination: All endpoints in same job so AI can see sibling responses
  * - Visual timeline: Color-coded source attribution (baseline, AI, one-shot, clamped)
  * - AI transparency: Every decision explained with reasoning
  * - User control: Min/max constraints enforced throughout
@@ -133,32 +134,14 @@ function getFlashSaleMetrics(minuteOffset: number) {
 }
 
 /* ============================================================================
-   JOBS DEFINITIONS (4 Jobs)
+   JOBS DEFINITIONS (1 Job - all endpoints must share same job for AI coordination)
    ============================================================================ */
 
 const JOBS = [
   {
-    id: "job-flash-sale-ops",
-    name: "Flash Sale Operations",
-    description: "Core operational health monitoring for e-commerce flash sale events",
-    status: "active" as const,
-  },
-  {
-    id: "job-flash-sale-diagnostics",
-    name: "Flash Sale Diagnostics",
-    description: "Deep diagnostic tools activated during performance degradation",
-    status: "active" as const,
-  },
-  {
-    id: "job-flash-sale-recovery",
-    name: "Flash Sale Recovery",
-    description: "Automated recovery actions triggered by AI during critical load",
-    status: "active" as const,
-  },
-  {
-    id: "job-flash-sale-alerts",
-    name: "Flash Sale Alerts",
-    description: "Escalation alerts for operations, support, and oncall teams",
+    id: "job-flash-sale-demo",
+    name: "E-Commerce Flash Sale Demo",
+    description: "AI-coordinated flash sale monitoring with health checks, diagnostics, recovery actions, and alerts. All endpoints share the same job so AI can use get_sibling_latest_responses to coordinate decisions across the system.",
     status: "active" as const,
   },
 ];
@@ -171,7 +154,7 @@ const ENDPOINTS: EndpointConfig[] = [
   // Health Tier (3 endpoints - continuous monitoring)
   {
     id: "ep-traffic-monitor",
-    jobId: "job-flash-sale-ops",
+    jobId: "job-flash-sale-demo",
     tier: "health",
     name: "Traffic Monitor",
     description: "Real-time visitor traffic monitoring",
@@ -183,7 +166,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-order-processor-health",
-    jobId: "job-flash-sale-ops",
+    jobId: "job-flash-sale-demo",
     tier: "health",
     name: "Order Processor Health",
     description: "Order processing pipeline health check",
@@ -195,7 +178,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-inventory-sync-check",
-    jobId: "job-flash-sale-ops",
+    jobId: "job-flash-sale-demo",
     tier: "health",
     name: "Inventory Sync Check",
     description: "Stock synchronization lag monitoring",
@@ -209,7 +192,7 @@ const ENDPOINTS: EndpointConfig[] = [
   // Investigation Tier (2 endpoints - conditionally activated)
   {
     id: "ep-slow-page-analyzer",
-    jobId: "job-flash-sale-diagnostics",
+    jobId: "job-flash-sale-demo",
     tier: "investigation",
     name: "Slow Page Analyzer",
     description: "Deep page performance analysis (activated during degradation)",
@@ -222,7 +205,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-database-query-trace",
-    jobId: "job-flash-sale-diagnostics",
+    jobId: "job-flash-sale-demo",
     tier: "investigation",
     name: "Database Query Trace",
     description: "Query performance tracing (activated when DB slows)",
@@ -237,7 +220,7 @@ const ENDPOINTS: EndpointConfig[] = [
   // Recovery Tier (2 endpoints - one-shot actions with cooldowns)
   {
     id: "ep-cache-warmup",
-    jobId: "job-flash-sale-recovery",
+    jobId: "job-flash-sale-demo",
     tier: "recovery",
     name: "Cache Warm Up",
     description: "Preload product cache to reduce database load",
@@ -250,7 +233,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-scale-checkout-workers",
-    jobId: "job-flash-sale-recovery",
+    jobId: "job-flash-sale-demo",
     tier: "recovery",
     name: "Scale Checkout Workers",
     description: "Horizontally scale checkout worker pool",
@@ -265,7 +248,7 @@ const ENDPOINTS: EndpointConfig[] = [
   // Alert Tier (4 endpoints - escalation alerts with cooldowns)
   {
     id: "ep-slack-operations",
-    jobId: "job-flash-sale-alerts",
+    jobId: "job-flash-sale-demo",
     tier: "alert",
     name: "Slack Operations Alert",
     description: "Alert operations team of performance degradation",
@@ -278,7 +261,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-slack-customer-support",
-    jobId: "job-flash-sale-alerts",
+    jobId: "job-flash-sale-demo",
     tier: "alert",
     name: "Slack Customer Support Alert",
     description: "Escalate to customer support team for high-impact issues",
@@ -291,7 +274,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-emergency-oncall-page",
-    jobId: "job-flash-sale-alerts",
+    jobId: "job-flash-sale-demo",
     tier: "alert",
     name: "Emergency Oncall Page",
     description: "Page oncall engineer for critical system failure",
@@ -304,7 +287,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-performance-webhook",
-    jobId: "job-flash-sale-alerts",
+    jobId: "job-flash-sale-demo",
     tier: "alert",
     name: "Performance Degradation Webhook",
     description: "Generic webhook for third-party monitoring integrations",
@@ -469,11 +452,15 @@ function generateRunsForEndpoint(endpoint: EndpointConfig): schema.RunInsert[] {
       : Math.floor(avgDuration * (2 + Math.random())); // Failures take 2-3x longer
 
     // Create response body for health tier with flash sale metrics
-    let responseBody: Record<string, unknown> | null = null;
+    let responseBody: import("@cronicorn/domain").JsonValue | undefined;
     if (endpoint.tier === "health" && isFlashSaleWindow && minuteOffset >= 0) {
       const metrics = getFlashSaleMetrics(minuteOffset);
       responseBody = {
-        ...metrics,
+        traffic: metrics.traffic,
+        ordersPerMin: metrics.ordersPerMin,
+        pageLoadMs: metrics.pageLoadMs,
+        inventoryLagMs: metrics.inventoryLagMs,
+        dbQueryMs: metrics.dbQueryMs,
         timestamp: currentTime.toISOString(),
       };
     }
@@ -718,7 +705,7 @@ async function seed() {
     archivedAt: null,
   }));
   await db.insert(schema.jobs).values(jobsToInsert).onConflictDoNothing();
-  console.log(`✓ 4 jobs created\n`);
+  console.log(`✓ 1 job created (all endpoints share same job for AI coordination)\n`);
 
   // 3. Create endpoints
   console.log("🎯 Creating endpoints...");
@@ -780,7 +767,7 @@ async function seed() {
   console.log("  • Day 6, 12:00-13:00: Flash sale event (complete adaptation cycle)");
   console.log("  • Day 7: Post-event stabilization\n");
   console.log("📦 Data Created:");
-  console.log(`  • ${JOBS.length} jobs (ops, diagnostics, recovery, alerts)`);
+  console.log(`  • ${JOBS.length} job (E-Commerce Flash Sale Demo - all endpoints share same job)`);
   console.log(`  • ${ENDPOINTS.length} endpoints (4 tiers: health, investigation, recovery, alert)`);
   console.log(`  • ${allRuns.length} runs (~7 days of execution history)`);
   console.log(`  • ${sessions.length} AI analysis sessions (surge → critical → recovery → expiration)\n`);
