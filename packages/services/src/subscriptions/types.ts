@@ -1,9 +1,10 @@
-import type { JobsRepo, PaymentProvider } from "@cronicorn/domain";
+import type { JobsRepo, Logger, PaymentProvider } from "@cronicorn/domain";
 
 export type SubscriptionDeps = {
   jobsRepo: JobsRepo;
   paymentProvider: PaymentProvider;
   baseUrl: string;
+  logger: Logger;
 };
 
 export type CreateCheckoutInput = {

@@ -2,7 +2,7 @@ import { CronParserAdapter } from "@cronicorn/adapter-cron";
 import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
+import { logger as honoLogger } from "hono/logger";
 
 import type { Auth } from "./auth/config.js";
 import type { Env } from "./lib/config.js";
@@ -14,6 +14,7 @@ import { createDashboardManager } from "./lib/create-dashboard-manager.js";
 import { createJobsManager } from "./lib/create-jobs-manager.js";
 import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.js";
 import { errorHandler } from "./lib/error-handler.js";
+import { logger } from "./lib/logger.js";
 import configureOpenAPI from "./lib/openapi.js";
 import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
@@ -55,7 +56,7 @@ export async function createApp(
   const app = createRouter().basePath("/api") as AppOpenAPI;
 
   if (config.LOG_LEVEL === "debug") {
-    app.use("*", logger());
+    app.use("*", honoLogger());
   }
 
   // Configure CORS globally to allow direct requests from web app (no proxy)
@@ -191,14 +192,7 @@ export async function createApp(
   // Start server
   const port = config.PORT;
 
-  // eslint-disable-next-line no-console
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    level: "info",
-    message: "API server starting",
-    port,
-    env: config.NODE_ENV,
-  }));
+  logger.info({ port, env: config.NODE_ENV }, "API server starting");
 
   return { app, auth };
 }

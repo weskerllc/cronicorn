@@ -29,13 +29,15 @@
     "@hono/node-server": "^1.13.7",
     "@hono/swagger-ui": "^0.4.1",
     "@hono/zod-openapi": "0.19.10",
+    "@scalar/hono-api-reference": "0.5.164",
     "better-auth": "^1.3.34",
     "drizzle-orm": "catalog:",
-    "stoker": "1.4.3",
     "hono": "4.8.5",
-    "@scalar/hono-api-reference": "0.5.164",
     "nanoid": "^5.0.9",
     "pg": "^8.13.1",
+    "pino": "^10.1.0",
+    "pino-pretty": "^11.3.0",
+    "stoker": "1.4.3",
     "zod": "catalog:"
   },
   "devDependencies": {
