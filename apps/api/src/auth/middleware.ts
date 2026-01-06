@@ -6,6 +6,8 @@ import type { Env } from "../lib/config";
 import type { Auth } from "./config";
 import type { AuthContext } from "./types";
 
+import { logger } from "../lib/logger.js";
+
 /**
  * Unified authentication middleware supporting multiple auth methods.
  *
@@ -19,34 +21,28 @@ import type { AuthContext } from "./types";
  */
 export function requireAuth(auth: Auth, config: Env) {
   return async (c: Context, next: Next) => {
-    // Debug logging for auth troubleshooting (only in development/production with issues)
-    // eslint-disable-next-line node/no-process-env
-    const debugAuth = process.env.DEBUG_AUTH === "true" || config.NODE_ENV === "development";
+    // SECURITY: Debug logging ONLY in development (never in production)
+    const debugAuth = config.NODE_ENV === "development";
 
     if (debugAuth) {
-      console.warn("[AUTH DEBUG] Request:", {
+      logger.debug({
         path: c.req.path,
         method: c.req.method,
-        headers: {
-          "cookie": c.req.header("cookie") ? "present" : "missing",
-          "authorization": c.req.header("authorization") ? "present" : "missing",
-          "x-api-key": c.req.header("x-api-key") ? "present" : "missing",
-          "x-forwarded-proto": c.req.header("x-forwarded-proto"),
-          "x-forwarded-host": c.req.header("x-forwarded-host"),
-          "host": c.req.header("host"),
-        },
-      });
+        hasCookie: !!c.req.header("cookie"),
+        hasAuthorization: !!c.req.header("authorization"),
+        hasApiKey: !!c.req.header("x-api-key"),
+      }, "Auth debug: Request");
     }
 
     // Try OAuth session first (automatic from cookie)
     const sessionResult = await auth.api.getSession({ headers: c.req.raw.headers });
 
     if (debugAuth) {
-      console.warn("[AUTH DEBUG] Session check result:", {
+      logger.debug({
         hasSession: !!sessionResult,
         hasUser: !!sessionResult?.user,
         userId: sessionResult?.user?.id,
-      });
+      }, "Auth debug: Session check result");
     }
 
     if (sessionResult?.user) {
@@ -54,7 +50,7 @@ export function requireAuth(auth: Auth, config: Env) {
       c.set("userId", sessionResult.user.id);
 
       if (debugAuth) {
-        console.warn("[AUTH DEBUG] ✅ Authenticated via session cookie");
+        logger.debug({ userId: sessionResult.user.id }, "Auth debug: Authenticated via session cookie");
       }
 
       return next();
@@ -93,10 +89,10 @@ export function requireAuth(auth: Auth, config: Env) {
       });
 
       if (debugAuth) {
-        console.warn("[AUTH DEBUG] API key check:", {
+        logger.debug({
           valid: !!apiKeyResult?.valid,
           hasKey: !!apiKeyResult?.key,
-        });
+        }, "Auth debug: API key check");
       }
 
       if (apiKeyResult?.valid && apiKeyResult.key) {
@@ -108,7 +104,7 @@ export function requireAuth(auth: Auth, config: Env) {
         c.set("session", null); // API key auth doesn't have a traditional session
 
         if (debugAuth) {
-          console.warn("[AUTH DEBUG] ✅ Authenticated via API key");
+          logger.debug({ userId }, "Auth debug: Authenticated via API key");
         }
 
         return next();
@@ -117,7 +113,7 @@ export function requireAuth(auth: Auth, config: Env) {
 
     // No valid authentication found
     if (debugAuth) {
-      console.warn("[AUTH DEBUG] ❌ No valid authentication found");
+      logger.debug({ path: c.req.path }, "Auth debug: No valid authentication found");
     }
 
     throw new HTTPException(401, {

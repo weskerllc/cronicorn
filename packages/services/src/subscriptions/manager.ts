@@ -160,8 +160,7 @@ export class SubscriptionsManager {
 
     try {
       // 4. Issue refund via payment provider
-      // eslint-disable-next-line no-console
-      console.log(`[SubscriptionsManager] Issuing refund for user ${userId}, payment intent ${user.lastPaymentIntentId}`);
+      this.deps.logger.info({ userId, paymentIntentId: user.lastPaymentIntentId }, "Issuing refund");
 
       const refundResult = await this.deps.paymentProvider.issueRefund({
         paymentIntentId: user.lastPaymentIntentId,
@@ -174,8 +173,7 @@ export class SubscriptionsManager {
 
       // 5. Cancel subscription immediately to prevent future billing
       if (user.stripeSubscriptionId) {
-        // eslint-disable-next-line no-console
-        console.log(`[SubscriptionsManager] Canceling subscription ${user.stripeSubscriptionId} for user ${userId}`);
+        this.deps.logger.info({ userId, subscriptionId: user.stripeSubscriptionId }, "Canceling subscription");
         await this.deps.paymentProvider.cancelSubscriptionNow(user.stripeSubscriptionId);
       }
 
@@ -190,13 +188,12 @@ export class SubscriptionsManager {
       });
 
       // 7. Emit log event for analytics/audit
-      // eslint-disable-next-line no-console
-      console.log(`[SubscriptionsManager] Refund issued`, {
+      this.deps.logger.info({
         userId,
         refundId: refundResult.refundId,
         amount: "full",
         reason: reason || "14-day money-back guarantee",
-      });
+      }, "Refund issued");
 
       return refundResult;
     }
@@ -238,8 +235,7 @@ export class SubscriptionsManager {
 
       default:
         // Ignore unhandled events (product.created, plan.created, etc.)
-        // eslint-disable-next-line no-console
-        console.log(`[SubscriptionsManager] Ignoring unhandled webhook event: ${event.type}`);
+        this.deps.logger.debug({ eventType: event.type }, "Ignoring unhandled webhook event");
     }
   }
 
@@ -253,12 +249,11 @@ export class SubscriptionsManager {
     const tier = session.metadata?.tier as "pro" | "enterprise";
 
     if (!userId || !tier) {
-      console.error("[SubscriptionsManager] Missing userId or tier in checkout session metadata", session);
+      this.deps.logger.error({ sessionId: session.id }, "Missing userId or tier in checkout session metadata");
       throw new Error("Missing userId or tier in checkout session metadata");
     }
 
-    // eslint-disable-next-line no-console
-    console.log(`[SubscriptionsManager] Checkout completed: user=${userId}, tier=${tier}, customer=${session.customer}`);
+    this.deps.logger.info({ userId, tier, customerId: session.customer }, "Checkout completed");
 
     // Calculate refund window (14 days from now)
     const now = new Date();
@@ -286,15 +281,14 @@ export class SubscriptionsManager {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
 
     if (!user) {
-      console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${subscription.customer}`);
+      this.deps.logger.warn({ customerId: subscription.customer }, "No user found for Stripe customer");
       return;
     }
 
     // Extract tier from subscription data using PaymentProvider port
     const tier = this.deps.paymentProvider.extractTierFromSubscription(subscription);
 
-    // eslint-disable-next-line no-console
-    console.log(`[SubscriptionsManager] Subscription updated: user=${user.id}, status=${subscription.status}, tier=${tier}`);
+    this.deps.logger.info({ userId: user.id, status: subscription.status, tier }, "Subscription updated");
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
       tier: tier ?? undefined,
@@ -313,12 +307,11 @@ export class SubscriptionsManager {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(subscription.customer);
 
     if (!user) {
-      console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${subscription.customer}`);
+      this.deps.logger.warn({ customerId: subscription.customer }, "No user found for Stripe customer");
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.log(`[SubscriptionsManager] Subscription deleted: user=${user.id}, downgrading to free`);
+    this.deps.logger.info({ userId: user.id }, "Subscription deleted, downgrading to free");
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
       tier: "free",
@@ -335,19 +328,17 @@ export class SubscriptionsManager {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
 
     if (!user) {
-      console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${invoice.customer}`);
+      this.deps.logger.warn({ customerId: invoice.customer }, "No user found for Stripe customer");
       return;
     }
 
     // Skip if user already refunded (idempotency check)
     if (user.refundStatus === "issued") {
-      // eslint-disable-next-line no-console
-      console.log(`[SubscriptionsManager] Ignoring payment_succeeded for refunded user: ${user.id}`);
+      this.deps.logger.debug({ userId: user.id }, "Ignoring payment_succeeded for refunded user");
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.log(`[SubscriptionsManager] Payment succeeded: user=${user.id}`);
+    this.deps.logger.info({ userId: user.id }, "Payment succeeded");
 
     const updatePayload: {
       subscriptionStatus: "active";
@@ -376,12 +367,11 @@ export class SubscriptionsManager {
     const user = await this.deps.jobsRepo.getUserByStripeCustomerId(invoice.customer);
 
     if (!user) {
-      console.warn(`[SubscriptionsManager] No user found for Stripe customer: ${invoice.customer}`);
+      this.deps.logger.warn({ customerId: invoice.customer }, "No user found for Stripe customer");
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.log(`[SubscriptionsManager] Payment failed: user=${user.id}, marking past_due`);
+    this.deps.logger.warn({ userId: user.id }, "Payment failed, marking past_due");
 
     await this.deps.jobsRepo.updateUserSubscription(user.id, {
       subscriptionStatus: "past_due",

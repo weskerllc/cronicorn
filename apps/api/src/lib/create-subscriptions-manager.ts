@@ -4,6 +4,8 @@ import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgre
 import { DrizzleJobsRepo } from "@cronicorn/adapter-drizzle";
 import { SubscriptionsManager } from "@cronicorn/services";
 
+import { logger } from "./logger.js";
+
 /**
  * Composition root: Wires concrete adapters into SubscriptionsManager.
  *
@@ -27,5 +29,6 @@ export function createSubscriptionsManager(
     jobsRepo,
     paymentProvider,
     baseUrl,
+    logger,
   });
 }

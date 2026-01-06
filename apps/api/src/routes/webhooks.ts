@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 
+import { logger } from "../lib/logger.js";
 import { createRouter } from "../types.js";
 
 /**
@@ -37,7 +38,7 @@ router.post("/webhooks/stripe", async (c: Context) => {
   catch (error) {
     // Signature verification failed or webhook processing error
     const errorMessage = error instanceof Error ? error.message : "Internal server error";
-    console.error(`[Webhooks] Stripe webhook error: ${errorMessage}`);
+    logger.error({ error, errorMessage }, "Stripe webhook error");
 
     // Return 400 for signature verification failures (so Stripe retries)
     if (error instanceof Error && error.message.includes("signature")) {

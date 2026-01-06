@@ -23,7 +23,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    // SECURITY: Only log errors in development (never in production)
+    if (import.meta.env.DEV) {
+      console.error("ErrorBoundary caught an error:", error, errorInfo);
+    }
   }
 
   render() {
@@ -32,7 +35,8 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="p-8 max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
           <p className="text-gray-600 mb-4">Please try refreshing the page.</p>
-          {this.state.error && (
+          {/* SECURITY: Only show error details in development */}
+          {import.meta.env.DEV && this.state.error && (
             <pre className="text-sm bg-gray-100 p-4 rounded overflow-auto">
               {this.state.error.message}
             </pre>
