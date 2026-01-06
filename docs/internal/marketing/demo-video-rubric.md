@@ -619,9 +619,11 @@ This rubric should evolve based on:
 
 ## 🎥 SHOT-BY-SHOT PRODUCTION SCRIPT
 
-**Use Case:** E-Commerce Flash Sale Demo (seeded data ready at `apps/migrator/src/seed.ts`)
-
+**Demo Scenario:** E-Commerce Flash Sale (one example of adaptive scheduling)
+**Seed Data Location:** `apps/migrator/src/seed.ts`
 **Total Runtime:** 105 seconds (1:45)
+
+**Note:** This script uses the flash sale scenario as a **visual demonstration** of how adaptive scheduling works. The narration frames it as one example that applies to any dynamic system (API monitoring, CI/CD, data pipelines, etc.).
 
 ### Pre-Recording Setup
 
@@ -653,12 +655,12 @@ pnpm tsx apps/migrator/src/seed.ts
 - Zoom slightly into the critical phase (minutes 13-20) showing red/failed runs
 
 **Narration:**
-> "Your e-commerce site just launched a flash sale. Traffic jumped from 1,000 to 6,000 visitors per minute. Your monitoring? Still checking every 5 minutes—missing the meltdown in real-time."
+> "Your system's workload just changed dramatically. Maybe it's a traffic surge, a deployment, or a data pipeline spike. Your monitoring? Still on the same rigid schedule—checking every 5 minutes whether things are calm or on fire."
 
 **On-screen text (3 seconds each):**
-- "Traffic: 1,000 → 6,000/min"
+- "System load: 6x increase"
 - "Health checks: Still every 5 minutes"
-- "Issue detection: 10+ minutes late"
+- "Static schedules miss dynamic problems"
 
 **What to capture:**
 - Timeline visualization clearly showing baseline (green) vs critical (red) periods
@@ -679,12 +681,12 @@ pnpm tsx apps/migrator/src/seed.ts
   - Clamped-min: Orange dots (critical phase)
 
 **Narration:**
-> "Cronicorn is an AI-powered job scheduler that adapts to your system's reality. When your site experiences a traffic surge, it automatically tightens monitoring—without you lifting a finger. Every decision is transparent. You stay in control."
+> "Cronicorn is an AI-powered job scheduler that adapts to your system's reality. Instead of rigid schedules, it watches what's happening and adjusts automatically—tightening during incidents, relaxing during recovery. Every decision is transparent. You stay in control."
 
 **On-screen text:**
-- "AI adapts schedules in real-time"
+- "Schedules adapt to system reality"
 - "Every decision explained"
-- "You control min/max constraints"
+- "You control the boundaries"
 
 **What to capture:**
 - Full timeline showing 7-day view (establish baseline credibility)
@@ -704,7 +706,7 @@ pnpm tsx apps/migrator/src/seed.ts
   - Success rate: 95-98%
 
 **Narration:**
-> "For five days before the sale, Cronicorn establishes a baseline. Traffic Monitor checks every minute. Orders, inventory—all on predictable schedules. 98% success rate. Everything's calm."
+> "Let's watch it work. Here's an e-commerce monitoring job during a flash sale. For five days, the system's running smoothly—baseline schedules, checking every minute. 98% success rate. Everything's calm."
 
 **On-screen highlights:**
 - Circle the baseline interval: "1 minute baseline"
@@ -727,7 +729,7 @@ pnpm tsx apps/migrator/src/seed.ts
 
 ---
 
-### SHOT 3B: Flash Sale Surge Detection (35-50 seconds)
+### SHOT 3B: Surge Detection (35-50 seconds)
 
 **Visual:**
 - Pan timeline to **Day 6, 12:05-12:08** (Surge phase)
@@ -736,7 +738,7 @@ pnpm tsx apps/migrator/src/seed.ts
 - Highlight the tool call: `propose_interval(30000, 60)`
 
 **Narration:**
-> "Then the flash sale hits. Minute 6: traffic spikes to 5,000 per minute. Cronicorn's AI notices immediately—and here's the key: it shows you exactly what it's thinking."
+> "Then the workload changes. Traffic jumps 5x. The AI notices immediately—and here's the key: it shows you exactly what it's thinking. 'Traffic surge detected—tightening monitoring to 30 seconds.' Same pattern works for database spikes, CI failures, API rate limits—any dynamic system."
 
 **AI Reasoning visible on screen:**
 > "Traffic surge from 1,000 to 5,100 visitors/min detected. Tightening health check intervals to 30 seconds for proactive monitoring during flash sale peak."
@@ -756,7 +758,7 @@ pnpm tsx apps/migrator/src/seed.ts
 
 ---
 
-### SHOT 3C: Critical Phase & Multi-Tier Response (50-68 seconds)
+### SHOT 3C: Critical Response & Multi-Tier Actions (50-68 seconds)
 
 **Visual:**
 - Pan timeline to **Day 6, 12:13-12:20** (Critical phase)
@@ -768,7 +770,7 @@ pnpm tsx apps/migrator/src/seed.ts
   4. **Emergency Oncall Page** - purple one-shot execution
 
 **Narration:**
-> "Minute 13: things get critical. 6,000 visitors, page load at 4.5 seconds, success rate drops to 60%. Watch what happens. AI tightens monitoring to the minimum—20 seconds. It activates diagnostics that were paused. It triggers cache warmup. And when orders drop below 120 per minute? It pages oncall."
+> "As things get critical—success rate drops to 60%—watch the coordinated response. AI tightens monitoring to your minimum constraint. It activates diagnostics that were paused. It triggers recovery actions. And it escalates when needed. All automatic. All transparent."
 
 **On-screen highlights:**
 - **Traffic Monitor**: "Interval: 20s (min constraint enforced)"
@@ -799,7 +801,7 @@ pnpm tsx apps/migrator/src/seed.ts
 
 ---
 
-### SHOT 3D: Recovery & Hint Expiration (68-85 seconds)
+### SHOT 3D: Recovery & Automatic Reversion (68-85 seconds)
 
 **Visual:**
 - Pan timeline to **Day 6, 12:21-12:39** (Recovery phase)
@@ -808,7 +810,7 @@ pnpm tsx apps/migrator/src/seed.ts
 - Jump to **Day 6, 13:05** - hint expiration moment
 
 **Narration:**
-> "Minute 21: recovery begins. Traffic drops, page load improves. AI confirms the recovery and loosens back to baseline. By 13:05—exactly 60 minutes later—all AI hints expire automatically. The system returns to normal. No manual intervention required."
+> "As the system recovers, AI detects the improvement and loosens back to baseline. Then—60 minutes later—all AI adjustments expire automatically. Your baseline schedules resume. No manual intervention. No runaway automation. It adapts, then gets out of the way."
 
 **On-screen highlights:**
 - **Minute 28** (12:28): "AI Session #4: Recovery confirmed"
@@ -841,7 +843,7 @@ pnpm tsx apps/migrator/src/seed.ts
 - Quick highlight of **source attribution** legend
 
 **Narration:**
-> "Three things make this different: One—every decision is transparent. You saw exactly why AI tightened to 30 seconds. Two—you control the boundaries. Min 20 seconds, max 5 minutes. AI operates within your constraints. Three—it works perfectly without AI. Baseline schedules continue if AI is unavailable."
+> "Three things make this different: One—every decision is transparent. You saw exactly why the schedule changed. Two—you set the boundaries. AI operates within your min and max constraints. Three—it works perfectly without AI. Your baseline schedules always continue."
 
 **On-screen text:**
 - "✓ Every decision explained"
@@ -865,7 +867,7 @@ pnpm tsx apps/migrator/src/seed.ts
 - **CTA overlay** appears
 
 **Narration:**
-> "Stop missing critical issues because your schedules can't keep up. Cronicorn adapts in real-time. Start scheduling smarter."
+> "Stop fighting rigid schedules that can't adapt to your system's reality. Whether you're monitoring APIs, running CI pipelines, or processing data—Cronicorn adjusts automatically. Start scheduling smarter."
 
 **On-screen text (large, clear):**
 ```
@@ -924,9 +926,11 @@ No credit card required
 
 ### SEED DATA REFERENCE (Quick Lookup)
 
+**Important:** These are the specific metrics used in the demo scenario (e-commerce flash sale). The **narration** should reference these visually but **speak to the general concept** of adaptive scheduling that applies to any use case.
+
 **Timeline Structure:**
-- **Days 1-5**: Baseline establishment (5 days before sale)
-- **Day 6, 12:00-13:00**: Flash sale event (60 minutes)
+- **Days 1-5**: Baseline establishment (5 days before workload change)
+- **Day 6, 12:00-13:00**: Workload surge event (60 minutes)
 - **Day 7**: Post-event stabilization
 
 **Flash Sale Phases (Day 6, 12:00-13:00):**
