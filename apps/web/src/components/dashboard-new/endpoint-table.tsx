@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ChartStyle } from "@cronicorn/ui-library/components/chart";
+import { ScrollArea } from "@cronicorn/ui-library/components/scroll-area";
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint, EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
@@ -142,23 +143,22 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
             description={description}
         >
             {endpointStats.length === 0 ? null : (
-                <>
+                <ScrollArea data-chart="endpoint-table" className="w-full h-full overflow-hidden">
                     <ChartStyle id="endpoint-table" config={chartConfig} />
-                    <div data-chart="endpoint-table" className="w-full">
-                        <DataTable
-                            columns={columns}
-                            data={endpointStats}
-                            enablePagination={true}
-                            defaultPageSize={20}
-                            emptyMessage="No endpoints found."
-                            onRowClick={handleRowClick}
-                            getRowId={(row) => row.id}
-                            initialSorting={[{ id: "runs", desc: true }]}
-                            headerClassName="bg-card sticky top-0 z-10"
-                            containerClassName="h-full flex flex-col"
-                        />
-                    </div>
-                </>
+                    <DataTable
+                        columns={columns}
+                        data={[...endpointStats, ...endpointStats]} // Duplicate data to allow scrolling
+                        enablePagination={true}
+                        defaultPageSize={20}
+                        emptyMessage="No endpoints found."
+                        onRowClick={handleRowClick}
+                        getRowId={(row) => row.id}
+                        initialSorting={[{ id: "runs", desc: true }]}
+                        headerClassName="bg-card sticky top-0 z-10"
+                        containerClassName="border-none"
+                    />
+                </ScrollArea>
+
             )}
         </DashboardCard>
     );

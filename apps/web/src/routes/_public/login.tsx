@@ -6,14 +6,14 @@ import { Label } from "@cronicorn/ui-library/components/label";
 import { Separator } from "@cronicorn/ui-library/components/separator";
 import { Skeleton } from "@cronicorn/ui-library/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, isRedirect, redirect, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Github, Mail } from "lucide-react";
 import React, { useState } from "react";
 
 import { brand, metaDescriptions, pageTitles, structuredData } from "@cronicorn/content";
 import { APP_URL } from "@/config";
 import { authConfigQueryOptions } from "@/lib/api-client/queries/auth-config.queries";
-import { signIn } from "@/lib/auth-client";
+import { getSession, signIn } from "@/lib/auth-client";
 import { createSEOHead } from "@/lib/seo";
 
 type LoginSearch = {
@@ -22,6 +22,23 @@ type LoginSearch = {
 
 export const Route = createFileRoute("/_public/login")({
   ssr: false,
+  beforeLoad: async ({ search }) => {
+    // Redirect authenticated users away from login page
+    try {
+      const result = await getSession();
+      if (result.data) {
+        // User is already logged in, redirect to dashboard or the intended destination
+        const redirectPath = search.redirect || "/dashboard";
+        throw redirect({ to: redirectPath });
+      }
+    } catch (e) {
+      // Re-throw TanStack Router redirects (they use throw for control flow)
+      if (isRedirect(e)) {
+        throw e;
+      }
+      // If getSession fails (e.g., no session), continue to show login page
+    }
+  },
   head: () => {
     const loginStructuredData = {
       "@context": "https://schema.org",
@@ -71,7 +88,7 @@ function RouteComponent() {
   const [password, setPassword] = useState("");
   const [isClient, setIsClient] = useState(false);
   const navigate = useNavigate();
-  const { redirect } = Route.useSearch();
+  const { redirect: redirectTo } = Route.useSearch();
 
 
 
@@ -85,14 +102,14 @@ function RouteComponent() {
   });
 
   const getRedirectPath = () => {
-    if (redirect) {
+    if (redirectTo) {
       try {
-        const url = new URL(redirect);
+        const url = new URL(redirectTo);
         if (url.origin === window.location.origin) {
           return url.pathname + url.search;
         }
       } catch {
-        return redirect;
+        return redirectTo;
       }
     }
     return "/dashboard";
