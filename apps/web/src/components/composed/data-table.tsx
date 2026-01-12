@@ -266,39 +266,10 @@ export function DataTable<TData, TValue>({
 
       {enablePagination && table.getPageCount() > 0 && (
         <div className="flex items-center justify-between px-2">
-          {enableRowSelection && (
-            <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-              {table.getFilteredSelectedRowModel().rows.length} of{" "}
-              {table.getFilteredRowModel().rows.length} row(s) selected.
-            </div>
-          )}
-          <div className={`flex items-center gap-8 ${enableRowSelection ? "lg:w-fit" : "w-full justify-between"}`}>
-            <div className="hidden items-center gap-2 lg:flex">
-              <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Rows per page
-              </Label>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value));
-                }}
-              >
-                <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                  <SelectValue placeholder={table.getState().pagination.pageSize} />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {pageSizeOptions.map((pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-            </div>
-            <div className="ml-auto flex items-center gap-2 lg:ml-0 pb-2">
+
+          <div className={`flex  flex-col gap-2 ${enableRowSelection ? "lg:w-fit" : "w-full justify-between"}`}>
+
+            <div className="flex items-center gap-2 lg:ml-0">
               <Button
                 variant="outline"
                 className="hidden h-8 w-8 p-0 lg:flex"
@@ -339,7 +310,40 @@ export function DataTable<TData, TValue>({
                 <IconChevronsRight />
               </Button>
             </div>
+
+            {enableRowSelection && (
+              <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+                {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                {table.getFilteredRowModel().rows.length} row(s) selected.
+              </div>
+            )}
+            <div className="hidden items-center gap-2 lg:flex">
+              <Label htmlFor="rows-per-page" className="text-sm font-medium">
+                Rows per page
+              </Label>
+              <Select
+                value={`${table.getState().pagination.pageSize}`}
+                onValueChange={(value) => {
+                  table.setPageSize(Number(value));
+                }}
+              >
+                <SelectTrigger size="sm" className="w-20" id="rows-per-page">
+                  <SelectValue placeholder={table.getState().pagination.pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {pageSizeOptions.map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex text-sm font-medium pb-2">
+              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+            </div>
           </div>
+
         </div>
       )}
     </div>
