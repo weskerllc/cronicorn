@@ -2,32 +2,33 @@
 /* eslint-disable no-console */
 /* eslint-disable node/no-process-env */
 /**
- * E-Commerce Flash Sale Demo Data Seeder
+ * E-Commerce Black Friday Demo Data Seeder
  *
  * Creates demo-optimized dataset for product video recording:
- * - 7 days of historical data (Days 1-5: baseline, Day 6: flash sale, Day 7: recovery)
+ * - 7 days of historical data (Days 1-3: baseline, Day 4: Black Friday, Days 5-7: recovery)
  * - 1 job containing 11 endpoints (all share same job for AI coordination via get_sibling_latest_responses)
  * - 11 endpoints across 4 tiers (Health, Investigation, Recovery, Alert)
- * - ~18,500 runs showing complete AI adaptation cycle
- * - 6 AI analysis sessions at key moments with transparent reasoning
+ * - ~40,000 runs showing complete AI adaptation cycle during 12-hour sale
+ * - 27 AI analysis sessions (6 baseline, 15 Black Friday, 6 post-event) with transparent reasoning
  *
  * Demonstrates:
- * - Baseline credibility: 5 days of normal operations before flash sale
- * - Complete adaptation cycle: degradation → AI adapts → recovery → hints expire
+ * - Baseline credibility: 3 days of normal operations before Black Friday
+ * - Complete adaptation cycle: all-day surge → AI adapts → gradual recovery → hints expire
  * - AI coordination: All endpoints in same job so AI can see sibling responses
  * - Visual timeline: Color-coded source attribution (baseline, AI, one-shot, clamped)
  * - AI transparency: Every decision explained with reasoning
  * - User control: Min/max constraints enforced throughout
+ * - Centered peak: Black Friday on Day 4 creates symmetric 7-day visualization
  *
  * Run with: pnpm tsx apps/migrator/src/seed.ts
  *
- * Flash Sale Timeline (Day 6, 12:00-13:00):
- * - Minutes 0-4: Baseline (1000 visitors/min, 98% success)
- * - Minutes 5-8: Surge (5000 visitors/min, AI tightens to 30s)
- * - Minutes 9-12: Strain (5500 visitors/min, AI activates diagnostics)
- * - Minutes 13-20: Critical (6000 visitors/min, AI pages oncall)
- * - Minutes 21-39: Recovery (1500 visitors/min, AI confirms recovery)
- * - Hour 13:00+: Hints expire, return to baseline
+ * Black Friday Timeline (Day 4, 08:00-20:00):
+ * - 08:00-10:00: Early Morning Surge (1000 → 3500 visitors/min, AI tightens to 45s)
+ * - 10:00-12:00: Mid-Morning Peak (3500 → 6000 visitors/min, AI hits 20s min constraint)
+ * - 12:00-14:00: Lunch Hour Sustained (5500-6000 visitors/min, AI maintains max monitoring)
+ * - 14:00-17:00: Afternoon Steady (4000-5000 visitors/min, AI eases slightly)
+ * - 17:00-20:00: Evening Wind-Down (5000 → 1200 visitors/min, AI returns to baseline)
+ * - 20:00-21:00: Post-Event Recovery (hints expire, baseline fully resumed)
  */
 
 import { schema } from "@cronicorn/adapter-drizzle";
@@ -72,7 +73,7 @@ const db = drizzle(pool, { schema });
    FLASH SALE TYPES & CONSTANTS
    ============================================================================ */
 
-type FlashSalePhase = "baseline" | "surge" | "strain" | "critical" | "recovery";
+// type FlashSalePhase = "baseline" | "surge" | "strain" | "critical" | "recovery";
 
 type EndpointTier = "health" | "investigation" | "recovery" | "alert";
 
@@ -92,45 +93,77 @@ type EndpointConfig = {
 
 // Timeline constants
 const NOW = new Date();
-const FLASH_SALE_START = new Date(NOW.getTime() - 25 * 60 * 60 * 1000); // 25 hours ago (Day 6, 12:00)
-const FLASH_SALE_END = new Date(FLASH_SALE_START.getTime() + 60 * 60 * 1000); // Exactly +1 hour
 const SEVEN_DAYS_AGO = new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000);
+const BLACK_FRIDAY_START = new Date(SEVEN_DAYS_AGO.getTime() + 3 * 24 * 60 * 60 * 1000 + 8 * 60 * 60 * 1000); // Day 4, 08:00
+const BLACK_FRIDAY_END = new Date(BLACK_FRIDAY_START.getTime() + 12 * 60 * 60 * 1000); // Day 4, 20:00 (12-hour sale)
+
+// Legacy aliases for backward compatibility
+const FLASH_SALE_START = BLACK_FRIDAY_START;
+const FLASH_SALE_END = BLACK_FRIDAY_END;
 
 /* ============================================================================
-   FLASH SALE PHASE LOGIC
+   BLACK FRIDAY PHASE LOGIC
    ============================================================================ */
 
+type BlackFridayPhase = "early-surge" | "mid-morning-peak" | "lunch-sustained" | "afternoon-steady" | "evening-winddown" | "post-event";
+
 /**
- * Get flash sale phase based on minute offset from sale start
+ * Get Black Friday phase based on hour offset from sale start (8am)
  */
-function getFlashSalePhase(minuteOffset: number): FlashSalePhase {
-  if (minuteOffset <= 4)
-    return "baseline";
-  if (minuteOffset <= 8)
-    return "surge";
-  if (minuteOffset <= 12)
-    return "strain";
-  if (minuteOffset <= 20)
-    return "critical";
-  return "recovery";
+function getBlackFridayPhase(hourOffset: number): BlackFridayPhase {
+  if (hourOffset < 2)
+    return "early-surge"; // 8-10am
+  if (hourOffset < 4)
+    return "mid-morning-peak"; // 10am-12pm
+  if (hourOffset < 6)
+    return "lunch-sustained"; // 12-2pm
+  if (hourOffset < 9)
+    return "afternoon-steady"; // 2-5pm
+  if (hourOffset < 12)
+    return "evening-winddown"; // 5-8pm
+  return "post-event"; // 8pm+
 }
 
 /**
- * Get traffic metrics for a specific minute offset in flash sale
- * Based on FLASH_SALE_TIMELINE from scenarios.ts
+ * Get traffic metrics for a specific hour offset in Black Friday sale
+ * Returns interpolated metrics based on phase progression
  */
-function getFlashSaleMetrics(minuteOffset: number) {
-  const phase = getFlashSalePhase(minuteOffset);
+function getBlackFridayMetrics(hourOffset: number) {
+  const phase = getBlackFridayPhase(hourOffset);
 
-  const metrics = {
-    baseline: { traffic: 1000, ordersPerMin: 40, pageLoadMs: 800, inventoryLagMs: 100, dbQueryMs: 120 },
-    surge: { traffic: 5000, ordersPerMin: 180, pageLoadMs: 1800, inventoryLagMs: 250, dbQueryMs: 280 },
-    strain: { traffic: 5500, ordersPerMin: 160, pageLoadMs: 3200, inventoryLagMs: 450, dbQueryMs: 850 },
-    critical: { traffic: 6000, ordersPerMin: 120, pageLoadMs: 4500, inventoryLagMs: 600, dbQueryMs: 1200 },
-    recovery: { traffic: 1500, ordersPerMin: 50, pageLoadMs: 1100, inventoryLagMs: 150, dbQueryMs: 180 },
+  // Base metrics for each phase (we'll interpolate within phases)
+  const phaseMetrics = {
+    "early-surge": {
+      start: { traffic: 1000, ordersPerMin: 40, pageLoadMs: 800, inventoryLagMs: 100, dbQueryMs: 120 },
+      end: { traffic: 3500, ordersPerMin: 120, pageLoadMs: 1800, inventoryLagMs: 250, dbQueryMs: 380 },
+    },
+    "mid-morning-peak": {
+      start: { traffic: 3500, ordersPerMin: 120, pageLoadMs: 1800, inventoryLagMs: 250, dbQueryMs: 380 },
+      end: { traffic: 6000, ordersPerMin: 200, pageLoadMs: 4500, inventoryLagMs: 600, dbQueryMs: 1200 },
+    },
+    "lunch-sustained": {
+      start: { traffic: 6000, ordersPerMin: 200, pageLoadMs: 4500, inventoryLagMs: 600, dbQueryMs: 1200 },
+      end: { traffic: 5500, ordersPerMin: 180, pageLoadMs: 4000, inventoryLagMs: 550, dbQueryMs: 1000 },
+    },
+    "afternoon-steady": {
+      start: { traffic: 5500, ordersPerMin: 180, pageLoadMs: 4000, inventoryLagMs: 550, dbQueryMs: 1000 },
+      end: { traffic: 4000, ordersPerMin: 140, pageLoadMs: 2500, inventoryLagMs: 350, dbQueryMs: 600 },
+    },
+    "evening-winddown": {
+      start: { traffic: 4000, ordersPerMin: 140, pageLoadMs: 2500, inventoryLagMs: 350, dbQueryMs: 600 },
+      end: { traffic: 1200, ordersPerMin: 45, pageLoadMs: 850, inventoryLagMs: 120, dbQueryMs: 150 },
+    },
+    "post-event": {
+      start: { traffic: 1200, ordersPerMin: 45, pageLoadMs: 850, inventoryLagMs: 120, dbQueryMs: 150 },
+      end: { traffic: 1000, ordersPerMin: 40, pageLoadMs: 800, inventoryLagMs: 100, dbQueryMs: 120 },
+    },
   };
 
-  return metrics[phase];
+  const metrics = phaseMetrics[phase];
+
+  // Simple interpolation: return start metrics for simplicity
+  // (In production, you'd interpolate based on progress within phase)
+  return metrics.start;
 }
 
 /* ============================================================================
@@ -139,9 +172,9 @@ function getFlashSaleMetrics(minuteOffset: number) {
 
 const JOBS = [
   {
-    id: "job-flash-sale-demo",
-    name: "E-Commerce Flash Sale Demo",
-    description: "AI-coordinated flash sale monitoring with health checks, diagnostics, recovery actions, and alerts. All endpoints share the same job so AI can use get_sibling_latest_responses to coordinate decisions across the system.",
+    id: "job-black-friday-demo",
+    name: "E-Commerce Black Friday Demo",
+    description: "AI-coordinated Black Friday monitoring with health checks, diagnostics, recovery actions, and alerts across a 12-hour sale. All endpoints share the same job so AI can use get_sibling_latest_responses to coordinate decisions across the system.",
     status: "active" as const,
   },
 ];
@@ -154,7 +187,7 @@ const ENDPOINTS: EndpointConfig[] = [
   // Health Tier (3 endpoints - continuous monitoring)
   {
     id: "ep-traffic-monitor",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "health",
     name: "Traffic Monitor",
     description: "Real-time visitor traffic monitoring",
@@ -166,7 +199,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-order-processor-health",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "health",
     name: "Order Processor Health",
     description: "Order processing pipeline health check",
@@ -178,7 +211,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-inventory-sync-check",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "health",
     name: "Inventory Sync Check",
     description: "Stock synchronization lag monitoring",
@@ -192,7 +225,7 @@ const ENDPOINTS: EndpointConfig[] = [
   // Investigation Tier (2 endpoints - conditionally activated)
   {
     id: "ep-slow-page-analyzer",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "investigation",
     name: "Slow Page Analyzer",
     description: "Deep page performance analysis (activated during degradation)",
@@ -205,7 +238,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-database-query-trace",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "investigation",
     name: "Database Query Trace",
     description: "Query performance tracing (activated when DB slows)",
@@ -220,7 +253,7 @@ const ENDPOINTS: EndpointConfig[] = [
   // Recovery Tier (2 endpoints - one-shot actions with cooldowns)
   {
     id: "ep-cache-warmup",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "recovery",
     name: "Cache Warm Up",
     description: "Preload product cache to reduce database load",
@@ -233,7 +266,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-scale-checkout-workers",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "recovery",
     name: "Scale Checkout Workers",
     description: "Horizontally scale checkout worker pool",
@@ -248,7 +281,7 @@ const ENDPOINTS: EndpointConfig[] = [
   // Alert Tier (4 endpoints - escalation alerts with cooldowns)
   {
     id: "ep-slack-operations",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "alert",
     name: "Slack Operations Alert",
     description: "Alert operations team of performance degradation",
@@ -261,7 +294,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-slack-customer-support",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "alert",
     name: "Slack Customer Support Alert",
     description: "Escalate to customer support team for high-impact issues",
@@ -274,7 +307,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-emergency-oncall-page",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "alert",
     name: "Emergency Oncall Page",
     description: "Page oncall engineer for critical system failure",
@@ -287,7 +320,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
   {
     id: "ep-performance-webhook",
-    jobId: "job-flash-sale-demo",
+    jobId: "job-black-friday-demo",
     tier: "alert",
     name: "Performance Degradation Webhook",
     description: "Generic webhook for third-party monitoring integrations",
@@ -315,56 +348,90 @@ function generateRunsForEndpoint(endpoint: EndpointConfig): schema.RunInsert[] {
   let lastRecoveryExecution: Date | null = null;
   let lastAlertExecution: Date | null = null;
 
+  // ========== ADD INITIAL SETUP/TESTING RUNS FOR NON-HEALTH ENDPOINTS ==========
+  // Day 1 (9am-12pm): Show these endpoints were configured/tested, then went dormant
+  if (endpoint.tier !== "health") {
+    const setupStartTime = new Date(SEVEN_DAYS_AGO.getTime() + 9 * 60 * 60_000); // Day 1, 9am
+    const numSetupRuns = 3; // 3 test runs to show initial configuration
+
+    for (let i = 0; i < numSetupRuns; i++) {
+      const setupTime = new Date(setupStartTime.getTime() + i * 30 * 60_000); // 30 minutes apart
+      const setupSuccess = i < 2; // First 2 succeed, last one might fail (testing)
+      const setupDuration = setupSuccess ? 150 + Math.floor(Math.random() * 100) : 450;
+
+      runs.push({
+        id: `run-${crypto.randomUUID()}`,
+        endpointId: endpoint.id,
+        status: setupSuccess ? "success" : "success", // All succeed for cleaner demo
+        attempt: 1,
+        source: "baseline-interval",
+        startedAt: setupTime,
+        finishedAt: new Date(setupTime.getTime() + setupDuration),
+        durationMs: setupDuration,
+        errorMessage: null,
+        statusCode: 200,
+        responseBody: undefined,
+      });
+    }
+
+    // After setup runs, jump to flash sale window (these endpoints are dormant Days 2-5)
+    currentTime = new Date(FLASH_SALE_START.getTime());
+  }
+
   while (currentTime < NOW) {
-    // Determine if we're in flash sale window
-    const isFlashSaleWindow = currentTime >= FLASH_SALE_START && currentTime <= FLASH_SALE_END;
-    const minuteOffset = isFlashSaleWindow
-      ? Math.floor((currentTime.getTime() - FLASH_SALE_START.getTime()) / 60_000)
+    // Determine if we're in Black Friday window
+    const isBlackFridayWindow = currentTime >= BLACK_FRIDAY_START && currentTime <= BLACK_FRIDAY_END;
+    const hourOffset = isBlackFridayWindow
+      ? (currentTime.getTime() - BLACK_FRIDAY_START.getTime()) / (60 * 60 * 1000) // Hours elapsed
       : -1;
 
-    // Non-health endpoints should only run during flash sale window
-    if (!isFlashSaleWindow && endpoint.tier !== "health") {
-      // Skip to flash sale start or end
-      if (currentTime < FLASH_SALE_START) {
-        currentTime = new Date(FLASH_SALE_START.getTime());
+    // Non-health endpoints should only run during Black Friday window
+    if (!isBlackFridayWindow && endpoint.tier !== "health") {
+      // Skip to Black Friday start or end
+      if (currentTime < BLACK_FRIDAY_START) {
+        currentTime = new Date(BLACK_FRIDAY_START.getTime());
       }
       else {
-        break; // Past flash sale, done
+        break; // Past Black Friday, done
       }
       continue;
     }
 
-    // Get interval based on endpoint tier and flash sale phase
+    // Get interval based on endpoint tier and Black Friday phase
     let interval = endpoint.baselineIntervalMs;
     let source = "baseline-interval";
 
-    if (isFlashSaleWindow && minuteOffset >= 0) {
-      const phase = getFlashSalePhase(minuteOffset);
-      const metrics = getFlashSaleMetrics(minuteOffset);
+    if (isBlackFridayWindow && hourOffset >= 0) {
+      const phase = getBlackFridayPhase(hourOffset);
+      const metrics = getBlackFridayMetrics(hourOffset);
 
-      // Tier-specific interval logic during flash sale
+      // Tier-specific interval logic during Black Friday
       if (endpoint.tier === "health") {
-        // Health tier: Tighten during surge/strain/critical
-        if (phase === "critical") {
+        // Health tier: Tighten progressively through the day
+        if (phase === "mid-morning-peak" || phase === "lunch-sustained") {
+          // Peak hours: hit min constraint
           interval = endpoint.minIntervalMs; // 20-30s
-          source = Math.random() < 0.85 ? "ai-interval" : (Math.random() < 0.8 ? "baseline-interval" : "clamped-min");
+          source = Math.random() < 0.85 ? "clamped-min" : (Math.random() < 0.9 ? "ai-interval" : "baseline-interval");
         }
-        else if (phase === "strain") {
+        else if (phase === "early-surge" || phase === "afternoon-steady") {
+          // Moderate load: tighten to ~half baseline
           interval = Math.floor(endpoint.baselineIntervalMs / 2); // 30s-90s
-          source = Math.random() < 0.80 ? "ai-interval" : (Math.random() < 0.9 ? "baseline-interval" : "clamped-min");
+          source = Math.random() < 0.80 ? "ai-interval" : "baseline-interval";
         }
-        else if (phase === "surge") {
-          interval = Math.floor(endpoint.baselineIntervalMs * 0.6); // Moderately tight
-          source = Math.random() < 0.70 ? "ai-interval" : "baseline-interval";
-        }
-        else if (phase === "recovery") {
-          interval = Math.floor(endpoint.baselineIntervalMs * 0.8);
+        else if (phase === "evening-winddown") {
+          // Winding down: gradually ease back
+          interval = Math.floor(endpoint.baselineIntervalMs * 0.7); // Still slightly tight
           source = Math.random() < 0.60 ? "ai-interval" : "baseline-interval";
+        }
+        else if (phase === "post-event") {
+          // Back to baseline
+          interval = endpoint.baselineIntervalMs;
+          source = Math.random() < 0.30 ? "ai-interval" : "baseline-interval";
         }
       }
       else if (endpoint.tier === "investigation") {
-        // Investigation tier: Activated during strain/critical only
-        if (phase === "strain" || phase === "critical") {
+        // Investigation tier: Activated during peak/sustained hours only
+        if (phase === "mid-morning-peak" || phase === "lunch-sustained" || phase === "afternoon-steady") {
           interval = endpoint.baselineIntervalMs; // Active
           source = "ai-interval";
         }
@@ -375,9 +442,9 @@ function generateRunsForEndpoint(endpoint: EndpointConfig): schema.RunInsert[] {
         }
       }
       else if (endpoint.tier === "recovery") {
-        // Recovery tier: One-shot actions during critical with cooldowns
-        if (phase === "critical" || phase === "strain") {
-          const cooldownMs = 10 * 60 * 1000; // 10-minute cooldown
+        // Recovery tier: One-shot actions during peak hours with cooldowns
+        if (phase === "mid-morning-peak" || phase === "lunch-sustained") {
+          const cooldownMs = 30 * 60 * 1000; // 30-minute cooldown (longer for all-day event)
           if (!lastRecoveryExecution || currentTime.getTime() - lastRecoveryExecution.getTime() >= cooldownMs) {
             interval = 60_000; // Fire once, then cooldown
             source = "ai-oneshot";
@@ -396,9 +463,9 @@ function generateRunsForEndpoint(endpoint: EndpointConfig): schema.RunInsert[] {
         }
       }
       else if (endpoint.tier === "alert") {
-        // Alert tier: Escalation during critical with cooldowns
-        if (phase === "critical" || (phase === "strain" && metrics.pageLoadMs >= 3000)) {
-          const cooldownMs = endpoint.id === "ep-emergency-oncall-page" ? 2 * 60 * 60 * 1000 : 10 * 60 * 1000;
+        // Alert tier: Escalation during peak hours with cooldowns
+        if (phase === "mid-morning-peak" || phase === "lunch-sustained" || (phase === "afternoon-steady" && metrics.pageLoadMs >= 3000)) {
+          const cooldownMs = endpoint.id === "ep-emergency-oncall-page" ? 3 * 60 * 60 * 1000 : 30 * 60 * 1000; // 3 hours for oncall, 30 min for others
           if (!lastAlertExecution || currentTime.getTime() - lastAlertExecution.getTime() >= cooldownMs) {
             interval = 60_000; // Fire once, then cooldown
             source = "ai-oneshot";
@@ -418,7 +485,7 @@ function generateRunsForEndpoint(endpoint: EndpointConfig): schema.RunInsert[] {
       }
     }
     else {
-      // Outside flash sale: Normal baseline with occasional AI hints (health tier only)
+      // Outside Black Friday: Normal baseline with occasional AI hints (health tier only)
       if (endpoint.tier === "health" && Math.random() < 0.05) {
         source = "ai-interval";
       }
@@ -430,17 +497,18 @@ function generateRunsForEndpoint(endpoint: EndpointConfig): schema.RunInsert[] {
       break;
 
     // Determine success/failure based on phase
-    let successRate = 0.97; // Default outside flash sale
+    let successRate = 0.97; // Default outside Black Friday
     let avgDuration = 200; // ms
 
-    if (isFlashSaleWindow && minuteOffset >= 0) {
-      const phase = getFlashSalePhase(minuteOffset);
+    if (isBlackFridayWindow && hourOffset >= 0) {
+      const phase = getBlackFridayPhase(hourOffset);
       const phaseMetrics = {
-        baseline: { successRate: 0.98, avgDuration: 200 },
-        surge: { successRate: 0.92, avgDuration: 400 },
-        strain: { successRate: 0.85, avgDuration: 800 },
-        critical: { successRate: 0.60, avgDuration: 1500 },
-        recovery: { successRate: 0.95, avgDuration: 300 },
+        "early-surge": { successRate: 0.94, avgDuration: 350 },
+        "mid-morning-peak": { successRate: 0.75, avgDuration: 1200 },
+        "lunch-sustained": { successRate: 0.70, avgDuration: 1400 },
+        "afternoon-steady": { successRate: 0.85, avgDuration: 800 },
+        "evening-winddown": { successRate: 0.92, avgDuration: 400 },
+        "post-event": { successRate: 0.96, avgDuration: 250 },
       };
       successRate = phaseMetrics[phase].successRate;
       avgDuration = phaseMetrics[phase].avgDuration;
@@ -451,10 +519,10 @@ function generateRunsForEndpoint(endpoint: EndpointConfig): schema.RunInsert[] {
       ? Math.floor(avgDuration * (0.8 + Math.random() * 0.4)) // ±20% variance
       : Math.floor(avgDuration * (2 + Math.random())); // Failures take 2-3x longer
 
-    // Create response body for health tier with flash sale metrics
+    // Create response body for health tier with Black Friday metrics
     let responseBody: import("@cronicorn/domain").JsonValue | undefined;
-    if (endpoint.tier === "health" && isFlashSaleWindow && minuteOffset >= 0) {
-      const metrics = getFlashSaleMetrics(minuteOffset);
+    if (endpoint.tier === "health" && isBlackFridayWindow && hourOffset >= 0) {
+      const metrics = getBlackFridayMetrics(hourOffset);
       responseBody = {
         traffic: metrics.traffic,
         ordersPerMin: metrics.ordersPerMin,
@@ -484,7 +552,7 @@ function generateRunsForEndpoint(endpoint: EndpointConfig): schema.RunInsert[] {
 }
 
 /* ============================================================================
-   AI SESSION DEFINITIONS (6 Sessions)
+   AI SESSION DEFINITIONS (22+ Sessions: 6 baseline + 15 Black Friday + 1 post-event)
    ============================================================================ */
 
 function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInsert> {
@@ -529,8 +597,110 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
     }),
   };
 
-  // Session 1: Pre-Sale Analysis (Day 6, 11:45 - 15 min before sale)
-  const session1Time = new Date(FLASH_SALE_START.getTime() - 15 * 60_000);
+  // ========== BASELINE AI SESSIONS (Days 1-3: 6 sessions) ==========
+  // These show AI was monitoring before Black Friday, just confirming baseline operations
+
+  // Day 1 Morning (8am)
+  const day1Morning = new Date(SEVEN_DAYS_AGO.getTime() + 8 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: day1Morning,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 1020, pageLoadMs: 790, trends: "stable" } }),
+      tc.submit("Initial monitoring baseline established. All metrics within expected ranges.", [], "high"),
+    ],
+    reasoning: "Initial monitoring baseline established. All metrics within expected ranges.",
+    tokenUsage: 420,
+    durationMs: 180,
+    nextAnalysisAt: new Date(day1Morning.getTime() + 12 * 60 * 60_000),
+  });
+
+  // Day 1 Evening (8pm)
+  const day1Evening = new Date(SEVEN_DAYS_AGO.getTime() + 20 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: day1Evening,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 980, pageLoadMs: 800, trends: "stable" } }),
+      tc.submit("Traffic patterns consistent throughout day. No adjustments needed.", [], "high"),
+    ],
+    reasoning: "Traffic patterns consistent throughout day. No adjustments needed.",
+    tokenUsage: 380,
+    durationMs: 160,
+    nextAnalysisAt: new Date(day1Evening.getTime() + 12 * 60 * 60_000),
+  });
+
+  // Day 2 Morning (8am)
+  const day2Morning = new Date(SEVEN_DAYS_AGO.getTime() + 32 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-order-processor-health",
+    analyzedAt: day2Morning,
+    toolCalls: [
+      tc.getLatest({ responseBody: { ordersPerMin: 42, processingTime: 180, queueDepth: 5 } }),
+      tc.submit("Order processing healthy. Baseline schedules performing optimally.", [], "high"),
+    ],
+    reasoning: "Order processing healthy. Baseline schedules performing optimally.",
+    tokenUsage: 410,
+    durationMs: 170,
+    nextAnalysisAt: new Date(day2Morning.getTime() + 12 * 60 * 60_000),
+  });
+
+  // Day 2 Evening (8pm)
+  const day2Evening = new Date(SEVEN_DAYS_AGO.getTime() + 44 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: day2Evening,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 1010, pageLoadMs: 785, trends: "stable" } }),
+      tc.submit("All systems nominal. No intervention required.", [], "high"),
+    ],
+    reasoning: "All systems nominal. No intervention required.",
+    tokenUsage: 390,
+    durationMs: 155,
+    nextAnalysisAt: new Date(day2Evening.getTime() + 12 * 60 * 60_000),
+  });
+
+  // Day 3 Morning (8am)
+  const day3Morning = new Date(SEVEN_DAYS_AGO.getTime() + 56 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-inventory-sync-check",
+    analyzedAt: day3Morning,
+    toolCalls: [
+      tc.getLatest({ responseBody: { lagMs: 95, syncStatus: "healthy", queueDepth: 2 } }),
+      tc.submit("Inventory synchronization performing within tolerances. No action needed.", [], "high"),
+    ],
+    reasoning: "Inventory synchronization performing within tolerances. No action needed.",
+    tokenUsage: 400,
+    durationMs: 165,
+    nextAnalysisAt: new Date(day3Morning.getTime() + 12 * 60 * 60_000),
+  });
+
+  // Day 3 Evening (8pm)
+  const day3Evening = new Date(SEVEN_DAYS_AGO.getTime() + 68 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: day3Evening,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 990, pageLoadMs: 795, trends: "stable" } }),
+      tc.submit("Steady state operations continue. Baseline schedules appropriate.", [], "high"),
+    ],
+    reasoning: "Steady state operations continue. Baseline schedules appropriate.",
+    tokenUsage: 385,
+    durationMs: 150,
+    nextAnalysisAt: new Date(day3Evening.getTime() + 12 * 60 * 60_000),
+  });
+
+  // ========== BLACK FRIDAY AI SESSIONS (Day 4: 15+ sessions) ==========
+  // These sessions create a dramatic spike in AI activity during the 12-hour Black Friday sale
+
+  // Session 1: Pre-Sale Analysis (Day 4, 07:45 - 15 min before sale)
+  const session1Time = new Date(BLACK_FRIDAY_START.getTime() - 15 * 60_000);
   sessions.push({
     id: `session-${crypto.randomUUID()}`,
     endpointId: "ep-traffic-monitor",
@@ -552,18 +722,39 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
     nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 5 * 60_000),
   });
 
-  // Session 2: Surge Detection (Day 6, 12:06 - Minute 6 of sale)
-  const session2Time = new Date(FLASH_SALE_START.getTime() + 6 * 60_000);
+  // Session 2: Early Surge Detection (Day 6, 12:03 - Minute 3 of sale)
+  const session2Time = new Date(FLASH_SALE_START.getTime() + 3 * 60_000);
   sessions.push({
     id: `session-${crypto.randomUUID()}`,
     endpointId: "ep-traffic-monitor",
     analyzedAt: session2Time,
     toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 2800, pageLoadMs: 1150, ordersPerMin: 95, trends: "increasing" } }),
+      tc.getHistory(3, [
+        { responseBody: { visitors: 2200, pageLoadMs: 1050 }, status: "success" },
+        { responseBody: { visitors: 1500, pageLoadMs: 920 }, status: "success" },
+        { responseBody: { visitors: 1100, pageLoadMs: 850 }, status: "success" },
+      ]),
+      tc.submit("Traffic trending upward (1000 → 2800 visitors/min). Monitoring closely for continued surge.", [], "high"),
+    ],
+    reasoning: "Traffic trending upward (1000 → 2800 visitors/min). Monitoring closely for continued surge.",
+    tokenUsage: 890,
+    durationMs: 320,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 6 * 60_000),
+  });
+
+  // Session 3: Surge Confirmed (Day 6, 12:06 - Minute 6 of sale)
+  const session3Time = new Date(FLASH_SALE_START.getTime() + 6 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session3Time,
+    toolCalls: [
       tc.getLatest({ responseBody: { visitors: 5100, pageLoadMs: 1850, ordersPerMin: 185, trends: "spiking" } }),
       tc.getHistory(3, [
         { responseBody: { visitors: 5000, pageLoadMs: 1800, ordersPerMin: 180 }, status: "success" },
         { responseBody: { visitors: 3200, pageLoadMs: 1200, ordersPerMin: 140 }, status: "success" },
-        { responseBody: { visitors: 1100, pageLoadMs: 850, ordersPerMin: 45 }, status: "success" },
+        { responseBody: { visitors: 2800, pageLoadMs: 1150, ordersPerMin: 95 }, status: "success" },
       ]),
       tc.proposeInterval(30_000, 60, "Traffic surge detected (+400%)—tightening monitoring to 30s"),
       tc.submit("Traffic surge from 1000 to 5100 visitors/min detected. Tightening health check intervals to 30s for proactive monitoring during flash sale peak.", ["propose_interval"], "high"),
@@ -571,15 +762,49 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
     reasoning: "Traffic surge from 1000 to 5100 visitors/min detected. Tightening health check intervals to 30s for proactive monitoring during flash sale peak.",
     tokenUsage: 1250,
     durationMs: 420,
-    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 10 * 60_000),
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 9 * 60_000),
   });
 
-  // Session 3: Critical Escalation (Day 6, 12:15 - Minute 15)
-  const session3Time = new Date(FLASH_SALE_START.getTime() + 15 * 60_000);
+  // Session 4: Surge Intensifying (Day 6, 12:09 - Minute 9)
+  const session4Time = new Date(FLASH_SALE_START.getTime() + 9 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session4Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 5600, pageLoadMs: 2400, ordersPerMin: 160, trends: "intensifying" } }),
+      tc.proposeInterval(25_000, 60, "Surge intensifying—tightening further to 25s"),
+      tc.submit("Traffic continuing to climb (5100 → 5600). Page load degrading (1850ms → 2400ms). Tightening monitoring to 25s.", ["propose_interval"], "high"),
+    ],
+    reasoning: "Traffic continuing to climb (5100 → 5600). Page load degrading (1850ms → 2400ms). Tightening monitoring to 25s.",
+    tokenUsage: 980,
+    durationMs: 350,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 12 * 60_000),
+  });
+
+  // Session 5: Strain Phase (Day 6, 12:12 - Minute 12)
+  const session5Time = new Date(FLASH_SALE_START.getTime() + 12 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-order-processor-health",
+    analyzedAt: session5Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { ordersPerMin: 135, failureRate: 0.08, queueDepth: 420 } }),
+      tc.proposeInterval(20_000, 60, "System strain detected—hitting min constraint at 20s"),
+      tc.submit("Order processor showing strain (8% failure rate, queue depth 420). Maxing out monitoring frequency at 20s (min constraint).", ["propose_interval"], "high"),
+    ],
+    reasoning: "Order processor showing strain (8% failure rate, queue depth 420). Maxing out monitoring frequency at 20s (min constraint).",
+    tokenUsage: 1050,
+    durationMs: 380,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 15 * 60_000),
+  });
+
+  // Session 6: Critical Escalation (Day 6, 12:15 - Minute 15)
+  const session6Time = new Date(FLASH_SALE_START.getTime() + 15 * 60_000);
   sessions.push({
     id: `session-${crypto.randomUUID()}`,
     endpointId: "ep-slow-page-analyzer",
-    analyzedAt: session3Time,
+    analyzedAt: session6Time,
     toolCalls: [
       tc.getLatest({ responseBody: { avgPageLoadMs: 4600, p95Ms: 6200, bottleneck: "database" } }),
       tc.siblings([
@@ -601,15 +826,63 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
     reasoning: "CRITICAL: Page load times at 4600ms (p95: 6200ms). Orders degraded to 118/min. Activating emergency recovery: cache warmup, oncall escalation.",
     tokenUsage: 1850,
     durationMs: 520,
-    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 20 * 60_000),
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 18 * 60_000),
   });
 
-  // Session 4: Recovery Confirmation (Day 6, 12:28 - Minute 28)
-  const session4Time = new Date(FLASH_SALE_START.getTime() + 28 * 60_000);
+  // Session 7: Critical Sustained (Day 6, 12:18 - Minute 18)
+  const session7Time = new Date(FLASH_SALE_START.getTime() + 18 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-inventory-sync-check",
+    analyzedAt: session7Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { lagMs: 750, queueDepth: 920, failedSyncs: 12 } }),
+      tc.submit("Critical conditions sustained. Inventory lag at 750ms, queue depth 920. Recovery actions in progress. Continuing max monitoring frequency.", [], "high"),
+    ],
+    reasoning: "Critical conditions sustained. Inventory lag at 750ms, queue depth 920. Recovery actions in progress. Continuing max monitoring frequency.",
+    tokenUsage: 920,
+    durationMs: 340,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 21 * 60_000),
+  });
+
+  // Session 8: Early Recovery Signs (Day 6, 12:21 - Minute 21)
+  const session8Time = new Date(FLASH_SALE_START.getTime() + 21 * 60_000);
   sessions.push({
     id: `session-${crypto.randomUUID()}`,
     endpointId: "ep-traffic-monitor",
-    analyzedAt: session4Time,
+    analyzedAt: session8Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 4200, pageLoadMs: 2800, ordersPerMin: 135, trends: "stabilizing" } }),
+      tc.submit("Early recovery signs detected. Traffic declining from peak (6000 → 4200). Page load improving (4500ms → 2800ms). Monitoring for sustained recovery.", [], "high"),
+    ],
+    reasoning: "Early recovery signs detected. Traffic declining from peak (6000 → 4200). Page load improving (4500ms → 2800ms). Monitoring for sustained recovery.",
+    tokenUsage: 1050,
+    durationMs: 370,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 24 * 60_000),
+  });
+
+  // Session 9: Recovery Progressing (Day 6, 12:24 - Minute 24)
+  const session9Time = new Date(FLASH_SALE_START.getTime() + 24 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session9Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 2400, pageLoadMs: 1650, ordersPerMin: 80, trends: "declining" } }),
+      tc.submit("Recovery progressing. Traffic continues to decline (4200 → 2400). Page load improving (2800ms → 1650ms). Preparing to ease monitoring intervals.", [], "high"),
+    ],
+    reasoning: "Recovery progressing. Traffic continues to decline (4200 → 2400). Page load improving (2800ms → 1650ms). Preparing to ease monitoring intervals.",
+    tokenUsage: 980,
+    durationMs: 350,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 28 * 60_000),
+  });
+
+  // Session 10: Recovery Confirmed (Day 6, 12:28 - Minute 28)
+  const session10Time = new Date(FLASH_SALE_START.getTime() + 28 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session10Time,
     toolCalls: [
       tc.getLatest({ responseBody: { visitors: 1400, pageLoadMs: 1050, ordersPerMin: 55, trends: "declining" } }),
       tc.getHistory(5, [
@@ -625,11 +898,75 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
     reasoning: "Recovery confirmed. Traffic declining to 1400/min, page load improved to 1050ms. Returning health checks to baseline 1-minute intervals.",
     tokenUsage: 1100,
     durationMs: 380,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 32 * 60_000),
+  });
+
+  // Session 11: Stability Monitoring (Day 6, 12:32 - Minute 32)
+  const session11Time = new Date(FLASH_SALE_START.getTime() + 32 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session11Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 1250, pageLoadMs: 950, ordersPerMin: 48, trends: "stable" } }),
+      tc.submit("Traffic stabilizing at near-baseline levels (1250/min). Page load normalized (950ms). Monitoring for sustained stability.", [], "high"),
+    ],
+    reasoning: "Traffic stabilizing at near-baseline levels (1250/min). Page load normalized (950ms). Monitoring for sustained stability.",
+    tokenUsage: 850,
+    durationMs: 310,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 38 * 60_000),
+  });
+
+  // Session 12: Continued Stability (Day 6, 12:38 - Minute 38)
+  const session12Time = new Date(FLASH_SALE_START.getTime() + 38 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-order-processor-health",
+    analyzedAt: session12Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { ordersPerMin: 44, failureRate: 0.01, queueDepth: 12 } }),
+      tc.submit("Order processing fully stabilized. Failure rate back to baseline (0.01). Queue depth normal (12). Continued stability confirmed.", [], "high"),
+    ],
+    reasoning: "Order processing fully stabilized. Failure rate back to baseline (0.01). Queue depth normal (12). Continued stability confirmed.",
+    tokenUsage: 820,
+    durationMs: 290,
+    nextAnalysisAt: new Date(FLASH_SALE_START.getTime() + 45 * 60_000),
+  });
+
+  // Session 13: Post-Event Monitoring (Day 6, 12:45 - Minute 45)
+  const session13Time = new Date(FLASH_SALE_START.getTime() + 45 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session13Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 1100, pageLoadMs: 850, ordersPerMin: 42, trends: "stable" } }),
+      tc.submit("Post-event monitoring confirms full recovery. Traffic (1100/min), page load (850ms), orders (42/min) all within baseline ranges.", [], "high"),
+    ],
+    reasoning: "Post-event monitoring confirms full recovery. Traffic (1100/min), page load (850ms), orders (42/min) all within baseline ranges.",
+    tokenUsage: 780,
+    durationMs: 270,
+    nextAnalysisAt: new Date(FLASH_SALE_END.getTime()),
+  });
+
+  // Session 14: Normal Patterns Resuming (Day 6, 13:00 - Flash sale end time)
+  const session14Time = new Date(FLASH_SALE_END.getTime());
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: session14Time,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 1080, pageLoadMs: 830, ordersPerMin: 41, trends: "stable" } }),
+      tc.submit("Flash sale window closed. Normal traffic patterns fully resumed. All metrics baseline. AI hints will expire in 5 minutes (60-min TTL from initial surge).", [], "high"),
+    ],
+    reasoning: "Flash sale window closed. Normal traffic patterns fully resumed. All metrics baseline. AI hints will expire in 5 minutes (60-min TTL from initial surge).",
+    tokenUsage: 800,
+    durationMs: 280,
     nextAnalysisAt: new Date(FLASH_SALE_END.getTime() + 5 * 60_000),
   });
 
-  // Session 5: Hint Expiration (Day 6, 13:05 - 5 min after sale)
-  const session5Time = new Date(FLASH_SALE_END.getTime() + 5 * 60_000);
+  // Session 15: Hint Expiration (Day 6, 13:05 - 5 min after sale)
+  const _session15Time = new Date(FLASH_SALE_END.getTime() + 5 * 60_000);
   sessions.push({
     id: `session-${crypto.randomUUID()}`,
     endpointId: "ep-traffic-monitor",
@@ -644,32 +981,110 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
     nextAnalysisAt: new Date(FLASH_SALE_END.getTime() + 19 * 60 * 60_000), // Next day, 8am
   });
 
-  // Session 6: Post-Event Analysis (Day 7, 08:00 - Next morning)
-  const session6Time = new Date(FLASH_SALE_END.getTime() + 19 * 60 * 60_000);
+  // ========== POST-BLACK FRIDAY AI SESSIONS (Days 5-7: 6 sessions) ==========
+  // These show AI continues monitoring after the event, confirming recovery
+
+  // Session 16: Day 5 Morning - Immediate Post-Event Check (08:00)
+  const day5Morning = new Date(BLACK_FRIDAY_END.getTime() + 12 * 60 * 60_000); // Day 5, 08:00
   sessions.push({
     id: `session-${crypto.randomUUID()}`,
     endpointId: "ep-traffic-monitor",
-    analyzedAt: session6Time,
+    analyzedAt: day5Morning,
     toolCalls: [
       tc.getLatest({ responseBody: { visitors: 920, pageLoadMs: 780, ordersPerMin: 38, trends: "stable" } }),
-      tc.getHistory(10, [
+      tc.getHistory(5, [
         { responseBody: { visitors: 920, pageLoadMs: 780 }, status: "success" },
         { responseBody: { visitors: 930, pageLoadMs: 790 }, status: "success" },
         { responseBody: { visitors: 910, pageLoadMs: 770 }, status: "success" },
         { responseBody: { visitors: 950, pageLoadMs: 800 }, status: "success" },
         { responseBody: { visitors: 940, pageLoadMs: 785 }, status: "success" },
-        { responseBody: { visitors: 960, pageLoadMs: 795 }, status: "success" },
-        { responseBody: { visitors: 930, pageLoadMs: 790 }, status: "success" },
-        { responseBody: { visitors: 920, pageLoadMs: 775 }, status: "success" },
-        { responseBody: { visitors: 940, pageLoadMs: 805 }, status: "success" },
-        { responseBody: { visitors: 950, pageLoadMs: 790 }, status: "success" },
       ]),
-      tc.submit("Post-event stability confirmed. All metrics returned to normal baseline ranges. No action needed.", [], "high"),
+      tc.submit("Post-Black Friday analysis: All metrics returned to baseline. Event handled successfully with zero manual intervention.", [], "high"),
     ],
-    reasoning: "Post-event stability confirmed. All metrics returned to normal baseline ranges. No action needed.",
+    reasoning: "Post-Black Friday analysis: All metrics returned to baseline. Event handled successfully with zero manual intervention.",
     tokenUsage: 680,
     durationMs: 250,
-    nextAnalysisAt: new Date(session6Time.getTime() + 24 * 60 * 60_000), // +1 day
+    nextAnalysisAt: new Date(day5Morning.getTime() + 12 * 60 * 60_000),
+  });
+
+  // Session 17: Day 5 Evening - Sustained Recovery (20:00)
+  const day5Evening = new Date(day5Morning.getTime() + 12 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: day5Evening,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 1005, pageLoadMs: 795, ordersPerMin: 40, trends: "stable" } }),
+      tc.submit("Sustained recovery confirmed. Traffic, page load, and order rates all within normal ranges throughout the day.", [], "high"),
+    ],
+    reasoning: "Sustained recovery confirmed. Traffic, page load, and order rates all within normal ranges throughout the day.",
+    tokenUsage: 520,
+    durationMs: 210,
+    nextAnalysisAt: new Date(day5Evening.getTime() + 12 * 60 * 60_000),
+  });
+
+  // Session 18: Day 6 Morning - Baseline Resumption (08:00)
+  const day6Morning = new Date(day5Evening.getTime() + 12 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-order-processor-health",
+    analyzedAt: day6Morning,
+    toolCalls: [
+      tc.getLatest({ responseBody: { ordersPerMin: 41, processingTime: 178, queueDepth: 4 } }),
+      tc.submit("Order processing fully stabilized. Baseline monitoring cadence appropriate. No adjustments needed.", [], "high"),
+    ],
+    reasoning: "Order processing fully stabilized. Baseline monitoring cadence appropriate. No adjustments needed.",
+    tokenUsage: 490,
+    durationMs: 195,
+    nextAnalysisAt: new Date(day6Morning.getTime() + 12 * 60 * 60_000),
+  });
+
+  // Session 19: Day 6 Evening - Normal Operations (20:00)
+  const day6Evening = new Date(day6Morning.getTime() + 12 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: day6Evening,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 990, pageLoadMs: 788, ordersPerMin: 39, trends: "stable" } }),
+      tc.submit("Normal operations fully resumed. All systems operating within expected parameters.", [], "high"),
+    ],
+    reasoning: "Normal operations fully resumed. All systems operating within expected parameters.",
+    tokenUsage: 475,
+    durationMs: 185,
+    nextAnalysisAt: new Date(day6Evening.getTime() + 12 * 60 * 60_000),
+  });
+
+  // Session 20: Day 7 Morning - Final Verification (08:00)
+  const day7Morning = new Date(day6Evening.getTime() + 12 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-traffic-monitor",
+    analyzedAt: day7Morning,
+    toolCalls: [
+      tc.getLatest({ responseBody: { visitors: 1010, pageLoadMs: 792, ordersPerMin: 40, trends: "stable" } }),
+      tc.submit("Final post-event verification complete. System performance consistent with pre-event baseline. Monitoring continues normally.", [], "high"),
+    ],
+    reasoning: "Final post-event verification complete. System performance consistent with pre-event baseline. Monitoring continues normally.",
+    tokenUsage: 510,
+    durationMs: 200,
+    nextAnalysisAt: new Date(day7Morning.getTime() + 24 * 60 * 60_000),
+  });
+
+  // Session 21: Day 7 Evening - Routine Check (20:00)
+  const day7Evening = new Date(day7Morning.getTime() + 12 * 60 * 60_000);
+  sessions.push({
+    id: `session-${crypto.randomUUID()}`,
+    endpointId: "ep-inventory-sync-check",
+    analyzedAt: day7Evening,
+    toolCalls: [
+      tc.getLatest({ responseBody: { lagMs: 98, queueDepth: 3, syncRate: 0.99 } }),
+      tc.submit("Inventory sync operating optimally. No intervention required. Standard baseline monitoring continues.", [], "high"),
+    ],
+    reasoning: "Inventory sync operating optimally. No intervention required. Standard baseline monitoring continues.",
+    tokenUsage: 465,
+    durationMs: 175,
+    nextAnalysisAt: new Date(day7Evening.getTime() + 24 * 60 * 60_000),
   });
 
   return sessions;
@@ -757,27 +1172,27 @@ async function seed() {
   console.log("🤖 Creating AI analysis sessions...");
   const sessions = generateAISessions();
   await db.insert(schema.aiAnalysisSessions).values(sessions).onConflictDoNothing();
-  console.log(`✓ 6 AI analysis sessions created\n`);
+  console.log(`✓ ${sessions.length} AI analysis sessions created (6 baseline + 15 Black Friday + 6 post-event)\n`);
 
   // 7. Summary
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("✨ E-Commerce Flash Sale Demo Seed Complete!\n");
+  console.log("✨ E-Commerce Black Friday Demo Seed Complete!\n");
   console.log("📊 Timeline Summary:");
-  console.log("  • Days 1-5: Normal operations (baseline establishment)");
-  console.log("  • Day 6, 12:00-13:00: Flash sale event (complete adaptation cycle)");
-  console.log("  • Day 7: Post-event stabilization\n");
+  console.log("  • Days 1-3: Normal operations (baseline establishment)");
+  console.log("  • Day 4, 08:00-20:00: Black Friday sale (12-hour adaptation cycle)");
+  console.log("  • Days 5-7: Post-event stabilization\n");
   console.log("📦 Data Created:");
-  console.log(`  • ${JOBS.length} job (E-Commerce Flash Sale Demo - all endpoints share same job)`);
+  console.log(`  • ${JOBS.length} job (E-Commerce Black Friday Demo - all endpoints share same job)`);
   console.log(`  • ${ENDPOINTS.length} endpoints (4 tiers: health, investigation, recovery, alert)`);
   console.log(`  • ${allRuns.length} runs (~7 days of execution history)`);
-  console.log(`  • ${sessions.length} AI analysis sessions (surge → critical → recovery → expiration)\n`);
+  console.log(`  • ${sessions.length} AI analysis sessions (baseline monitoring + Black Friday adaptations)\n`);
   console.log("🎯 Demo Features:");
-  console.log("  • Baseline credibility: 5 days of normal ops before flash sale");
-  console.log("  • Complete adaptation cycle: degradation → AI adapts → recovery → hints expire");
+  console.log("  • Baseline credibility: 3 days of normal ops before Black Friday (centered peak)");
+  console.log("  • Complete adaptation cycle: all-day surge → AI adapts → recovery → hints expire");
   console.log("  • Visual timeline: Color-coded source attribution (baseline, AI interval, AI one-shot, clamped)");
-  console.log("  • AI transparency: 6 sessions showing reasoning at key moments");
+  console.log(`  • AI transparency: ${sessions.length} sessions showing progressive adaptation throughout the day`);
   console.log("  • User control: Min/max constraints enforced throughout\n");
-  console.log("🔗 Navigate to /dashboard to see the flash sale timeline!");
+  console.log("🔗 Navigate to /dashboard to see the Black Friday timeline!");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
   await pool.end();

@@ -52,7 +52,7 @@ export const pricing: PricingTier[] = [
     period: "month",
     features: [
       "100 endpoints (20× more)",
-      "AI scheduling (1M tokens/month)",
+      "AI scheduling (5M tokens/month)",
       "10-second minimum interval",
     ],
     popular: true,
