@@ -298,7 +298,7 @@ export function DataTable<TData, TValue>({
             <div className="flex w-fit items-center justify-center text-sm font-medium">
               Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
             </div>
-            <div className="ml-auto flex items-center gap-2 lg:ml-0">
+            <div className="ml-auto flex items-center gap-2 lg:ml-0 pb-2">
               <Button
                 variant="outline"
                 className="hidden h-8 w-8 p-0 lg:flex"

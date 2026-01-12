@@ -1,60 +1,20 @@
 name: 🐛 Bug Report
 description: Something isn't working as expected
-labels:
-  - bug
-  - triage
+labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report a bug! Please fill out the sections below.
+        Thanks for reporting a bug! Share what you can - even a quick note helps.
 
   - type: textarea
-    id: what-happened
+    id: description
     attributes:
-      label: What happened?
-      description: A clear description of the bug
-      placeholder: Describe the issue...
-    validations:
-      required: true
-
-  - type: textarea
-    id: expected
-    attributes:
-      label: What did you expect?
-      placeholder: What should have happened instead...
-    validations:
-      required: true
-
-  - type: textarea
-    id: reproduce
-    attributes:
-      label: Steps to reproduce
+      label: What's going on?
+      description: Describe the issue and what you expected to happen
       placeholder: |
-        1. Go to...
-        2. Click on...
-        3. See error...
-    validations:
-      required: false
+        When I do X, Y happens, but I expected Z.
 
-  - type: dropdown
-    id: area
-    attributes:
-      label: What area is affected?
-      options:
-        - Web Dashboard
-        - API
-        - Scheduler / Job Execution
-        - MCP Server
-        - Documentation
-        - Other
+        (Optional) Steps to reproduce, error messages, screenshots, etc.
     validations:
       required: true
-
-  - type: textarea
-    id: context
-    attributes:
-      label: Additional context
-      description: Screenshots, error messages, browser/environment info, etc.
-    validations:
-      required: false
