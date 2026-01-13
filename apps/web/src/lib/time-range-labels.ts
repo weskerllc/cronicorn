@@ -2,7 +2,47 @@
  * Utility functions for generating user-friendly time range labels for charts
  */
 
-import { format, differenceInDays, isToday } from "date-fns";
+import { format, differenceInDays, differenceInHours, isToday } from "date-fns";
+
+/**
+ * Determines whether to show time in tooltip based on the date range span.
+ * Shows time for ranges of 2 days or less.
+ *
+ * @param startDate - The start of the range
+ * @param endDate - The end of the range
+ * @returns true if time should be shown in tooltips
+ */
+export function shouldShowTimeInTooltip(startDate?: Date, endDate?: Date): boolean {
+  if (!startDate || !endDate) {
+    return false;
+  }
+  const hoursDiff = differenceInHours(endDate, startDate);
+  // Show time for ranges of 48 hours or less
+  return hoursDiff <= 48;
+}
+
+/**
+ * Formats a date for display in chart tooltips.
+ * Shows time when the date range is short (<=2 days), otherwise just date.
+ *
+ * @param date - The date to format
+ * @param startDate - Optional start of the displayed range (for determining granularity)
+ * @param endDate - Optional end of the displayed range (for determining granularity)
+ * @returns Formatted date string like "Jan 15, 2024" or "Jan 15, 2024, 3:00 PM"
+ */
+export function formatTooltipDate(
+  date: Date,
+  startDate?: Date,
+  endDate?: Date,
+): string {
+  const showTime = shouldShowTimeInTooltip(startDate, endDate);
+
+  if (showTime) {
+    return format(date, "MMM d, yyyy, h:mm a");
+  }
+
+  return format(date, "MMM d, yyyy");
+}
 
 /**
  * Generates user-friendly labels for a date range.

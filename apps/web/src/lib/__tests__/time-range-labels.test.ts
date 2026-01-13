@@ -1,5 +1,11 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { getDateRangeLabels, getDateRangeStartLabel, getDateRangeEndLabel } from '../time-range-labels';
+import {
+  formatTooltipDate,
+  getDateRangeEndLabel,
+  getDateRangeLabels,
+  getDateRangeStartLabel,
+  shouldShowTimeInTooltip,
+} from '../time-range-labels';
 
 describe('time-range-labels', () => {
   // Mock the current date for consistent testing
@@ -85,6 +91,69 @@ describe('time-range-labels', () => {
       const startDate = new Date('2024-01-01T00:00:00.000Z');
       const endDate = new Date('2024-01-07T00:00:00.000Z');
       expect(getDateRangeEndLabel(startDate, endDate)).toBe('Jan 7');
+    });
+  });
+
+  describe('shouldShowTimeInTooltip', () => {
+    it('returns false when no dates provided', () => {
+      expect(shouldShowTimeInTooltip(undefined, undefined)).toBe(false);
+    });
+
+    it('returns false when only startDate provided', () => {
+      const startDate = new Date('2024-01-14T00:00:00.000Z');
+      expect(shouldShowTimeInTooltip(startDate, undefined)).toBe(false);
+    });
+
+    it('returns true for 24 hour range', () => {
+      const startDate = new Date('2024-01-14T00:00:00.000Z');
+      const endDate = new Date('2024-01-15T00:00:00.000Z');
+      expect(shouldShowTimeInTooltip(startDate, endDate)).toBe(true);
+    });
+
+    it('returns true for 48 hour range', () => {
+      const startDate = new Date('2024-01-13T00:00:00.000Z');
+      const endDate = new Date('2024-01-15T00:00:00.000Z');
+      expect(shouldShowTimeInTooltip(startDate, endDate)).toBe(true);
+    });
+
+    it('returns false for 49 hour range', () => {
+      const startDate = new Date('2024-01-12T23:00:00.000Z');
+      const endDate = new Date('2024-01-15T00:00:00.000Z');
+      expect(shouldShowTimeInTooltip(startDate, endDate)).toBe(false);
+    });
+
+    it('returns false for 7 day range', () => {
+      const startDate = new Date('2024-01-08T00:00:00.000Z');
+      const endDate = new Date('2024-01-15T00:00:00.000Z');
+      expect(shouldShowTimeInTooltip(startDate, endDate)).toBe(false);
+    });
+  });
+
+  describe('formatTooltipDate', () => {
+    it('shows time for short range (24 hours)', () => {
+      const date = new Date('2024-01-15T14:30:00.000Z');
+      const startDate = new Date('2024-01-14T00:00:00.000Z');
+      const endDate = new Date('2024-01-15T00:00:00.000Z');
+      expect(formatTooltipDate(date, startDate, endDate)).toBe('Jan 15, 2024, 2:30 PM');
+    });
+
+    it('hides time for longer range (7 days)', () => {
+      const date = new Date('2024-01-15T14:30:00.000Z');
+      const startDate = new Date('2024-01-08T00:00:00.000Z');
+      const endDate = new Date('2024-01-15T00:00:00.000Z');
+      expect(formatTooltipDate(date, startDate, endDate)).toBe('Jan 15, 2024');
+    });
+
+    it('hides time when no range provided', () => {
+      const date = new Date('2024-01-15T14:30:00.000Z');
+      expect(formatTooltipDate(date)).toBe('Jan 15, 2024');
+    });
+
+    it('shows time for same-day range', () => {
+      const date = new Date('2024-01-15T09:00:00.000Z');
+      const startDate = new Date('2024-01-15T00:00:00.000Z');
+      const endDate = new Date('2024-01-15T23:59:59.000Z');
+      expect(formatTooltipDate(date, startDate, endDate)).toBe('Jan 15, 2024, 9:00 AM');
     });
   });
 });
