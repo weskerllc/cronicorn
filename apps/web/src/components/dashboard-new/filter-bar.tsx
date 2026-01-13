@@ -99,6 +99,7 @@ export function FilterBar({
 
             {/* Date Range Picker */}
             <DateRangePicker
+                showCompare={false}
                 initialDateFrom={filters.startDate}
                 initialDateTo={filters.endDate}
                 onUpdate={({ range }) => onDateRangeChange({ startDate: range.from, endDate: range.to ?? new Date() })}
