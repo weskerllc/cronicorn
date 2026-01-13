@@ -301,7 +301,7 @@ export class DashboardManager {
    *
    * @param userId - The user ID
    * @param days - Number of days to include
-   * @param now - Current timestamp
+   * @param now - Current timestamp (unused, kept for API compatibility)
    * @param filters - Filter options
    * @param filters.userId - User ID filter
    * @param filters.jobId - Job ID filter (optional)
@@ -327,23 +327,30 @@ export class DashboardManager {
     // Get aggregated data from repository (SQL aggregation)
     const aggregatedData = await this.runsRepo.getRunTimeSeries(filters);
 
+    // Use the actual date range from filters, not "now" minus days
+    const rangeStart = filters.sinceDate;
+    const rangeEnd = filters.untilDate;
+
     // If hourly granularity, fill in hourly buckets instead of daily
     if (filters.granularity === "hour") {
       const dataMap = new Map(
         aggregatedData.map(item => [item.date, item]),
       );
 
-      // Fill in all hours for the time period, aligned to hour boundaries
+      // Fill in all hours for the time period, from rangeStart to rangeEnd
       const result: RunTimeSeriesPoint[] = [];
-      const hours = days * 24;
 
-      // Start from the beginning of the current hour, go back hours-1 more hours
-      const currentHourStart = new Date(now);
-      currentHourStart.setMinutes(0, 0, 0);
+      // Start from the beginning of the start hour
+      const startHour = new Date(rangeStart);
+      startHour.setMinutes(0, 0, 0);
 
-      for (let i = hours - 1; i >= 0; i--) {
-        const date = new Date(currentHourStart.getTime() - i * 60 * 60 * 1000);
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+      // End at the beginning of the end hour
+      const endHour = new Date(rangeEnd);
+      endHour.setMinutes(0, 0, 0);
+
+      for (let t = startHour.getTime(); t <= endHour.getTime(); t += 60 * 60 * 1000) {
+        const currentHour = new Date(t);
+        const dateStr = `${currentHour.getFullYear()}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(currentHour.getDate()).padStart(2, "0")} ${String(currentHour.getHours()).padStart(2, "0")}:00:00`;
         const existing = dataMap.get(dateStr);
         result.push({
           date: dateStr,
@@ -362,10 +369,10 @@ export class DashboardManager {
 
       aggregatedData.forEach((item) => {
         const date = new Date(item.date);
-        // Calculate bucket key (round down to nearest bucket)
-        const daysSinceStart = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+        // Calculate bucket key based on rangeStart, not now
+        const daysSinceStart = Math.floor((date.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000));
         const bucketIndex = Math.floor(daysSinceStart / bucketDays);
-        const bucketStart = new Date(now.getTime() - (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
+        const bucketStart = new Date(rangeStart.getTime() + (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
         const bucketKey = bucketStart.toISOString().split("T")[0];
 
         const existing = bucketMap.get(bucketKey) || { success: 0, failure: 0 };
@@ -377,8 +384,8 @@ export class DashboardManager {
       // Fill in missing buckets with zeros
       const result: RunTimeSeriesPoint[] = [];
       const numBuckets = Math.ceil(days / bucketDays);
-      for (let i = numBuckets - 1; i >= 0; i--) {
-        const bucketStart = new Date(now.getTime() - (i * bucketDays * 24 * 60 * 60 * 1000));
+      for (let i = 0; i < numBuckets; i++) {
+        const bucketStart = new Date(rangeStart.getTime() + (i * bucketDays * 24 * 60 * 60 * 1000));
         const dateStr = bucketStart.toISOString().split("T")[0];
         const existing = bucketMap.get(dateStr);
         result.push({
@@ -395,12 +402,15 @@ export class DashboardManager {
       aggregatedData.map(item => [item.date, item]),
     );
 
-    // Initialize all days with zero counts to ensure complete time series
+    // Initialize all days with zero counts from rangeStart to rangeEnd
     const result: RunTimeSeriesPoint[] = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const dateStr = date.toISOString().split("T")[0];
+    const startTime = new Date(rangeStart);
+    startTime.setUTCHours(0, 0, 0, 0);
+    const endTime = new Date(rangeEnd);
+    endTime.setUTCHours(0, 0, 0, 0);
 
+    for (let t = startTime.getTime(); t <= endTime.getTime(); t += 24 * 60 * 60 * 1000) {
+      const dateStr = new Date(t).toISOString().split("T")[0];
       const existing = dataMap.get(dateStr);
       result.push({
         date: dateStr,
@@ -417,7 +427,7 @@ export class DashboardManager {
    *
    * @param userId - The user ID
    * @param days - Number of days to include
-   * @param now - Current timestamp
+   * @param now - Current timestamp (unused, kept for API compatibility)
    * @param filters - Filter options
    * @param filters.endpointLimit - Maximum number of endpoints to include (sorted by run count DESC)
    * @param filters.userId - User ID filter
@@ -445,6 +455,10 @@ export class DashboardManager {
     // Get aggregated data from repository (SQL aggregation)
     const aggregatedData = await this.runsRepo.getEndpointTimeSeries(filters);
 
+    // Use the actual date range from filters, not "now" minus days
+    const rangeStart = filters.sinceDate;
+    const rangeEnd = filters.untilDate;
+
     // Get unique endpoints
     const endpoints = new Map<string, { id: string; name: string }>();
     aggregatedData.forEach((item) => {
@@ -461,17 +475,20 @@ export class DashboardManager {
         dataMap.set(key, item);
       });
 
-      // Fill in all hours for all endpoints, aligned to hour boundaries
+      // Fill in all hours for all endpoints, from rangeStart to rangeEnd
       const result: EndpointTimeSeriesPoint[] = [];
-      const hours = days * 24;
 
-      // Start from the beginning of the current hour, go back hours-1 more hours
-      const currentHourStart = new Date(now);
-      currentHourStart.setMinutes(0, 0, 0);
+      // Start from the beginning of the start hour
+      const startHour = new Date(rangeStart);
+      startHour.setMinutes(0, 0, 0);
 
-      for (let i = hours - 1; i >= 0; i--) {
-        const date = new Date(currentHourStart.getTime() - i * 60 * 60 * 1000);
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+      // End at the beginning of the end hour
+      const endHour = new Date(rangeEnd);
+      endHour.setMinutes(0, 0, 0);
+
+      for (let t = startHour.getTime(); t <= endHour.getTime(); t += 60 * 60 * 1000) {
+        const currentHour = new Date(t);
+        const dateStr = `${currentHour.getFullYear()}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(currentHour.getDate()).padStart(2, "0")} ${String(currentHour.getHours()).padStart(2, "0")}:00:00`;
 
         endpoints.forEach((endpoint) => {
           const key = `${dateStr}-${endpoint.id}`;
@@ -497,9 +514,10 @@ export class DashboardManager {
 
       aggregatedData.forEach((item) => {
         const date = new Date(item.date);
-        const daysSinceStart = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+        // Calculate bucket key based on rangeStart, not now
+        const daysSinceStart = Math.floor((date.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000));
         const bucketIndex = Math.floor(daysSinceStart / bucketDays);
-        const bucketStart = new Date(now.getTime() - (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
+        const bucketStart = new Date(rangeStart.getTime() + (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
         const bucketKey = `${bucketStart.toISOString().split("T")[0]}-${item.endpointId}`;
 
         const existing = bucketMap.get(bucketKey) || { success: 0, failure: 0, totalDurationMs: 0 };
@@ -512,8 +530,8 @@ export class DashboardManager {
       // Fill in missing buckets with zeros
       const result: EndpointTimeSeriesPoint[] = [];
       const numBuckets = Math.ceil(days / bucketDays);
-      for (let i = numBuckets - 1; i >= 0; i--) {
-        const bucketStart = new Date(now.getTime() - (i * bucketDays * 24 * 60 * 60 * 1000));
+      for (let i = 0; i < numBuckets; i++) {
+        const bucketStart = new Date(rangeStart.getTime() + (i * bucketDays * 24 * 60 * 60 * 1000));
         const dateStr = bucketStart.toISOString().split("T")[0];
 
         endpoints.forEach((endpoint) => {
@@ -539,11 +557,15 @@ export class DashboardManager {
       dataMap.set(key, item);
     });
 
-    // Initialize all days for all endpoints with zero counts
+    // Initialize all days for all endpoints with zero counts from rangeStart to rangeEnd
     const result: EndpointTimeSeriesPoint[] = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const dateStr = date.toISOString().split("T")[0];
+    const startTime = new Date(rangeStart);
+    startTime.setUTCHours(0, 0, 0, 0);
+    const endTime = new Date(rangeEnd);
+    endTime.setUTCHours(0, 0, 0, 0);
+
+    for (let t = startTime.getTime(); t <= endTime.getTime(); t += 24 * 60 * 60 * 1000) {
+      const dateStr = new Date(t).toISOString().split("T")[0];
 
       endpoints.forEach((endpoint) => {
         const key = `${dateStr}-${endpoint.id}`;
@@ -567,7 +589,7 @@ export class DashboardManager {
    *
    * @param userId - The user ID
    * @param days - Number of days to include
-   * @param now - Current timestamp
+   * @param now - Current timestamp (unused, kept for API compatibility)
    * @param filters - Filter options
    * @param filters.userId - User ID filter
    * @param filters.jobId - Job ID filter (optional)
@@ -593,6 +615,10 @@ export class DashboardManager {
     // Get aggregated data from repository (SQL aggregation by date + endpoint)
     const aggregatedData = await this.sessionsRepo.getAISessionTimeSeries(filters);
 
+    // Use the actual date range from filters, not "now" minus days
+    const rangeStart = filters.sinceDate;
+    const rangeEnd = filters.untilDate;
+
     // Get unique endpoints
     const endpointMap = new Map<string, { id: string; name: string }>();
     aggregatedData.forEach((item) => {
@@ -610,17 +636,20 @@ export class DashboardManager {
         aggregatedData.map(item => [`${item.date}_${item.endpointId}`, item]),
       );
 
-      // Fill in all hours for all endpoints, aligned to hour boundaries
+      // Fill in all hours for all endpoints, from rangeStart to rangeEnd
       const result: AISessionTimeSeriesPoint[] = [];
-      const hours = days * 24;
 
-      // Start from the beginning of the current hour, go back hours-1 more hours
-      const currentHourStart = new Date(now);
-      currentHourStart.setMinutes(0, 0, 0);
+      // Start from the beginning of the start hour
+      const startHour = new Date(rangeStart);
+      startHour.setMinutes(0, 0, 0);
 
-      for (let i = hours - 1; i >= 0; i--) {
-        const date = new Date(currentHourStart.getTime() - i * 60 * 60 * 1000);
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+      // End at the beginning of the end hour
+      const endHour = new Date(rangeEnd);
+      endHour.setMinutes(0, 0, 0);
+
+      for (let t = startHour.getTime(); t <= endHour.getTime(); t += 60 * 60 * 1000) {
+        const currentHour = new Date(t);
+        const dateStr = `${currentHour.getFullYear()}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(currentHour.getDate()).padStart(2, "0")} ${String(currentHour.getHours()).padStart(2, "0")}:00:00`;
 
         endpointMap.forEach((endpoint) => {
           const existing = dataMap.get(`${dateStr}_${endpoint.id}`);
@@ -644,9 +673,10 @@ export class DashboardManager {
 
       aggregatedData.forEach((item) => {
         const date = new Date(item.date);
-        const daysSinceStart = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+        // Calculate bucket key based on rangeStart, not now
+        const daysSinceStart = Math.floor((date.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000));
         const bucketIndex = Math.floor(daysSinceStart / bucketDays);
-        const bucketStart = new Date(now.getTime() - (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
+        const bucketStart = new Date(rangeStart.getTime() + (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
         const bucketKey = `${bucketStart.toISOString().split("T")[0]}_${item.endpointId}`;
 
         const existing = bucketMap.get(bucketKey) || { sessionCount: 0, totalTokens: 0 };
@@ -658,8 +688,8 @@ export class DashboardManager {
       // Fill in missing buckets with zeros
       const result: AISessionTimeSeriesPoint[] = [];
       const numBuckets = Math.ceil(days / bucketDays);
-      for (let i = numBuckets - 1; i >= 0; i--) {
-        const bucketStart = new Date(now.getTime() - (i * bucketDays * 24 * 60 * 60 * 1000));
+      for (let i = 0; i < numBuckets; i++) {
+        const bucketStart = new Date(rangeStart.getTime() + (i * bucketDays * 24 * 60 * 60 * 1000));
         const dateStr = bucketStart.toISOString().split("T")[0];
 
         endpointMap.forEach((endpoint) => {
@@ -681,11 +711,15 @@ export class DashboardManager {
       aggregatedData.map(item => [`${item.date}_${item.endpointId}`, item]),
     );
 
-    // Initialize all days for all endpoints with zero counts (cartesian product)
+    // Initialize all days for all endpoints with zero counts from rangeStart to rangeEnd
     const result: AISessionTimeSeriesPoint[] = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const dateStr = date.toISOString().split("T")[0];
+    const startTime = new Date(rangeStart);
+    startTime.setUTCHours(0, 0, 0, 0);
+    const endTime = new Date(rangeEnd);
+    endTime.setUTCHours(0, 0, 0, 0);
+
+    for (let t = startTime.getTime(); t <= endTime.getTime(); t += 24 * 60 * 60 * 1000) {
+      const dateStr = new Date(t).toISOString().split("T")[0];
 
       // For each date, add entry for every endpoint
       endpointMap.forEach((endpoint) => {
