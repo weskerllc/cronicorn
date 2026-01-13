@@ -107,7 +107,6 @@ function DashboardPage() {
   };
 
   const handleDateRangeChange = (range: { startDate: Date; endDate: Date }) => {
-    console.log("Date range changed:", range);
     updateFilters({
       startDate: range.startDate.toISOString(),
       endDate: range.endDate.toISOString(),
@@ -208,12 +207,14 @@ function DashboardPage() {
           chartConfig={endpointChartConfig}
           startDate={startDate}
           endDate={endDate}
+          onDateRangeChange={handleDateRangeChange}
         />
         <AITokensChart
           data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
           startDate={startDate}
           endDate={endDate}
+          onDateRangeChange={handleDateRangeChange}
         />
       </GridLayout>
 
@@ -223,12 +224,14 @@ function DashboardPage() {
           chartConfig={endpointChartConfig}
           startDate={startDate}
           endDate={endDate}
+          onDateRangeChange={handleDateRangeChange}
         />
         <ExecutionDurationChart
           data={dashboardData?.endpointTimeSeries || []}
           chartConfig={endpointChartConfig}
           startDate={startDate}
           endDate={endDate}
+          onDateRangeChange={handleDateRangeChange}
         />
 
       </GridLayout>
