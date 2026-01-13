@@ -57,8 +57,9 @@ export function AISessionsChart({
             if (!endpointSet.has(item.endpointName)) return;
             if (!dateMap.has(item.date)) {
                 // Store timestamp for X-axis domain calculation
+                // Parse as local time by adding time component (prevents UTC offset issues)
                 dateMap.set(item.date, {
-                    date: new Date(item.date).getTime()
+                    date: new Date(item.date + 'T00:00:00').getTime()
                 });
             }
             const dateEntry = dateMap.get(item.date)!;

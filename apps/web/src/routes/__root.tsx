@@ -88,7 +88,7 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
           <Toaster richColors />
         </ThemeProvider>
 
-        <TanStackDevtools
+        {/* <TanStackDevtools
           config={{
             position: "bottom-right",
           }}
@@ -102,7 +102,7 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
               render: <TanStackRouterDevtoolsPanel />,
             },
           ]}
-        />
+        /> */}
 
         <Scripts />
       </body>

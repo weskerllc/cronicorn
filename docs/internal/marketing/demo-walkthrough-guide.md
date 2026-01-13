@@ -3,11 +3,11 @@
 **Purpose:** This guide maps the demo video rubric to the seeded dashboard, showing exactly what to show and say at each moment.
 
 **Seeded Data Summary:**
-- **Timeline:** 7 days (Days 1-3 baseline, Day 4 Black Friday 08:00-20:00, Days 5-7 recovery)
+- **Timeline:** 30 days (Days 1-27 baseline, Day 28 Black Friday 08:00-20:00, Days 29-30 recovery)
 - **11 Endpoints:** 4 tiers (Health, Investigation, Recovery, Alert)
-- **~20,000 Runs:** Color-coded by source (green=baseline, blue=AI interval, purple=one-shot, orange=clamped)
-- **22 AI Sessions:** 6 baseline monitoring (Days 1-3) + 15 Black Friday adaptations (Day 4) + 1 post-event
-- **Visual Story:** Centered peak on Day 4 creates symmetric before/during/after visualization
+- **Runs:** Color-coded by source (green=baseline, blue=AI interval, purple=one-shot, orange=clamped)
+- **~45 AI Sessions:** ~9 baseline monitoring (every 3 days) + ~36 Black Friday adaptations (every 20 min) + post-event
+- **Visual Story:** Dramatic spike on Day 28 with sparse baseline creates clear before/during/after visualization
 
 ---
 
@@ -21,19 +21,19 @@
 **Dashboard View:** Home Dashboard (`/dashboard`)
 
 **Navigation:**
-1. Start with full 7-day timeline visible
-2. Pan to Day 4, 08:00-20:00 (Black Friday window)
-3. Zoom into mid-morning peak (10:00-12:00)
+1. Start with 30-day timeline visible (select "30 days" time range)
+2. Pan to Day 28, 08:00-20:00 (Black Friday window)
+3. Zoom into mid-morning peak (10:00-14:00)
 
 **What's Visible:**
-- **Timeline spikes dramatically** at Day 4, 08:00 (all-day peak)
-- **Centered visualization:** Days 1-3 baseline → Day 4 peak → Days 5-7 recovery
+- **Timeline spikes dramatically** at Day 28, 08:00 (all-day peak)
+- **Clear contrast:** Days 1-27 sparse baseline → Day 28 intense peak → Days 29-30 recovery
 - **Color change:** Green baseline dots → Blue/Orange/Purple dots (AI taking over)
 - **Run density increases** visibly across entire day (dots cluster tighter)
 - **Endpoint Activity charts** show sustained high activity for 12 hours
 
 **Specific Numbers to Highlight:**
-- Baseline: ~1,000 visitors/min (Days 1-3)
+- Baseline: ~1,000 visitors/min (Days 1-27)
 - Black Friday peak: ~6,000 visitors/min (6x increase at 10am-2pm)
 - Page load: 800ms → 4,500ms (5.6x slower at peak)
 
@@ -47,7 +47,7 @@ Static schedules can't adapt
 **Pro Tips:**
 - Keep this shot fast-paced and dramatic
 - Don't explain anything yet—just show the problem
-- The visual should feel overwhelming (lots of activity)
+- The visual should feel overwhelming (lots of activity vs sparse baseline)
 
 ---
 
@@ -58,19 +58,19 @@ Static schedules can't adapt
 
 ### What You Show:
 
-**Dashboard View:** Full 7-Day Timeline Overview
+**Dashboard View:** Full 30-Day Timeline Overview
 
 **Navigation:**
 1. Show Cronicorn logo briefly (2 seconds)
-2. Zoom out to show complete 7-day timeline
-3. Slow pan from left (Day 1) → center (Day 4) → right (Day 7)
+2. Zoom out to show complete 30-day timeline
+3. Slow pan from left (Day 1) → right through baseline → Day 28 peak → Days 29-30
 
 **What's Visible:**
-- **Days 1-3:** Steady green baseline dots (normal operations)
-- **Day 4, 08:00-20:00:** Blue, orange, purple dots (AI adaptation across 12 hours)
-- **Days 5-7:** Return to green baseline dots (recovery)
+- **Days 1-27:** Sparse green baseline dots (normal operations, 5-10 min intervals)
+- **Day 28, 08:00-20:00:** Dense blue, orange, purple dots (AI adaptation across 12 hours)
+- **Days 29-30:** Return to sparse green baseline dots (recovery)
 - **Source attribution visible** in timeline colors
-- **Centered peak:** Black Friday perfectly centered creates symmetric visual story
+- **Dramatic spike:** Day 28 stands out clearly against sparse baseline
 
 **Color Legend (add as annotation):**
 - 🟢 **Green dots** = Baseline interval (your original schedule)
@@ -79,10 +79,10 @@ Static schedules can't adapt
 - 🟠 **Orange dots** = Clamped to min/max (boundary enforced)
 
 **Specific Patterns to Highlight:**
-- 3 days of stability before event (credibility + allows centered visualization)
+- 27 days of stability before event (credibility + makes spike dramatic)
 - AI responds progressively throughout 12-hour day (not just one spike)
-- Gradual return to baseline Days 5-7 (automatic reversion after hints expire)
-- Symmetric visual story: 3 days before, 1 day peak, 3 days after
+- Gradual return to baseline Days 29-30 (automatic reversion after hints expire)
+- Clear visual story: sparse baseline → intense spike → sparse recovery
 
 **On-Screen Text Overlays:**
 ```
@@ -92,7 +92,7 @@ You set the boundaries
 ```
 
 **Pro Tips:**
-- This shot establishes trust (5 days of baseline = we're not making this up)
+- This shot establishes trust (27 days of baseline = we're not making this up)
 - Point out the automatic reversion (hints expire after 60 min)
 - Emphasize transparency: every color change = AI decision
 
@@ -101,7 +101,7 @@ You set the boundaries
 ## SHOT 3A: Baseline Credibility (27-35 seconds)
 
 ### What You Say:
-> "Let's see it in action. This is a monitoring job tracking an e-commerce site. For three days, everything's smooth. Baseline schedule, checking every minute. 98% success rate. Nice and calm."
+> "Let's see it in action. This is a monitoring job tracking an e-commerce site. For nearly a month, everything's smooth. Baseline schedule, checking regularly. 98% success rate. Nice and calm."
 
 ### What You Show:
 
@@ -110,42 +110,44 @@ You set the boundaries
 **Navigation:**
 1. Click "Traffic Monitor" endpoint from list
 2. Show endpoint details panel
-3. Scroll to show response body from Days 1-3
+3. Scroll to show response body from baseline period
 
 **Endpoint Configuration Visible:**
 - **Name:** Traffic Monitor
-- **Baseline Interval:** 60,000ms (1 minute)
+- **Baseline Interval:** 300,000ms (5 minutes)
 - **Min Interval:** 20,000ms (20 seconds)
-- **Max Interval:** 300,000ms (5 minutes)
-- **Success Rate:** 98% (Days 1-3)
+- **Max Interval:** 600,000ms (10 minutes)
+- **Success Rate:** 98%
 
-**Response Body Example (Day 2, 10:30am):**
+**Response Body Example (Baseline period):**
 ```json
 {
-  "traffic": 1020,
-  "ordersPerMin": 42,
-  "pageLoadMs": 790,
-  "inventoryLagMs": 95,
-  "dbQueryMs": 118,
-  "timestamp": "2025-12-31T10:30:00Z"
+  "visitors": 1000,
+  "pageLoadMs": 800,
+  "ordersPerMin": 40,
+  "processingTimeMs": 180,
+  "queueDepth": 5,
+  "failureRate": 0.01,
+  "inventoryLagMs": 100,
+  "syncStatus": "healthy"
 }
 ```
 
-**Timeline View (Days 1-3):**
-- Green dots evenly spaced (every 60 seconds)
-- Continuous monitoring (~6,000 total runs for Traffic Monitor in 3 days)
-- AI sessions show baseline monitoring (2 per day confirming normal ops)
+**Timeline View (Days 1-27):**
+- Green dots evenly spaced (every 5-10 minutes)
+- Consistent baseline monitoring
+- AI sessions show baseline monitoring (~1 every 3 days confirming normal ops)
 
 **On-Screen Highlights:**
-- Circle the baseline interval: **"1 minute baseline"**
+- Circle the baseline interval: **"5 minute baseline"**
 - Arrow to response metrics: **"1,000 visitors/min, 800ms page load"**
 - Success badge: **"98% success"**
 
 **Pro Tips:**
 - Emphasize the boring stability (this is good!)
 - Show that baseline schedules are reliable
-- Point out: "3 days of steady operations—perfect baseline"
-- Mention: "Day 4 will show what happens when things change"
+- Point out: "Nearly a month of steady operations—perfect baseline"
+- Mention: "Day 28 will show what happens when things change"
 
 ---
 
@@ -156,56 +158,58 @@ You set the boundaries
 
 ### What You Show:
 
-**Dashboard View:** AI Session #2 (Day 4, 08:03)
+**Dashboard View:** AI Session (Day 28, ~08:20)
 
 **Navigation:**
-1. Pan timeline to Day 4, 08:00-10:00 (early morning surge)
-2. Click on AI session marker around 08:03
-3. Open **AI Session #2** details panel
+1. Pan timeline to Day 28, 08:00-10:00 (early morning surge)
+2. Click on AI session marker (sessions occur every 20 minutes)
+3. Open AI Session details panel
 
-**AI Session #2 Details:**
+**AI Session Details (Early Surge):**
 
-**Timestamp:** Day 4, 08:03 (3 minutes into Black Friday)
+**Timestamp:** Day 28, ~08:20 (early surge phase)
 
 **Reasoning:**
-> "Traffic trending upward (1000 → 2800 visitors/min). Monitoring closely for continued surge."
+> "Traffic trending upward. Early surge detected - monitoring closely for continued increase."
 
 **Tool Calls Executed:**
-1. `get_latest_response` → Found traffic: 2,800, pageLoadMs: 1,150
-2. `get_response_history(limit: 3)` → Confirmed trend: 1,100 → 1,500 → 2,200 → 2,800
-3. `submit_analysis` → Confidence: HIGH (watching but not adjusting yet)
+1. `get_latest_response` → Found elevated traffic metrics
+2. `get_response_history(limit: 3)` → Confirmed upward trend
+3. `submit_analysis` → Confidence: HIGH (watching closely)
 
 **Metrics Visible:**
-- Token usage: 890 tokens
-- Duration: 320ms
-- Next analysis: 08:06 (3 minutes later - AI monitoring more frequently)
+- Token usage: ~890 tokens
+- Duration: ~320ms
+- Next analysis: 20 minutes later (AI analyzing every 20 minutes during Black Friday)
 
-**Response Body at 08:03:**
+**Response Body (Early Surge ~08:20):**
 ```json
 {
-  "traffic": 2800,
-  "ordersPerMin": 95,
+  "visitors": 2800,
   "pageLoadMs": 1150,
+  "ordersPerMin": 95,
+  "processingTimeMs": 280,
+  "queueDepth": 45,
+  "failureRate": 0.03,
   "inventoryLagMs": 180,
-  "dbQueryMs": 240,
-  "timestamp": "Day4-08:03:00Z"
+  "syncStatus": "elevated"
 }
 ```
 
 **Timeline Change Visible:**
-- Before 08:00: Green dots (60s apart) - baseline
+- Before 08:00: Sparse green dots (5-10 min apart) - baseline
 - After 08:00: Dots start clustering tighter, some blue appearing
 - Shows AI is watching closely, preparing to react
 
 **On-Screen Highlights:**
 - Highlight the upward trend: **"1,000 → 2,800 visitors (2.8x increase)"**
 - Show AI reasoning: **"Monitoring closely for continued surge"**
-- Point to next session timing: **"AI analyzing every 3 minutes now"**
+- Point to session frequency: **"AI analyzing every 20 minutes now"**
 
 **Pro Tips:**
-- Emphasize this is just the beginning—"It's only 8am, wait until you see 10am"
+- Emphasize this is just the beginning—"It's only 8am, wait until you see the peak"
 - Show AI is being careful: watching first, then acting
-- Mention: "This continues all day—15 AI sessions total"
+- Mention: "~36 AI sessions during the 12-hour event"
 
 ---
 
@@ -216,26 +220,26 @@ You set the boundaries
 
 ### What You Show:
 
-**Dashboard View:** AI Session #3 (Day 6, 12:15) + Endpoint Activity
+**Dashboard View:** AI Session (Day 28, ~14:00 peak) + Endpoint Activity
 
 **Navigation:**
-1. Pan timeline to Day 6, 12:15 (minute 15 - critical phase)
-2. Open **AI Session #3** details
+1. Pan timeline to Day 28, 12:00-16:00 (peak phase)
+2. Open AI Session details during peak
 3. Show endpoint list with all 4 tiers visible
 4. Quick cuts between activated endpoints
 
-**AI Session #3 Details:**
+**AI Session Details (Peak Phase):**
 
-**Timestamp:** Day 6, 12:15 (critical escalation moment)
+**Timestamp:** Day 28, ~14:00 (peak moment)
 
 **Reasoning:**
-> "CRITICAL: Page load times at 4,600ms (p95: 6,200ms). Database identified as bottleneck. Activating diagnostics and triggering recovery actions. Coordinating with sibling endpoints."
+> "CRITICAL: Traffic at sustained peak levels. Page load times elevated. Activating diagnostics and triggering recovery actions. Coordinating with sibling endpoints."
 
 **Tool Calls Executed:**
-1. `get_latest_response` → avgPageLoadMs: 4,600, bottleneck: "database"
+1. `get_latest_response` → avgPageLoadMs: ~4,500, traffic: ~6,000
 2. `get_sibling_latest_responses` → Found 10 other endpoints in same job
-   - Order Processor: ordersPerMin: 118, failureRate: 0.15
-   - Inventory Sync: lagMs: 620, queueDepth: 850
+   - Order Processor: ordersPerMin: 120, failureRate: 0.15
+   - Inventory Sync: lagMs: 600, queueDepth: 850
 3. `pause_until(null, "Resume diagnostics")` → **Unpaused Slow Page Analyzer**
 4. `propose_next_time(5000, 5)` → **Triggered Cache Warmup in 5 seconds**
 5. `propose_next_time(10000, 10)` → **Triggered Database Query Trace in 10s**
@@ -244,36 +248,37 @@ You set the boundaries
 **What's Happening Across Tiers:**
 
 **Tier 1: Health (Continuous monitoring - now maxed out)**
-- Traffic Monitor: 60s → 30s → **20s (MIN CONSTRAINT ENFORCED)** 🟠 Orange dots
-- Order Processor Health: 120s → 60s → **30s** 🔵 Blue dots
-- Inventory Sync Check: 180s → 90s → **60s** 🔵 Blue dots
+- Traffic Monitor: 5min → **20s (MIN CONSTRAINT ENFORCED)** 🟠 Orange dots
+- Order Processor Health: Tightened 🔵 Blue dots
+- Inventory Sync Check: Tightened 🔵 Blue dots
 
 **Tier 2: Investigation (Activated from paused state)**
-- Slow Page Analyzer: **PAUSED → ACTIVE** (purple activation dot at 12:15)
-  - First run in 5 days (was dormant)
-  - Response shows: avgPageLoadMs: 4,600, p95: 6,200, bottleneck: "database"
-- Database Query Trace: **PAUSED → ACTIVE** (purple activation dot at 12:15)
+- Slow Page Analyzer: **PAUSED → ACTIVE** (purple activation dot)
+  - Response shows: avgPageLoadMs: 4,500, bottleneck: "database"
+- Database Query Trace: **PAUSED → ACTIVE** (purple activation dot)
   - Response shows: slowestQuery: 2,400ms, activeConnections: 95
 
 **Tier 3: Recovery (One-shot actions triggered)**
-- Cache Warmup: 🟣 Purple dot at 12:15 (5 seconds after session)
-- Scale Checkout Workers: 🟣 Purple dot at 12:16
+- Cache Warmup: 🟣 Purple dot (triggered during peak)
+- Scale Checkout Workers: 🟣 Purple dot
 
 **Tier 4: Alert (Escalation actions)**
-- Slack Operations Alert: 🟣 Purple dot at 12:15
-- Slack Customer Support Alert: 🟣 Purple dot at 12:16
-- Emergency Oncall Page: 🟣 Purple dot at 12:17 (2-hour cooldown applied)
-- Performance Degradation Webhook: 🟣 Purple dot at 12:15
+- Slack Operations Alert: 🟣 Purple dot
+- Slack Customer Support Alert: 🟣 Purple dot
+- Emergency Oncall Page: 🟣 Purple dot (2-hour cooldown applied)
+- Performance Degradation Webhook: 🟣 Purple dot
 
-**Response Body at Critical Peak (12:15):**
+**Response Body at Critical Peak:**
 ```json
 {
-  "traffic": 6000,
-  "ordersPerMin": 120,
+  "visitors": 6000,
   "pageLoadMs": 4500,
+  "ordersPerMin": 120,
+  "processingTimeMs": 850,
+  "queueDepth": 850,
+  "failureRate": 0.15,
   "inventoryLagMs": 600,
-  "dbQueryMs": 1200,
-  "timestamp": "2025-12-31T12:15:00Z"
+  "syncStatus": "critical"
 }
 ```
 
@@ -309,97 +314,82 @@ You set the boundaries
 
 ### What You Show:
 
-**Dashboard View:** AI Sessions #4, #5, #6 + Timeline Recovery
+**Dashboard View:** AI Sessions (Late Day 28) + Timeline Recovery
 
 **Navigation:**
-1. Pan timeline to Day 6, 12:28 (minute 28 - recovery phase)
-2. Show **AI Session #4** - Recovery confirmed
-3. Jump to Day 6, 13:05 (minute 65 - hint expiration)
-4. Show **AI Session #5** - Hints expired
-5. Pan to Day 7, 08:00 - Show **AI Session #6** - Stability confirmed
+1. Pan timeline to Day 28, 18:00-20:00 (evening wind-down phase)
+2. Show AI Session - Recovery confirmed
+3. Jump to Day 29 - Show return to baseline
+4. Pan to Day 30 - Show stability confirmed
 
-**AI Session #4 (12:28 - Recovery Phase):**
+**AI Session (Evening Wind-Down ~18:00):**
 
 **Reasoning:**
-> "Recovery confirmed. Traffic declining to 1,400/min, page load improved to 1,050ms. Loosening health checks back to 1-minute baseline. System stabilizing."
+> "Traffic declining from peak. Page load times improving. System stabilizing. Easing monitoring back toward baseline intervals."
 
 **Tool Calls:**
-1. `get_latest_response` → traffic: 1400, pageLoadMs: 1050
-2. `propose_interval(60000, 30)` → **Back to 1 minute (30-min TTL)**
-3. `pause_until("2025-12-31T14:00:00Z")` → **Re-paused Slow Page Analyzer**
+1. `get_latest_response` → traffic: declining, pageLoadMs: improving
+2. `propose_interval(300000, 30)` → **Back to 5 minutes (30-min TTL)**
+3. `pause_until(...)` → **Re-paused investigation endpoints**
 4. `submit_analysis` → Confidence: HIGH
 
 **Timeline Change:**
 - Orange/Blue dots → Green dots (baseline interval resumed)
 - Investigation tier endpoints re-paused (no more purple dots)
 
-**AI Session #5 (13:05 - Hint Expiration):**
+**Post-Event (Day 29+):**
 
 **Reasoning:**
-> "All AI scheduling hints expired (60-minute TTL from initial surge detection). Baseline schedules fully resumed. No active adjustments remaining."
-
-**Tool Calls:**
-1. `get_latest_response` → traffic: 1050, pageLoadMs: 820
-2. `submit_analysis` → Confidence: HIGH (no adjustments needed)
+> "All AI scheduling hints expired. Baseline schedules fully resumed. No active adjustments remaining."
 
 **Timeline Change:**
 - All endpoints return to baseline intervals
 - No more AI-adjusted schedules active
 - Color fully reverts to green (baseline-interval source)
 
-**AI Session #6 (Day 7, 08:00 - Next Morning Stability Check):**
-
-**Reasoning:**
-> "System fully stabilized. All metrics returned to baseline ranges. Flash sale event successfully handled with zero manual intervention."
-
 **Metrics to Show:**
 
-**Recovery Phase (12:28):**
+**Evening Wind-Down (~18:00):**
 ```json
 {
-  "traffic": 1400,
-  "ordersPerMin": 50,
-  "pageLoadMs": 1050,
-  "inventoryLagMs": 140,
-  "dbQueryMs": 180
+  "visitors": 2200,
+  "pageLoadMs": 1400,
+  "ordersPerMin": 75,
+  "processingTimeMs": 340,
+  "queueDepth": 120,
+  "failureRate": 0.04,
+  "inventoryLagMs": 220,
+  "syncStatus": "recovering"
 }
 ```
 
-**Post-Expiration (13:05):**
+**Post-Event Baseline (Day 29+):**
 ```json
 {
-  "traffic": 1050,
-  "ordersPerMin": 42,
-  "pageLoadMs": 820,
-  "inventoryLagMs": 100,
-  "dbQueryMs": 125
-}
-```
-
-**Day 7 Baseline (08:00):**
-```json
-{
-  "traffic": 1010,
+  "visitors": 1000,
+  "pageLoadMs": 800,
   "ordersPerMin": 40,
-  "pageLoadMs": 795,
-  "inventoryLagMs": 95,
-  "dbQueryMs": 118
+  "processingTimeMs": 180,
+  "queueDepth": 5,
+  "failureRate": 0.01,
+  "inventoryLagMs": 100,
+  "syncStatus": "healthy"
 }
 ```
 
 **On-Screen Highlights:**
-- **12:28:** "AI easing back to baseline" (blue → green transition)
-- **13:05:** "60-min TTL expired - hints removed" (all green)
-- **Day 7:** "Normal operations restored" (same as Days 1-5)
+- **Evening:** "AI easing back to baseline" (blue → green transition)
+- **Day 29:** "60-min TTL expired - hints removed" (all green)
+- **Day 30:** "Normal operations restored" (same as Days 1-27)
 
 **Timeline Visual:**
 - Show color gradient: Orange → Blue → Green
-- Show density decreasing: Tight clusters → Even spacing
-- Show return to baseline pattern (same as Days 1-5)
+- Show density decreasing: Tight clusters → Sparse spacing
+- Show return to baseline pattern (same as Days 1-27)
 
 **Pro Tips:**
 - Emphasize "60-minute TTL" = automatic safety valve
-- Show Day 7 looks identical to Days 1-5 (full circle)
+- Show Days 29-30 look identical to Days 1-27 (full circle)
 - "No manual intervention required" = hands-off recovery
 
 ---
@@ -416,55 +406,47 @@ You set the boundaries
 **Navigation:**
 1. Show Traffic Monitor endpoint configuration panel
 2. Highlight min/max/baseline interval fields
-3. Show AI Sessions list with all 16 sessions visible
+3. Show AI Sessions list with sessions visible
 4. Show source attribution legend
 
 **Endpoint Configuration Panel:**
 
 **Traffic Monitor Settings:**
-- **Baseline Interval:** 60,000ms (1 minute) ← Your default schedule
+- **Baseline Interval:** 300,000ms (5 minutes) ← Your default schedule
 - **Min Interval:** 20,000ms (20 seconds) ← AI can't go faster than this
-- **Max Interval:** 300,000ms (5 minutes) ← AI can't go slower than this
-- **Current Interval:** 60,000ms (baseline - no AI adjustments active)
+- **Max Interval:** 600,000ms (10 minutes) ← AI can't go slower than this
+- **Current Interval:** 300,000ms (baseline - no AI adjustments active)
 
-**AI Sessions List (All 16 Visible):**
+**AI Sessions List:**
 
-**Baseline Sessions (Days 1-5):**
-1. Day 1, 08:00 - "Initial baseline established"
-2. Day 1, 20:00 - "Traffic patterns consistent"
-3. Day 2, 08:00 - "Monitoring confirmed stable"
-4. Day 2, 20:00 - "No action needed"
-5. Day 3, 08:00 - "Order processing optimal"
-6. Day 3, 20:00 - "Inventory sync normal"
-7. Day 4, 08:00 - "Baseline schedules optimal"
-8. Day 4, 20:00 - "All metrics within ranges"
-9. Day 5, 08:00 - "Consistent performance"
-10. Day 5, 20:00 - "No action required"
+**Baseline Sessions (Days 1-27):**
+- ~9 sessions total (approximately 1 every 3 days)
+- Each confirms: "System stable, no action needed"
 
-**Flash Sale Sessions (Day 6):**
-11. 11:45 - "Normal patterns detected" (pre-sale baseline)
-12. 12:06 - "Surge detected - tightening to 30s" (ADAPTATION)
-13. 12:15 - "CRITICAL - activating diagnostics" (ESCALATION)
-14. 12:28 - "Recovery confirmed - easing back" (RECOVERY)
-15. 13:05 - "Hints expired - baseline resumed" (EXPIRATION)
-16. Day 7, 08:00 - "Stability confirmed" (VERIFICATION)
+**Black Friday Sessions (Day 28):**
+- ~36 sessions (every 20 minutes during 12-hour event)
+- Progressive phases: Early Surge → Mid-Morning Peak → Lunch Sustained → Afternoon Steady → Evening Wind-Down → Post-Event
+
+**Post-Event Sessions (Days 29-30):**
+- Return to sparse monitoring
+- Confirm stability restored
 
 **Source Attribution Legend:**
-- 🟢 **Baseline Interval** (18,400 runs) - Your original schedule, always runs
-- 🔵 **AI Interval** (140 runs) - AI tightened/loosened interval
-- 🟣 **AI One-Shot** (35 runs) - AI triggered specific action
-- 🟠 **Clamped Min/Max** (15 runs) - AI hit your boundary
+- 🟢 **Baseline Interval** - Your original schedule, always runs
+- 🔵 **AI Interval** - AI tightened/loosened interval
+- 🟣 **AI One-Shot** - AI triggered specific action
+- 🟠 **Clamped Min/Max** - AI hit your boundary
 
 **On-Screen Text:**
 ```
 ✓ Every decision explained
-  → 16 AI sessions with full reasoning
+  → ~45 AI sessions with full reasoning
 
 ✓ Min/max constraints enforced
-  → AI stayed within 20s - 5min bounds
+  → AI stayed within 20s - 10min bounds
 
 ✓ Works without AI
-  → 18,400 baseline runs always executed
+  → Baseline schedules always executed
 ```
 
 **Optional Use Cases Callout (2-3 seconds):**
@@ -479,7 +461,7 @@ Use Cronicorn for:
 
 **Pro Tips:**
 - Show the actual fields users can configure
-- Highlight the ratio: 18,400 baseline runs vs 190 AI-adjusted runs
+- Highlight the contrast: sparse baseline vs intense Black Friday
 - "AI is helpful, not required" = no vendor lock-in
 
 ---
@@ -494,17 +476,17 @@ Use Cronicorn for:
 **Dashboard View:** Final Timeline Pan + Logo + CTA
 
 **Navigation:**
-1. Zoom out to show complete 7-day timeline
-2. Slow pan showing full story: baseline → surge → recovery
+1. Zoom out to show complete 30-day timeline
+2. Slow pan showing full story: sparse baseline → dramatic surge → recovery
 3. Fade to Cronicorn logo on clean background
 4. CTA overlay appears
 
 **Timeline Final Shot:**
-- Full 7 days visible
+- Full 30 days visible
 - Clear visual arc:
-  - Days 1-5: Steady green (credibility)
-  - Day 6: Colorful burst (adaptation)
-  - Day 7: Return to green (recovery)
+  - Days 1-27: Sparse green (credibility)
+  - Day 28: Dense colorful burst (adaptation)
+  - Days 29-30: Return to sparse green (recovery)
 - Success story: "6x surge handled automatically"
 
 **Logo + CTA:**
@@ -530,12 +512,284 @@ Set up in 5 minutes
 
 ---
 
+## Recording Sequence: Step-by-Step UI Interactions
+
+This section provides the exact sequence of clicks and navigation for recording the demo. Follow these steps precisely to capture all necessary footage.
+
+### UI Structure Overview
+
+```
+/dashboard                    → Main dashboard with charts
+  ├─ Endpoint Activity Chart  → Shows run activity over time
+  ├─ AI Sessions Chart        → Shows AI session activity over time
+  └─ Endpoint Table           → List of all endpoints
+
+/endpoints/:id                → Endpoint detail page
+  ├─ Endpoint Configuration   → Name, intervals (min/baseline/max), URL
+  ├─ Runs Table              → List of runs for this endpoint (click row → run details)
+  └─ AI Sessions Table       → List of AI sessions for this endpoint (click row → session details)
+
+Run Detail Modal              → Full run details (response body, status, timing)
+AI Session Detail Modal       → Full session details (reasoning, tool calls, token usage)
+```
+
+---
+
+### SEQUENCE 1: Dashboard Overview (Shots 1-2)
+
+**Starting Point:** `/dashboard`
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 1.1 | Navigate to `/dashboard` | Main dashboard loads with charts | 2s |
+| 1.2 | Click time range dropdown → Select "30 days" | Charts update to show full 30-day timeline | 2s |
+| 1.3 | Hover over Endpoint Activity chart | Tooltip shows date and endpoint activity | 3s |
+| 1.4 | Slowly move cursor from left (Day 1) to right (Day 30) | Shows sparse baseline → Day 28 spike → recovery | 5s |
+| 1.5 | Hover over AI Sessions chart at Day 28 | Tooltip shows high AI session count | 2s |
+| 1.6 | Scroll down to view Endpoint Table | Shows all 11 endpoints with status indicators | 2s |
+
+**Footage Captured:**
+- Full dashboard with both charts
+- 30-day timeline with visible Day 28 spike
+- Endpoint table overview
+
+---
+
+### SEQUENCE 2: Baseline Endpoint Exploration (Shot 3A)
+
+**Starting Point:** `/dashboard` → Endpoint Table
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 2.1 | Click "Traffic Monitor" row in Endpoint Table | Navigate to `/endpoints/{traffic-monitor-id}` | 1s |
+| 2.2 | View Endpoint Configuration section | Shows name, baseline: 5min, min: 20s, max: 10min | 3s |
+| 2.3 | Scroll to Runs Table | List of runs with timestamps, status, duration | 2s |
+| 2.4 | Filter/scroll to find a baseline run (Days 1-27) | Look for green "baseline-interval" source badge | 2s |
+| 2.5 | **Click the baseline run row** | **Run Detail Modal opens** | 1s |
+| 2.6 | View Response Body in modal | Shows baseline JSON: visitors: 1000, pageLoadMs: 800 | 4s |
+| 2.7 | Close modal (click X or outside) | Returns to endpoint page | 1s |
+
+**Footage Captured:**
+- Endpoint detail page layout
+- Endpoint configuration (intervals)
+- Run detail modal with baseline response body
+
+---
+
+### SEQUENCE 3: Early Surge AI Session (Shot 3B)
+
+**Starting Point:** `/endpoints/{traffic-monitor-id}`
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 3.1 | Scroll to AI Sessions Table on endpoint page | List of AI sessions for Traffic Monitor | 2s |
+| 3.2 | Filter/scroll to find Day 28, ~08:20 session | Look for "early-surge" phase session | 2s |
+| 3.3 | **Click the early surge AI session row** | **AI Session Detail Modal opens** | 1s |
+| 3.4 | View Reasoning section | Shows "Traffic trending upward. Early surge detected..." | 3s |
+| 3.5 | Scroll to Tool Calls section | Shows get_latest_response, get_response_history calls | 4s |
+| 3.6 | Expand a tool call (if expandable) | Shows tool input/output details | 2s |
+| 3.7 | View Token Usage & Duration | Shows ~890 tokens, ~320ms | 2s |
+| 3.8 | Close modal | Returns to endpoint page | 1s |
+
+**Footage Captured:**
+- AI Sessions table on endpoint page
+- AI Session detail modal with full reasoning
+- Tool calls with inputs/outputs
+- Token usage metrics
+
+---
+
+### SEQUENCE 4: Peak Phase - Run Details (Shot 3C Part 1)
+
+**Starting Point:** `/endpoints/{traffic-monitor-id}`
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 4.1 | Scroll to Runs Table | List of runs for Traffic Monitor | 1s |
+| 4.2 | Filter/scroll to find Day 28, ~14:00 run (peak) | Look for orange "clamped-min" source badge | 2s |
+| 4.3 | **Click the peak run row** | **Run Detail Modal opens** | 1s |
+| 4.4 | View Response Body | Shows peak JSON: visitors: 6000, pageLoadMs: 4500 | 4s |
+| 4.5 | Note the source badge shows "clamped-min" | AI hit minimum constraint (20s) | 2s |
+| 4.6 | Close modal | Returns to endpoint page | 1s |
+
+**Footage Captured:**
+- Peak run with elevated metrics
+- "clamped-min" source indicator
+
+---
+
+### SEQUENCE 5: Peak Phase - AI Session with Actions (Shot 3C Part 2)
+
+**Starting Point:** `/endpoints/{traffic-monitor-id}`
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 5.1 | Scroll to AI Sessions Table | AI sessions for Traffic Monitor | 1s |
+| 5.2 | Filter/scroll to find Day 28, ~14:00 session (peak) | Look for "lunch-sustained" or "afternoon-steady" phase | 2s |
+| 5.3 | **Click the peak AI session row** | **AI Session Detail Modal opens** | 1s |
+| 5.4 | View Reasoning section | Shows "CRITICAL: Traffic at sustained peak levels..." | 3s |
+| 5.5 | Scroll to Tool Calls section | Shows multiple tool calls including pause_until, propose_next_time | 5s |
+| 5.6 | Highlight get_sibling_latest_responses call | Shows coordination across endpoints | 3s |
+| 5.7 | Close modal | Returns to endpoint page | 1s |
+
+**Footage Captured:**
+- Critical phase AI reasoning
+- Multi-endpoint coordination tool calls
+- Recovery/alert trigger actions
+
+---
+
+### SEQUENCE 6: Multi-Tier Endpoint Exploration (Shot 3C Part 3)
+
+**Starting Point:** `/endpoints/{traffic-monitor-id}` → Back to dashboard
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 6.1 | Click browser back or navigate to `/dashboard` | Return to main dashboard | 1s |
+| 6.2 | Scroll to Endpoint Table | All 11 endpoints visible | 1s |
+| 6.3 | Click "Slow Page Analyzer" (Investigation tier) | Navigate to endpoint page | 1s |
+| 6.4 | View Runs Table | Shows runs only during Day 28 peak (was paused before) | 3s |
+| 6.5 | **Click a run from peak period** | **Run Detail Modal opens** | 1s |
+| 6.6 | View Response Body | Shows avgPageLoadMs: 4500, bottleneck: "database" | 3s |
+| 6.7 | Close modal | Returns to endpoint page | 1s |
+| 6.8 | Navigate back to dashboard | `/dashboard` | 1s |
+| 6.9 | Click "Cache Warmup" (Recovery tier) | Navigate to endpoint page | 1s |
+| 6.10 | View Runs Table | Shows one-shot runs (purple badges) during peak | 2s |
+| 6.11 | **Click a one-shot run** | **Run Detail Modal opens** | 1s |
+| 6.12 | View Response Body | Shows cache warmup results | 2s |
+| 6.13 | Close modal | Returns to endpoint page | 1s |
+
+**Footage Captured:**
+- Investigation tier endpoint activation
+- Recovery tier one-shot execution
+- Cross-tier coordination evidence
+
+---
+
+### SEQUENCE 7: Recovery Phase (Shot 3D)
+
+**Starting Point:** Dashboard → Traffic Monitor
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 7.1 | Navigate to `/dashboard` | Main dashboard | 1s |
+| 7.2 | Click "Traffic Monitor" in Endpoint Table | Navigate to endpoint page | 1s |
+| 7.3 | Scroll to Runs Table | Run list visible | 1s |
+| 7.4 | Filter/scroll to find Day 28, ~18:00 run (wind-down) | Look for runs with declining metrics | 2s |
+| 7.5 | **Click the wind-down run row** | **Run Detail Modal opens** | 1s |
+| 7.6 | View Response Body | Shows visitors: 2200, pageLoadMs: 1400 (recovering) | 3s |
+| 7.7 | Close modal | Returns to endpoint page | 1s |
+| 7.8 | Scroll to AI Sessions Table | AI sessions list | 1s |
+| 7.9 | Filter/scroll to find Day 28, ~18:00 session | Look for "evening-winddown" phase | 2s |
+| 7.10 | **Click the wind-down AI session row** | **AI Session Detail Modal opens** | 1s |
+| 7.11 | View Reasoning | Shows "Traffic declining... Easing back toward baseline" | 3s |
+| 7.12 | View Tool Calls | Shows propose_interval back to 5min, pause_until for investigation tier | 3s |
+| 7.13 | Close modal | Returns to endpoint page | 1s |
+
+**Footage Captured:**
+- Recovery phase metrics
+- AI reasoning for easing back
+- Re-pausing of investigation endpoints
+
+---
+
+### SEQUENCE 8: Post-Event Stability (Shot 3D continued)
+
+**Starting Point:** `/endpoints/{traffic-monitor-id}`
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 8.1 | Scroll to Runs Table | Run list visible | 1s |
+| 8.2 | Filter/scroll to find Day 29 or Day 30 run | Look for green "baseline-interval" source badge | 2s |
+| 8.3 | **Click the post-event baseline run row** | **Run Detail Modal opens** | 1s |
+| 8.4 | View Response Body | Shows visitors: 1000, pageLoadMs: 800 (baseline restored) | 3s |
+| 8.5 | Close modal | Returns to endpoint page | 1s |
+
+**Footage Captured:**
+- Return to baseline metrics
+- Full recovery confirmation
+
+---
+
+### SEQUENCE 9: Configuration & Differentiators (Shot 4)
+
+**Starting Point:** `/endpoints/{traffic-monitor-id}`
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 9.1 | Scroll to top of endpoint page | Endpoint Configuration section visible | 1s |
+| 9.2 | Highlight interval fields | Baseline: 5min, Min: 20s, Max: 10min clearly visible | 4s |
+| 9.3 | Navigate to `/dashboard` | Return to main dashboard | 1s |
+| 9.4 | View AI Sessions chart | Shows ~45 sessions over 30 days | 2s |
+| 9.5 | Hover over Day 28 on AI Sessions chart | Tooltip shows high session count | 2s |
+
+**Footage Captured:**
+- Clear interval configuration
+- AI session overview showing ~45 total sessions
+
+---
+
+### SEQUENCE 10: Final Pan (Shot 5)
+
+**Starting Point:** `/dashboard`
+
+| Step | Action | What You See | Duration |
+|------|--------|--------------|----------|
+| 10.1 | Ensure "30 days" time range is selected | Full timeline visible | 1s |
+| 10.2 | Slowly scroll/pan across Endpoint Activity chart | Visual arc: sparse → spike → sparse | 5s |
+| 10.3 | Hold on final dashboard view | Clean, professional dashboard | 3s |
+
+**Footage Captured:**
+- Complete 30-day story arc
+- Final dashboard impression
+
+---
+
+### Recording Checklist
+
+Before recording, verify these elements are visible and working:
+
+**Dashboard Page (`/dashboard`):**
+- [ ] Endpoint Activity chart loads correctly
+- [ ] AI Sessions chart loads correctly
+- [ ] Time range selector works (30 days option)
+- [ ] Endpoint Table shows all 11 endpoints
+- [ ] Chart tooltips display on hover
+
+**Endpoint Page (`/endpoints/:id`):**
+- [ ] Endpoint Configuration section shows intervals
+- [ ] Runs Table loads with pagination/filtering
+- [ ] AI Sessions Table loads with pagination/filtering
+- [ ] Source badges display correctly (green, blue, purple, orange)
+
+**Run Detail Modal:**
+- [ ] Opens when clicking a run row
+- [ ] Response Body displays formatted JSON
+- [ ] Status, duration, timestamp visible
+- [ ] Close button/click-outside works
+
+**AI Session Detail Modal:**
+- [ ] Opens when clicking an AI session row
+- [ ] Reasoning section displays full text
+- [ ] Tool Calls section shows all calls with inputs/outputs
+- [ ] Token usage and duration visible
+- [ ] Close button/click-outside works
+
+**Data Verification:**
+- [ ] Day 28 shows dramatic spike in charts
+- [ ] Baseline runs (Days 1-27) have visitors: ~1000
+- [ ] Peak runs (Day 28 midday) have visitors: ~6000
+- [ ] AI sessions during peak show critical reasoning
+- [ ] Post-event runs (Days 29-30) return to baseline
+
+---
+
 ## Quick Reference: Dashboard Navigation Map
 
 ### Main Views You'll Use:
 
 1. **Dashboard Home** (`/dashboard`)
-   - Full timeline (7 days)
+   - Full timeline (30 days)
    - Endpoint activity charts
    - Recent activity stats
    - AI session count
@@ -547,13 +801,13 @@ Set up in 5 minutes
    - Success rate statistics
 
 3. **AI Sessions List** (`/dashboard/ai-sessions` or panel)
-   - All 16 sessions chronologically
+   - All ~45 sessions chronologically
    - Click session to view full details
    - Tool calls, reasoning, token usage
 
 4. **Timeline Controls**
-   - Zoom: Focus on specific time ranges
-   - Pan: Navigate through 7 days
+   - Time range selector: 30 days for full view
+   - Zoom: Focus on specific time ranges (Day 28 for Black Friday)
    - Hover: See run details inline
 
 ### Color Coding (Source Attribution):
@@ -567,13 +821,11 @@ Set up in 5 minutes
 - **Surge traffic:** ~6,000 visitors/min (6x)
 - **Baseline page load:** ~800ms
 - **Critical page load:** ~4,500ms (5.6x)
-- **Total runs:** 18,590
-- **AI sessions:** 16 (10 baseline + 6 flash sale)
-- **Baseline interval:** 60s (1 minute)
-- **Surge interval:** 30s (2x faster)
-- **Critical interval:** 20s (3x faster, min constraint)
+- **AI sessions:** ~45 (~9 baseline + ~36 Black Friday)
+- **Baseline interval:** 5min (300,000ms)
+- **Critical interval:** 20s (min constraint)
 - **TTL duration:** 60 minutes
-- **Recovery time:** ~28 minutes (from surge to baseline)
+- **Black Friday duration:** 12 hours (08:00-20:00 on Day 28)
 
 ---
 
@@ -600,7 +852,7 @@ Set up in 5 minutes
 5. **Versatility:** "Works for monitoring, scraping, pipelines..."
 
 ### Common Mistakes to Avoid:
-- ❌ Don't skip the baseline credibility (Days 1-5)
+- ❌ Don't skip the baseline credibility (Days 1-27)
 - ❌ Don't explain too much technical detail
 - ❌ Don't use jargon without context
 - ❌ Don't show UI bugs or incomplete features
@@ -610,66 +862,61 @@ Set up in 5 minutes
 
 ## Appendix: Seed Data Reference
 
-### Flash Sale Timeline (Day 6):
+### Black Friday Timeline (Day 28):
 
-**Phase 1: Baseline (11:45-12:00)**
-- Traffic: 980-1,020 visitors/min
-- Page load: 780-810ms
-- AI: Monitoring, no action
+**Phase 1: Early Surge (08:00-10:00)**
+- Traffic: 1,000 → 3,500 visitors/min (ramping up)
+- Page load: 800 → 1,800ms
+- AI: Detects surge, begins tightening
 
-**Phase 2: Surge (12:00-12:08)**
-- Traffic: 1,100 → 5,100 visitors/min (surge detected)
-- Page load: 850 → 1,850ms
-- AI: Tightens to 30s at 12:06
+**Phase 2: Mid-Morning Peak (10:00-12:00)**
+- Traffic: 3,500 → 6,000 visitors/min (peak levels)
+- Page load: 1,800 → 4,500ms
+- AI: Maximum tightening, activates investigation tier
 
-**Phase 3: Strain (12:08-12:13)**
-- Traffic: 5,200-5,800 visitors/min
-- Page load: 2,100-3,400ms
-- AI: Continues tightening, approaching min constraint
+**Phase 3: Lunch Sustained (12:00-14:00)**
+- Traffic: ~6,000 visitors/min (sustained peak)
+- Page load: ~4,500ms
+- AI: Maintains heightened monitoring, triggers recovery/alerts
 
-**Phase 4: Critical (12:13-12:20)**
-- Traffic: 5,900-6,100 visitors/min
-- Page load: 4,200-4,600ms
-- AI: Maxes out at 20s (min), activates investigation, triggers recovery/alerts
+**Phase 4: Afternoon Steady (14:00-16:00)**
+- Traffic: ~5,500 visitors/min (high but stable)
+- Page load: ~3,200ms
+- AI: Sustained high-frequency monitoring
 
-**Phase 5: Recovery (12:21-12:39)**
-- Traffic: 5,500 → 1,400 visitors/min (declining)
-- Page load: 3,800 → 1,050ms (improving)
-- AI: Eases back to baseline at 12:28
+**Phase 5: Evening Wind-Down (16:00-20:00)**
+- Traffic: 5,500 → 1,500 visitors/min (declining)
+- Page load: 3,200 → 1,000ms (improving)
+- AI: Eases back toward baseline
 
-**Phase 6: Expiration (13:00-13:05)**
-- Traffic: 1,200 → 1,050 visitors/min
-- Page load: 950 → 820ms
-- AI: All hints expire at 13:05 (60-min TTL)
-
-**Phase 7: Stabilization (Day 7+)**
-- Traffic: ~1,010 visitors/min (baseline restored)
-- Page load: ~795ms (baseline restored)
-- AI: Monitors at reduced frequency, confirms stability
+**Phase 6: Post-Event (Days 29-30)**
+- Traffic: ~1,000 visitors/min (baseline restored)
+- Page load: ~800ms (baseline restored)
+- AI: Returns to sparse monitoring, confirms stability
 
 ### Endpoint Breakdown:
 
 **Health Tier (3 endpoints - continuous monitoring):**
-1. Traffic Monitor - 10,112 runs
-2. Order Processor Health - 5,052 runs
-3. Inventory Sync Check - 3,377 runs
+1. Traffic Monitor - Baseline 5min, Min 20s, Max 10min
+2. Order Processor Health - Baseline 5min, Min 30s, Max 10min
+3. Inventory Sync Check - Baseline 10min, Min 60s, Max 15min
 
 **Investigation Tier (2 endpoints - conditional activation):**
-4. Slow Page Analyzer - 11 runs (activated during critical phase)
-5. Database Query Trace - 9 runs (activated during critical phase)
+4. Slow Page Analyzer - Activated during critical phase
+5. Database Query Trace - Activated during critical phase
 
 **Recovery Tier (2 endpoints - one-shot actions):**
-6. Cache Warmup - 5 runs
-7. Scale Checkout Workers - 5 runs
+6. Cache Warmup
+7. Scale Checkout Workers
 
 **Alert Tier (4 endpoints - escalation):**
-8. Slack Operations Alert - 5 runs
-9. Slack Customer Support Alert - 5 runs
-10. Emergency Oncall Page - 4 runs (2-hour cooldown enforced)
-11. Performance Degradation Webhook - 5 runs
+8. Slack Operations Alert
+9. Slack Customer Support Alert
+10. Emergency Oncall Page (2-hour cooldown enforced)
+11. Performance Degradation Webhook
 
 ---
 
-**Last Updated:** 2026-01-06
+**Last Updated:** 2026-01-13
 **Seed Script:** `apps/migrator/src/seed.ts`
 **Demo Rubric:** `docs/internal/marketing/demo-video-rubric.md`

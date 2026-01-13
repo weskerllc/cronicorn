@@ -147,7 +147,7 @@ export function EndpointTable({ endpointTimeSeries, aiSessionTimeSeries, colorMa
                     <ChartStyle id="endpoint-table" config={chartConfig} />
                     <DataTable
                         columns={columns}
-                        data={[...endpointStats, ...endpointStats]} // Duplicate data to allow scrolling
+                        data={endpointStats}
                         enablePagination={true}
                         defaultPageSize={20}
                         emptyMessage="No endpoints found."
