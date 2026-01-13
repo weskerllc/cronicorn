@@ -9,16 +9,17 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
-import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
+import { getDateRangeEndLabel, getDateRangeStartLabel } from "@/lib/time-range-labels";
 
 interface ExecutionDurationChartProps {
     data: Array<EndpointTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
-    /** Selected time range for label display */
-    timeRange?: TimeRangeValue;
+    /** Start date for the displayed range */
+    startDate?: Date;
+    /** End date for the displayed range */
+    endDate?: Date;
 }
 
 /**
@@ -42,7 +43,8 @@ function formatDuration(ms: number): string {
 export function ExecutionDurationChart({
     data,
     chartConfig,
-    timeRange,
+    startDate,
+    endDate,
 }: ExecutionDurationChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
@@ -189,9 +191,9 @@ export function ExecutionDurationChart({
                             tickFormatter={(_value, index) => {
                                 // Show start label on left, end label on right
                                 if (index === 0) {
-                                    return getTimeRangeStartLabel(timeRange);
+                                    return getDateRangeStartLabel(startDate, endDate);
                                 }
-                                return getTimeRangeEndLabel();
+                                return getDateRangeEndLabel(startDate, endDate);
                             }}
                         />
                         <YAxis

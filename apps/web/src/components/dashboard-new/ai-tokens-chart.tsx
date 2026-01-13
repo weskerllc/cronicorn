@@ -10,22 +10,24 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
-import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
+import { getDateRangeEndLabel, getDateRangeStartLabel } from "@/lib/time-range-labels";
 
 interface AITokensChartProps {
     data: Array<AISessionTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
-    /** Selected time range for label display */
-    timeRange?: TimeRangeValue;
+    /** Start date for the displayed range */
+    startDate?: Date;
+    /** End date for the displayed range */
+    endDate?: Date;
 }
 
 export function AITokensChart({
     data,
     chartConfig,
-    timeRange,
+    startDate,
+    endDate,
 }: AITokensChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
@@ -175,9 +177,9 @@ export function AITokensChart({
                             tickFormatter={(_value, index) => {
                                 // Show start label on left, end label on right
                                 if (index === 0) {
-                                    return getTimeRangeStartLabel(timeRange);
+                                    return getDateRangeStartLabel(startDate, endDate);
                                 }
-                                return getTimeRangeEndLabel();
+                                return getDateRangeEndLabel(startDate, endDate);
                             }}
                         />
                         <YAxis
