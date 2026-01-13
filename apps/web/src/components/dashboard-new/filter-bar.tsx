@@ -102,7 +102,13 @@ export function FilterBar({
                 showCompare={false}
                 initialDateFrom={filters.startDate}
                 initialDateTo={filters.endDate}
-                onUpdate={({ range }) => onDateRangeChange({ startDate: range.from, endDate: range.to ?? new Date() })}
+                onUpdate={({ range }) => {
+                    const end = range.to ?? range.from;
+                    const endOfDay = new Date(end.getTime());
+                    endOfDay.setHours(23, 59, 59, 999);
+
+                    onDateRangeChange({ startDate: range.from, endDate: endOfDay });
+                }}
             />
 
         </div>

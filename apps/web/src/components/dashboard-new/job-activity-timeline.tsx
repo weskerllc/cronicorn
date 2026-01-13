@@ -55,17 +55,21 @@ export function JobActivityTimeline({ jobId, jobName, startDate, endDate }: JobA
 
   const title = jobName ? `Activity: ${jobName}` : "Recent Activity";
 
+  const description = allEvents.length === 0 ? (
+    <p>No data to display</p>
+  ) : (
+    <p>Runs and AI Sessions</p>
+  );
+
   return (
     <DashboardCard
       title={title}
+      description={description}
       className="h-[400px]"
     >
       <ScrollArea className="h-full w-full">
         {allEvents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
-            <Activity className="size-6 mb-2 opacity-50" />
-            <p className="text-sm">No activity</p>
-          </div>
+          null
         ) : (
           <div className="p-2 space-y-3">
             {Object.entries(eventsByDate).map(([date, events]) => (

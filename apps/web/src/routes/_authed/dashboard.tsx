@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useMemo } from "react";
-import { subDays, startOfDay, endOfDay } from "date-fns";
+import { endOfDay, startOfDay, subDays } from "date-fns";
 
 import { ErrorState } from "../../components/composed/error-state";
 import { PageSkeleton } from "../../components/skeletons/page-skeleton";
@@ -107,6 +107,7 @@ function DashboardPage() {
   };
 
   const handleDateRangeChange = (range: { startDate: Date; endDate: Date }) => {
+    console.log("Date range changed:", range);
     updateFilters({
       startDate: range.startDate.toISOString(),
       endDate: range.endDate.toISOString(),
