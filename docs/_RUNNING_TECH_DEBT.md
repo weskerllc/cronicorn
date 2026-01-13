@@ -39,3 +39,9 @@
 ### Pricing Checkout Gap (Early Adopter Annual)
 - Addressed: billingPeriod now flows UI → API → Stripe with `STRIPE_PRICE_PRO_ANNUAL`. Remaining action: set live annual price ID in prod secrets.
 
+## Dashboard time range alignment
+**Status**: Identified
+
+- DashboardManager now requires `startDate`/`endDate` inputs, but time-series generation still anchors to `clock.now()` instead of the provided `endDate`. If callers ever ask for historical windows (not ending "now"), returned series will be misaligned with the requested range.
+- Action: Confirm consumer contract (should `endDate` always be `now`?). If not, update manager to anchor buckets to `endDate` and add tests for non-now ranges.
+

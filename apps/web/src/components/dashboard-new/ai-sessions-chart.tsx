@@ -10,22 +10,24 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
-import type { TimeRangeValue } from "@/lib/time-range-labels";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import { formatTimeRangeTooltipLabel, getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
+import { getDateRangeEndLabel, getDateRangeStartLabel } from "@/lib/time-range-labels";
 
 interface AISessionsChartProps {
     data: Array<AISessionTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
-    /** Selected time range for label display */
-    timeRange?: TimeRangeValue;
+    /** Start date for the displayed range */
+    startDate?: Date;
+    /** End date for the displayed range */
+    endDate?: Date;
 }
 
 export function AISessionsChart({
     data,
     chartConfig,
-    timeRange,
+    startDate,
+    endDate,
 }: AISessionsChartProps) {
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
@@ -57,9 +59,8 @@ export function AISessionsChart({
             if (!endpointSet.has(item.endpointName)) return;
             if (!dateMap.has(item.date)) {
                 // Store timestamp for X-axis domain calculation
-                // Parse as local time by adding time component (prevents UTC offset issues)
                 dateMap.set(item.date, {
-                    date: new Date(item.date + 'T00:00:00').getTime()
+                    date: new Date(item.date).getTime()
                 });
             }
             const dateEntry = dateMap.get(item.date)!;
@@ -176,9 +177,9 @@ export function AISessionsChart({
                             tickFormatter={(_value, index) => {
                                 // Show start label on left, end label on right
                                 if (index === 0) {
-                                    return getTimeRangeStartLabel(timeRange);
+                                    return getDateRangeStartLabel(startDate, endDate);
                                 }
-                                return getTimeRangeEndLabel();
+                                return getDateRangeEndLabel(startDate, endDate);
                             }}
                         />
                         <YAxis
@@ -203,14 +204,17 @@ export function AISessionsChart({
                                 });
 
                                 const date = new Date(Number(payload[0]?.payload?.date));
-                                const formattedDateLabel = formatTimeRangeTooltipLabel(date, timeRange);
 
                                 // If all values are zero, show "No activity" message
                                 if (filteredPayload.length === 0) {
                                     return (
                                         <div className="rounded-lg border bg-background p-2 shadow-sm">
                                             <div className="text-muted-foreground text-xs">
-                                                {formattedDateLabel}
+                                                {date.toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric",
+                                                })}
                                             </div>
                                             <div className="text-muted-foreground mt-1 text-xs">No activity</div>
                                         </div>
@@ -221,7 +225,11 @@ export function AISessionsChart({
                                     <ChartTooltipContent
                                         active={active}
                                         payload={filteredPayload}
-                                        label={formattedDateLabel}
+                                        label={date.toLocaleDateString("en-US", {
+                                            month: "short",
+                                            day: "numeric",
+                                            year: "numeric",
+                                        })}
                                         indicator="dot"
                                     />
                                 );
