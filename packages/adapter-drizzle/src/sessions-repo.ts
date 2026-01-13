@@ -1,7 +1,7 @@
 import type { SessionsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, count, desc, eq, gte, inArray, isNull, ne, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql, sum } from "drizzle-orm";
 
 import { aiAnalysisSessions, jobEndpoints, jobs } from "./schema.js";
 
@@ -144,6 +144,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     endpointLimit?: number;
     granularity?: "hour" | "day";
   }): Promise<Array<{
@@ -161,6 +162,9 @@ export class DrizzleSessionsRepo implements SessionsRepo {
 
     if (filters.sinceDate) {
       conditions.push(gte(aiAnalysisSessions.analyzedAt, filters.sinceDate));
+    }
+    if (filters.untilDate) {
+      conditions.push(lte(aiAnalysisSessions.analyzedAt, filters.untilDate));
     }
     if (filters.jobId) {
       conditions.push(eq(jobs.id, filters.jobId));
@@ -234,6 +238,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     limit?: number;
     offset?: number;
   }): Promise<{
@@ -262,6 +267,9 @@ export class DrizzleSessionsRepo implements SessionsRepo {
 
     if (filters.sinceDate) {
       conditions.push(gte(aiAnalysisSessions.analyzedAt, filters.sinceDate));
+    }
+    if (filters.untilDate) {
+      conditions.push(lte(aiAnalysisSessions.analyzedAt, filters.untilDate));
     }
 
     const limit = filters.limit ?? 50;

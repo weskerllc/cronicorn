@@ -1,4 +1,3 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@cronicorn/ui-library/components/command";
@@ -7,28 +6,25 @@ import { cn } from "@cronicorn/ui-library/lib/utils";
 import { useState } from "react";
 
 import type { JobHealthItem } from "@cronicorn/api-contracts/dashboard";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 export interface DashboardFilters {
     jobId?: string | null;
-    timeRange?: string | null;
+    startDate?: Date;
+    endDate?: Date;
 }
 
 interface FilterBarProps {
     filters: DashboardFilters;
-    onFilterChange: (key: keyof DashboardFilters, value: string | null) => void;
+    onFilterChange: (key: "jobId", value: string | null) => void;
+    onDateRangeChange: (range: { startDate: Date; endDate: Date }) => void;
     availableJobs?: Array<JobHealthItem>;
 }
-
-const TIME_RANGE_OPTIONS = [
-    { value: "24h", label: "Last 24 Hours" },
-    { value: "7d", label: "Last 7 Days" },
-    { value: "30d", label: "Last 30 Days" },
-    { value: "all", label: "All Time" },
-];
 
 export function FilterBar({
     filters,
     onFilterChange,
+    onDateRangeChange,
     availableJobs = [],
 }: FilterBarProps) {
     const [jobComboOpen, setJobComboOpen] = useState(false);
@@ -101,22 +97,12 @@ export function FilterBar({
                 </Popover>
             </div>
 
-            {/* Time Range Filter */}
-            <Select
-                value={filters.timeRange || "7d"}
-                onValueChange={(value) => onFilterChange("timeRange", value)}
-            >
-                <SelectTrigger size="sm" id="timeRange-filter">
-                    <SelectValue placeholder="Last 7 Days" />
-                </SelectTrigger>
-                <SelectContent>
-                    {TIME_RANGE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            {/* Date Range Picker */}
+            <DateRangePicker
+                startDate={filters.startDate}
+                endDate={filters.endDate}
+                onRangeChange={onDateRangeChange}
+            />
 
         </div>
     );

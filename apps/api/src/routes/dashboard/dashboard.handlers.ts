@@ -14,10 +14,10 @@ export const getDashboardStats: AppRouteHandler<routes.GetDashboardStatsRoute> =
 
   return c.get("withDashboardManager")(async (manager) => {
     const stats = await manager.getDashboardStats(userId, {
-      days: query.days,
       jobId: query.jobId,
       source: query.source,
-      timeRange: query.timeRange,
+      startDate: query.startDate,
+      endDate: query.endDate,
       endpointLimit: query.endpointLimit,
     });
     return c.json(mappers.mapDashboardStatsToResponse(stats), HTTPStatusCodes.OK);
@@ -32,7 +32,8 @@ export const getDashboardActivity: AppRouteHandler<routes.GetDashboardActivityRo
 
   return c.get("withDashboardManager")(async (manager) => {
     const timeline = await manager.getJobActivityTimeline(userId, query.jobId, {
-      timeRange: query.timeRange,
+      startDate: query.startDate,
+      endDate: query.endDate,
       limit: query.limit,
       offset: query.offset,
     });

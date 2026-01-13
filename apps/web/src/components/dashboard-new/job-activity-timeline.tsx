@@ -12,7 +12,10 @@ import { dashboardActivityInfiniteQueryOptions } from "@/lib/api-client/queries/
 interface JobActivityTimelineProps {
   jobId?: string | null;
   jobName?: string;
-  timeRange?: "24h" | "7d" | "30d" | "all";
+  /** Start date for the activity range */
+  startDate: Date;
+  /** End date for the activity range */
+  endDate: Date;
 }
 
 const PAGE_SIZE = 20;
@@ -24,16 +27,12 @@ function formatDate(date: Date): string {
   });
 }
 
-// Convert "all" to "30d" for the API
-function normalizeTimeRange(range: "24h" | "7d" | "30d" | "all" = "7d"): "24h" | "7d" | "30d" {
-  return range === "all" ? "30d" : range;
-}
-
-export function JobActivityTimeline({ jobId, jobName, timeRange = "7d" }: JobActivityTimelineProps) {
+export function JobActivityTimeline({ jobId, jobName, startDate, endDate }: JobActivityTimelineProps) {
   const { data, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery(
     dashboardActivityInfiniteQueryOptions({
       jobId: jobId ?? undefined,
-      timeRange: normalizeTimeRange(timeRange),
+      startDate,
+      endDate,
       limit: PAGE_SIZE,
     })
   );

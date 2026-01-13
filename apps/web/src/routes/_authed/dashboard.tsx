@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useMemo } from "react";
+import { subDays, startOfDay, endOfDay } from "date-fns";
 
 import { ErrorState } from "../../components/composed/error-state";
 import { PageSkeleton } from "../../components/skeletons/page-skeleton";
@@ -21,34 +22,49 @@ import { useDashboardFilters } from "@/hooks/useDashboardFilters";
 import { buildChartConfigFromMappings, createEndpointColorMappings } from "@/lib/endpoint-colors";
 
 // Search params schema for dashboard filters
+// Dates are stored as ISO strings in the URL
 const dashboardSearchSchema = z.object({
   jobId: z.string().optional().catch(undefined),
-  timeRange: z.enum(['24h', '7d', '30d', 'all']).optional().catch('7d'),
+  startDate: z.string().optional().catch(undefined),
+  endDate: z.string().optional().catch(undefined),
 });
 
 export type DashboardSearch = z.infer<typeof dashboardSearchSchema>;
 
-// Helper to convert timeRange to days for chart data points
-function timeRangeToDays(timeRange?: '24h' | '7d' | '30d' | 'all'): number {
-  switch (timeRange) {
-    case '24h': return 1; // 1 day with hourly granularity = 24 data points
-    case '7d': return 7;
-    case '30d': return 30;
-    case 'all': return 30; // Cap at 30 days for performance
-    default: return 7;
+// Default date range: last 7 days
+function getDefaultDateRange(): { startDate: Date; endDate: Date } {
+  const end = endOfDay(new Date());
+  const start = startOfDay(subDays(end, 7));
+  return { startDate: start, endDate: end };
+}
+
+// Parse date strings from URL or use defaults
+function parseDateRange(startDateStr?: string, endDateStr?: string): { startDate: Date; endDate: Date } {
+  if (startDateStr && endDateStr) {
+    try {
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+      if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+        return { startDate, endDate };
+      }
+    } catch {
+      // Fall through to defaults
+    }
   }
+  return getDefaultDateRange();
 }
 
 export const Route = createFileRoute("/_authed/dashboard")({
   validateSearch: dashboardSearchSchema,
-  loaderDeps: ({ search: { jobId, timeRange } }) => ({ jobId, timeRange }),
-  loader: async ({ context: { queryClient }, deps: { jobId, timeRange } }) => {
+  loaderDeps: ({ search: { jobId, startDate, endDate } }) => ({ jobId, startDate, endDate }),
+  loader: async ({ context: { queryClient }, deps: { jobId, startDate, endDate } }) => {
+    const { startDate: parsedStart, endDate: parsedEnd } = parseDateRange(startDate, endDate);
     // ensureQueryData will fetch if not cached, or return cached data if fresh
     await queryClient.ensureQueryData(
       dashboardStatsQueryOptions({
-        days: timeRangeToDays(timeRange),
         jobId,
-        timeRange
+        startDate: parsedStart,
+        endDate: parsedEnd,
       })
     );
   },
@@ -65,14 +81,19 @@ export const Route = createFileRoute("/_authed/dashboard")({
 });
 
 function DashboardPage() {
-  const { filters, toggleFilter } = useDashboardFilters();
+  const { filters, updateFilters, toggleFilter } = useDashboardFilters();
 
+  // Parse dates from URL
+  const { startDate, endDate } = useMemo(
+    () => parseDateRange(filters.startDate, filters.endDate),
+    [filters.startDate, filters.endDate]
+  );
 
   const { data: dashboardData, isPlaceholderData } = useQuery({
     ...dashboardStatsQueryOptions({
-      days: timeRangeToDays(filters.timeRange),
       jobId: filters.jobId,
-      timeRange: filters.timeRange
+      startDate,
+      endDate,
     }),
     placeholderData: keepPreviousData,
   });
@@ -83,6 +104,13 @@ function DashboardPage() {
     } else {
       toggleFilter(key, value);
     }
+  };
+
+  const handleDateRangeChange = (range: { startDate: Date; endDate: Date }) => {
+    updateFilters({
+      startDate: range.startDate.toISOString(),
+      endDate: range.endDate.toISOString(),
+    });
   };
 
   // Calculate color mappings once for all components
@@ -131,9 +159,11 @@ function DashboardPage() {
         <FilterBar
           filters={{
             jobId: filters.jobId || null,
-            timeRange: filters.timeRange || "7d",
+            startDate,
+            endDate,
           }}
           onFilterChange={handleFilterChange}
+          onDateRangeChange={handleDateRangeChange}
           availableJobs={dashboardData?.jobHealth || []}
         />
       } />
@@ -158,7 +188,8 @@ function DashboardPage() {
       <JobActivityTimeline
         jobId={filters.jobId ?? null}
         jobName={selectedJobName}
-        timeRange={filters.timeRange}
+        startDate={startDate}
+        endDate={endDate}
       />
 
       <EndpointTable
@@ -174,12 +205,14 @@ function DashboardPage() {
         <AISessionsChart
           data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
-          timeRange={filters.timeRange}
+          startDate={startDate}
+          endDate={endDate}
         />
         <AITokensChart
           data={dashboardData?.aiSessionTimeSeries || []}
           chartConfig={endpointChartConfig}
-          timeRange={filters.timeRange}
+          startDate={startDate}
+          endDate={endDate}
         />
       </GridLayout>
 
@@ -187,12 +220,14 @@ function DashboardPage() {
         <ExecutionTimelineChart
           data={dashboardData?.endpointTimeSeries || []}
           chartConfig={endpointChartConfig}
-          timeRange={filters.timeRange}
+          startDate={startDate}
+          endDate={endDate}
         />
         <ExecutionDurationChart
           data={dashboardData?.endpointTimeSeries || []}
           chartConfig={endpointChartConfig}
-          timeRange={filters.timeRange}
+          startDate={startDate}
+          endDate={endDate}
         />
 
       </GridLayout>

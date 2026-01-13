@@ -81,59 +81,39 @@ export class DashboardManager {
    *
    * @param userId - The user ID
    * @param options - Query options
-   * @param options.days - Number of days for time-series data (default: 7, max: 30)
    * @param options.jobId - Filter by job ID (optional)
    * @param options.source - Filter by scheduling source (optional)
-   * @param options.timeRange - Time range filter: 24h, 7d, 30d, all (optional)
+   * @param options.startDate - Start date for filtering runs (required)
+   * @param options.endDate - End date for filtering runs (required)
    * @param options.endpointLimit - Maximum number of endpoints in time-series (default: 20)
    * @returns Aggregated dashboard statistics
    */
   async getDashboardStats(
     userId: string,
     options: {
-      days?: number;
       jobId?: string;
       source?: string;
-      timeRange?: "24h" | "7d" | "30d" | "all";
+      startDate: Date;
+      endDate: Date;
       endpointLimit?: number;
-    } = {},
+    },
   ): Promise<DashboardStats> {
-    const days = Math.min(options.days ?? 7, 30);
     const now = this.clock.now();
 
-    // Convert timeRange to sinceDate for filtering runs
-    let sinceDate: Date | undefined;
-    if (options.timeRange) {
-      switch (options.timeRange) {
-        case "24h":
-          sinceDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-          break;
-        case "7d":
-          sinceDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case "30d":
-          sinceDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          break;
-        case "all":
-          sinceDate = undefined; // No time filter
-          break;
-      }
-    }
+    // Calculate span in days for granularity and bucketing decisions
+    const spanMs = options.endDate.getTime() - options.startDate.getTime();
+    const spanDays = Math.max(1, Math.ceil(spanMs / (24 * 60 * 60 * 1000)));
 
-    // If no timeRange specified, use days for sinceDate
-    if (!sinceDate) {
-      sinceDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-    }
-
-    // Determine if we should use hourly granularity (for 24h view)
-    const useHourlyGranularity = options.timeRange === "24h";
+    // Use hourly granularity for spans of 1 day or less
+    const useHourlyGranularity = spanDays <= 1;
 
     // Build filter object for queries
     const filters = {
       userId,
       jobId: options.jobId,
       source: options.source,
-      sinceDate: sinceDate!, // Always defined by this point
+      sinceDate: options.startDate,
+      untilDate: options.endDate,
       granularity: useHourlyGranularity ? ("hour" as const) : ("day" as const),
     };
 
@@ -152,22 +132,23 @@ export class DashboardManager {
     ] = await Promise.all([
       this.getJobsStats(userId),
       this.getEndpointsStats(userId),
-      this.calculateOverallSuccessRate(userId, days),
+      this.calculateOverallSuccessRate(userId, spanDays),
       this.getRecentActivity(userId, now),
-      // New aggregated queries - now respects time filter
-      this.runsRepo.getJobHealthDistribution(userId, { sinceDate: filters.sinceDate }),
+      // Aggregated queries - respects date range filter
+      this.runsRepo.getJobHealthDistribution(userId, { sinceDate: filters.sinceDate, untilDate: filters.untilDate }),
       this.runsRepo.getFilteredMetrics(filters),
-      // sourceDistribution should NOT be filtered by source (only by jobId and sinceDate)
+      // sourceDistribution should NOT be filtered by source (only by jobId and date range)
       // This allows it to show the full distribution while other charts are filtered
       this.runsRepo.getSourceDistribution({
         userId,
         jobId: filters.jobId,
         sinceDate: filters.sinceDate,
+        untilDate: filters.untilDate,
         // Explicitly omit source filter
       }),
-      this.getRunTimeSeries(userId, days, now, filters),
-      this.getEndpointTimeSeries(userId, days, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
-      this.getAISessionTimeSeries(userId, days, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
+      this.getRunTimeSeries(userId, spanDays, now, filters),
+      this.getEndpointTimeSeries(userId, spanDays, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
+      this.getAISessionTimeSeries(userId, spanDays, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
     ]);
 
     // Calculate max stacked values for chart Y-axis domains
@@ -326,6 +307,7 @@ export class DashboardManager {
    * @param filters.jobId - Job ID filter (optional)
    * @param filters.source - Scheduling source filter (optional)
    * @param filters.sinceDate - Start date for filtering runs
+   * @param filters.untilDate - End date for filtering runs
    * @param filters.granularity - Time bucket granularity (hour or day)
    * @returns Array of daily run counts
    */
@@ -337,7 +319,8 @@ export class DashboardManager {
       userId: string;
       jobId?: string;
       source?: string;
-      sinceDate: Date; // Required for this method
+      sinceDate: Date;
+      untilDate: Date;
       granularity: "hour" | "day";
     },
   ): Promise<RunTimeSeriesPoint[]> {
@@ -441,6 +424,7 @@ export class DashboardManager {
    * @param filters.jobId - Job ID filter (optional)
    * @param filters.source - Scheduling source filter (optional)
    * @param filters.sinceDate - Start date for filtering runs
+   * @param filters.untilDate - End date for filtering runs
    * @param filters.granularity - Time bucket granularity (hour or day)
    * @returns Array of daily run counts by endpoint
    */
@@ -453,6 +437,7 @@ export class DashboardManager {
       jobId?: string;
       source?: string;
       sinceDate: Date;
+      untilDate: Date;
       endpointLimit?: number;
       granularity: "hour" | "day";
     },
@@ -587,6 +572,7 @@ export class DashboardManager {
    * @param filters.userId - User ID filter
    * @param filters.jobId - Job ID filter (optional)
    * @param filters.sinceDate - Start date for filtering sessions
+   * @param filters.untilDate - End date for filtering sessions
    * @param filters.endpointLimit - Maximum number of endpoints to include (sorted by session count DESC)
    * @param filters.granularity - Time bucket granularity (hour or day)
    * @returns Array of daily AI session counts
@@ -599,6 +585,7 @@ export class DashboardManager {
       userId: string;
       jobId?: string;
       sinceDate: Date;
+      untilDate: Date;
       endpointLimit?: number;
       granularity: "hour" | "day";
     },
@@ -757,7 +744,8 @@ export class DashboardManager {
    * @param userId - The user ID
    * @param jobId - Optional job ID (omit for all jobs)
    * @param options - Query options
-   * @param options.timeRange - Time range filter: 24h, 7d, 30d (default: 7d)
+   * @param options.startDate - Start date for filtering events (required)
+   * @param options.endDate - End date for filtering events (required)
    * @param options.limit - Maximum events to return (default: 50)
    * @param options.offset - Pagination offset (default: 0)
    * @returns Combined timeline of runs and AI sessions
@@ -766,29 +754,14 @@ export class DashboardManager {
     userId: string,
     jobId: string | undefined,
     options: {
-      timeRange?: "24h" | "7d" | "30d";
+      startDate: Date;
+      endDate: Date;
       limit?: number;
       offset?: number;
-    } = {},
+    },
   ): Promise<JobActivityTimeline> {
-    const now = this.clock.now();
-    const timeRange = options.timeRange ?? "7d";
     const limit = Math.min(options.limit ?? 50, 100);
     const offset = options.offset ?? 0;
-
-    // Convert timeRange to sinceDate
-    let sinceDate: Date;
-    switch (timeRange) {
-      case "24h":
-        sinceDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case "7d":
-        sinceDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "30d":
-        sinceDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-    }
 
     // Fetch runs and sessions in parallel
     // We fetch more than needed from each source to handle interleaving properly
@@ -797,14 +770,16 @@ export class DashboardManager {
       this.runsRepo.getJobRuns({
         userId,
         jobId,
-        sinceDate,
+        sinceDate: options.startDate,
+        untilDate: options.endDate,
         limit: fetchLimit,
         offset: 0,
       }),
       this.sessionsRepo.getJobSessions({
         userId,
         jobId,
-        sinceDate,
+        sinceDate: options.startDate,
+        untilDate: options.endDate,
         limit: fetchLimit,
         offset: 0,
       }),

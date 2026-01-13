@@ -60,12 +60,11 @@ export function useDashboardFilters() {
 
     /**
      * Clear all filters (reset to defaults)
+     * This clears all filters, letting the route use default date range
      */
     const clearAllFilters = useCallback(() => {
         navigate({
-            search: {
-                timeRange: '7d', // Keep default timeRange
-            },
+            search: {},
             resetScroll: false, // Prevent scroll to top when filters change
         });
     }, [navigate]);
