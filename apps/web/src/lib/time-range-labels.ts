@@ -2,53 +2,63 @@
  * Utility functions for generating user-friendly time range labels for charts
  */
 
-export type TimeRangeValue = '24h' | '7d' | '30d' | 'all';
+import { differenceInDays, format, isToday } from "date-fns";
 
 /**
- * Formats a date label for tooltips based on the selected time range.
- * Shows hour-level precision for 24h, otherwise shows date only.
+ * Generates user-friendly labels for a date range.
+ * For ranges ending today, shows relative format like "7d ago" to "now".
+ * For custom ranges, shows formatted dates.
+ *
+ * @param startDate - The start of the range
+ * @param endDate - The end of the range
+ * @returns An object with start and end labels
  */
-export function formatTimeRangeTooltipLabel(date: Date, timeRange?: TimeRangeValue): string {
-  if (timeRange === '24h') {
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+export function getDateRangeLabels(
+  startDate?: Date,
+  endDate?: Date,
+): { start: string; end: string } {
+  if (!startDate || !endDate) {
+    return { start: "7d ago", end: "now" };
   }
 
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const daysDiff = differenceInDays(endDate, startDate);
+  const endsToday = isToday(endDate);
+
+  // For ranges ending today, use relative labels
+  if (endsToday) {
+    if (daysDiff === 0) {
+      return { start: "today", end: "now" };
+    }
+    return { start: `${daysDiff}d ago`, end: "now" };
+  }
+
+  // For custom historical ranges, use formatted dates
+  return {
+    start: format(startDate, "MMM d"),
+    end: format(endDate, "MMM d"),
+  };
 }
 
 /**
- * Generates a user-friendly label for the start of a time range
- * @param timeRange - The selected time range filter
- * @returns A human-readable label like "1d ago", "7d ago", etc.
+ * Generates a user-friendly label for the start of a date range.
+ * Backwards-compatible wrapper for chart components.
+ *
+ * @param startDate - The start of the range
+ * @param endDate - The end of the range
+ * @returns A human-readable label like "7d ago", "Jan 15", etc.
  */
-export function getTimeRangeStartLabel(timeRange?: TimeRangeValue): string {
-  switch (timeRange) {
-    case '24h':
-      return '1d ago';
-    case '7d':
-      return '7d ago';
-    case '30d':
-      return '30d ago';
-    case 'all':
-      return '30d ago'; // All time is capped at 30 days
-    default:
-      return '7d ago';
-  }
+export function getDateRangeStartLabel(startDate?: Date, endDate?: Date): string {
+  return getDateRangeLabels(startDate, endDate).start;
 }
 
 /**
- * Generates a user-friendly label for the end of a time range (typically "now")
- * @returns "now" to indicate the current time
+ * Generates a user-friendly label for the end of a date range.
+ * Backwards-compatible wrapper for chart components.
+ *
+ * @param startDate - The start of the range
+ * @param endDate - The end of the range
+ * @returns A human-readable label like "now", "Jan 22", etc.
  */
-export function getTimeRangeEndLabel(): string {
-  return 'now';
+export function getDateRangeEndLabel(startDate?: Date, endDate?: Date): string {
+  return getDateRangeLabels(startDate, endDate).end;
 }

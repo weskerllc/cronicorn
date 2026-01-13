@@ -262,15 +262,17 @@ export type RunsRepo = {
 
   /**
    * Get aggregated job health distribution.
-   * Returns success/failure counts grouped by job, optionally filtered by time range.
+   * Returns success/failure counts grouped by job, filtered by date range.
    *
    * @param userId - The user ID
-   * @param filters - Optional filter criteria
-   * @param filters.sinceDate - Only count runs since this date (optional)
+   * @param filters - Filter criteria
+   * @param filters.sinceDate - Only count runs since this date
+   * @param filters.untilDate - Only count runs until this date
    * @returns Array of jobs with run counts
    */
   getJobHealthDistribution: (userId: string, filters?: {
     sinceDate?: Date;
+    untilDate?: Date;
   }) => Promise<Array<{ jobId: string; jobName: string; successCount: number; failureCount: number }>>;
 
   /**
@@ -284,6 +286,7 @@ export type RunsRepo = {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    untilDate?: Date;
   }) => Promise<{
     totalRuns: number;
     successCount: number;
@@ -302,6 +305,7 @@ export type RunsRepo = {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    untilDate?: Date;
   }) => Promise<Array<{
     source: string;
     count: number;
@@ -318,6 +322,7 @@ export type RunsRepo = {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    untilDate?: Date;
   }) => Promise<Array<{
     date: string; // YYYY-MM-DD
     success: number;
@@ -336,6 +341,7 @@ export type RunsRepo = {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     endpointLimit?: number;
   }) => Promise<Array<{
     date: string; // YYYY-MM-DD
@@ -438,6 +444,7 @@ export type RunsRepo = {
    * @param filters.userId - User ID for authorization
    * @param filters.jobId - Optional job ID to filter by (omit for all jobs)
    * @param filters.sinceDate - Optional start date filter
+   * @param filters.untilDate - Optional end date filter
    * @param filters.limit - Maximum runs to return (default: 50)
    * @param filters.offset - Pagination offset
    * @returns Array of runs with endpoint info, ordered by startedAt DESC
@@ -446,6 +453,7 @@ export type RunsRepo = {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     limit?: number;
     offset?: number;
   }) => Promise<{
@@ -545,6 +553,7 @@ export type SessionsRepo = {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     endpointLimit?: number;
   }) => Promise<Array<{
     date: string; // YYYY-MM-DD
@@ -562,6 +571,7 @@ export type SessionsRepo = {
    * @param filters.userId - User ID for authorization
    * @param filters.jobId - Optional job ID to filter by (omit for all jobs)
    * @param filters.sinceDate - Optional start date filter
+   * @param filters.untilDate - Optional end date filter
    * @param filters.limit - Maximum sessions to return (default: 50)
    * @param filters.offset - Pagination offset
    * @returns Array of sessions with endpoint info, ordered by analyzedAt DESC
@@ -570,6 +580,7 @@ export type SessionsRepo = {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     limit?: number;
     offset?: number;
   }) => Promise<{

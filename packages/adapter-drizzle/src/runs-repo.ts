@@ -183,6 +183,7 @@ export class DrizzleRunsRepo implements RunsRepo {
 
   async getJobHealthDistribution(userId: string, filters?: {
     sinceDate?: Date;
+    untilDate?: Date;
   }): Promise<Array<{
       jobId: string;
       jobName: string;
@@ -201,12 +202,16 @@ export class DrizzleRunsRepo implements RunsRepo {
 
     // Build LEFT JOIN condition with optional date filter
     // This ensures jobs are always included, but only runs matching the filter are counted
-    const runsJoinCondition = filters?.sinceDate
-      ? and(
-        eq(runs.endpointId, jobEndpoints.id),
-        gte(runs.startedAt, filters.sinceDate),
-      )!
-      : eq(runs.endpointId, jobEndpoints.id);
+    const dateConditions = [eq(runs.endpointId, jobEndpoints.id)];
+    if (filters?.sinceDate) {
+      dateConditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+    if (filters?.untilDate) {
+      dateConditions.push(lte(runs.startedAt, filters.untilDate));
+    }
+    const runsJoinCondition = dateConditions.length > 1
+      ? and(...dateConditions)!
+      : dateConditions[0];
 
     const results = await this.tx
       .select({
@@ -234,6 +239,7 @@ export class DrizzleRunsRepo implements RunsRepo {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    untilDate?: Date;
   }): Promise<{
       totalRuns: number;
       successCount: number;
@@ -254,6 +260,9 @@ export class DrizzleRunsRepo implements RunsRepo {
     }
     if (filters.sinceDate) {
       conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+    if (filters.untilDate) {
+      conditions.push(lte(runs.startedAt, filters.untilDate));
     }
 
     const result = await this.tx
@@ -282,6 +291,7 @@ export class DrizzleRunsRepo implements RunsRepo {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    untilDate?: Date;
   }): Promise<Array<{
       source: string;
       count: number;
@@ -301,6 +311,9 @@ export class DrizzleRunsRepo implements RunsRepo {
     }
     if (filters.sinceDate) {
       conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+    if (filters.untilDate) {
+      conditions.push(lte(runs.startedAt, filters.untilDate));
     }
 
     const results = await this.tx
@@ -325,6 +338,7 @@ export class DrizzleRunsRepo implements RunsRepo {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     granularity?: "hour" | "day";
   }): Promise<Array<{
       date: string;
@@ -339,6 +353,9 @@ export class DrizzleRunsRepo implements RunsRepo {
 
     if (filters.sinceDate) {
       conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+    if (filters.untilDate) {
+      conditions.push(lte(runs.startedAt, filters.untilDate));
     }
     if (filters.jobId) {
       conditions.push(eq(jobs.id, filters.jobId));
@@ -378,6 +395,7 @@ export class DrizzleRunsRepo implements RunsRepo {
     jobId?: string;
     source?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     endpointLimit?: number;
     granularity?: "hour" | "day";
   }): Promise<Array<{
@@ -396,6 +414,9 @@ export class DrizzleRunsRepo implements RunsRepo {
 
     if (filters.sinceDate) {
       conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+    if (filters.untilDate) {
+      conditions.push(lte(runs.startedAt, filters.untilDate));
     }
     if (filters.jobId) {
       conditions.push(eq(jobs.id, filters.jobId));
@@ -828,6 +849,7 @@ export class DrizzleRunsRepo implements RunsRepo {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     limit?: number;
     offset?: number;
   }): Promise<{
@@ -856,6 +878,9 @@ export class DrizzleRunsRepo implements RunsRepo {
 
     if (filters.sinceDate) {
       conditions.push(gte(runs.startedAt, filters.sinceDate));
+    }
+    if (filters.untilDate) {
+      conditions.push(lte(runs.startedAt, filters.untilDate));
     }
 
     const limit = filters.limit ?? 50;

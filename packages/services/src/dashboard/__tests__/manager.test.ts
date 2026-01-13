@@ -17,6 +17,12 @@ describe("dashboardManager", () => {
   let mockSessionsRepo: SessionsRepo;
   let fakeClock: Clock;
   let baseDate: Date;
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  const dateRange = (days: number) => ({
+    startDate: new Date(baseDate.getTime() - days * DAY_MS),
+    endDate: baseDate,
+  });
 
   beforeEach(() => {
     // Setup base date for consistent testing
@@ -104,7 +110,7 @@ describe("dashboardManager", () => {
   // ==================== getDashboardStats Tests ====================
 
   describe("getDashboardStats", () => {
-    it("should return complete dashboard stats with default 7 days", async () => {
+    it("should return complete dashboard stats for a 7-day window", async () => {
       const mockJob: Job & { endpointCount: number } = {
         id: "job-1",
         userId: "user-1",
@@ -187,7 +193,9 @@ describe("dashboardManager", () => {
         total: 2,
       });
 
-      const result = await manager.getDashboardStats("user-1");
+      const range = dateRange(7);
+
+      const result = await manager.getDashboardStats("user-1", range);
 
       expect(result.jobs.total).toBe(1);
       expect(result.endpoints.total).toBe(2);
@@ -195,17 +203,22 @@ describe("dashboardManager", () => {
       expect(result.endpoints.paused).toBe(1);
       expect(result.successRate.overall).toBeGreaterThan(0);
       expect(result.recentActivity.runs24h).toBe(2);
-      expect(result.runTimeSeries).toHaveLength(7); // Default 7 days
+      expect(result.runTimeSeries).toHaveLength(7); // 7-day range -> 7 buckets
+      expect(mockRunsRepo.getFilteredMetrics).toHaveBeenCalledWith(expect.objectContaining({
+        sinceDate: range.startDate,
+        untilDate: range.endDate,
+        granularity: "day",
+      }));
     });
 
-    it("should cap days parameter at 30", async () => {
+    it("should use 3-day buckets for a 30-day window", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { days: 100 });
+      const result = await manager.getDashboardStats("user-1", dateRange(30));
 
-      // Should create 30 days of time series (capped), but with 3-day buckets = 10 buckets
+      // 30 days with 3-day buckets yields 10 buckets
       expect(result.runTimeSeries).toHaveLength(10);
     });
 
@@ -214,7 +227,7 @@ describe("dashboardManager", () => {
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1");
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       expect(result.jobs.total).toBe(0);
       expect(result.endpoints.total).toBe(0);
@@ -279,7 +292,7 @@ describe("dashboardManager", () => {
         failureStreak: 0,
       });
 
-      const result = await manager.getDashboardStats("user-1", { days: 7 });
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       expect(result.successRate.overall).toBe(90.0);
       expect(result.successRate.trend).toBe("up");
@@ -351,7 +364,7 @@ describe("dashboardManager", () => {
           failureStreak: 0,
         });
 
-      const result = await manager.getDashboardStats("user-1", { days: 7 });
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       expect(result.successRate.overall).toBe(70.0);
       expect(result.successRate.trend).toBe("down");
@@ -407,7 +420,7 @@ describe("dashboardManager", () => {
           failureStreak: 0,
         });
 
-      const result = await manager.getDashboardStats("user-1", { days: 7 });
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       expect(result.successRate.trend).toBe("stable");
     });
@@ -444,7 +457,7 @@ describe("dashboardManager", () => {
         failureStreak: 0,
       });
 
-      const result = await manager.getDashboardStats("user-1", { days: 7 });
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       expect(result.successRate.overall).toBe(0);
       expect(result.successRate.trend).toBe("stable");
@@ -482,7 +495,7 @@ describe("dashboardManager", () => {
         failureStreak: 10,
       });
 
-      const result = await manager.getDashboardStats("user-1", { days: 7 });
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       expect(result.successRate.overall).toBe(0);
     });
@@ -531,7 +544,7 @@ describe("dashboardManager", () => {
         total: 4,
       });
 
-      const result = await manager.getDashboardStats("user-1");
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       expect(result.recentActivity.runs24h).toBe(3);
       expect(result.recentActivity.success24h).toBe(2);
@@ -554,7 +567,7 @@ describe("dashboardManager", () => {
         total: 1,
       });
 
-      const result = await manager.getDashboardStats("user-1");
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       expect(result.recentActivity.failure24h).toBe(1);
     });
@@ -568,7 +581,7 @@ describe("dashboardManager", () => {
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { days: 7 });
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       expect(result.runTimeSeries).toHaveLength(7);
       result.runTimeSeries.forEach((point) => {
@@ -620,7 +633,7 @@ describe("dashboardManager", () => {
         total: 3,
       });
 
-      const result = await manager.getDashboardStats("user-1", { days: 7 });
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       const todayPoint = result.runTimeSeries.find(p => p.date === today);
       const yesterdayPoint = result.runTimeSeries.find(p => p.date === yesterday);
@@ -636,7 +649,7 @@ describe("dashboardManager", () => {
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { days: 7 });
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
 
       // Verify dates are in ascending order
       for (let i = 1; i < result.runTimeSeries.length; i++) {
@@ -648,15 +661,21 @@ describe("dashboardManager", () => {
   // ==================== Hourly Bucketing Tests ====================
 
   describe("hourly time series buckets", () => {
-    it("should use hourly granularity for 24h timeRange", async () => {
+    it("should use hourly granularity for a 24h window", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+      const range = dateRange(1);
+      const result = await manager.getDashboardStats("user-1", range);
 
       // Should create 24 hourly buckets
       expect(result.runTimeSeries).toHaveLength(24);
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        sinceDate: range.startDate,
+        untilDate: range.endDate,
+        granularity: "hour",
+      }));
 
       // Verify hourly format (YYYY-MM-DD HH:00:00)
       result.runTimeSeries.forEach((point) => {
@@ -670,7 +689,7 @@ describe("dashboardManager", () => {
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+      const result = await manager.getDashboardStats("user-1", dateRange(1));
 
       // Should have 24 buckets
       expect(result.runTimeSeries).toHaveLength(24);
@@ -684,15 +703,21 @@ describe("dashboardManager", () => {
       expect(firstBucket.date).toMatch(/:00:00$/);
     });
 
-    it("should use daily granularity for 7d timeRange", async () => {
+    it("should use daily granularity for a 7-day window", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { timeRange: "7d", days: 7 });
+      const range = dateRange(7);
+      const result = await manager.getDashboardStats("user-1", range);
 
       // Should create 7 daily buckets
       expect(result.runTimeSeries).toHaveLength(7);
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "day",
+        sinceDate: range.startDate,
+        untilDate: range.endDate,
+      }));
 
       // Verify daily format (YYYY-MM-DD)
       result.runTimeSeries.forEach((point) => {
@@ -700,12 +725,12 @@ describe("dashboardManager", () => {
       });
     });
 
-    it("should use 3-day buckets for 30d timeRange", async () => {
+    it("should use 3-day buckets for a 30-day window", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { timeRange: "30d", days: 30 });
+      const result = await manager.getDashboardStats("user-1", dateRange(30));
 
       // Should create 10 buckets (30 days / 3 days per bucket)
       expect(result.runTimeSeries).toHaveLength(10);
@@ -743,7 +768,8 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+      const range = dateRange(1);
+      const result = await manager.getDashboardStats("user-1", range);
 
       // Find the specific hours
       const currentHourPoint = result.runTimeSeries.find(p => p.date === currentHour);
@@ -795,7 +821,7 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+      const result = await manager.getDashboardStats("user-1", dateRange(1));
 
       // Should have 24 hours * 2 endpoints = 48 data points
       expect(result.endpointTimeSeries).toHaveLength(48);
@@ -853,7 +879,7 @@ describe("dashboardManager", () => {
 
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
-      const result = await manager.getDashboardStats("user-1", { timeRange: "24h", days: 1 });
+      const result = await manager.getDashboardStats("user-1", dateRange(1));
 
       // Should have hourly buckets
       const currentHourSession = result.aiSessionTimeSeries.find(
