@@ -74,7 +74,8 @@ export function ExecutionDurationChart({
             if (!endpointSet.has(item.endpointName)) return;
             if (!dateMap.has(item.date)) {
                 // Store timestamp for X-axis domain calculation
-                dateMap.set(item.date, { date: new Date(item.date).getTime() });
+                // Parse as local time by adding time component (prevents UTC offset issues)
+                dateMap.set(item.date, { date: new Date(item.date + 'T00:00:00').getTime() });
             }
             const dateEntry = dateMap.get(item.date)!;
             // Use endpoint name as key for total duration
