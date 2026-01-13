@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ReferenceArea, XAxis, YAxis } from "recharts";
 import {
     ChartContainer,
     ChartTooltip,
@@ -11,6 +11,7 @@ import type { EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
 import { formatTooltipDate, getDateRangeEndLabel, getDateRangeStartLabel } from "@/lib/time-range-labels";
+import { useChartRangeSelect, type DateRange } from "@/hooks/use-chart-range-select";
 
 interface ExecutionDurationChartProps {
     data: Array<EndpointTimeSeriesPoint>;
@@ -20,6 +21,8 @@ interface ExecutionDurationChartProps {
     startDate?: Date;
     /** End date for the displayed range */
     endDate?: Date;
+    /** Callback when user drags to select a date range on the chart */
+    onDateRangeChange?: (range: DateRange) => void;
 }
 
 /**
@@ -45,7 +48,18 @@ export function ExecutionDurationChart({
     chartConfig,
     startDate,
     endDate,
+    onDateRangeChange,
 }: ExecutionDurationChartProps) {
+    // Drag-to-select functionality
+    const {
+        refAreaLeft,
+        refAreaRight,
+        containerStyle,
+        handleMouseDown,
+        handleMouseMove,
+        handleMouseUp,
+    } = useChartRangeSelect({ onDateRangeChange });
+
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
         // Calculate total duration per endpoint to find top performers
@@ -145,8 +159,15 @@ export function ExecutionDurationChart({
                 <ChartContainer
                     config={chartConfig}
                     className="aspect-auto h-full w-full"
+                    style={containerStyle}
                 >
-                    <AreaChart data={chartData}>
+                    <AreaChart
+                        data={chartData}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                    >
                         <defs>
                             {endpoints
                                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -277,6 +298,17 @@ export function ExecutionDurationChart({
                                     />
                                 );
                             })}
+                        {/* Selection overlay for drag-to-select */}
+                        {refAreaLeft && refAreaRight && (
+                            <ReferenceArea
+                                x1={refAreaLeft}
+                                x2={refAreaRight}
+                                strokeOpacity={0.3}
+                                stroke="hsl(var(--primary))"
+                                fill="hsl(var(--primary))"
+                                fillOpacity={0.15}
+                            />
+                        )}
                     </AreaChart>
                 </ChartContainer>
             ) : null}
