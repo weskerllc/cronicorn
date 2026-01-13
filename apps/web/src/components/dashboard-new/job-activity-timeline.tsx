@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Activity, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { ScrollArea } from "@cronicorn/ui-library/components/scroll-area";
 import { Button } from "@cronicorn/ui-library/components/button";
