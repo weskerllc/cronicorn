@@ -933,8 +933,12 @@ describe("dashboardManager", () => {
         endpointName: "Endpoint 1",
         analyzedAt: new Date("2025-10-20T10:30:00Z"),
         reasoning: "Analyzed recent failures",
-        toolCalls: 2,
+        toolCalls: [
+          { tool: "analyze", args: {}, result: {} },
+          { tool: "suggest", args: {}, result: {} },
+        ],
         tokenUsage: 500,
+        durationMs: 1500,
       },
       {
         sessionId: "session-2",
@@ -942,8 +946,9 @@ describe("dashboardManager", () => {
         endpointName: "Endpoint 1",
         analyzedAt: new Date("2025-10-20T08:00:00Z"),
         reasoning: "Initial analysis",
-        toolCalls: 1,
+        toolCalls: [{ tool: "analyze", args: {}, result: {} }],
         tokenUsage: 300,
+        durationMs: 800,
       },
     ];
 
