@@ -40,8 +40,8 @@ export function ActivityEventItem({ event }: { event: ActivityEvent }) {
 
     return (
         <Link
-            to={isRun ? "/runs/$id" : "/endpoints/$id"}
-            params={{ id: isRun ? event.id : event.endpointId }}
+            to={isRun ? "/runs/$id" : "/ai-sessions/$id"}
+            params={{ id: event.id }}
             preload={false}
             className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",

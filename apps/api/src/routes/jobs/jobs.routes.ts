@@ -382,6 +382,21 @@ export const listSessions = createRoute({
   },
 });
 
+export const getSession = createRoute({
+  path: "/sessions/:id",
+  method: "get",
+  tags: ["AI Analysis"],
+  summary: sessionsSchemas.GetSessionSummary,
+  description: sessionsSchemas.GetSessionDescription,
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(sessionsSchemas.AISessionDetailSchema, "AI analysis session details"),
+    ...errorResponses,
+  },
+});
+
 // Type exports for handlers
 export type CreateJobRoute = typeof createJob;
 export type GetJobRoute = typeof getJob;
@@ -409,3 +424,4 @@ export type GetRunDetailsRoute = typeof getRunDetails;
 export type GetHealthSummaryRoute = typeof getHealthSummary;
 
 export type ListSessionsRoute = typeof listSessions;
+export type GetSessionRoute = typeof getSession;
