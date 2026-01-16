@@ -533,6 +533,24 @@ export type SessionsRepo = {
   }>>;
 
   /**
+   * Get a single AI analysis session by ID.
+   * Used for session detail page display.
+   *
+   * @param sessionId - The session ID
+   * @returns Session details with endpoint info, or null if not found
+   */
+  getSession: (sessionId: string) => Promise<{
+    id: string;
+    endpointId: string;
+    endpointName: string;
+    analyzedAt: Date;
+    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+    reasoning: string;
+    tokenUsage: number | null;
+    durationMs: number | null;
+  } | null>;
+
+  /**
    * Get total token usage for an endpoint over a time window.
    * Useful for cost tracking and quota enforcement.
    *

@@ -430,3 +430,25 @@ export const listSessions: AppRouteHandler<routes.ListSessionsRoute> = async (c)
     }
   });
 };
+
+export const getSession: AppRouteHandler<routes.GetSessionRoute> = async (c) => {
+  const { id } = c.req.valid("param");
+  const { userId } = getAuthContext(c);
+
+  return c.get("withJobsManager")(async (manager) => {
+    const session = await manager.getSession(userId, id);
+    if (!session) {
+      return c.json({ message: "Session not found" }, HTTPStatusCodes.NOT_FOUND);
+    }
+    return c.json({
+      id: session.id,
+      endpointId: session.endpointId,
+      endpointName: session.endpointName,
+      analyzedAt: session.analyzedAt.toISOString(),
+      toolCalls: session.toolCalls,
+      reasoning: session.reasoning,
+      tokenUsage: session.tokenUsage,
+      durationMs: session.durationMs,
+    }, HTTPStatusCodes.OK);
+  });
+};

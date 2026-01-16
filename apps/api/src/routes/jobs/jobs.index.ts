@@ -33,6 +33,7 @@ const router = createRouter()
   .openapi(routes.getHealthSummary, handlers.getHealthSummary)
 
   // ==================== AI Analysis Sessions Routes ====================
-  .openapi(routes.listSessions, handlers.listSessions);
+  .openapi(routes.listSessions, handlers.listSessions)
+  .openapi(routes.getSession, handlers.getSession);
 
 export default router;

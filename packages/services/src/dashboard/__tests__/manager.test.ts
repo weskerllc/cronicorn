@@ -96,6 +96,7 @@ describe("dashboardManager", () => {
       getAISessionTimeSeries: vi.fn().mockResolvedValue([]),
       getLastSession: vi.fn().mockResolvedValue(null),
       getJobSessions: vi.fn().mockResolvedValue({ sessions: [], total: 0 }),
+      getSession: vi.fn().mockResolvedValue(null),
     };
 
     // Fake clock for deterministic time-based tests

@@ -124,6 +124,49 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     return Number(result[0]?.count ?? 0);
   }
 
+  async getSession(sessionId: string): Promise<{
+    id: string;
+    endpointId: string;
+    endpointName: string;
+    analyzedAt: Date;
+    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+    reasoning: string;
+    tokenUsage: number | null;
+    durationMs: number | null;
+  } | null> {
+    const results = await this.tx
+      .select({
+        id: aiAnalysisSessions.id,
+        endpointId: aiAnalysisSessions.endpointId,
+        endpointName: jobEndpoints.name,
+        analyzedAt: aiAnalysisSessions.analyzedAt,
+        toolCalls: aiAnalysisSessions.toolCalls,
+        reasoning: aiAnalysisSessions.reasoning,
+        tokenUsage: aiAnalysisSessions.tokenUsage,
+        durationMs: aiAnalysisSessions.durationMs,
+      })
+      .from(aiAnalysisSessions)
+      .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
+      .where(eq(aiAnalysisSessions.id, sessionId))
+      .limit(1);
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    const r = results[0];
+    return {
+      id: r.id,
+      endpointId: r.endpointId,
+      endpointName: r.endpointName,
+      analyzedAt: r.analyzedAt,
+      toolCalls: r.toolCalls ?? [],
+      reasoning: r.reasoning ?? "",
+      tokenUsage: r.tokenUsage,
+      durationMs: r.durationMs,
+    };
+  }
+
   async getTotalTokenUsage(endpointId: string, since: Date): Promise<number> {
     const result = await this.tx
       .select({
