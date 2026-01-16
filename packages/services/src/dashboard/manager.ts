@@ -780,6 +780,7 @@ export class DashboardManager {
    * @param options - Query options
    * @param options.startDate - Start date for filtering events (required)
    * @param options.endDate - End date for filtering events (required)
+   * @param options.eventType - Filter by event type: 'all', 'runs', or 'sessions' (default: 'all')
    * @param options.limit - Maximum events to return (default: 50)
    * @param options.offset - Pagination offset (default: 0)
    * @returns Combined timeline of runs and AI sessions
@@ -790,33 +791,43 @@ export class DashboardManager {
     options: {
       startDate: Date;
       endDate: Date;
+      eventType?: "all" | "runs" | "sessions";
       limit?: number;
       offset?: number;
     },
   ): Promise<JobActivityTimeline> {
     const limit = Math.min(options.limit ?? 50, 100);
     const offset = options.offset ?? 0;
+    const eventType = options.eventType ?? "all";
 
-    // Fetch runs and sessions in parallel
-    // We fetch more than needed from each source to handle interleaving properly
+    // Fetch runs and sessions based on eventType filter
+    // Only fetch what we need for efficiency
     const fetchLimit = limit + offset;
+
+    const shouldFetchRuns = eventType === "all" || eventType === "runs";
+    const shouldFetchSessions = eventType === "all" || eventType === "sessions";
+
     const [runsResult, sessionsResult] = await Promise.all([
-      this.runsRepo.getJobRuns({
-        userId,
-        jobId,
-        sinceDate: options.startDate,
-        untilDate: options.endDate,
-        limit: fetchLimit,
-        offset: 0,
-      }),
-      this.sessionsRepo.getJobSessions({
-        userId,
-        jobId,
-        sinceDate: options.startDate,
-        untilDate: options.endDate,
-        limit: fetchLimit,
-        offset: 0,
-      }),
+      shouldFetchRuns
+        ? this.runsRepo.getJobRuns({
+            userId,
+            jobId,
+            sinceDate: options.startDate,
+            untilDate: options.endDate,
+            limit: fetchLimit,
+            offset: 0,
+          })
+        : { runs: [], total: 0 },
+      shouldFetchSessions
+        ? this.sessionsRepo.getJobSessions({
+            userId,
+            jobId,
+            sinceDate: options.startDate,
+            untilDate: options.endDate,
+            limit: fetchLimit,
+            offset: 0,
+          })
+        : { sessions: [], total: 0 },
     ]);
 
     // Convert runs to activity events

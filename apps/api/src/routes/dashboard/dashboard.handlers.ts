@@ -34,6 +34,7 @@ export const getDashboardActivity: AppRouteHandler<routes.GetDashboardActivityRo
     const timeline = await manager.getJobActivityTimeline(userId, query.jobId, {
       startDate: query.startDate,
       endDate: query.endDate,
+      eventType: query.eventType,
       limit: query.limit,
       offset: query.offset,
     });

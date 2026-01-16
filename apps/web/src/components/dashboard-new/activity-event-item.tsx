@@ -44,34 +44,34 @@ export function ActivityEventItem({ event }: { event: ActivityEvent }) {
             params={{ id: event.id }}
             preload={false}
             className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                "flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors",
                 "hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             )}
         >
             {/* Event type icon - consistent per type */}
             <div className={cn(
-                "shrink-0 size-6 rounded-full flex items-center justify-center",
+                "shrink-0 size-5 rounded-full flex items-center justify-center",
                 isRun ? "bg-primary/10 text-primary" : "bg-violet-500/15 text-violet-500"
             )}>
                 {isRun ? (
-                    <Zap className="size-3.5" />
+                    <Zap className="size-3" />
                 ) : (
-                    <Brain className="size-3.5" />
+                    <Brain className="size-3" />
                 )}
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     <span className="text-sm font-medium truncate">{event.endpointName}</span>
                     {isRun && event.status && RunStatusIcon && statusVariant && (
-                        <Badge variant={statusVariant} className="text-[10px] px-1.5 py-0 gap-0.5 capitalize">
+                        <Badge variant={statusVariant} className="text-[10px] px-1 py-0 gap-0.5 capitalize">
                             <RunStatusIcon className="size-2.5" />
                             {event.status}
                         </Badge>
                     )}
                     {!isRun && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-violet-500 border-violet-500/30">
+                        <Badge variant="outline" className="text-[10px] px-1 py-0 text-violet-500 border-violet-500/30">
                             AI
                         </Badge>
                     )}
@@ -79,10 +79,10 @@ export function ActivityEventItem({ event }: { event: ActivityEvent }) {
             </div>
 
             {/* Meta info */}
-            <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                 {isRun && event.durationMs !== undefined && (
-                    <span className="flex items-center gap-1">
-                        <Clock className="size-3" />
+                    <span className="flex items-center gap-0.5">
+                        <Clock className="size-2.5" />
                         {event.durationMs}ms
                     </span>
                 )}

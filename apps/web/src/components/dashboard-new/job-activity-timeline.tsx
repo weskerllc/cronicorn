@@ -1,13 +1,16 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Brain, Loader2, Zap } from "lucide-react";
 
 import { ScrollArea } from "@cronicorn/ui-library/components/scroll-area";
 import { Button } from "@cronicorn/ui-library/components/button";
+import { ToggleGroup, ToggleGroupItem } from "@cronicorn/ui-library/components/toggle-group";
 
 import { DashboardCard } from "./dashboard-card";
 import { ActivityEventItem } from "./activity-event-item";
 import { dashboardActivityInfiniteQueryOptions } from "@/lib/api-client/queries/dashboard.queries";
+
+type FilterType = "all" | "runs" | "sessions";
 
 interface JobActivityTimelineProps {
   jobId?: string | null;
@@ -28,11 +31,14 @@ function formatDate(date: Date): string {
 }
 
 export function JobActivityTimeline({ jobId, jobName, startDate, endDate }: JobActivityTimelineProps) {
+  const [filter, setFilter] = useState<FilterType>("all");
+
   const { data, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery(
     dashboardActivityInfiniteQueryOptions({
       jobId: jobId ?? undefined,
       startDate,
       endDate,
+      eventType: filter,
       limit: PAGE_SIZE,
     })
   );
@@ -57,8 +63,28 @@ export function JobActivityTimeline({ jobId, jobName, startDate, endDate }: JobA
 
   const description = allEvents.length === 0 ? (
     <p>No data to display</p>
-  ) : (
+  ) : filter == 'runs' ? (<p>Showing Runs Only</p>) : filter == 'sessions' ? <p>Showing AI Sessions Only</p> : (
     <p>Runs and AI Sessions</p>
+  );
+
+  const filterToggle = (
+    <ToggleGroup
+      type="single"
+      value={filter}
+      onValueChange={(value) => value && setFilter(value as FilterType)}
+      size="sm"
+      variant="outline"
+    >
+      <ToggleGroupItem value="all" aria-label="Show all events" className="text-xs px-2">
+        All
+      </ToggleGroupItem>
+      <ToggleGroupItem value="runs" aria-label="Show only runs" className="text-xs px-2">
+        <Zap className="size-3" />
+      </ToggleGroupItem>
+      <ToggleGroupItem value="sessions" aria-label="Show only AI sessions" className="text-xs px-2">
+        <Brain className="size-3" />
+      </ToggleGroupItem>
+    </ToggleGroup>
   );
 
   return (
@@ -66,18 +92,19 @@ export function JobActivityTimeline({ jobId, jobName, startDate, endDate }: JobA
       title={title}
       description={description}
       className="h-[400px]"
+      headerSlot={filterToggle}
     >
       <ScrollArea className="h-full w-full">
         {allEvents.length === 0 ? (
           null
         ) : (
-          <div className="p-2 space-y-3">
+          <div className="p-2 space-y-2">
             {Object.entries(eventsByDate).map(([date, events]) => (
               <div key={date}>
-                <div className="px-3 py-1">
+                <div className="px-3 py-0.5">
                   <span className="text-xs font-medium text-muted-foreground">{date}</span>
                 </div>
-                <div className="space-y-0.5">
+                <div>
                   {events.map((event) => (
                     <ActivityEventItem key={event.id} event={event} />
                   ))}
@@ -86,7 +113,7 @@ export function JobActivityTimeline({ jobId, jobName, startDate, endDate }: JobA
             ))}
 
             {hasNextPage && (
-              <div className="flex justify-center py-3">
+              <div className="flex justify-center py-2">
                 <Button
                   variant="ghost"
                   size="sm"

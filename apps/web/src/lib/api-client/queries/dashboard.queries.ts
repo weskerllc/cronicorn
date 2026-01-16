@@ -58,6 +58,7 @@ interface DashboardActivityQuery {
     jobId?: string;
     startDate: Date;
     endDate: Date;
+    eventType?: "all" | "runs" | "sessions";
     limit?: number;
     offset?: number;
 }
@@ -70,6 +71,7 @@ export async function getDashboardActivity(
         jobId: query.jobId,
         startDate: query.startDate,
         endDate: query.endDate,
+        eventType: query.eventType,
         limit: query.limit,
         offset: query.offset,
     };
@@ -125,6 +127,7 @@ export function dashboardActivityInfiniteQueryOptions(
         jobId: baseQuery.jobId,
         startDate: baseQuery.startDate.toISOString(),
         endDate: baseQuery.endDate.toISOString(),
+        eventType: baseQuery.eventType,
         limit,
     };
 
