@@ -2,11 +2,7 @@
 
 import {
   IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
   IconChevronUp,
-  IconChevronsLeft,
-  IconChevronsRight,
   IconLoader,
   IconRefresh
 } from "@tabler/icons-react";
@@ -39,6 +35,15 @@ import {
   TableHeader,
   TableRow
 } from "@cronicorn/ui-library/components/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@cronicorn/ui-library/components/pagination";
 
 import type {
   ColumnDef,
@@ -46,8 +51,158 @@ import type {
   PaginationState,
   RowSelectionState,
   SortingState,
+  Table,
   VisibilityState,
 } from "@tanstack/react-table";
+
+/**
+ * Generate page numbers to display with ellipsis for large page counts
+ */
+function getPageNumbers(currentPage: number, totalPages: number): Array<number | "ellipsis-start" | "ellipsis-end"> {
+  const pages: Array<number | "ellipsis-start" | "ellipsis-end"> = [];
+
+  if (totalPages <= 7) {
+    // Show all pages if 7 or fewer
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else if (currentPage <= 3) {
+    // Near the start: 1 2 3 4 5 ... last
+    for (let i = 1; i <= 5; i++) {
+      pages.push(i);
+    }
+    pages.push("ellipsis-end");
+    pages.push(totalPages);
+  } else if (currentPage >= totalPages - 2) {
+    // Near the end: 1 ... last-4 last-3 last-2 last-1 last
+    pages.push(1);
+    pages.push("ellipsis-start");
+    for (let i = totalPages - 4; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else {
+    // In the middle: 1 ... current-1 current current+1 ... last
+    pages.push(1);
+    pages.push("ellipsis-start");
+    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+      pages.push(i);
+    }
+    pages.push("ellipsis-end");
+    pages.push(totalPages);
+  }
+
+  return pages;
+}
+
+interface DataTablePaginationProps<TData> {
+  table: Table<TData>;
+  pageSizeOptions: Array<number>;
+  enableRowSelection: boolean;
+}
+
+function DataTablePagination<TData>({
+  table,
+  pageSizeOptions,
+  enableRowSelection,
+}: DataTablePaginationProps<TData>) {
+  const pageIndex = table.getState().pagination.pageIndex;
+  const pageSize = table.getState().pagination.pageSize;
+  const pageCount = table.getPageCount();
+  const totalRows = table.getFilteredRowModel().rows.length;
+
+  const currentPage = pageIndex + 1; // Convert to 1-indexed
+  const startItem = pageIndex * pageSize + 1;
+  const endItem = Math.min((pageIndex + 1) * pageSize, totalRows);
+
+  const pageNumbers = getPageNumbers(currentPage, pageCount);
+
+  const canGoPrev = table.getCanPreviousPage();
+  const canGoNext = table.getCanNextPage();
+
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2 py-2">
+      {/* Left side: Row info */}
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <span>
+          Showing {startItem}–{endItem} of {totalRows}
+        </span>
+        {enableRowSelection && table.getFilteredSelectedRowModel().rows.length > 0 && (
+          <span>
+            ({table.getFilteredSelectedRowModel().rows.length} selected)
+          </span>
+        )}
+      </div>
+
+      {/* Center: Page navigation */}
+      <Pagination className="mx-0 w-auto">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => canGoPrev && table.previousPage()}
+              className={!canGoPrev ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              aria-disabled={!canGoPrev}
+            />
+          </PaginationItem>
+
+          {pageNumbers.map((page, index) => (
+            <PaginationItem key={index} className="hidden sm:block">
+              {page === "ellipsis-start" || page === "ellipsis-end" ? (
+                <PaginationEllipsis />
+              ) : (
+                <PaginationLink
+                  onClick={() => table.setPageIndex(page - 1)}
+                  isActive={currentPage === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              )}
+            </PaginationItem>
+          ))}
+
+          {/* Mobile: Show current page indicator */}
+          <PaginationItem className="sm:hidden">
+            <span className="flex h-9 items-center justify-center px-3 text-sm">
+              {currentPage} / {pageCount}
+            </span>
+          </PaginationItem>
+
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => canGoNext && table.nextPage()}
+              className={!canGoNext ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              aria-disabled={!canGoNext}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+
+      {/* Right side: Rows per page */}
+      <div className="hidden items-center gap-2 lg:flex">
+        <Label htmlFor="rows-per-page" className="text-sm text-muted-foreground whitespace-nowrap">
+          Rows per page
+        </Label>
+        <Select
+          value={`${pageSize}`}
+          onValueChange={(value) => {
+            table.setPageSize(Number(value));
+          }}
+        >
+          <SelectTrigger size="sm" className="w-[70px]" id="rows-per-page">
+            <SelectValue placeholder={pageSize} />
+          </SelectTrigger>
+          <SelectContent side="top">
+            {pageSizeOptions.map((size) => (
+              <SelectItem key={size} value={`${size}`}>
+                {size}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
 
 interface DataTableProps<TData, TValue> {
   columns: Array<ColumnDef<TData, TValue>>;
@@ -265,87 +420,11 @@ export function DataTable<TData, TValue>({
       </div>
 
       {enablePagination && table.getPageCount() > 0 && (
-        <div className="flex items-center justify-between px-2">
-
-          <div className={`flex  flex-col gap-2 ${enableRowSelection ? "lg:w-fit" : "w-full justify-between"}`}>
-
-            <div className="flex items-center gap-2 lg:ml-0">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to first page</span>
-                <IconChevronsLeft />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <IconChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to next page</span>
-                <IconChevronRight />
-              </Button>
-              <Button
-                variant="outline"
-                className="hidden size-8 lg:flex"
-                size="icon"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to last page</span>
-                <IconChevronsRight />
-              </Button>
-              <div className="hidden items-center gap-2 lg:flex">
-                <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                  Rows per page
-                </Label>
-                <Select
-                  value={`${table.getState().pagination.pageSize}`}
-                  onValueChange={(value) => {
-                    table.setPageSize(Number(value));
-                  }}
-                >
-                  <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                    <SelectValue placeholder={table.getState().pagination.pageSize} />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    {pageSizeOptions.map((pageSize) => (
-                      <SelectItem key={pageSize} value={`${pageSize}`}>
-                        {pageSize}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {enableRowSelection && (
-              <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-                {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                {table.getFilteredRowModel().rows.length} row(s) selected.
-              </div>
-            )}
-
-            <div className="flex text-sm font-medium pb-2">
-              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-            </div>
-          </div>
-
-        </div>
+        <DataTablePagination
+          table={table}
+          pageSizeOptions={pageSizeOptions}
+          enableRowSelection={enableRowSelection}
+        />
       )}
     </div>
   );
