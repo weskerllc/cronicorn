@@ -280,7 +280,7 @@ function generateResponseBody(
 const JOBS = [
   {
     id: "job-black-friday-demo",
-    name: "E-Commerce Black Friday Demo",
+    name: "E-Commerce SAAS",
     description: "AI-coordinated Black Friday monitoring with health checks, diagnostics, recovery actions, and alerts across a 12-hour sale. All endpoints share the same job so AI can use get_sibling_latest_responses to coordinate decisions across the system.",
     status: "active" as const,
   },
@@ -714,43 +714,43 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
     getResponseBody: () => Record<string, unknown>;
     message: string;
   }> = [
-    {
-      endpointId: "ep-traffic-monitor",
-      getResponseBody: () => ({
-        visitors: 980 + Math.floor(Math.random() * 80),
-        pageLoadMs: 780 + Math.floor(Math.random() * 40),
-        activeUsers: 290 + Math.floor(Math.random() * 30),
-        requestsPerSec: 95 + Math.floor(Math.random() * 15),
-        errorRate: 0.001,
-        trends: "stable",
-      }),
-      message: "Traffic patterns stable. All metrics within normal ranges.",
-    },
-    {
-      endpointId: "ep-order-processor-health",
-      getResponseBody: () => ({
-        ordersPerMin: 38 + Math.floor(Math.random() * 8),
-        processingTimeMs: 175 + Math.floor(Math.random() * 20),
-        queueDepth: 4 + Math.floor(Math.random() * 4),
-        failureRate: 0.01,
-        pendingOrders: 6 + Math.floor(Math.random() * 4),
-        completedLastHour: 2300 + Math.floor(Math.random() * 200),
-        status: "healthy",
-      }),
-      message: "Order processing healthy. Queue depth normal.",
-    },
-    {
-      endpointId: "ep-inventory-sync-check",
-      getResponseBody: () => ({
-        lagMs: 95 + Math.floor(Math.random() * 20),
-        queueDepth: 2 + Math.floor(Math.random() * 3),
-        syncStatus: "healthy",
-        pendingUpdates: 1 + Math.floor(Math.random() * 3),
-        failedSyncs: 0,
-      }),
-      message: "Inventory sync performing within tolerances. No action needed.",
-    },
-  ];
+      {
+        endpointId: "ep-traffic-monitor",
+        getResponseBody: () => ({
+          visitors: 980 + Math.floor(Math.random() * 80),
+          pageLoadMs: 780 + Math.floor(Math.random() * 40),
+          activeUsers: 290 + Math.floor(Math.random() * 30),
+          requestsPerSec: 95 + Math.floor(Math.random() * 15),
+          errorRate: 0.001,
+          trends: "stable",
+        }),
+        message: "Traffic patterns stable. All metrics within normal ranges.",
+      },
+      {
+        endpointId: "ep-order-processor-health",
+        getResponseBody: () => ({
+          ordersPerMin: 38 + Math.floor(Math.random() * 8),
+          processingTimeMs: 175 + Math.floor(Math.random() * 20),
+          queueDepth: 4 + Math.floor(Math.random() * 4),
+          failureRate: 0.01,
+          pendingOrders: 6 + Math.floor(Math.random() * 4),
+          completedLastHour: 2300 + Math.floor(Math.random() * 200),
+          status: "healthy",
+        }),
+        message: "Order processing healthy. Queue depth normal.",
+      },
+      {
+        endpointId: "ep-inventory-sync-check",
+        getResponseBody: () => ({
+          lagMs: 95 + Math.floor(Math.random() * 20),
+          queueDepth: 2 + Math.floor(Math.random() * 3),
+          syncStatus: "healthy",
+          pendingUpdates: 1 + Math.floor(Math.random() * 3),
+          failedSyncs: 0,
+        }),
+        message: "Inventory sync performing within tolerances. No action needed.",
+      },
+    ];
 
   for (let i = 0; i < baselineDays.length; i++) {
     const day = baselineDays[i] - 1; // Convert to 0-indexed
