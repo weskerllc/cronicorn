@@ -14,24 +14,57 @@ import type {
 } from "./types.js";
 
 /**
- * Calculate time bucket granularity based on number of days.
- * This prevents sending too many data points to the frontend.
+ * Calculate time bucket granularity based on date range span.
+ * Targets ~24-30 data points for optimal chart visualization.
  *
  * Strategy:
- * - 1-2 days: Daily buckets (1-2 points)
- * - 3-7 days: Daily buckets (3-7 points)
- * - 8-14 days: Daily buckets (8-14 points)
- * - 15-30 days: 3-day buckets (~10 points)
+ * - Up to 2 weeks: Hourly granularity with variable bucket sizes (1, 2, 3, 4, 6, 8, 12 hours)
+ * - Beyond 2 weeks: Daily granularity with variable bucket sizes (1, 2, 3, 7, 14 days)
+ *
+ * Examples:
+ * - 1 day → 1-hour buckets (24 points)
+ * - 7 days → 6-hour buckets (28 points)
+ * - 14 days → 12-hour buckets (28 points)
+ * - 30 days → daily buckets (30 points)
+ * - 90 days → 3-day buckets (30 points)
  */
-function getTimeBucketSize(days: number): { bucketDays: number; bucketSql: string } {
-  if (days <= 14) {
-    // Daily granularity for 2 weeks or less
-    return { bucketDays: 1, bucketSql: "DATE" };
+function getTimeGranularity(spanMs: number): {
+  granularity: "hour" | "day";
+  bucketSize: number; // hours if granularity='hour', days if granularity='day'
+} {
+  const TARGET_POINTS = 24;
+  const spanHours = spanMs / (60 * 60 * 1000);
+  const spanDays = spanHours / 24;
+
+  // For spans up to ~2 weeks, use hourly granularity with variable bucket sizes
+  if (spanDays <= 14) {
+    const idealBucketHours = spanHours / TARGET_POINTS;
+    if (idealBucketHours <= 1)
+      return { granularity: "hour", bucketSize: 1 };
+    if (idealBucketHours <= 2)
+      return { granularity: "hour", bucketSize: 2 };
+    if (idealBucketHours <= 3)
+      return { granularity: "hour", bucketSize: 3 };
+    if (idealBucketHours <= 5)
+      return { granularity: "hour", bucketSize: 4 };
+    if (idealBucketHours <= 7)
+      return { granularity: "hour", bucketSize: 6 };
+    if (idealBucketHours <= 10)
+      return { granularity: "hour", bucketSize: 8 };
+    return { granularity: "hour", bucketSize: 12 };
   }
-  else {
-    // 3-day buckets for longer ranges (reduces 30 days to ~10 buckets)
-    return { bucketDays: 3, bucketSql: "WEEK_BUCKET" };
-  }
+
+  // For longer spans, use daily granularity with variable bucket sizes
+  const idealBucketDays = spanDays / TARGET_POINTS;
+  if (idealBucketDays <= 1)
+    return { granularity: "day", bucketSize: 1 };
+  if (idealBucketDays <= 2)
+    return { granularity: "day", bucketSize: 2 };
+  if (idealBucketDays <= 4)
+    return { granularity: "day", bucketSize: 3 };
+  if (idealBucketDays <= 10)
+    return { granularity: "day", bucketSize: 7 };
+  return { granularity: "day", bucketSize: 14 };
 }
 
 /**
@@ -100,12 +133,12 @@ export class DashboardManager {
   ): Promise<DashboardStats> {
     const now = this.clock.now();
 
-    // Calculate span in days for granularity and bucketing decisions
+    // Calculate span for granularity and bucketing decisions
     const spanMs = options.endDate.getTime() - options.startDate.getTime();
     const spanDays = Math.max(1, Math.ceil(spanMs / (24 * 60 * 60 * 1000)));
 
-    // Use hourly granularity for spans of 1 day or less
-    const useHourlyGranularity = spanDays <= 1;
+    // Get optimal granularity and bucket size for ~24-30 data points
+    const { granularity, bucketSize } = getTimeGranularity(spanMs);
 
     // Build filter object for queries
     const filters = {
@@ -114,7 +147,8 @@ export class DashboardManager {
       source: options.source,
       sinceDate: options.startDate,
       untilDate: options.endDate,
-      granularity: useHourlyGranularity ? ("hour" as const) : ("day" as const),
+      granularity,
+      bucketSize,
     };
 
     // Execute queries in parallel for performance
@@ -146,9 +180,9 @@ export class DashboardManager {
         untilDate: filters.untilDate,
         // Explicitly omit source filter
       }),
-      this.getRunTimeSeries(userId, spanDays, now, filters),
-      this.getEndpointTimeSeries(userId, spanDays, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
-      this.getAISessionTimeSeries(userId, spanDays, now, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
+      this.getRunTimeSeries(userId, filters),
+      this.getEndpointTimeSeries(userId, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
+      this.getAISessionTimeSeries(userId, { ...filters, endpointLimit: options.endpointLimit ?? 20 }),
     ]);
 
     // Calculate max stacked values for chart Y-axis domains
@@ -300,8 +334,6 @@ export class DashboardManager {
    * Get time-series data for run activity.
    *
    * @param userId - The user ID
-   * @param days - Number of days to include
-   * @param now - Current timestamp (unused, kept for API compatibility)
    * @param filters - Filter options
    * @param filters.userId - User ID filter
    * @param filters.jobId - Job ID filter (optional)
@@ -309,12 +341,11 @@ export class DashboardManager {
    * @param filters.sinceDate - Start date for filtering runs
    * @param filters.untilDate - End date for filtering runs
    * @param filters.granularity - Time bucket granularity (hour or day)
-   * @returns Array of daily run counts
+   * @param filters.bucketSize - Size of each bucket (hours if granularity='hour', days if granularity='day')
+   * @returns Array of time-series run counts
    */
   private async getRunTimeSeries(
     userId: string,
-    days: number,
-    now: Date,
     filters: {
       userId: string;
       jobId?: string;
@@ -322,101 +353,145 @@ export class DashboardManager {
       sinceDate: Date;
       untilDate: Date;
       granularity: "hour" | "day";
+      bucketSize: number;
     },
   ): Promise<RunTimeSeriesPoint[]> {
     // Get aggregated data from repository (SQL aggregation)
     const aggregatedData = await this.runsRepo.getRunTimeSeries(filters);
 
-    // Use the actual date range from filters, not "now" minus days
     const rangeStart = filters.sinceDate;
     const rangeEnd = filters.untilDate;
 
-    // If hourly granularity, fill in hourly buckets instead of daily
     if (filters.granularity === "hour") {
-      const dataMap = new Map(
-        aggregatedData.map(item => [item.date, item]),
+      return this.aggregateHourlyBuckets(
+        aggregatedData,
+        rangeStart,
+        rangeEnd,
+        filters.bucketSize,
+        item => ({ success: item.success, failure: item.failure }),
+        () => ({ success: 0, failure: 0 }),
+        (acc, item) => {
+          acc.success += item.success;
+          acc.failure += item.failure;
+          return acc;
+        },
+        (date, values) => ({ date, ...values }),
       );
-
-      // Fill in all hours for the time period, from rangeStart to rangeEnd
-      const result: RunTimeSeriesPoint[] = [];
-
-      // Start from the beginning of the start hour
-      const startHour = new Date(rangeStart);
-      startHour.setMinutes(0, 0, 0);
-
-      // End at the beginning of the end hour
-      const endHour = new Date(rangeEnd);
-      endHour.setMinutes(0, 0, 0);
-
-      for (let t = startHour.getTime(); t <= endHour.getTime(); t += 60 * 60 * 1000) {
-        const currentHour = new Date(t);
-        const dateStr = `${currentHour.getFullYear()}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(currentHour.getDate()).padStart(2, "0")} ${String(currentHour.getHours()).padStart(2, "0")}:00:00`;
-        const existing = dataMap.get(dateStr);
-        result.push({
-          date: dateStr,
-          success: existing?.success ?? 0,
-          failure: existing?.failure ?? 0,
-        });
-      }
-      return result;
     }
 
-    const { bucketDays } = getTimeBucketSize(days);
-
-    // If using multi-day buckets, aggregate the daily data
-    if (bucketDays > 1) {
-      const bucketMap = new Map<string, { success: number; failure: number }>();
-
-      aggregatedData.forEach((item) => {
-        const date = new Date(item.date);
-        // Calculate bucket key based on rangeStart, not now
-        const daysSinceStart = Math.floor((date.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000));
-        const bucketIndex = Math.floor(daysSinceStart / bucketDays);
-        const bucketStart = new Date(rangeStart.getTime() + (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
-        const bucketKey = bucketStart.toISOString().split("T")[0];
-
-        const existing = bucketMap.get(bucketKey) || { success: 0, failure: 0 };
-        existing.success += item.success;
-        existing.failure += item.failure;
-        bucketMap.set(bucketKey, existing);
-      });
-
-      // Fill in missing buckets with zeros
-      const result: RunTimeSeriesPoint[] = [];
-      const numBuckets = Math.ceil(days / bucketDays);
-      for (let i = 0; i < numBuckets; i++) {
-        const bucketStart = new Date(rangeStart.getTime() + (i * bucketDays * 24 * 60 * 60 * 1000));
-        const dateStr = bucketStart.toISOString().split("T")[0];
-        const existing = bucketMap.get(dateStr);
-        result.push({
-          date: dateStr,
-          success: existing?.success ?? 0,
-          failure: existing?.failure ?? 0,
-        });
-      }
-      return result;
-    }
-
-    // Daily granularity - create a map for quick lookup
-    const dataMap = new Map(
-      aggregatedData.map(item => [item.date, item]),
+    // Daily granularity with variable bucket size
+    return this.aggregateDailyBuckets(
+      aggregatedData,
+      rangeStart,
+      rangeEnd,
+      filters.bucketSize,
+      item => ({ success: item.success, failure: item.failure }),
+      () => ({ success: 0, failure: 0 }),
+      (acc, item) => {
+        acc.success += item.success;
+        acc.failure += item.failure;
+        return acc;
+      },
+      (date, values) => ({ date, ...values }),
     );
+  }
 
-    // Initialize all days with zero counts from rangeStart to rangeEnd
-    const result: RunTimeSeriesPoint[] = [];
-    const startTime = new Date(rangeStart);
-    startTime.setUTCHours(0, 0, 0, 0);
-    const endTime = new Date(rangeEnd);
-    endTime.setUTCHours(0, 0, 0, 0);
+  /**
+   * Generic helper to aggregate hourly data into multi-hour buckets.
+   */
+  private aggregateHourlyBuckets<T extends { date: string }, V, R>(
+    data: T[],
+    rangeStart: Date,
+    rangeEnd: Date,
+    bucketSizeHours: number,
+    extractValues: (item: T) => V,
+    createEmpty: () => V,
+    accumulate: (acc: V, item: V) => V,
+    toResult: (date: string, values: V) => R,
+  ): R[] {
+    const bucketMs = bucketSizeHours * 60 * 60 * 1000;
 
-    for (let t = startTime.getTime(); t <= endTime.getTime(); t += 24 * 60 * 60 * 1000) {
+    // Create a map of raw hourly data
+    const dataMap = new Map(data.map(item => [item.date, item]));
+
+    // Calculate bucket boundaries
+    const startHour = new Date(rangeStart);
+    startHour.setMinutes(0, 0, 0);
+    const endHour = new Date(rangeEnd);
+    endHour.setMinutes(0, 0, 0);
+
+    // Aggregate into buckets
+    const bucketMap = new Map<number, V>();
+
+    for (let t = startHour.getTime(); t <= endHour.getTime(); t += 60 * 60 * 1000) {
+      const currentHour = new Date(t);
+      const dateStr = `${currentHour.getFullYear()}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(currentHour.getDate()).padStart(2, "0")} ${String(currentHour.getHours()).padStart(2, "0")}:00:00`;
+
+      const existing = dataMap.get(dateStr);
+      if (existing) {
+        const bucketIndex = Math.floor((t - startHour.getTime()) / bucketMs);
+        const bucketKey = startHour.getTime() + bucketIndex * bucketMs;
+        const acc = bucketMap.get(bucketKey) ?? createEmpty();
+        bucketMap.set(bucketKey, accumulate(acc, extractValues(existing)));
+      }
+    }
+
+    // Fill in all buckets (including empty ones)
+    const result: R[] = [];
+    for (let t = startHour.getTime(); t <= endHour.getTime(); t += bucketMs) {
+      const bucketDate = new Date(t);
+      const dateStr = `${bucketDate.getFullYear()}-${String(bucketDate.getMonth() + 1).padStart(2, "0")}-${String(bucketDate.getDate()).padStart(2, "0")} ${String(bucketDate.getHours()).padStart(2, "0")}:00:00`;
+      const values = bucketMap.get(t) ?? createEmpty();
+      result.push(toResult(dateStr, values));
+    }
+
+    return result;
+  }
+
+  /**
+   * Generic helper to aggregate daily data into multi-day buckets.
+   */
+  private aggregateDailyBuckets<T extends { date: string }, V, R>(
+    data: T[],
+    rangeStart: Date,
+    rangeEnd: Date,
+    bucketSizeDays: number,
+    extractValues: (item: T) => V,
+    createEmpty: () => V,
+    accumulate: (acc: V, item: V) => V,
+    toResult: (date: string, values: V) => R,
+  ): R[] {
+    const bucketMs = bucketSizeDays * 24 * 60 * 60 * 1000;
+
+    // Create a map of raw daily data
+    const dataMap = new Map(data.map(item => [item.date, item]));
+
+    // Calculate bucket boundaries
+    const startDay = new Date(rangeStart);
+    startDay.setUTCHours(0, 0, 0, 0);
+    const endDay = new Date(rangeEnd);
+    endDay.setUTCHours(0, 0, 0, 0);
+
+    // Aggregate into buckets
+    const bucketMap = new Map<number, V>();
+
+    for (let t = startDay.getTime(); t <= endDay.getTime(); t += 24 * 60 * 60 * 1000) {
       const dateStr = new Date(t).toISOString().split("T")[0];
       const existing = dataMap.get(dateStr);
-      result.push({
-        date: dateStr,
-        success: existing?.success ?? 0,
-        failure: existing?.failure ?? 0,
-      });
+      if (existing) {
+        const bucketIndex = Math.floor((t - startDay.getTime()) / bucketMs);
+        const bucketKey = startDay.getTime() + bucketIndex * bucketMs;
+        const acc = bucketMap.get(bucketKey) ?? createEmpty();
+        bucketMap.set(bucketKey, accumulate(acc, extractValues(existing)));
+      }
+    }
+
+    // Fill in all buckets (including empty ones)
+    const result: R[] = [];
+    for (let t = startDay.getTime(); t <= endDay.getTime(); t += bucketMs) {
+      const dateStr = new Date(t).toISOString().split("T")[0];
+      const values = bucketMap.get(t) ?? createEmpty();
+      result.push(toResult(dateStr, values));
     }
 
     return result;
@@ -426,8 +501,6 @@ export class DashboardManager {
    * Get time-series data for run activity grouped by endpoint.
    *
    * @param userId - The user ID
-   * @param days - Number of days to include
-   * @param now - Current timestamp (unused, kept for API compatibility)
    * @param filters - Filter options
    * @param filters.endpointLimit - Maximum number of endpoints to include (sorted by run count DESC)
    * @param filters.userId - User ID filter
@@ -436,12 +509,11 @@ export class DashboardManager {
    * @param filters.sinceDate - Start date for filtering runs
    * @param filters.untilDate - End date for filtering runs
    * @param filters.granularity - Time bucket granularity (hour or day)
-   * @returns Array of daily run counts by endpoint
+   * @param filters.bucketSize - Size of each bucket (hours if granularity='hour', days if granularity='day')
+   * @returns Array of time-series run counts by endpoint
    */
   private async getEndpointTimeSeries(
     userId: string,
-    days: number,
-    now: Date,
     filters: {
       userId: string;
       jobId?: string;
@@ -450,12 +522,12 @@ export class DashboardManager {
       untilDate: Date;
       endpointLimit?: number;
       granularity: "hour" | "day";
+      bucketSize: number;
     },
   ): Promise<EndpointTimeSeriesPoint[]> {
     // Get aggregated data from repository (SQL aggregation)
     const aggregatedData = await this.runsRepo.getEndpointTimeSeries(filters);
 
-    // Use the actual date range from filters, not "now" minus days
     const rangeStart = filters.sinceDate;
     const rangeEnd = filters.untilDate;
 
@@ -467,116 +539,146 @@ export class DashboardManager {
       }
     });
 
-    // If hourly granularity, fill in hourly buckets
+    // If no endpoints, return empty array
+    if (endpoints.size === 0) {
+      return [];
+    }
+
     if (filters.granularity === "hour") {
-      const dataMap = new Map<string, typeof aggregatedData[0]>();
-      aggregatedData.forEach((item) => {
-        const key = `${item.date}-${item.endpointId}`;
-        dataMap.set(key, item);
-      });
-
-      // Fill in all hours for all endpoints, from rangeStart to rangeEnd
-      const result: EndpointTimeSeriesPoint[] = [];
-
-      // Start from the beginning of the start hour
-      const startHour = new Date(rangeStart);
-      startHour.setMinutes(0, 0, 0);
-
-      // End at the beginning of the end hour
-      const endHour = new Date(rangeEnd);
-      endHour.setMinutes(0, 0, 0);
-
-      for (let t = startHour.getTime(); t <= endHour.getTime(); t += 60 * 60 * 1000) {
-        const currentHour = new Date(t);
-        const dateStr = `${currentHour.getFullYear()}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(currentHour.getDate()).padStart(2, "0")} ${String(currentHour.getHours()).padStart(2, "0")}:00:00`;
-
-        endpoints.forEach((endpoint) => {
-          const key = `${dateStr}-${endpoint.id}`;
-          const existing = dataMap.get(key);
-          result.push({
-            date: dateStr,
-            endpointId: endpoint.id,
-            endpointName: endpoint.name,
-            success: existing?.success ?? 0,
-            failure: existing?.failure ?? 0,
-            totalDurationMs: existing?.totalDurationMs ?? 0,
-          });
-        });
-      }
-      return result;
+      return this.aggregateEndpointHourlyBuckets(
+        aggregatedData,
+        endpoints,
+        rangeStart,
+        rangeEnd,
+        filters.bucketSize,
+      );
     }
 
-    const { bucketDays } = getTimeBucketSize(days);
+    // Daily granularity with variable bucket size
+    return this.aggregateEndpointDailyBuckets(
+      aggregatedData,
+      endpoints,
+      rangeStart,
+      rangeEnd,
+      filters.bucketSize,
+    );
+  }
 
-    // If using multi-day buckets, aggregate the daily data per endpoint
-    if (bucketDays > 1) {
-      const bucketMap = new Map<string, { success: number; failure: number; totalDurationMs: number }>();
+  /**
+   * Aggregate endpoint time-series into multi-hour buckets.
+   */
+  private aggregateEndpointHourlyBuckets(
+    data: Array<{ date: string; endpointId: string; endpointName: string; success: number; failure: number; totalDurationMs: number }>,
+    endpoints: Map<string, { id: string; name: string }>,
+    rangeStart: Date,
+    rangeEnd: Date,
+    bucketSizeHours: number,
+  ): EndpointTimeSeriesPoint[] {
+    const bucketMs = bucketSizeHours * 60 * 60 * 1000;
 
-      aggregatedData.forEach((item) => {
-        const date = new Date(item.date);
-        // Calculate bucket key based on rangeStart, not now
-        const daysSinceStart = Math.floor((date.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000));
-        const bucketIndex = Math.floor(daysSinceStart / bucketDays);
-        const bucketStart = new Date(rangeStart.getTime() + (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
-        const bucketKey = `${bucketStart.toISOString().split("T")[0]}-${item.endpointId}`;
+    // Create a map of raw hourly data keyed by date-endpointId
+    const dataMap = new Map(data.map(item => [`${item.date}-${item.endpointId}`, item]));
 
-        const existing = bucketMap.get(bucketKey) || { success: 0, failure: 0, totalDurationMs: 0 };
-        existing.success += item.success;
-        existing.failure += item.failure;
-        existing.totalDurationMs += item.totalDurationMs;
-        bucketMap.set(bucketKey, existing);
-      });
+    // Calculate bucket boundaries
+    const startHour = new Date(rangeStart);
+    startHour.setMinutes(0, 0, 0);
+    const endHour = new Date(rangeEnd);
+    endHour.setMinutes(0, 0, 0);
 
-      // Fill in missing buckets with zeros
-      const result: EndpointTimeSeriesPoint[] = [];
-      const numBuckets = Math.ceil(days / bucketDays);
-      for (let i = 0; i < numBuckets; i++) {
-        const bucketStart = new Date(rangeStart.getTime() + (i * bucketDays * 24 * 60 * 60 * 1000));
-        const dateStr = bucketStart.toISOString().split("T")[0];
+    // Aggregate into buckets per endpoint
+    const bucketMap = new Map<string, { success: number; failure: number; totalDurationMs: number }>();
 
-        endpoints.forEach((endpoint) => {
-          const key = `${dateStr}-${endpoint.id}`;
-          const existing = bucketMap.get(key);
-          result.push({
-            date: dateStr,
-            endpointId: endpoint.id,
-            endpointName: endpoint.name,
-            success: existing?.success ?? 0,
-            failure: existing?.failure ?? 0,
-            totalDurationMs: existing?.totalDurationMs ?? 0,
-          });
-        });
-      }
-      return result;
-    }
-
-    // Daily granularity - create a map for quick lookup
-    const dataMap = new Map<string, typeof aggregatedData[0]>();
-    aggregatedData.forEach((item) => {
-      const key = `${item.date}-${item.endpointId}`;
-      dataMap.set(key, item);
-    });
-
-    // Initialize all days for all endpoints with zero counts from rangeStart to rangeEnd
-    const result: EndpointTimeSeriesPoint[] = [];
-    const startTime = new Date(rangeStart);
-    startTime.setUTCHours(0, 0, 0, 0);
-    const endTime = new Date(rangeEnd);
-    endTime.setUTCHours(0, 0, 0, 0);
-
-    for (let t = startTime.getTime(); t <= endTime.getTime(); t += 24 * 60 * 60 * 1000) {
-      const dateStr = new Date(t).toISOString().split("T")[0];
+    for (let t = startHour.getTime(); t <= endHour.getTime(); t += 60 * 60 * 1000) {
+      const currentHour = new Date(t);
+      const dateStr = `${currentHour.getFullYear()}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(currentHour.getDate()).padStart(2, "0")} ${String(currentHour.getHours()).padStart(2, "0")}:00:00`;
 
       endpoints.forEach((endpoint) => {
-        const key = `${dateStr}-${endpoint.id}`;
-        const existing = dataMap.get(key);
+        const existing = dataMap.get(`${dateStr}-${endpoint.id}`);
+        if (existing) {
+          const bucketIndex = Math.floor((t - startHour.getTime()) / bucketMs);
+          const bucketKey = `${startHour.getTime() + bucketIndex * bucketMs}-${endpoint.id}`;
+          const acc = bucketMap.get(bucketKey) ?? { success: 0, failure: 0, totalDurationMs: 0 };
+          acc.success += existing.success;
+          acc.failure += existing.failure;
+          acc.totalDurationMs += existing.totalDurationMs;
+          bucketMap.set(bucketKey, acc);
+        }
+      });
+    }
+
+    // Fill in all buckets (including empty ones)
+    const result: EndpointTimeSeriesPoint[] = [];
+    for (let t = startHour.getTime(); t <= endHour.getTime(); t += bucketMs) {
+      const bucketDate = new Date(t);
+      const dateStr = `${bucketDate.getFullYear()}-${String(bucketDate.getMonth() + 1).padStart(2, "0")}-${String(bucketDate.getDate()).padStart(2, "0")} ${String(bucketDate.getHours()).padStart(2, "0")}:00:00`;
+
+      endpoints.forEach((endpoint) => {
+        const values = bucketMap.get(`${t}-${endpoint.id}`) ?? { success: 0, failure: 0, totalDurationMs: 0 };
         result.push({
           date: dateStr,
           endpointId: endpoint.id,
           endpointName: endpoint.name,
-          success: existing?.success ?? 0,
-          failure: existing?.failure ?? 0,
-          totalDurationMs: existing?.totalDurationMs ?? 0,
+          ...values,
+        });
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Aggregate endpoint time-series into multi-day buckets.
+   */
+  private aggregateEndpointDailyBuckets(
+    data: Array<{ date: string; endpointId: string; endpointName: string; success: number; failure: number; totalDurationMs: number }>,
+    endpoints: Map<string, { id: string; name: string }>,
+    rangeStart: Date,
+    rangeEnd: Date,
+    bucketSizeDays: number,
+  ): EndpointTimeSeriesPoint[] {
+    const bucketMs = bucketSizeDays * 24 * 60 * 60 * 1000;
+
+    // Create a map of raw daily data keyed by date-endpointId
+    const dataMap = new Map(data.map(item => [`${item.date}-${item.endpointId}`, item]));
+
+    // Calculate bucket boundaries
+    const startDay = new Date(rangeStart);
+    startDay.setUTCHours(0, 0, 0, 0);
+    const endDay = new Date(rangeEnd);
+    endDay.setUTCHours(0, 0, 0, 0);
+
+    // Aggregate into buckets per endpoint
+    const bucketMap = new Map<string, { success: number; failure: number; totalDurationMs: number }>();
+
+    for (let t = startDay.getTime(); t <= endDay.getTime(); t += 24 * 60 * 60 * 1000) {
+      const dateStr = new Date(t).toISOString().split("T")[0];
+
+      endpoints.forEach((endpoint) => {
+        const existing = dataMap.get(`${dateStr}-${endpoint.id}`);
+        if (existing) {
+          const bucketIndex = Math.floor((t - startDay.getTime()) / bucketMs);
+          const bucketKey = `${startDay.getTime() + bucketIndex * bucketMs}-${endpoint.id}`;
+          const acc = bucketMap.get(bucketKey) ?? { success: 0, failure: 0, totalDurationMs: 0 };
+          acc.success += existing.success;
+          acc.failure += existing.failure;
+          acc.totalDurationMs += existing.totalDurationMs;
+          bucketMap.set(bucketKey, acc);
+        }
+      });
+    }
+
+    // Fill in all buckets (including empty ones)
+    const result: EndpointTimeSeriesPoint[] = [];
+    for (let t = startDay.getTime(); t <= endDay.getTime(); t += bucketMs) {
+      const dateStr = new Date(t).toISOString().split("T")[0];
+
+      endpoints.forEach((endpoint) => {
+        const values = bucketMap.get(`${t}-${endpoint.id}`) ?? { success: 0, failure: 0, totalDurationMs: 0 };
+        result.push({
+          date: dateStr,
+          endpointId: endpoint.id,
+          endpointName: endpoint.name,
+          ...values,
         });
       });
     }
@@ -588,8 +690,6 @@ export class DashboardManager {
    * Get time-series data for AI session activity.
    *
    * @param userId - The user ID
-   * @param days - Number of days to include
-   * @param now - Current timestamp (unused, kept for API compatibility)
    * @param filters - Filter options
    * @param filters.userId - User ID filter
    * @param filters.jobId - Job ID filter (optional)
@@ -597,12 +697,11 @@ export class DashboardManager {
    * @param filters.untilDate - End date for filtering sessions
    * @param filters.endpointLimit - Maximum number of endpoints to include (sorted by session count DESC)
    * @param filters.granularity - Time bucket granularity (hour or day)
-   * @returns Array of daily AI session counts
+   * @param filters.bucketSize - Size of each bucket (hours if granularity='hour', days if granularity='day')
+   * @returns Array of time-series AI session counts
    */
   private async getAISessionTimeSeries(
     userId: string,
-    days: number,
-    now: Date,
     filters: {
       userId: string;
       jobId?: string;
@@ -610,126 +709,164 @@ export class DashboardManager {
       untilDate: Date;
       endpointLimit?: number;
       granularity: "hour" | "day";
+      bucketSize: number;
     },
   ): Promise<AISessionTimeSeriesPoint[]> {
     // Get aggregated data from repository (SQL aggregation by date + endpoint)
     const aggregatedData = await this.sessionsRepo.getAISessionTimeSeries(filters);
 
-    // Use the actual date range from filters, not "now" minus days
     const rangeStart = filters.sinceDate;
     const rangeEnd = filters.untilDate;
 
     // Get unique endpoints
-    const endpointMap = new Map<string, { id: string; name: string }>();
+    const endpoints = new Map<string, { id: string; name: string }>();
     aggregatedData.forEach((item) => {
-      if (!endpointMap.has(item.endpointId)) {
-        endpointMap.set(item.endpointId, {
+      if (!endpoints.has(item.endpointId)) {
+        endpoints.set(item.endpointId, {
           id: item.endpointId,
           name: item.endpointName,
         });
       }
     });
 
-    // If hourly granularity, fill in hourly buckets
+    // If no endpoints, return empty array
+    if (endpoints.size === 0) {
+      return [];
+    }
+
     if (filters.granularity === "hour") {
-      const dataMap = new Map(
-        aggregatedData.map(item => [`${item.date}_${item.endpointId}`, item]),
+      return this.aggregateAISessionHourlyBuckets(
+        aggregatedData,
+        endpoints,
+        rangeStart,
+        rangeEnd,
+        filters.bucketSize,
       );
-
-      // Fill in all hours for all endpoints, from rangeStart to rangeEnd
-      const result: AISessionTimeSeriesPoint[] = [];
-
-      // Start from the beginning of the start hour
-      const startHour = new Date(rangeStart);
-      startHour.setMinutes(0, 0, 0);
-
-      // End at the beginning of the end hour
-      const endHour = new Date(rangeEnd);
-      endHour.setMinutes(0, 0, 0);
-
-      for (let t = startHour.getTime(); t <= endHour.getTime(); t += 60 * 60 * 1000) {
-        const currentHour = new Date(t);
-        const dateStr = `${currentHour.getFullYear()}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(currentHour.getDate()).padStart(2, "0")} ${String(currentHour.getHours()).padStart(2, "0")}:00:00`;
-
-        endpointMap.forEach((endpoint) => {
-          const existing = dataMap.get(`${dateStr}_${endpoint.id}`);
-          result.push({
-            date: dateStr,
-            endpointId: endpoint.id,
-            endpointName: endpoint.name,
-            sessionCount: existing?.sessionCount ?? 0,
-            totalTokens: existing?.totalTokens ?? 0,
-          });
-        });
-      }
-      return result;
     }
 
-    const { bucketDays } = getTimeBucketSize(days);
-
-    // If using multi-day buckets, aggregate the daily data per endpoint
-    if (bucketDays > 1) {
-      const bucketMap = new Map<string, { sessionCount: number; totalTokens: number }>();
-
-      aggregatedData.forEach((item) => {
-        const date = new Date(item.date);
-        // Calculate bucket key based on rangeStart, not now
-        const daysSinceStart = Math.floor((date.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000));
-        const bucketIndex = Math.floor(daysSinceStart / bucketDays);
-        const bucketStart = new Date(rangeStart.getTime() + (bucketIndex * bucketDays * 24 * 60 * 60 * 1000));
-        const bucketKey = `${bucketStart.toISOString().split("T")[0]}_${item.endpointId}`;
-
-        const existing = bucketMap.get(bucketKey) || { sessionCount: 0, totalTokens: 0 };
-        existing.sessionCount += item.sessionCount;
-        existing.totalTokens += item.totalTokens;
-        bucketMap.set(bucketKey, existing);
-      });
-
-      // Fill in missing buckets with zeros
-      const result: AISessionTimeSeriesPoint[] = [];
-      const numBuckets = Math.ceil(days / bucketDays);
-      for (let i = 0; i < numBuckets; i++) {
-        const bucketStart = new Date(rangeStart.getTime() + (i * bucketDays * 24 * 60 * 60 * 1000));
-        const dateStr = bucketStart.toISOString().split("T")[0];
-
-        endpointMap.forEach((endpoint) => {
-          const existing = bucketMap.get(`${dateStr}_${endpoint.id}`);
-          result.push({
-            date: dateStr,
-            endpointId: endpoint.id,
-            endpointName: endpoint.name,
-            sessionCount: existing?.sessionCount ?? 0,
-            totalTokens: existing?.totalTokens ?? 0,
-          });
-        });
-      }
-      return result;
-    }
-
-    // Daily granularity - create a map for quick lookup
-    const dataMap = new Map(
-      aggregatedData.map(item => [`${item.date}_${item.endpointId}`, item]),
+    // Daily granularity with variable bucket size
+    return this.aggregateAISessionDailyBuckets(
+      aggregatedData,
+      endpoints,
+      rangeStart,
+      rangeEnd,
+      filters.bucketSize,
     );
+  }
 
-    // Initialize all days for all endpoints with zero counts from rangeStart to rangeEnd
-    const result: AISessionTimeSeriesPoint[] = [];
-    const startTime = new Date(rangeStart);
-    startTime.setUTCHours(0, 0, 0, 0);
-    const endTime = new Date(rangeEnd);
-    endTime.setUTCHours(0, 0, 0, 0);
+  /**
+   * Aggregate AI session time-series into multi-hour buckets.
+   */
+  private aggregateAISessionHourlyBuckets(
+    data: Array<{ date: string; endpointId: string; endpointName: string; sessionCount: number; totalTokens: number }>,
+    endpoints: Map<string, { id: string; name: string }>,
+    rangeStart: Date,
+    rangeEnd: Date,
+    bucketSizeHours: number,
+  ): AISessionTimeSeriesPoint[] {
+    const bucketMs = bucketSizeHours * 60 * 60 * 1000;
 
-    for (let t = startTime.getTime(); t <= endTime.getTime(); t += 24 * 60 * 60 * 1000) {
-      const dateStr = new Date(t).toISOString().split("T")[0];
+    // Create a map of raw hourly data keyed by date_endpointId
+    const dataMap = new Map(data.map(item => [`${item.date}_${item.endpointId}`, item]));
 
-      // For each date, add entry for every endpoint
-      endpointMap.forEach((endpoint) => {
+    // Calculate bucket boundaries
+    const startHour = new Date(rangeStart);
+    startHour.setMinutes(0, 0, 0);
+    const endHour = new Date(rangeEnd);
+    endHour.setMinutes(0, 0, 0);
+
+    // Aggregate into buckets per endpoint
+    const bucketMap = new Map<string, { sessionCount: number; totalTokens: number }>();
+
+    for (let t = startHour.getTime(); t <= endHour.getTime(); t += 60 * 60 * 1000) {
+      const currentHour = new Date(t);
+      const dateStr = `${currentHour.getFullYear()}-${String(currentHour.getMonth() + 1).padStart(2, "0")}-${String(currentHour.getDate()).padStart(2, "0")} ${String(currentHour.getHours()).padStart(2, "0")}:00:00`;
+
+      endpoints.forEach((endpoint) => {
         const existing = dataMap.get(`${dateStr}_${endpoint.id}`);
+        if (existing) {
+          const bucketIndex = Math.floor((t - startHour.getTime()) / bucketMs);
+          const bucketKey = `${startHour.getTime() + bucketIndex * bucketMs}_${endpoint.id}`;
+          const acc = bucketMap.get(bucketKey) ?? { sessionCount: 0, totalTokens: 0 };
+          acc.sessionCount += existing.sessionCount;
+          acc.totalTokens += existing.totalTokens;
+          bucketMap.set(bucketKey, acc);
+        }
+      });
+    }
+
+    // Fill in all buckets (including empty ones)
+    const result: AISessionTimeSeriesPoint[] = [];
+    for (let t = startHour.getTime(); t <= endHour.getTime(); t += bucketMs) {
+      const bucketDate = new Date(t);
+      const dateStr = `${bucketDate.getFullYear()}-${String(bucketDate.getMonth() + 1).padStart(2, "0")}-${String(bucketDate.getDate()).padStart(2, "0")} ${String(bucketDate.getHours()).padStart(2, "0")}:00:00`;
+
+      endpoints.forEach((endpoint) => {
+        const values = bucketMap.get(`${t}_${endpoint.id}`) ?? { sessionCount: 0, totalTokens: 0 };
         result.push({
           date: dateStr,
           endpointId: endpoint.id,
           endpointName: endpoint.name,
-          sessionCount: existing?.sessionCount ?? 0,
-          totalTokens: existing?.totalTokens ?? 0,
+          ...values,
+        });
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Aggregate AI session time-series into multi-day buckets.
+   */
+  private aggregateAISessionDailyBuckets(
+    data: Array<{ date: string; endpointId: string; endpointName: string; sessionCount: number; totalTokens: number }>,
+    endpoints: Map<string, { id: string; name: string }>,
+    rangeStart: Date,
+    rangeEnd: Date,
+    bucketSizeDays: number,
+  ): AISessionTimeSeriesPoint[] {
+    const bucketMs = bucketSizeDays * 24 * 60 * 60 * 1000;
+
+    // Create a map of raw daily data keyed by date_endpointId
+    const dataMap = new Map(data.map(item => [`${item.date}_${item.endpointId}`, item]));
+
+    // Calculate bucket boundaries
+    const startDay = new Date(rangeStart);
+    startDay.setUTCHours(0, 0, 0, 0);
+    const endDay = new Date(rangeEnd);
+    endDay.setUTCHours(0, 0, 0, 0);
+
+    // Aggregate into buckets per endpoint
+    const bucketMap = new Map<string, { sessionCount: number; totalTokens: number }>();
+
+    for (let t = startDay.getTime(); t <= endDay.getTime(); t += 24 * 60 * 60 * 1000) {
+      const dateStr = new Date(t).toISOString().split("T")[0];
+
+      endpoints.forEach((endpoint) => {
+        const existing = dataMap.get(`${dateStr}_${endpoint.id}`);
+        if (existing) {
+          const bucketIndex = Math.floor((t - startDay.getTime()) / bucketMs);
+          const bucketKey = `${startDay.getTime() + bucketIndex * bucketMs}_${endpoint.id}`;
+          const acc = bucketMap.get(bucketKey) ?? { sessionCount: 0, totalTokens: 0 };
+          acc.sessionCount += existing.sessionCount;
+          acc.totalTokens += existing.totalTokens;
+          bucketMap.set(bucketKey, acc);
+        }
+      });
+    }
+
+    // Fill in all buckets (including empty ones)
+    const result: AISessionTimeSeriesPoint[] = [];
+    for (let t = startDay.getTime(); t <= endDay.getTime(); t += bucketMs) {
+      const dateStr = new Date(t).toISOString().split("T")[0];
+
+      endpoints.forEach((endpoint) => {
+        const values = bucketMap.get(`${t}_${endpoint.id}`) ?? { sessionCount: 0, totalTokens: 0 };
+        result.push({
+          date: dateStr,
+          endpointId: endpoint.id,
+          endpointName: endpoint.name,
+          ...values,
         });
       });
     }

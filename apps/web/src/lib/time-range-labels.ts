@@ -2,11 +2,15 @@
  * Utility functions for generating user-friendly time range labels for charts
  */
 
-import { differenceInDays, differenceInHours, format, isToday } from "date-fns";
+import { differenceInDays, format, isToday } from "date-fns";
 
 /**
  * Determines whether to show time in tooltip based on the date range span.
- * Shows time for ranges of 2 days or less.
+ * Shows time for ranges up to 14 days (when backend uses hourly granularity).
+ *
+ * Backend bucketing strategy:
+ * - Up to 14 days: hourly granularity (1, 2, 3, 4, 6, 8, or 12-hour buckets)
+ * - Beyond 14 days: daily granularity (1, 2, 3, 7, or 14-day buckets)
  *
  * @param startDate - The start of the range
  * @param endDate - The end of the range
@@ -16,14 +20,14 @@ export function shouldShowTimeInTooltip(startDate?: Date, endDate?: Date): boole
   if (!startDate || !endDate) {
     return false;
   }
-  const hoursDiff = differenceInHours(endDate, startDate);
-  // Show time for ranges of 48 hours or less
-  return hoursDiff <= 48;
+  const daysDiff = differenceInDays(endDate, startDate);
+  // Show time for ranges of 14 days or less (backend uses hourly granularity)
+  return daysDiff <= 14;
 }
 
 /**
  * Formats a date for display in chart tooltips.
- * Shows time when the date range is short (<=2 days), otherwise just date.
+ * Shows time when the date range uses hourly buckets (<=14 days), otherwise just date.
  *
  * @param date - The date to format
  * @param startDate - Optional start of the displayed range (for determining granularity)
