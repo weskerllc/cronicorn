@@ -311,6 +311,10 @@ export const JobActivityTimelineQuerySchema = z.object({
     description: "End date for filtering activity events (ISO 8601 format). Required.",
     example: "2025-01-08T00:00:00.000Z",
   }),
+  eventType: z.enum(["all", "runs", "sessions"]).optional().default("all").openapi({
+    description: "Filter by event type: 'all' (default), 'runs' (only run executions), or 'sessions' (only AI sessions)",
+    example: "all",
+  }),
   limit: z.coerce.number().int().positive().max(100).optional().default(50).openapi({
     description: "Maximum number of events to return",
     example: 50,

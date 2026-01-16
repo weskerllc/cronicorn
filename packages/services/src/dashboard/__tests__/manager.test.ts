@@ -903,4 +903,127 @@ describe("dashboardManager", () => {
       expect(oneHourAgoSession?.totalTokens).toBe(0);
     });
   });
+
+  describe("getJobActivityTimeline", () => {
+    const mockRuns = [
+      {
+        runId: "run-1",
+        endpointId: "ep-1",
+        endpointName: "Endpoint 1",
+        startedAt: new Date("2025-10-20T10:00:00Z"),
+        status: "success" as const,
+        durationMs: 150,
+        source: "cron",
+      },
+      {
+        runId: "run-2",
+        endpointId: "ep-1",
+        endpointName: "Endpoint 1",
+        startedAt: new Date("2025-10-20T09:00:00Z"),
+        status: "failed" as const,
+        durationMs: 200,
+        source: "manual",
+      },
+    ];
+
+    const mockSessions = [
+      {
+        sessionId: "session-1",
+        endpointId: "ep-1",
+        endpointName: "Endpoint 1",
+        analyzedAt: new Date("2025-10-20T10:30:00Z"),
+        reasoning: "Analyzed recent failures",
+        toolCalls: 2,
+        tokenUsage: 500,
+      },
+      {
+        sessionId: "session-2",
+        endpointId: "ep-1",
+        endpointName: "Endpoint 1",
+        analyzedAt: new Date("2025-10-20T08:00:00Z"),
+        reasoning: "Initial analysis",
+        toolCalls: 1,
+        tokenUsage: 300,
+      },
+    ];
+
+    it("should fetch both runs and sessions when eventType is 'all'", async () => {
+      vi.mocked(mockRunsRepo.getJobRuns).mockResolvedValue({ runs: mockRuns, total: 2 });
+      vi.mocked(mockSessionsRepo.getJobSessions).mockResolvedValue({ sessions: mockSessions, total: 2 });
+
+      const result = await manager.getJobActivityTimeline("user-1", undefined, {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+        eventType: "all",
+      });
+
+      expect(mockRunsRepo.getJobRuns).toHaveBeenCalled();
+      expect(mockSessionsRepo.getJobSessions).toHaveBeenCalled();
+      expect(result.events).toHaveLength(4);
+      expect(result.total).toBe(4);
+    });
+
+    it("should only fetch runs when eventType is 'runs'", async () => {
+      vi.mocked(mockRunsRepo.getJobRuns).mockResolvedValue({ runs: mockRuns, total: 2 });
+
+      const result = await manager.getJobActivityTimeline("user-1", undefined, {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+        eventType: "runs",
+      });
+
+      expect(mockRunsRepo.getJobRuns).toHaveBeenCalled();
+      expect(mockSessionsRepo.getJobSessions).not.toHaveBeenCalled();
+      expect(result.events).toHaveLength(2);
+      expect(result.events.every(e => e.type === "run")).toBe(true);
+      expect(result.total).toBe(2);
+    });
+
+    it("should only fetch sessions when eventType is 'sessions'", async () => {
+      vi.mocked(mockSessionsRepo.getJobSessions).mockResolvedValue({ sessions: mockSessions, total: 2 });
+
+      const result = await manager.getJobActivityTimeline("user-1", undefined, {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+        eventType: "sessions",
+      });
+
+      expect(mockRunsRepo.getJobRuns).not.toHaveBeenCalled();
+      expect(mockSessionsRepo.getJobSessions).toHaveBeenCalled();
+      expect(result.events).toHaveLength(2);
+      expect(result.events.every(e => e.type === "session")).toBe(true);
+      expect(result.total).toBe(2);
+    });
+
+    it("should default to 'all' when eventType is not specified", async () => {
+      vi.mocked(mockRunsRepo.getJobRuns).mockResolvedValue({ runs: mockRuns, total: 2 });
+      vi.mocked(mockSessionsRepo.getJobSessions).mockResolvedValue({ sessions: mockSessions, total: 2 });
+
+      const result = await manager.getJobActivityTimeline("user-1", undefined, {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+      });
+
+      expect(mockRunsRepo.getJobRuns).toHaveBeenCalled();
+      expect(mockSessionsRepo.getJobSessions).toHaveBeenCalled();
+      expect(result.events).toHaveLength(4);
+    });
+
+    it("should sort events by timestamp descending", async () => {
+      vi.mocked(mockRunsRepo.getJobRuns).mockResolvedValue({ runs: mockRuns, total: 2 });
+      vi.mocked(mockSessionsRepo.getJobSessions).mockResolvedValue({ sessions: mockSessions, total: 2 });
+
+      const result = await manager.getJobActivityTimeline("user-1", undefined, {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+        eventType: "all",
+      });
+
+      // Events should be sorted descending by timestamp
+      const timestamps = result.events.map(e => e.timestamp.getTime());
+      for (let i = 1; i < timestamps.length; i++) {
+        expect(timestamps[i]).toBeLessThanOrEqual(timestamps[i - 1]);
+      }
+    });
+  });
 });
