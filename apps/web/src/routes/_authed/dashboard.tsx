@@ -184,13 +184,7 @@ function DashboardPage() {
         </GridLayout>
       </div>
 
-      {/* Job Activity Timeline - Shows combined runs + AI sessions when a job is selected */}
-      <JobActivityTimeline
-        jobId={filters.jobId ?? null}
-        jobName={selectedJobName}
-        startDate={startDate}
-        endDate={endDate}
-      />
+
 
       <EndpointTable
         endpointTimeSeries={dashboardData?.endpointTimeSeries || []}
@@ -235,6 +229,13 @@ function DashboardPage() {
         />
 
       </GridLayout>
+      {/* Job Activity Timeline - Shows combined runs + AI sessions when a job is selected */}
+      <JobActivityTimeline
+        jobId={filters.jobId ?? null}
+        jobName={selectedJobName}
+        startDate={startDate}
+        endDate={endDate}
+      />
     </>
   );
 }

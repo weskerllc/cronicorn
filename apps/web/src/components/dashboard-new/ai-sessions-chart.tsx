@@ -10,9 +10,10 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
+import type { DateRange } from "@/hooks/use-chart-range-select";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import { formatTooltipDate, getDateRangeEndLabel, getDateRangeStartLabel } from "@/lib/time-range-labels";
-import { useChartRangeSelect, type DateRange } from "@/hooks/use-chart-range-select";
+import { formatTooltipDate, getDateRangeEndLabel, getDateRangeStartLabel, parseBackendDateAsLocal } from "@/lib/time-range-labels";
+import { useChartRangeSelect } from "@/hooks/use-chart-range-select";
 
 interface AISessionsChartProps {
     data: Array<AISessionTimeSeriesPoint>;
@@ -41,7 +42,11 @@ export function AISessionsChart({
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,
-    } = useChartRangeSelect({ onDateRangeChange });
+    } = useChartRangeSelect({
+        onDateRangeChange,
+        currentStartDate: startDate,
+        currentEndDate: endDate,
+    });
 
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
@@ -73,8 +78,9 @@ export function AISessionsChart({
             if (!endpointSet.has(item.endpointName)) return;
             if (!dateMap.has(item.date)) {
                 // Store timestamp for X-axis domain calculation
+                // Parse as local time to avoid UTC timezone shift in tooltips
                 dateMap.set(item.date, {
-                    date: new Date(item.date).getTime()
+                    date: parseBackendDateAsLocal(item.date)
                 });
             }
             const dateEntry = dateMap.get(item.date)!;

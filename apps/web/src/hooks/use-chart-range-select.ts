@@ -10,6 +10,10 @@ export interface DateRange {
 export interface UseChartRangeSelectOptions {
     /** Callback when user completes a drag selection */
     onDateRangeChange?: (range: DateRange) => void;
+    /** Current start date of the displayed range (used to determine granularity) */
+    currentStartDate?: Date;
+    /** Current end date of the displayed range (used to determine granularity) */
+    currentEndDate?: Date;
 }
 
 export interface ChartRangeSelectResult {
@@ -57,8 +61,22 @@ export interface ChartRangeSelectResult {
  * </ChartContainer>
  * ```
  */
+/**
+ * Determines if the current range uses hourly granularity (≤14 days).
+ * When using hourly granularity, we preserve exact times in selections.
+ * When using daily granularity, we normalize to day bounds.
+ */
+function isHourlyGranularity(startDate?: Date, endDate?: Date): boolean {
+    if (!startDate || !endDate) return false;
+    const diffMs = endDate.getTime() - startDate.getTime();
+    const diffDays = diffMs / (24 * 60 * 60 * 1000);
+    return diffDays <= 14;
+}
+
 export function useChartRangeSelect({
     onDateRangeChange,
+    currentStartDate,
+    currentEndDate,
 }: UseChartRangeSelectOptions): ChartRangeSelectResult {
     const [refAreaLeft, setRefAreaLeft] = useState<number | null>(null);
     const [refAreaRight, setRefAreaRight] = useState<number | null>(null);
@@ -95,13 +113,16 @@ export function useChartRangeSelect({
             // Sort to ensure left < right regardless of drag direction
             const [left, right] = [refAreaLeft, refAreaRight].sort((a, b) => a - b);
 
-            // Convert timestamps to Date objects and normalize to day bounds
             const newStartDate = new Date(left);
-            // Normalize using UTC so chart (UTC-based timestamps) maps cleanly to API filters
-            newStartDate.setUTCHours(0, 0, 0, 0);
-
             const newEndDate = new Date(right);
-            newEndDate.setUTCHours(23, 59, 59, 999);
+
+            // For hourly granularity (≤14 days), preserve exact times
+            // For daily granularity (>14 days), normalize to day bounds
+            if (!isHourlyGranularity(currentStartDate, currentEndDate)) {
+                // Normalize using local time to match chart display (which uses local midnight)
+                newStartDate.setHours(0, 0, 0, 0);
+                newEndDate.setHours(23, 59, 59, 999);
+            }
 
             onDateRangeChange({ startDate: newStartDate, endDate: newEndDate });
         }
@@ -110,7 +131,7 @@ export function useChartRangeSelect({
         setRefAreaLeft(null);
         setRefAreaRight(null);
         setIsSelecting(false);
-    }, [refAreaLeft, refAreaRight, onDateRangeChange]);
+    }, [refAreaLeft, refAreaRight, onDateRangeChange, currentStartDate, currentEndDate]);
 
     return {
         refAreaLeft,

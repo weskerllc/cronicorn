@@ -11,7 +11,7 @@ import { DashboardCard } from "./dashboard-card";
 import type { EndpointTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import { formatTooltipDate, getDateRangeEndLabel, getDateRangeStartLabel } from "@/lib/time-range-labels";
+import { formatTooltipDate, getDateRangeEndLabel, getDateRangeStartLabel, parseBackendDateAsLocal } from "@/lib/time-range-labels";
 import { useChartRangeSelect, type DateRange } from "@/hooks/use-chart-range-select";
 
 interface ExecutionTimelineChartProps {
@@ -41,7 +41,11 @@ export function ExecutionTimelineChart({
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,
-    } = useChartRangeSelect({ onDateRangeChange });
+    } = useChartRangeSelect({
+        onDateRangeChange,
+        currentStartDate: startDate,
+        currentEndDate: endDate,
+    });
 
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
@@ -73,7 +77,8 @@ export function ExecutionTimelineChart({
             if (!endpointSet.has(item.endpointName)) return;
             if (!dateMap.has(item.date)) {
                 // Store timestamp for X-axis domain calculation
-                dateMap.set(item.date, { date: new Date(item.date).getTime() });
+                // Parse as local time to avoid UTC timezone shift in tooltips
+                dateMap.set(item.date, { date: parseBackendDateAsLocal(item.date) });
             }
             const dateEntry = dateMap.get(item.date)!;
             // Use endpoint name as key, combine success + failure for total runs

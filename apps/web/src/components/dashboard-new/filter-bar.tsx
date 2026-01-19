@@ -100,14 +100,19 @@ export function FilterBar({
             {/* Date Range Picker */}
             <DateRangePicker
                 showCompare={false}
+                showTimeSelect={true}
                 initialDateFrom={filters.startDate}
                 initialDateTo={filters.endDate}
                 onUpdate={({ range }) => {
                     const end = range.to ?? range.from;
-                    const endOfDay = new Date(end.getTime());
-                    endOfDay.setHours(23, 59, 59, 999);
+                    // Use the time from the range if set, otherwise default to end of day
+                    const endDate = new Date(end.getTime());
+                    // If no specific time was set (hours/minutes are 0), set to end of day
+                    if (endDate.getHours() === 0 && endDate.getMinutes() === 0) {
+                        endDate.setHours(23, 59, 59, 999);
+                    }
 
-                    onDateRangeChange({ startDate: range.from, endDate: endOfDay });
+                    onDateRangeChange({ startDate: range.from, endDate: endDate });
                 }}
             />
 
