@@ -5,6 +5,32 @@
 import { differenceInDays, format, isToday } from "date-fns";
 
 /**
+ * Parses a backend date string as local time (not UTC).
+ *
+ * Backend returns two formats:
+ * - Daily: "2025-01-13" (date only)
+ * - Hourly: "2025-01-13 05:00:00" (date + time with space separator)
+ *
+ * JavaScript's Date constructor interprets date-only strings as UTC,
+ * which causes off-by-one day errors when displayed in local timezone.
+ * This function ensures dates are parsed as local time.
+ *
+ * @param dateStr - Date string from backend
+ * @returns Timestamp in milliseconds (local time)
+ */
+export function parseBackendDateAsLocal(dateStr: string): number {
+  // Check if it's a date-only format (no space or T separator)
+  if (!dateStr.includes(" ") && !dateStr.includes("T")) {
+    // Daily format: "2025-01-13" → parse as local midnight
+    return new Date(dateStr + "T00:00:00").getTime();
+  }
+
+  // Hourly format: "2025-01-13 05:00:00" → replace space with T for valid ISO-like format
+  // Without Z suffix, this parses as local time
+  return new Date(dateStr.replace(" ", "T")).getTime();
+}
+
+/**
  * Determines whether to show time in tooltip based on the date range span.
  * Shows time for ranges up to 14 days (when backend uses hourly granularity).
  *

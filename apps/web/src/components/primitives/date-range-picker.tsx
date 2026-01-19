@@ -16,7 +16,9 @@ import { Label } from '@cronicorn/ui-library/components/label'
 import { Switch } from '@cronicorn/ui-library/components/switch'
 import { cn } from '@cronicorn/ui-library/lib/utils'
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
+import { differenceInDays } from 'date-fns'
 import { DateInput } from './date-input'
+import { TimeInput } from './time-input'
 import type { FC, JSX } from 'react';
 
 
@@ -37,6 +39,8 @@ export interface DateRangePickerProps {
     locale?: string
     /** Option for showing compare feature */
     showCompare?: boolean
+    /** Option for showing time picker (auto-enabled for ranges ≤14 days) */
+    showTimeSelect?: boolean
 }
 
 const formatDate = (date: Date, locale: string = 'en-us'): string => {
@@ -45,6 +49,25 @@ const formatDate = (date: Date, locale: string = 'en-us'): string => {
         day: 'numeric',
         year: 'numeric'
     })
+}
+
+const formatTime = (date: Date): string => {
+    const hours = date.getHours()
+    const minutes = date.getMinutes()
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    const displayHours = hours % 12 || 12
+    const displayMinutes = minutes.toString().padStart(2, '0')
+    return `${displayHours}:${displayMinutes} ${ampm}`
+}
+
+const hasNonDefaultTime = (date: Date): boolean => {
+    const hours = date.getHours()
+    const minutes = date.getMinutes()
+    // Consider time "non-default" if it's not midnight (00:00) or end of day (23:59)
+    return !(
+        (hours === 0 && minutes === 0) ||
+        (hours === 23 && minutes === 59)
+    )
 }
 
 const getDateAdjustedForTimezone = (dateInput: Date | string): Date => {
@@ -93,7 +116,8 @@ export const DateRangePicker: FC<DateRangePickerProps> = ({
     onUpdate,
     align = 'end',
     locale = 'en-US',
-    showCompare = true
+    showCompare = true,
+    showTimeSelect = false
 }): JSX.Element => {
     const [isOpen, setIsOpen] = useState(false)
 
@@ -136,6 +160,29 @@ export const DateRangePicker: FC<DateRangePickerProps> = ({
             window.removeEventListener('resize', handleResize)
         }
     }, [])
+
+    // Determine if time selection should be shown
+    // Auto-enabled for ranges ≤14 days (matching backend hourly granularity threshold)
+    const shouldShowTimeSelect = (): boolean => {
+        if (!showTimeSelect) return false
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!range.from || !range.to) return false
+        const daysDiff = differenceInDays(range.to, range.from)
+        return daysDiff <= 14
+    }
+
+    const handleFromTimeChange = (hours: number, minutes: number): void => {
+        const newFrom = new Date(range.from)
+        newFrom.setHours(hours, minutes, 0, 0)
+        setRange(prev => ({ ...prev, from: newFrom }))
+    }
+
+    const handleToTimeChange = (hours: number, minutes: number): void => {
+        if (!range.to) return
+        const newTo = new Date(range.to)
+        newTo.setHours(hours, minutes, 59, 999)
+        setRange(prev => ({ ...prev, to: newTo }))
+    }
 
     const getPresetRange = (presetName: string): DateRange => {
         const preset = PRESETS.find(({ name }) => name === presetName)
@@ -341,8 +388,25 @@ export const DateRangePicker: FC<DateRangePickerProps> = ({
                 <Button variant="outline">
                     <div className="text-right">
                         <div className="py-1">
-                            <div>{`${formatDate(range.from, locale)}${range.to != null ? ' - ' + formatDate(range.to, locale) : ''
-                                }`}</div>
+                            <div>
+                                {formatDate(range.from, locale)}
+                                {showTimeSelect && hasNonDefaultTime(range.from) && (
+                                    <span className="text-muted-foreground text-xs ml-1">
+                                        {formatTime(range.from)}
+                                    </span>
+                                )}
+                                {range.to != null && (
+                                    <>
+                                        {' - '}
+                                        {formatDate(range.to, locale)}
+                                        {showTimeSelect && hasNonDefaultTime(range.to) && (
+                                            <span className="text-muted-foreground text-xs ml-1">
+                                                {formatTime(range.to)}
+                                            </span>
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                         {rangeCompare != null && (
                             <div className="opacity-60 text-xs -mt-1">
@@ -409,11 +473,18 @@ export const DateRangePicker: FC<DateRangePickerProps> = ({
                                         <DateInput
                                             value={range.from}
                                             onChange={(date) => {
+                                                // Preserve time when changing date
+                                                const newDate = new Date(date)
+                                                newDate.setHours(
+                                                    range.from.getHours(),
+                                                    range.from.getMinutes(),
+                                                    0, 0
+                                                )
                                                 const toDate =
-                                                    range.to == null || date > range.to ? date : range.to
+                                                    range.to == null || newDate > range.to ? newDate : range.to
                                                 setRange((prevRange) => ({
                                                     ...prevRange,
-                                                    from: date,
+                                                    from: newDate,
                                                     to: toDate
                                                 }))
                                             }}
@@ -422,15 +493,37 @@ export const DateRangePicker: FC<DateRangePickerProps> = ({
                                         <DateInput
                                             value={range.to}
                                             onChange={(date) => {
-                                                const fromDate = date < range.from ? date : range.from
+                                                // Preserve time when changing date
+                                                const newDate = new Date(date)
+                                                if (range.to) {
+                                                    newDate.setHours(
+                                                        range.to.getHours(),
+                                                        range.to.getMinutes(),
+                                                        59, 999
+                                                    )
+                                                }
+                                                const fromDate = newDate < range.from ? newDate : range.from
                                                 setRange((prevRange) => ({
                                                     ...prevRange,
                                                     from: fromDate,
-                                                    to: date
+                                                    to: newDate
                                                 }))
                                             }}
                                         />
                                     </div>
+                                    {shouldShowTimeSelect() && (
+                                        <div className="flex gap-2 items-center">
+                                            <TimeInput
+                                                value={range.from}
+                                                onChange={handleFromTimeChange}
+                                            />
+                                            <div className="py-1 text-muted-foreground">-</div>
+                                            <TimeInput
+                                                value={range.to}
+                                                onChange={handleToTimeChange}
+                                            />
+                                        </div>
+                                    )}
                                     {rangeCompare != null && (
                                         <div className="flex gap-2">
                                             <DateInput

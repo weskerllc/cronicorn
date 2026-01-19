@@ -15,7 +15,7 @@ import type {
 
 /**
  * Calculate time bucket granularity based on date range span.
- * Targets ~24-30 data points for optimal chart visualization.
+ * Targets ~24-36 data points for optimal chart visualization.
  *
  * Strategy:
  * - Up to 2 weeks: Hourly granularity with variable bucket sizes (1, 2, 3, 4, 6, 8, 12 hours)
@@ -25,7 +25,8 @@ import type {
  * - 1 day → 1-hour buckets (24 points)
  * - 7 days → 6-hour buckets (28 points)
  * - 14 days → 12-hour buckets (28 points)
- * - 30 days → daily buckets (30 points)
+ * - 32 days → daily buckets (32 points)
+ * - 50 days → 2-day buckets (25 points)
  * - 90 days → 3-day buckets (30 points)
  */
 function getTimeGranularity(spanMs: number): {
@@ -55,16 +56,17 @@ function getTimeGranularity(spanMs: number): {
   }
 
   // For longer spans, use daily granularity with variable bucket sizes
+  // Thresholds are slightly generous to prefer finer granularity when close
   const idealBucketDays = spanDays / TARGET_POINTS;
-  if (idealBucketDays <= 1)
-    return { granularity: "day", bucketSize: 1 };
-  if (idealBucketDays <= 2)
-    return { granularity: "day", bucketSize: 2 };
-  if (idealBucketDays <= 4)
-    return { granularity: "day", bucketSize: 3 };
-  if (idealBucketDays <= 10)
-    return { granularity: "day", bucketSize: 7 };
-  return { granularity: "day", bucketSize: 14 };
+  if (idealBucketDays <= 1.5)
+    return { granularity: "day", bucketSize: 1 }; // Up to ~36 days → daily
+  if (idealBucketDays <= 2.5)
+    return { granularity: "day", bucketSize: 2 }; // ~36-60 days → every 2 days
+  if (idealBucketDays <= 5)
+    return { granularity: "day", bucketSize: 3 }; // ~60-120 days → every 3 days
+  if (idealBucketDays <= 12)
+    return { granularity: "day", bucketSize: 7 }; // ~120-288 days → weekly
+  return { granularity: "day", bucketSize: 14 }; // 288+ days → bi-weekly
 }
 
 /**
