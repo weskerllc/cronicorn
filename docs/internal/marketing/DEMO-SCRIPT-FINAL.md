@@ -115,6 +115,7 @@ Add these annotations in post-production:
 
 ### Narration Script
 
+That's why we created cronicorn. A job scheduler that adapts to what's happening. Instead of rigid schedules or complex scheduling logic in your services - it watches responses from your services and adjusts appropriately. It's simple, transparent, and you remain in control.
 > "Meet Cronicorn. It's a job scheduler that actually adapts to what's happening. Instead of rigid schedules, it watches your workload and adjusts on the fly. Things heating up? It tightens. Things calm down? It backs off. And here's the thing—every decision is transparent. You're always in control."
 
 ### Screen Recording
@@ -321,6 +322,14 @@ Quick cut to Cronicorn dashboard showing:
 | 1:02-1:04 | Close modal, pan to 12:00-14:00 | Peak phase, dense activity |
 | 1:04-1:08 | Click run showing "clamped-min" | Run detail modal with critical metrics |
 | 1:08-1:10 | Quick cuts: Investigation, Recovery, Alert tiers | Purple dots firing |
+
+
+
+
+
+Here we can see a list of the AI decisions made during the flash sale—the endpoint name, what action was taken, and a brief justification. Around 8AM, traffic started to surge, so the AI tightened the   
+monitoring schedule. As the morning progresses, you'll notice other endpoints flagging irregular activity—the slow page analyzer, for example. Then as we move into the afternoon, the AI starts detecting 
+that things are returning to baseline and then it eases up the monitoring schedule             
 
 ### AI Session Content to Show
 
