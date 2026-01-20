@@ -768,3 +768,23 @@ Works for:
 **Document Owner:** Marketing Team
 **Last Updated:** 2026-01-16
 **Status:** Ready for Recording
+
+
+## INTRO stuff
+
+We built Cronicorn because we were tired of writing scheduling logic that couldn't react to what was actually happening. 
+
+So we made something that actually reads your responses - status codes, bodies, the real data - and adapts based on rules you set.
+
+Traffic spikes? It checks more often. Things calm down? It backs off. And you can see exactly why it made every call. Here's what that actually looks like.
+
+
+We built Cronicorn because scheduling logic never reacts to what’s actually happening.
+
+So we built something that reads real responses—status codes, bodies, real data—and adapts using rules you control.
+
+Traffic spikes? It checks more often. Things calm down? It backs off automatically.
+
+And you can see exactly why every call happened.
+
+Here’s what that looks like in practice.
