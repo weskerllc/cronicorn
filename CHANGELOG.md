@@ -1,3 +1,18 @@
+# [1.19.0](https://github.com/weskerllc/cronicorn/compare/v1.18.3...v1.19.0) (2026-01-21)
+
+
+### Bug Fixes
+
+* Annual pricing ([#99](https://github.com/weskerllc/cronicorn/issues/99)) ([fd8fc0d](https://github.com/weskerllc/cronicorn/commit/fd8fc0d92c903f499c3bdac5b8ae9d31cb21d6cf))
+* gradient artifacts on high resolution displays ([#103](https://github.com/weskerllc/cronicorn/issues/103)) ([f950805](https://github.com/weskerllc/cronicorn/commit/f950805b1b04535feff86528b10127f5e92e909e)), closes [hi#res](https://github.com/hi/issues/res) [hi#DPI](https://github.com/hi/issues/DPI) [hi#resolution](https://github.com/hi/issues/resolution)
+
+
+### Features
+
+* Enhancements to Dashboard, Seed, various others ([#104](https://github.com/weskerllc/cronicorn/issues/104)) ([2af94aa](https://github.com/weskerllc/cronicorn/commit/2af94aa7d33f6dc942ed5b26c0ccf2d12d56361c))
+* **migrator:** add demo-optimized e-commerce flash sale seed ([84e7976](https://github.com/weskerllc/cronicorn/commit/84e7976dd0c32fbce17b4de69bc4e3e4eaae2301))
+* Prod readiness ([#102](https://github.com/weskerllc/cronicorn/issues/102)) ([8e4bc8b](https://github.com/weskerllc/cronicorn/commit/8e4bc8b663b5debd7321af99765b63b0f452b6c1))
+
 ## [1.18.3](https://github.com/weskerllc/cronicorn/compare/v1.18.2...v1.18.3) (2026-01-05)
 
 
