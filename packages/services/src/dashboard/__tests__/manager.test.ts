@@ -204,23 +204,26 @@ describe("dashboardManager", () => {
       expect(result.endpoints.paused).toBe(1);
       expect(result.successRate.overall).toBeGreaterThan(0);
       expect(result.recentActivity.runs24h).toBe(2);
-      expect(result.runTimeSeries).toHaveLength(7); // 7-day range -> 7 buckets
+      // 7-day range (<=14 days) uses hourly granularity with 6-hour buckets
+      // 168 hours / 6 = 28, plus inclusive end = 29 buckets
+      expect(result.runTimeSeries).toHaveLength(29);
       expect(mockRunsRepo.getFilteredMetrics).toHaveBeenCalledWith(expect.objectContaining({
         sinceDate: range.startDate,
         untilDate: range.endDate,
-        granularity: "day",
+        granularity: "hour",
       }));
     });
 
-    it("should use 3-day buckets for a 30-day window", async () => {
+    it("should use daily buckets for a 30-day window", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       const result = await manager.getDashboardStats("user-1", dateRange(30));
 
-      // 30 days with 3-day buckets yields 10 buckets
-      expect(result.runTimeSeries).toHaveLength(10);
+      // 30 days (>14 days) uses daily granularity with 1-day buckets
+      // From Sep 20 to Oct 20 inclusive = 31 buckets
+      expect(result.runTimeSeries).toHaveLength(31);
     });
 
     it("should handle user with no jobs", async () => {
@@ -577,34 +580,40 @@ describe("dashboardManager", () => {
   // ==================== Run Time Series Tests ====================
 
   describe("runTimeSeries", () => {
-    it("should create time series with all days initialized to zero", async () => {
+    it("should create time series with all buckets initialized to zero", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       const result = await manager.getDashboardStats("user-1", dateRange(7));
 
-      expect(result.runTimeSeries).toHaveLength(7);
+      // 7-day range uses hourly granularity with 6-hour buckets (29 buckets)
+      expect(result.runTimeSeries).toHaveLength(29);
       result.runTimeSeries.forEach((point) => {
         expect(point.success).toBe(0);
         expect(point.failure).toBe(0);
-        expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2}$/); // YYYY-MM-DD format
+        // Hourly format: YYYY-MM-DD HH:00:00
+        expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:00:00$/);
       });
     });
 
     it("should aggregate runs by date", async () => {
-      const today = baseDate.toISOString().split("T")[0];
-      const yesterday = new Date(baseDate.getTime() - 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
+      // 7-day range uses hourly format with 6-hour buckets: YYYY-MM-DD HH:00:00
+      const formatHour = (date: Date) => {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+      };
+
+      const currentHourStart = new Date(baseDate);
+      currentHourStart.setMinutes(0, 0, 0);
+      const currentHour = formatHour(currentHourStart);
 
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
 
-      // Mock the aggregated time series data
+      // Mock the aggregated time series data with hourly format
+      // Note: With 6-hour buckets, hours within the same bucket get aggregated together
       vi.mocked(mockRunsRepo.getRunTimeSeries).mockResolvedValue([
-        { date: today, success: 1, failure: 1 },
-        { date: yesterday, success: 1, failure: 0 },
+        { date: currentHour, success: 2, failure: 1 }, // Aggregated data from current bucket
       ]);
 
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({
@@ -612,14 +621,14 @@ describe("dashboardManager", () => {
           {
             runId: "run-1",
             endpointId: "ep-1",
-            startedAt: new Date(baseDate.getTime() - 1 * 60 * 60 * 1000), // Today
+            startedAt: new Date(baseDate.getTime() - 1 * 60 * 60 * 1000), // 1 hour ago
             status: "success",
             durationMs: 100,
           },
           {
             runId: "run-2",
             endpointId: "ep-1",
-            startedAt: new Date(baseDate.getTime() - 2 * 60 * 60 * 1000), // Today
+            startedAt: new Date(baseDate.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
             status: "failed",
             durationMs: 200,
           },
@@ -636,13 +645,11 @@ describe("dashboardManager", () => {
 
       const result = await manager.getDashboardStats("user-1", dateRange(7));
 
-      const todayPoint = result.runTimeSeries.find(p => p.date === today);
-      const yesterdayPoint = result.runTimeSeries.find(p => p.date === yesterday);
+      // Find the current bucket and verify aggregated data
+      const currentBucket = result.runTimeSeries.find(p => p.date === currentHour);
 
-      expect(todayPoint?.success).toBe(1);
-      expect(todayPoint?.failure).toBe(1);
-      expect(yesterdayPoint?.success).toBe(1);
-      expect(yesterdayPoint?.failure).toBe(0);
+      expect(currentBucket?.success).toBe(2);
+      expect(currentBucket?.failure).toBe(1);
     });
 
     it("should sort time series chronologically", async () => {
@@ -670,8 +677,8 @@ describe("dashboardManager", () => {
       const range = dateRange(1);
       const result = await manager.getDashboardStats("user-1", range);
 
-      // Should create 24 hourly buckets
-      expect(result.runTimeSeries).toHaveLength(24);
+      // Should create 25 hourly buckets (24 hours + inclusive end)
+      expect(result.runTimeSeries).toHaveLength(25);
       expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
         sinceDate: range.startDate,
         untilDate: range.endDate,
@@ -692,8 +699,8 @@ describe("dashboardManager", () => {
 
       const result = await manager.getDashboardStats("user-1", dateRange(1));
 
-      // Should have 24 buckets
-      expect(result.runTimeSeries).toHaveLength(24);
+      // Should have 25 buckets (24 hours + inclusive end)
+      expect(result.runTimeSeries).toHaveLength(25);
 
       // Last bucket should be the current hour boundary
       const lastBucket = result.runTimeSeries[result.runTimeSeries.length - 1];
@@ -704,7 +711,7 @@ describe("dashboardManager", () => {
       expect(firstBucket.date).toMatch(/:00:00$/);
     });
 
-    it("should use daily granularity for a 7-day window", async () => {
+    it("should use hourly granularity with 6-hour buckets for a 7-day window", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
@@ -712,29 +719,31 @@ describe("dashboardManager", () => {
       const range = dateRange(7);
       const result = await manager.getDashboardStats("user-1", range);
 
-      // Should create 7 daily buckets
-      expect(result.runTimeSeries).toHaveLength(7);
+      // 7-day range (<=14 days) uses hourly granularity with 6-hour buckets
+      // 168 hours / 6 = 28 + 1 inclusive = 29 buckets
+      expect(result.runTimeSeries).toHaveLength(29);
       expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
-        granularity: "day",
+        granularity: "hour",
         sinceDate: range.startDate,
         untilDate: range.endDate,
       }));
 
-      // Verify daily format (YYYY-MM-DD)
+      // Verify hourly format (YYYY-MM-DD HH:00:00)
       result.runTimeSeries.forEach((point) => {
-        expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:00:00$/);
       });
     });
 
-    it("should use 3-day buckets for a 30-day window", async () => {
+    it("should use daily buckets for a 30-day window", async () => {
       vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
       vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
       vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
 
       const result = await manager.getDashboardStats("user-1", dateRange(30));
 
-      // Should create 10 buckets (30 days / 3 days per bucket)
-      expect(result.runTimeSeries).toHaveLength(10);
+      // 30-day range (>14 days) uses daily granularity with 1-day buckets
+      // From Sep 20 to Oct 20 inclusive = 31 buckets
+      expect(result.runTimeSeries).toHaveLength(31);
 
       // Verify daily format (YYYY-MM-DD)
       result.runTimeSeries.forEach((point) => {
@@ -824,8 +833,8 @@ describe("dashboardManager", () => {
 
       const result = await manager.getDashboardStats("user-1", dateRange(1));
 
-      // Should have 24 hours * 2 endpoints = 48 data points
-      expect(result.endpointTimeSeries).toHaveLength(48);
+      // Should have 25 hours (inclusive) * 2 endpoints = 50 data points
+      expect(result.endpointTimeSeries).toHaveLength(50);
 
       // Verify data for current hour
       const ep1CurrentHour = result.endpointTimeSeries.find(

@@ -2,12 +2,10 @@
 
 # <img src="packages/content/assets/logo.svg" alt="Cronicorn" height="40" align="center"> Cronicorn
 
-**HTTP Job scheduler that adapts to what's happening**
+**AI-powered HTTP scheduler that adapts based on real response data**
 
 <p align="center">
-Your workload just spiked. Could be a traffic surge, a live event, maybe a pipeline going nuts. But your scheduled jobs? They're still running every 5 minutes like nothing happened.
-<br><br>
-<strong>Cronicorn changes that.</strong> Schedules adapt to what's happening. Things heating up? It tightens. Things calm down? It backs off. And every decision is transparent—you're always in control.
+Reads status codes, bodies, and response content. Adjusts schedules using rules you control.
 </p>
 
 <p align="center">
