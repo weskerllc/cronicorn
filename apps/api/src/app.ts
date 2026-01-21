@@ -143,6 +143,11 @@ export async function createApp(
     return requireAuth(auth, config)(c, next);
   });
 
+  app.use("/sessions/*", async (c, next) => {
+    const auth = c.get("auth");
+    return requireAuth(auth, config)(c, next);
+  });
+
   app.use("/subscriptions/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);

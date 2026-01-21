@@ -2,19 +2,21 @@
 
 # <img src="packages/content/assets/logo.svg" alt="Cronicorn" height="40" align="center"> Cronicorn
 
-**HTTP Job Scheduler that adapts to your system**
+**AI-powered HTTP scheduler that adapts based on real response data**
 
 <p align="center">
-Stop writing complex scheduling logic. Cronicorn executes the policy you describe while keeping every decision auditable.
-<br>
-
-From rate limit fallbacks, conditional retries, to adaptive intervals—describe what you want in plain language.
+Reads status codes, bodies, and response content. Adjusts schedules using rules you control.
 </p>
 
 <p align="center">
   <img src=".github/images/timeline-animation.gif" alt="Cronicorn AI Adaptation" width="640">
   <br>
-  <em>Flash sale surge → AI tightens to 30s + cache warming → stabilizes → back to 5-min</em>
+  <em>Activity surge → AI tightens to 30s + triggers recovery actions → stabilizes → back to baseline</em>
+</p>
+
+<p align="center">
+<strong>What makes it different:</strong><br>
+Every decision explained • You set the boundaries • Works without AI
 </p>
 
 <p align="center">

@@ -4,24 +4,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## Ask a Question
-
-        Before asking, please check:
-        - 📚 [Documentation](https://docs.cronicorn.com)
-        - 🔍 [Existing discussions](https://github.com/weskerllc/cronicorn/discussions)
+        Ask away! Check the [docs](https://docs.cronicorn.com) first if you haven't already.
 
   - type: textarea
     id: question
     attributes:
       label: Your question
-      description: What would you like to know?
+      placeholder: How do I...
     validations:
       required: true
-
-  - type: textarea
-    id: context
-    attributes:
-      label: Context
-      description: Any relevant details about what you're trying to do
-    validations:
-      required: false

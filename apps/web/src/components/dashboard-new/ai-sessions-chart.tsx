@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ReferenceArea, XAxis, YAxis } from "recharts";
 import {
     ChartContainer,
     ChartTooltip,
@@ -10,23 +10,44 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
-import type { TimeRangeValue } from "@/lib/time-range-labels";
+import type { DateRange } from "@/hooks/use-chart-range-select";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
-import { getTimeRangeEndLabel, getTimeRangeStartLabel } from "@/lib/time-range-labels";
+import { formatTooltipDate, getDateRangeEndLabel, getDateRangeStartLabel, parseBackendDateAsLocal } from "@/lib/time-range-labels";
+import { useChartRangeSelect } from "@/hooks/use-chart-range-select";
 
 interface AISessionsChartProps {
     data: Array<AISessionTimeSeriesPoint>;
     /** Pre-calculated chart config for consistent colors */
     chartConfig: ChartConfig;
-    /** Selected time range for label display */
-    timeRange?: TimeRangeValue;
+    /** Start date for the displayed range */
+    startDate?: Date;
+    /** End date for the displayed range */
+    endDate?: Date;
+    /** Callback when user drags to select a date range on the chart */
+    onDateRangeChange?: (range: DateRange) => void;
 }
 
 export function AISessionsChart({
     data,
     chartConfig,
-    timeRange,
+    startDate,
+    endDate,
+    onDateRangeChange,
 }: AISessionsChartProps) {
+    // Drag-to-select functionality
+    const {
+        refAreaLeft,
+        refAreaRight,
+        containerStyle,
+        handleMouseDown,
+        handleMouseMove,
+        handleMouseUp,
+    } = useChartRangeSelect({
+        onDateRangeChange,
+        currentStartDate: startDate,
+        currentEndDate: endDate,
+    });
+
     // Transform flat endpoint time-series into grouped-by-date format for Recharts
     const { chartData, endpoints, totalEndpoints } = useMemo(() => {
         // Calculate total sessions per endpoint to find top performers
@@ -57,8 +78,9 @@ export function AISessionsChart({
             if (!endpointSet.has(item.endpointName)) return;
             if (!dateMap.has(item.date)) {
                 // Store timestamp for X-axis domain calculation
+                // Parse as local time to avoid UTC timezone shift in tooltips
                 dateMap.set(item.date, {
-                    date: new Date(item.date).getTime()
+                    date: parseBackendDateAsLocal(item.date)
                 });
             }
             const dateEntry = dateMap.get(item.date)!;
@@ -129,8 +151,15 @@ export function AISessionsChart({
                 <ChartContainer
                     config={chartConfig}
                     className="aspect-auto h-full w-full"
+                    style={containerStyle}
                 >
-                    <AreaChart data={chartData}>
+                    <AreaChart
+                        data={chartData}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                    >
                         <defs>
                             {endpoints
                                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -175,9 +204,9 @@ export function AISessionsChart({
                             tickFormatter={(_value, index) => {
                                 // Show start label on left, end label on right
                                 if (index === 0) {
-                                    return getTimeRangeStartLabel(timeRange);
+                                    return getDateRangeStartLabel(startDate, endDate);
                                 }
-                                return getTimeRangeEndLabel();
+                                return getDateRangeEndLabel(startDate, endDate);
                             }}
                         />
                         <YAxis
@@ -202,18 +231,13 @@ export function AISessionsChart({
                                 });
 
                                 const date = new Date(Number(payload[0]?.payload?.date));
+                                const formattedDate = formatTooltipDate(date, startDate, endDate);
 
                                 // If all values are zero, show "No activity" message
                                 if (filteredPayload.length === 0) {
                                     return (
                                         <div className="rounded-lg border bg-background p-2 shadow-sm">
-                                            <div className="text-muted-foreground text-xs">
-                                                {date.toLocaleDateString("en-US", {
-                                                    month: "short",
-                                                    day: "numeric",
-                                                    year: "numeric",
-                                                })}
-                                            </div>
+                                            <div className="font-medium text-xs">{formattedDate}</div>
                                             <div className="text-muted-foreground mt-1 text-xs">No activity</div>
                                         </div>
                                     );
@@ -223,11 +247,7 @@ export function AISessionsChart({
                                     <ChartTooltipContent
                                         active={active}
                                         payload={filteredPayload}
-                                        label={date.toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric",
-                                        })}
+                                        label={formattedDate}
                                         indicator="dot"
                                     />
                                 );
@@ -252,6 +272,17 @@ export function AISessionsChart({
                                     />
                                 );
                             })}
+                        {/* Selection overlay for drag-to-select */}
+                        {refAreaLeft && refAreaRight && (
+                            <ReferenceArea
+                                x1={refAreaLeft}
+                                x2={refAreaRight}
+                                strokeOpacity={0.3}
+                                stroke="hsl(var(--primary))"
+                                fill="hsl(var(--primary))"
+                                fillOpacity={0.15}
+                            />
+                        )}
                     </AreaChart>
                 </ChartContainer>
             ) : null}

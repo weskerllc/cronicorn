@@ -47,9 +47,9 @@ test.describe("Seeded Dashboard", () => {
     await expect(endpointsSection).toBeVisible({ timeout: 10000 });
 
     // Verify at least one seeded endpoint name appears in the table
-    // Seed creates endpoints like "Database Check", "Cache Status", "API Health"
-    // Note: "API Health" is first endpoint and may be archived; use "Database Check" which is more visible
-    const databaseCheckEndpoint = page.locator("text=Database Check").first();
+    // Seed creates endpoints like "Order Processor Health", "Cache Status", "API Health"
+    // Note: "API Health" is first endpoint and may be archived; use "Order Processor Health" which is more visible
+    const databaseCheckEndpoint = page.locator("text=Order Processor Health").first();
     await expect(databaseCheckEndpoint).toBeVisible({ timeout: 10000 });
   });
 
@@ -89,7 +89,7 @@ test.describe("Seeded Dashboard", () => {
       await jobDropdown.click();
 
       // Should show seeded job options
-      const monitoringOption = page.locator("text=Monitoring").first();
+      const monitoringOption = page.locator("text=Order Processor Health").first();
       await expect(monitoringOption).toBeVisible({ timeout: 5000 });
     }
   });
