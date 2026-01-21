@@ -30,6 +30,7 @@ import { Route as AuthedJobsNewRouteImport } from './routes/_authed/jobs.new'
 import { Route as AuthedJobsIdRouteImport } from './routes/_authed/jobs.$id'
 import { Route as AuthedEndpointsIdRouteImport } from './routes/_authed/endpoints.$id'
 import { Route as AuthedDeviceApproveRouteImport } from './routes/_authed/device.approve'
+import { Route as AuthedAiSessionsIdRouteImport } from './routes/_authed/ai-sessions.$id'
 import { Route as AuthedJobsIdIndexRouteImport } from './routes/_authed/jobs.$id.index'
 import { Route as AuthedEndpointsIdIndexRouteImport } from './routes/_authed/endpoints.$id.index'
 import { Route as AuthedJobsIdEndpointsRouteImport } from './routes/_authed/jobs.$id.endpoints'
@@ -143,6 +144,11 @@ const AuthedDeviceApproveRoute = AuthedDeviceApproveRouteImport.update({
   path: '/device/approve',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedAiSessionsIdRoute = AuthedAiSessionsIdRouteImport.update({
+  id: '/ai-sessions/$id',
+  path: '/ai-sessions/$id',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedJobsIdIndexRoute = AuthedJobsIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PublicPrivacyRoute
   '/terms': typeof PublicTermsRoute
   '/': typeof PublicIndexRoute
+  '/ai-sessions/$id': typeof AuthedAiSessionsIdRoute
   '/device/approve': typeof AuthedDeviceApproveRoute
   '/endpoints/$id': typeof AuthedEndpointsIdRouteWithChildren
   '/jobs/$id': typeof AuthedJobsIdRouteWithChildren
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PublicPrivacyRoute
   '/terms': typeof PublicTermsRoute
   '/': typeof PublicIndexRoute
+  '/ai-sessions/$id': typeof AuthedAiSessionsIdRoute
   '/device/approve': typeof AuthedDeviceApproveRoute
   '/jobs/new': typeof AuthedJobsNewRoute
   '/runs/$id': typeof AuthedRunsIdRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/_public/privacy': typeof PublicPrivacyRoute
   '/_public/terms': typeof PublicTermsRoute
   '/_public/': typeof PublicIndexRoute
+  '/_authed/ai-sessions/$id': typeof AuthedAiSessionsIdRoute
   '/_authed/device/approve': typeof AuthedDeviceApproveRoute
   '/_authed/endpoints/$id': typeof AuthedEndpointsIdRouteWithChildren
   '/_authed/jobs/$id': typeof AuthedJobsIdRouteWithChildren
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/'
+    | '/ai-sessions/$id'
     | '/device/approve'
     | '/endpoints/$id'
     | '/jobs/$id'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/'
+    | '/ai-sessions/$id'
     | '/device/approve'
     | '/jobs/new'
     | '/runs/$id'
@@ -344,6 +355,7 @@ export interface FileRouteTypes {
     | '/_public/privacy'
     | '/_public/terms'
     | '/_public/'
+    | '/_authed/ai-sessions/$id'
     | '/_authed/device/approve'
     | '/_authed/endpoints/$id'
     | '/_authed/jobs/$id'
@@ -516,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDeviceApproveRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/ai-sessions/$id': {
+      id: '/_authed/ai-sessions/$id'
+      path: '/ai-sessions/$id'
+      fullPath: '/ai-sessions/$id'
+      preLoaderRoute: typeof AuthedAiSessionsIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/jobs/$id/': {
       id: '/_authed/jobs/$id/'
       path: '/'
@@ -628,6 +647,7 @@ interface AuthedRouteChildren {
   AuthedPlanRoute: typeof AuthedPlanRoute
   AuthedSettingsRoute: typeof AuthedSettingsRouteWithChildren
   AuthedUsageRoute: typeof AuthedUsageRoute
+  AuthedAiSessionsIdRoute: typeof AuthedAiSessionsIdRoute
   AuthedDeviceApproveRoute: typeof AuthedDeviceApproveRoute
   AuthedEndpointsIdRoute: typeof AuthedEndpointsIdRouteWithChildren
   AuthedJobsIdRoute: typeof AuthedJobsIdRouteWithChildren
@@ -643,6 +663,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedPlanRoute: AuthedPlanRoute,
   AuthedSettingsRoute: AuthedSettingsRouteWithChildren,
   AuthedUsageRoute: AuthedUsageRoute,
+  AuthedAiSessionsIdRoute: AuthedAiSessionsIdRoute,
   AuthedDeviceApproveRoute: AuthedDeviceApproveRoute,
   AuthedEndpointsIdRoute: AuthedEndpointsIdRouteWithChildren,
   AuthedJobsIdRoute: AuthedJobsIdRouteWithChildren,

@@ -82,6 +82,7 @@ describe("jobsManager", () => {
       getAISessionTimeSeries: vi.fn().mockResolvedValue([]),
       getLastSession: vi.fn().mockResolvedValue(null),
       getJobSessions: vi.fn().mockResolvedValue({ sessions: [], total: 0 }),
+      getSession: vi.fn().mockResolvedValue(null),
     };
     const now = new Date("2025-01-14T12:00:00Z");
     fakeClock = { now: () => now, sleep: async () => { } };

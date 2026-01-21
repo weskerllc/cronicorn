@@ -4,22 +4,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## Share an Idea
-
-        Have an idea for Cronicorn? Share it here to discuss with the community before creating a formal feature request.
+        Share an idea for Cronicorn!
 
   - type: textarea
     id: idea
     attributes:
-      label: What's your idea?
-      description: Describe your idea or suggestion
+      label: Your idea
+      placeholder: What if we could...
     validations:
       required: true
-
-  - type: textarea
-    id: use-case
-    attributes:
-      label: Use case
-      description: How would you use this? Why would it be helpful?
-    validations:
-      required: false

@@ -219,10 +219,6 @@ export const DashboardStatsResponseSchema = z.object({
 // ==================== Dashboard Query Schema ====================
 
 export const DashboardStatsQuerySchema = z.object({
-  days: z.coerce.number().int().positive().max(30).optional().default(7).openapi({
-    description: "Number of days for time-series data (max 30)",
-    example: 7,
-  }),
   jobId: z.string().optional().openapi({
     description: "Filter by job ID (optional)",
     example: "job_123abc",
@@ -231,9 +227,13 @@ export const DashboardStatsQuerySchema = z.object({
     description: "Filter by scheduling source (baseline-cron, baseline-interval, ai-interval, ai-oneshot, clamped-min, clamped-max, etc.)",
     example: "ai-interval",
   }),
-  timeRange: z.enum(["24h", "7d", "30d", "all"]).optional().openapi({
-    description: "Time range filter for runs (optional, overrides 'days' for certain queries)",
-    example: "7d",
+  startDate: z.coerce.date().openapi({
+    description: "Start date for filtering runs (ISO 8601 format). Required.",
+    example: "2025-01-01T00:00:00.000Z",
+  }),
+  endDate: z.coerce.date().openapi({
+    description: "End date for filtering runs (ISO 8601 format). Required.",
+    example: "2025-01-08T00:00:00.000Z",
   }),
   endpointLimit: z.coerce.number().int().positive().max(100).optional().default(20).openapi({
     description: "Maximum number of endpoints to include in time-series data (sorted by run count DESC). Max 100, default 20.",
@@ -303,9 +303,17 @@ export const ActivityEventSchema = z.object({
 });
 
 export const JobActivityTimelineQuerySchema = z.object({
-  timeRange: z.enum(["24h", "7d", "30d"]).optional().default("7d").openapi({
-    description: "Time range filter for activity events",
-    example: "7d",
+  startDate: z.coerce.date().openapi({
+    description: "Start date for filtering activity events (ISO 8601 format). Required.",
+    example: "2025-01-01T00:00:00.000Z",
+  }),
+  endDate: z.coerce.date().openapi({
+    description: "End date for filtering activity events (ISO 8601 format). Required.",
+    example: "2025-01-08T00:00:00.000Z",
+  }),
+  eventType: z.enum(["all", "runs", "sessions"]).optional().default("all").openapi({
+    description: "Filter by event type: 'all' (default), 'runs' (only run executions), or 'sessions' (only AI sessions)",
+    example: "all",
   }),
   limit: z.coerce.number().int().positive().max(100).optional().default(50).openapi({
     description: "Maximum number of events to return",

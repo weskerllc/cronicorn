@@ -1,7 +1,7 @@
 import type { SessionsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { and, count, desc, eq, gte, inArray, isNull, ne, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql, sum } from "drizzle-orm";
 
 import { aiAnalysisSessions, jobEndpoints, jobs } from "./schema.js";
 
@@ -124,6 +124,49 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     return Number(result[0]?.count ?? 0);
   }
 
+  async getSession(sessionId: string): Promise<{
+    id: string;
+    endpointId: string;
+    endpointName: string;
+    analyzedAt: Date;
+    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+    reasoning: string;
+    tokenUsage: number | null;
+    durationMs: number | null;
+  } | null> {
+    const results = await this.tx
+      .select({
+        id: aiAnalysisSessions.id,
+        endpointId: aiAnalysisSessions.endpointId,
+        endpointName: jobEndpoints.name,
+        analyzedAt: aiAnalysisSessions.analyzedAt,
+        toolCalls: aiAnalysisSessions.toolCalls,
+        reasoning: aiAnalysisSessions.reasoning,
+        tokenUsage: aiAnalysisSessions.tokenUsage,
+        durationMs: aiAnalysisSessions.durationMs,
+      })
+      .from(aiAnalysisSessions)
+      .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
+      .where(eq(aiAnalysisSessions.id, sessionId))
+      .limit(1);
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    const r = results[0];
+    return {
+      id: r.id,
+      endpointId: r.endpointId,
+      endpointName: r.endpointName,
+      analyzedAt: r.analyzedAt,
+      toolCalls: r.toolCalls ?? [],
+      reasoning: r.reasoning ?? "",
+      tokenUsage: r.tokenUsage,
+      durationMs: r.durationMs,
+    };
+  }
+
   async getTotalTokenUsage(endpointId: string, since: Date): Promise<number> {
     const result = await this.tx
       .select({
@@ -144,6 +187,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     endpointLimit?: number;
     granularity?: "hour" | "day";
   }): Promise<Array<{
@@ -161,6 +205,9 @@ export class DrizzleSessionsRepo implements SessionsRepo {
 
     if (filters.sinceDate) {
       conditions.push(gte(aiAnalysisSessions.analyzedAt, filters.sinceDate));
+    }
+    if (filters.untilDate) {
+      conditions.push(lte(aiAnalysisSessions.analyzedAt, filters.untilDate));
     }
     if (filters.jobId) {
       conditions.push(eq(jobs.id, filters.jobId));
@@ -234,6 +281,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     userId: string;
     jobId?: string;
     sinceDate?: Date;
+    untilDate?: Date;
     limit?: number;
     offset?: number;
   }): Promise<{
@@ -262,6 +310,9 @@ export class DrizzleSessionsRepo implements SessionsRepo {
 
     if (filters.sinceDate) {
       conditions.push(gte(aiAnalysisSessions.analyzedAt, filters.sinceDate));
+    }
+    if (filters.untilDate) {
+      conditions.push(lte(aiAnalysisSessions.analyzedAt, filters.untilDate));
     }
 
     const limit = filters.limit ?? 50;

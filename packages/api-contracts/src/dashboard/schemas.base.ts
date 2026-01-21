@@ -120,9 +120,9 @@ export const DashboardStatsResponseBaseSchema = z.object({
 // ==================== Dashboard Query Schema ====================
 
 export const DashboardStatsQueryBaseSchema = z.object({
-  days: z.coerce.number().int().positive().max(30).optional().default(7),
   jobId: z.string().optional(),
   source: z.string().optional(),
-  timeRange: z.enum(["24h", "7d", "30d", "all"]).optional(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
   endpointLimit: z.coerce.number().int().positive().max(100).optional().default(20),
 });

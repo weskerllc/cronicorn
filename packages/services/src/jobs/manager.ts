@@ -901,4 +901,39 @@ export class JobsManager {
 
     return { sessions, total };
   }
+
+  /**
+   * Get a single AI analysis session by ID.
+   *
+   * @param userId - User ID for authorization
+   * @param sessionId - The session ID to retrieve
+   * @returns Session details with endpoint info, or null if not found/unauthorized
+   */
+  async getSession(
+    userId: string,
+    sessionId: string,
+  ): Promise<{
+    id: string;
+    endpointId: string;
+    endpointName: string;
+    analyzedAt: Date;
+    toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
+    reasoning: string;
+    tokenUsage: number | null;
+    durationMs: number | null;
+  } | null> {
+    // Get session from repo (includes endpoint info via join)
+    const session = await this.sessionsRepo.getSession(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    // Authorization check - verify user owns the endpoint
+    const endpoint = await this.getEndpoint(userId, session.endpointId);
+    if (!endpoint) {
+      return null; // User doesn't have access to this endpoint
+    }
+
+    return session;
+  }
 }

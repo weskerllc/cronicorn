@@ -1,4 +1,3 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cronicorn/ui-library/components/select";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@cronicorn/ui-library/components/command";
@@ -6,29 +5,26 @@ import { Popover, PopoverContent, PopoverTrigger } from "@cronicorn/ui-library/c
 import { cn } from "@cronicorn/ui-library/lib/utils";
 import { useState } from "react";
 
+import { DateRangePicker } from "../primitives/date-range-picker";
 import type { JobHealthItem } from "@cronicorn/api-contracts/dashboard";
 
 export interface DashboardFilters {
     jobId?: string | null;
-    timeRange?: string | null;
+    startDate?: Date;
+    endDate?: Date;
 }
 
 interface FilterBarProps {
     filters: DashboardFilters;
-    onFilterChange: (key: keyof DashboardFilters, value: string | null) => void;
+    onFilterChange: (key: "jobId", value: string | null) => void;
+    onDateRangeChange: (range: { startDate: Date; endDate: Date }) => void;
     availableJobs?: Array<JobHealthItem>;
 }
-
-const TIME_RANGE_OPTIONS = [
-    { value: "24h", label: "Last 24 Hours" },
-    { value: "7d", label: "Last 7 Days" },
-    { value: "30d", label: "Last 30 Days" },
-    { value: "all", label: "All Time" },
-];
 
 export function FilterBar({
     filters,
     onFilterChange,
+    onDateRangeChange,
     availableJobs = [],
 }: FilterBarProps) {
     const [jobComboOpen, setJobComboOpen] = useState(false);
@@ -101,22 +97,24 @@ export function FilterBar({
                 </Popover>
             </div>
 
-            {/* Time Range Filter */}
-            <Select
-                value={filters.timeRange || "7d"}
-                onValueChange={(value) => onFilterChange("timeRange", value)}
-            >
-                <SelectTrigger size="sm" id="timeRange-filter">
-                    <SelectValue placeholder="Last 7 Days" />
-                </SelectTrigger>
-                <SelectContent>
-                    {TIME_RANGE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            {/* Date Range Picker */}
+            <DateRangePicker
+                showCompare={false}
+                showTimeSelect={true}
+                initialDateFrom={filters.startDate}
+                initialDateTo={filters.endDate}
+                onUpdate={({ range }) => {
+                    const end = range.to ?? range.from;
+                    // Use the time from the range if set, otherwise default to end of day
+                    const endDate = new Date(end.getTime());
+                    // If no specific time was set (hours/minutes are 0), set to end of day
+                    if (endDate.getHours() === 0 && endDate.getMinutes() === 0) {
+                        endDate.setHours(23, 59, 59, 999);
+                    }
+
+                    onDateRangeChange({ startDate: range.from, endDate: endDate });
+                }}
+            />
 
         </div>
     );
