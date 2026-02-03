@@ -14,8 +14,8 @@ services:
       - "--auth-user=${PGWEB_USER:-admin}"
       - "--auth-pass=${PGWEB_PASSWORD:-changeme}"
     networks:
-      - cronicorn
+      - cronicorn_cronicorn
 
 networks:
-  cronicorn:
-    driver: bridge
+  cronicorn_cronicorn:
+    external: true

@@ -27,27 +27,24 @@ AI: ✅ Done! Health check running every 5 minutes.
 
 ## Quick Start
 
-**1. Install**
-
+**Claude Code (CLI):**
 ```bash
-npm install -g @cronicorn/mcp-server
+claude mcp add cronicorn -- npx -y @cronicorn/mcp-server
 ```
 
-**2. Configure your AI assistant**
-
+**Other assistants** (Claude Desktop, Copilot, Cursor, etc.):
 ```json
 {
   "mcpServers": {
     "cronicorn": {
-      "command": "cronicorn-mcp"
+      "command": "npx",
+      "args": ["-y", "@cronicorn/mcp-server"]
     }
   }
 }
 ```
 
-See the [full README](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server#configuration) for platform-specific config locations.
-
-**3. Authenticate**
+See the [full README](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server#setup) for platform-specific config locations.
 
 First use triggers OAuth in your browser. Approve once, stay connected for 30 days.
 
