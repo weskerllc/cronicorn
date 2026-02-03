@@ -3,15 +3,13 @@
  * Keywords, meta descriptions, and SEO metadata
  */
 
-import { brand } from "./brand.js";
-
-/** Meta descriptions optimized for search engines */
+/** Meta descriptions optimized for search engines (150-220 characters each) */
 export const metaDescriptions = {
-  home: brand.description,
-  pricing: "Flexible pricing for adaptive monitoring. Start with early access. Enterprise features for intelligent HTTP scheduler and workflow orchestration.",
-  docs: "Complete documentation for adaptive scheduling with AI hints. Quick start guides, API reference. Get started with intelligent cron alternatives.",
-  faq: "Get answers to common questions about Cronicorn's AI-powered job scheduling. Learn about adaptive intervals, workflow orchestration, and intelligent automation.",
-  login: "Sign in to your Cronicorn account to access powerful AI-driven job scheduling, analytics, and automation tools.",
+  home: "Cronicorn is an AI-powered adaptive job scheduler that intelligently manages HTTP endpoints with dynamic intervals. Automate monitoring, data pipelines, and workflows that respond to real-time conditions. Start free today.",
+  pricing: "Choose the right plan for your AI scheduling needs. Start free with 5 jobs, upgrade to Pro for unlimited endpoints and priority support. Enterprise plans available. 14-day money-back guarantee.",
+  docs: "Complete documentation for Cronicorn's adaptive scheduling platform. Quick start guides, API reference, use cases, and best practices for intelligent job automation.",
+  faq: "Get answers to common questions about Cronicorn's AI-powered job scheduling. Learn how adaptive intervals work, understand pricing, and discover best practices for automation.",
+  login: "Sign in to your Cronicorn account to manage AI-driven job scheduling, view analytics, configure adaptive monitoring, and access your automation dashboard.",
 } as const;
 
 /** Page titles for SEO (used with titleTemplate) */
@@ -127,6 +125,6 @@ export const twitter = {
 
 /** SEO defaults */
 export const seoDefaults = {
-  defaultTitle: "Cronicorn: AI-Powered HTTP Job Scheduler That Adapts",
-  titleTemplate: "%s | Cronicorn",
+  defaultTitle: "Cronicorn: AI-Powered HTTP Job Scheduler | Adaptive Cron Alternative",
+  titleTemplate: "%s | Cronicorn - AI Job Scheduling",
 } as const;
