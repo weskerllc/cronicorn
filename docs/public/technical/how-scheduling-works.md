@@ -7,11 +7,13 @@ sidebar_position: 2
 mcp:
   uri: file:///docs/technical/how-scheduling-works.md
   mimeType: text/markdown
-  priority: 0.85
-  lastModified: 2025-11-02T00:00:00Z
+  priority: 0.90
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # How Scheduling Works
+
+**TL;DR:** The Scheduler claims due endpoints, executes them, records results, and uses the Governor (a pure function) to calculate the next run time. AI hints override baseline schedules, constraints are hard limits, and the system includes safety mechanisms for locks, failures, and zombie runs.
 
 This document explains how the Scheduler worker executes jobs and calculates next run times. If you haven't read [System Architecture](./system-architecture.md), start there for context on the dual-worker design.
 
@@ -261,3 +263,11 @@ This is the power of database-mediated communication: the Scheduler and AI Plann
 6. **Sources provide auditability**: Every decision is traceable
 
 Understanding how scheduling works gives you the foundation to configure endpoints effectively, debug unexpected behavior, and reason about how AI adaptation affects execution timing.
+
+---
+
+## See Also
+
+- **[System Architecture](./system-architecture.md)** - High-level dual-worker design
+- **[How AI Adaptation Works](./how-ai-adaptation-works.md)** - AI tools, response body design, and decision framework
+- **[Configuration and Constraints](./configuration-and-constraints.md)** - Setting up endpoints effectively

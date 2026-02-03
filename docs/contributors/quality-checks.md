@@ -1,18 +1,3 @@
----
-id: developer-quality-checks
-title: Quality Checks
-description: Required quality checks before committing and merging code
-tags:
-  - developer
-  - quality
-  - testing
-sidebar_position: 4
-mcp:
-  uri: file:///docs/developers/quality-checks.md
-  mimeType: text/markdown
-  priority: 0.75
----
-
 # Quality Checks
 
 ## Before Commit

@@ -1,14 +1,3 @@
----
-id: developers-overview
-title: Developer Overview
-description: Documentation for developers contributing to Cronicorn
-tags:
-  - developer
-sidebar_position: 0
-mcp:
-  uri: file:///docs/developers/overview.md
----
-
 # Developer Documentation
 
 Documentation for developers contributing to Cronicorn's codebase or building AI agents that interact with Cronicorn.
@@ -19,10 +8,11 @@ Documentation for developers contributing to Cronicorn's codebase or building AI
 - **[Authentication](./authentication.md)** - Configure admin user or GitHub OAuth
 - **[Workspace Structure](./workspace-structure.md)** - Monorepo organization (apps and packages)
 - **[Quality Checks](./quality-checks.md)** - Required checks before committing and merging
+- **[Environment Configuration](./environment-configuration.md)** - Complete reference for environment variables
 
 ## Architecture & Design
 
-- **[System Architecture](../technical/system-architecture.md)** - Core concepts and design patterns
+For detailed architecture documentation, see the `.adr/` folder in the repository which contains 63+ Architecture Decision Records.
 
 ## Contributing
 

@@ -7,8 +7,8 @@ sidebar_position: 4
 mcp:
   uri: file:///docs/technical/coordinating-multiple-endpoints.md
   mimeType: text/markdown
-  priority: 0.80
-  lastModified: 2025-11-02T00:00:00Z
+  priority: 0.75
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # Coordinating Multiple Endpoints
@@ -449,3 +449,12 @@ When coordination isn't working:
 7. **Cross-job coordination**: Embed external status checks in responses
 
 These patterns give you the building blocks for complex workflows. Mix and match based on your needs.
+
+---
+
+## See Also
+
+- **[How AI Adaptation Works](./how-ai-adaptation-works.md)** - AI tools including sibling queries
+- **[Configuration and Constraints](./configuration-and-constraints.md)** - Endpoint configuration
+- **[Use Cases](../use-cases.md)** - Real-world examples
+- **[Technical Reference](./reference.md)** - Response body patterns

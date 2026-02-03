@@ -1,17 +1,3 @@
----
-id: developer-authentication
-title: Authentication Configuration
-description: Configure GitHub OAuth, API keys, and programmatic access
-tags:
-  - developer
-  - configuration
-sidebar_position: 2
-mcp:
-  uri: file:///docs/developers/authentication.md
-  mimeType: text/markdown
-  priority: 0.8
----
-
 # Authentication Configuration
 
 > **Getting started?** See [Quick Start](./quick-start.md) - no configuration required for local development.

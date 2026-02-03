@@ -7,8 +7,8 @@ sidebar_position: 6
 mcp:
   uri: file:///docs/technical/reference.md
   mimeType: text/markdown
-  priority: 0.75
-  lastModified: 2025-11-02T00:00:00Z
+  priority: 0.90
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # Reference
@@ -458,3 +458,12 @@ Calculate current backoff multiplier:
 ```
 failureCount > 0 ? 2^min(failureCount, 5) : 1
 ```
+
+---
+
+## See Also
+
+- **[How Scheduling Works](./how-scheduling-works.md)** - Detailed Governor logic
+- **[How AI Adaptation Works](./how-ai-adaptation-works.md)** - AI tools and decision framework
+- **[Configuration and Constraints](./configuration-and-constraints.md)** - Practical configuration guidance
+- **[Troubleshooting](../troubleshooting.md)** - Debugging guide

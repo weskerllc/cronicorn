@@ -13,11 +13,14 @@ sidebar_position: 1
 mcp:
   uri: file:///docs/introduction.md
   mimeType: text/markdown
-  priority: 0.9
-  lastModified: 2025-11-02T00:00:00Z
+  priority: 0.95
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # Introduction to Cronicorn
+
+[![GitHub Release](https://img.shields.io/github/v/release/weskerllc/cronicorn?style=flat-square)](https://github.com/weskerllc/cronicorn/releases)
+[![npm version](https://badge.fury.io/js/@cronicorn%2Fmcp-server.svg)](https://www.npmjs.com/package/@cronicorn/mcp-server)
 
 **Cronicorn** is an intelligent scheduler that automatically adapts to your application's behavior. Set baseline schedules and let AI optimize execution timing based on real-world patterns.
 
@@ -48,10 +51,17 @@ Configure it with GitHub Copilot, Claude Desktop, or any MCP-compatible AI assis
 **Getting Started**
 - [Quick Start](./quick-start.md) - Create your first scheduled job in 5 minutes
 - [Core Concepts](./core-concepts.md) - Understand jobs, endpoints, and scheduling
+- [MCP Server](./mcp-server.md) - Manage jobs via AI assistant
 
-**Learn More**
-- [Use Cases & Examples](./use-cases.md) - Real-world scenarios across industries
-- [Technical Architecture](./technical/system-architecture.md) - Deep dive - How Cronicorn works behind the scenes
+**Reference**
+- [API Reference](./api-reference.md) - Programmatic access to Cronicorn
+- [Use Cases](./use-cases.md) - Real-world scenarios and examples
+- [Troubleshooting](./troubleshooting.md) - Diagnose and fix common issues
+
+**Technical Deep Dive**
+- [System Architecture](./technical/system-architecture.md) - Dual-worker design
+- [How Scheduling Works](./technical/how-scheduling-works.md) - Governor and constraints
+- [How AI Adaptation Works](./technical/how-ai-adaptation-works.md) - AI tools and hints
 
 ---
 

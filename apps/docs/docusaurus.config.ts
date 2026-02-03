@@ -118,9 +118,10 @@ const config: Config = {
         includeOrder: [
           "/quick-start", // Getting started first
           "/core-concepts", // Core concepts second
-          "/use-cases", // Use cases third
           "/mcp-server", // MCP integration
-          "/developers/**", // Developer docs
+          "/api-reference", // API reference
+          "/use-cases", // Use cases
+          "/troubleshooting", // Troubleshooting
           "/technical/**", // Technical details
         ],
 
@@ -196,11 +197,11 @@ const config: Config = {
           items: [
             {
               label: "API Reference",
-              href: urls.docs.apiReference,
+              to: "/api-reference",
             },
             {
               label: "Architecture",
-              to: "/developers/developer-workspace-structure",
+              to: "/technical/system-architecture",
             },
             {
               label: "MCP Server",
@@ -236,29 +237,29 @@ const config: Config = {
               to: "/quick-start",
             },
             {
-              label: "Use Cases",
-              to: "/use-cases",
+              label: "API Reference",
+              to: "/api-reference",
             },
             {
-              label: "API Reference",
-              href: urls.docs.apiReference,
+              label: "Troubleshooting",
+              to: "/troubleshooting",
             },
           ],
         },
         {
-          title: "Developers",
+          title: "Resources",
           items: [
             {
               label: "Architecture",
-              to: "/developers/developer-workspace-structure",
-            },
-            {
-              label: "Contributing",
-              href: urls.github.contributing,
+              to: "/technical/system-architecture",
             },
             {
               label: "MCP Server",
               to: "/mcp-server",
+            },
+            {
+              label: "Contributing",
+              href: urls.github.contributing,
             },
           ],
         },
