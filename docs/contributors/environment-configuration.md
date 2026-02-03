@@ -1,14 +1,3 @@
----
-id: environment-configuration
-title: Environment Configuration
-description: Complete reference for all Cronicorn environment variables
-tags:
-  - developer
-  - configuration
-  - reference
-sidebar_position: 3
----
-
 # Environment Configuration
 
 > **Getting started?** See [Quick Start](./quick-start.md) - no configuration required for local development.

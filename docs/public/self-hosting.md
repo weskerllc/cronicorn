@@ -9,7 +9,8 @@ sidebar_position: 6
 mcp:
   uri: file:///docs/self-hosting.md
   mimeType: text/markdown
-  priority: 0.8
+  priority: 0.80
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # Self-Hosting Guide
@@ -132,3 +133,11 @@ docker compose up -d
 - **Auth errors**: Ensure `BETTER_AUTH_SECRET` is at least 32 characters
 - **API not accessible**: Check that port 3333 isn't already in use
 - **Database issues**: Check logs with `docker compose logs db`
+
+---
+
+## See Also
+
+- **[Quick Start](./quick-start.md)** - Getting started guide
+- **[Troubleshooting](./troubleshooting.md)** - Comprehensive troubleshooting guide
+- **[API Reference](./api-reference.md)** - Programmatic access

@@ -7,8 +7,8 @@ sidebar_position: 5
 mcp:
   uri: file:///docs/technical/configuration-and-constraints.md
   mimeType: text/markdown
-  priority: 0.80
-  lastModified: 2025-11-02T00:00:00Z
+  priority: 0.85
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # Configuration and Constraints
@@ -407,3 +407,12 @@ Expensive operation runs every 10 minutes normally, AI can relax to hourly or ti
 7. **Min/max apply relative to `now`, not `lastRunAt`**
 
 Configure conservatively. The system is designed to be safe by default. Add constraints when you encounter real problems, not anticipated ones.
+
+---
+
+## See Also
+
+- **[How Scheduling Works](./how-scheduling-works.md)** - Governor logic and constraint clamping
+- **[How AI Adaptation Works](./how-ai-adaptation-works.md)** - AI tools and hints
+- **[Technical Reference](./reference.md)** - Schema and defaults
+- **[Troubleshooting](../troubleshooting.md)** - Debugging configuration issues

@@ -11,7 +11,7 @@ mcp:
   uri: file:///docs/core-concepts.md
   mimeType: text/markdown
   priority: 0.95
-  lastModified: 2025-11-02T00:00:00Z
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # Core Concepts
@@ -225,3 +225,11 @@ AI behavior:
 - Never exceeds API rate limits (min)
 - Ensures data freshness (max)
 ```
+
+---
+
+## See Also
+
+- **[Quick Start](./quick-start.md)** - Create your first job
+- **[How Scheduling Works](./technical/how-scheduling-works.md)** - Detailed scheduling logic
+- **[Configuration and Constraints](./technical/configuration-and-constraints.md)** - Advanced configuration

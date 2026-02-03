@@ -1,17 +1,3 @@
----
-id: developer-quick-start
-title: Developer Quick Start
-description: Set up your Cronicorn development environment with zero configuration
-tags:
-  - developer
-  - essential
-sidebar_position: 1
-mcp:
-  uri: file:///docs/developers/quick-start.md
-  mimeType: text/markdown
-  priority: 0.9
----
-
 # Developer Quick Start
 
 Get Cronicorn running locally with **zero configuration**.

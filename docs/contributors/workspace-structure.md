@@ -1,17 +1,3 @@
----
-id: developer-workspace-structure
-title: Workspace Structure
-description: Overview of monorepo workspaces (apps and packages)
-tags:
-  - developer
-  - architecture
-sidebar_position: 3
-mcp:
-  uri: file:///docs/developers/workspace-structure.md
-  mimeType: text/markdown
-  priority: 0.7
----
-
 # Workspace Structure
 
 Cronicorn is organized as a pnpm monorepo with 8 apps and 13 packages. This guide helps you quickly locate code for specific features.

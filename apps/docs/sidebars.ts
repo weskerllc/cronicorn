@@ -18,13 +18,14 @@ const sidebars: SidebarsConfig = {
     "introduction",
     "quick-start",
     "core-concepts",
-    "use-cases",
     "mcp-server",
+    "api-reference",
+    "use-cases",
     "self-hosting",
-    "competitive-analysis",
+    "troubleshooting",
     {
       type: "category",
-      label: "Technical",
+      label: "Technical Deep Dive",
       items: [
         "technical/system-architecture",
         "technical/how-scheduling-works",
@@ -32,15 +33,6 @@ const sidebars: SidebarsConfig = {
         "technical/configuration-constraints",
         "technical/coordinating-endpoints",
         "technical/technical-reference",
-      ],
-    },
-    {
-      type: "category",
-      label: "Developers",
-      items: [
-        "developers/developers-overview",
-        "developers/developer-quick-start",
-        "developers/developer-authentication",
       ],
     },
   ],

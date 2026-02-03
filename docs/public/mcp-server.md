@@ -10,7 +10,8 @@ sidebar_position: 3
 mcp:
   uri: file:///docs/mcp-server.md
   mimeType: text/markdown
-  priority: 0.9
+  priority: 0.95
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # MCP Server
@@ -96,8 +97,11 @@ GitHub Copilot, Claude Desktop, Cursor, Cline, Continue, and any MCP-compatible 
 - Credentials stored locally with strict file permissions
 - Tokens auto-refresh, re-auth every 30 days
 
-## Documentation
+---
+
+## See Also
 
 - [Full README & Tool Reference](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server)
-- [Core Concepts](./core-concepts.md)
-- [How AI Adaptation Works](./technical/how-ai-adaptation-works.md)
+- [Core Concepts](./core-concepts.md) - Understanding jobs and endpoints
+- [How AI Adaptation Works](./technical/how-ai-adaptation-works.md) - AI tools and hints
+- [API Reference](./api-reference.md) - HTTP API for programmatic access

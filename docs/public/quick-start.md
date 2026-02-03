@@ -9,8 +9,8 @@ sidebar_position: 3
 mcp:
   uri: file:///docs/quick-start.md
   mimeType: text/markdown
-  priority: 0.9
-  lastModified: 2025-11-02T00:00:00Z
+  priority: 0.90
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # Quick Start Guide
@@ -217,3 +217,12 @@ If you're hitting rate limits:
 1. Increase **Min Interval** (e.g., from 30s to 60s)
 2. Adjust **Baseline Schedule** to be less frequent
 3. Let AI adapt (it will back off automatically)
+
+---
+
+## See Also
+
+- **[Core Concepts](./core-concepts.md)** - Understanding jobs, endpoints, and scheduling
+- **[API Reference](./api-reference.md)** - Programmatic access to Cronicorn
+- **[Troubleshooting](./troubleshooting.md)** - Diagnose and fix common issues
+- **[MCP Server](./mcp-server.md)** - Manage jobs via AI assistant

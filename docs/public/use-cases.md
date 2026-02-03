@@ -9,7 +9,8 @@ sidebar_position: 3
 mcp:
   uri: file:///docs/use-cases.md
   mimeType: text/markdown
-  priority: 0.8
+  priority: 0.75
+  lastModified: 2026-02-03T00:00:00Z
 ---
 
 # Use Cases & Examples
@@ -206,3 +207,11 @@ Monthly billing: Cron "0 0 1 * *" (1st of month)
 - Simple daily backup at 2am (basic cron is fine)
 - Completely static schedules that never change
 - Sub-second precision required (use a real-time system)
+
+---
+
+## See Also
+
+- **[Quick Start](./quick-start.md)** - Create your first job
+- **[Core Concepts](./core-concepts.md)** - Understanding scheduling fundamentals
+- **[Coordinating Multiple Endpoints](./technical/coordinating-multiple-endpoints.md)** - Advanced workflow patterns
