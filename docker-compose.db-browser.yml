@@ -17,5 +17,5 @@ services:
       - cronicorn_cronicorn
 
 networks:
-  cronicorn_cronicorn:
-    external: true
+  cronicorn:
+    driver: bridge
