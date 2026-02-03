@@ -359,6 +359,147 @@ curl -H "x-api-key: YOUR_API_KEY" \
 
 ---
 
+## AI Analysis API
+
+Access AI scheduling explanations and analysis history.
+
+### List Analysis Sessions
+
+Get AI analysis history for an endpoint to understand why scheduling decisions were made:
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://api.cronicorn.com/api/endpoints/ep_xyz789/analysis-sessions?limit=10"
+```
+
+**Query Parameters:**
+- `limit` (optional): Number of sessions (default: 10)
+- `offset` (optional): Pagination offset
+
+**Response:**
+```json
+{
+  "sessions": [
+    {
+      "id": "session_abc123",
+      "endpointId": "ep_xyz789",
+      "createdAt": "2026-02-03T12:00:00Z",
+      "reasoning": "Queue depth increased from 50 to 200 over last 5 runs. Tightening monitoring interval from 5 minutes to 30 seconds for next hour.",
+      "toolsCalled": ["get_response_history", "propose_interval"],
+      "tokenUsage": 1250,
+      "durationMs": 3200,
+      "nextAnalysisAt": "2026-02-03T13:00:00Z",
+      "endpointFailureCount": 0
+    }
+  ],
+  "total": 45,
+  "hasMore": true
+}
+```
+
+### Get Analysis Session Details
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" \
+  https://api.cronicorn.com/api/analysis-sessions/session_abc123
+```
+
+**Response:**
+```json
+{
+  "id": "session_abc123",
+  "endpointId": "ep_xyz789",
+  "createdAt": "2026-02-03T12:00:00Z",
+  "reasoning": "Queue depth increased from 50 to 200 over last 5 runs...",
+  "toolsCalled": ["get_response_history", "propose_interval"],
+  "actionsApplied": [
+    {
+      "tool": "propose_interval",
+      "params": { "intervalMs": 30000, "ttlMinutes": 60 },
+      "result": "success"
+    }
+  ],
+  "tokenUsage": 1250,
+  "durationMs": 3200,
+  "confidence": "high"
+}
+```
+
+---
+
+## Dynamic Scheduling Based on System Load
+
+You can programmatically override AI adaptation parameters based on external system metrics. This is useful for integrating Cronicorn with your existing monitoring infrastructure.
+
+### Example: Tighten Monitoring During High Load
+
+```bash
+#!/bin/bash
+# Script that runs from your monitoring system
+
+# Get current CPU load from your infrastructure
+CPU_LOAD=$(curl -s https://your-monitoring.com/api/cpu-load | jq '.value')
+
+if (( $(echo "$CPU_LOAD > 80" | bc -l) )); then
+  # High load detected: tighten monitoring to every 30 seconds
+  curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
+    -H "x-api-key: YOUR_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "intervalMs": 30000,
+      "ttlMinutes": 30,
+      "reason": "High CPU load detected ('"$CPU_LOAD"'%), increasing monitoring frequency"
+    }'
+elif (( $(echo "$CPU_LOAD < 20" | bc -l) )); then
+  # Low load: relax monitoring to every 10 minutes
+  curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
+    -H "x-api-key: YOUR_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "intervalMs": 600000,
+      "ttlMinutes": 60,
+      "reason": "Low CPU load detected ('"$CPU_LOAD"'%), reducing monitoring frequency"
+    }'
+else
+  # Normal load: clear any active hints to return to baseline
+  curl -X DELETE https://api.cronicorn.com/api/endpoints/ep_xyz789/hints \
+    -H "x-api-key: YOUR_API_KEY"
+fi
+```
+
+### Example: Pause During Maintenance Windows
+
+```bash
+# Pause all endpoints in a job during scheduled maintenance
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/pause \
+  -H "x-api-key: YOUR_API_KEY"
+
+# ... perform maintenance ...
+
+# Resume after maintenance
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/resume \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+### Example: Webhook Integration for Auto-Scaling
+
+Configure your endpoint to return system load metrics, and Cronicorn's AI will automatically adjust:
+
+```json
+// Your endpoint returns:
+{
+  "status": "healthy",
+  "system_load": 85,
+  "queue_depth": 500,
+  "queue_max": 1000,
+  "processing_rate_per_min": 150
+}
+```
+
+The AI Planner sees these metrics and autonomously decides to tighten monitoring when load increases or relax when the system is idle.
+
+---
+
 ## Common Response Formats
 
 ### Success Response

@@ -185,6 +185,70 @@ The database update is atomic. If two Schedulers somehow claimed the same endpoi
 
 After the update, the endpoint's lock expires naturally (when `_lockedUntil` passes), and it becomes claimable again when `nextRunAt` arrives.
 
+## Distributed Locks and Single Execution Guarantee
+
+A critical requirement for any job scheduler is ensuring each job runs **exactly once** per scheduled time—even when multiple Scheduler instances run concurrently for high availability.
+
+Cronicorn uses **database-level distributed locks** via PostgreSQL's atomic operations to achieve this guarantee.
+
+### How Distributed Locks Work
+
+When the Scheduler claims endpoints, it uses an **atomic conditional update**:
+
+```sql
+UPDATE job_endpoints
+SET _lockedUntil = now() + lockTtlMs
+WHERE nextRunAt <= now()
+  AND _lockedUntil <= now()
+RETURNING id
+```
+
+This query atomically:
+1. Finds endpoints that are due (`nextRunAt <= now`)
+2. Checks they're not already locked (`_lockedUntil <= now`)
+3. Acquires the lock by setting `_lockedUntil`
+4. Returns only the IDs that were successfully claimed
+
+Because PostgreSQL executes this as a single atomic operation, **only one Scheduler instance can claim each endpoint**, even if multiple instances query simultaneously.
+
+### Multi-Instance Behavior
+
+When running multiple Scheduler instances:
+
+| Time | Scheduler A | Scheduler B | Endpoint State |
+|------|-------------|-------------|----------------|
+| T=0 | Claims ep_123 | Attempts claim | `_lockedUntil = T+30s` |
+| T=0 | Gets ep_123 | Gets nothing | Locked by A |
+| T=5s | Executing | Skips ep_123 | Still locked |
+| T=10s | Completes, releases | Available but not due | `nextRunAt = T+300s` |
+
+**Result**: Endpoint ep_123 executes exactly once, by Scheduler A.
+
+### Lock TTL and Crash Recovery
+
+Locks have a short **Time-To-Live** (default: 30 seconds). This enables crash recovery:
+
+**If Scheduler A crashes mid-execution:**
+1. The lock remains until `_lockedUntil` expires
+2. After 30 seconds, Scheduler B can claim the endpoint
+3. The run is marked as failed (timeout/zombie)
+4. The endpoint recovers automatically
+
+This means endpoints **can't get permanently stuck**. At worst, there's a delay equal to the lock TTL before another instance picks up the work.
+
+### Single Execution Summary
+
+| Guarantee | Mechanism |
+|-----------|-----------|
+| No double execution | Atomic `UPDATE...WHERE _lockedUntil <= now` |
+| Crash recovery | Lock TTL expires, another instance claims |
+| Multi-instance safety | PostgreSQL transaction isolation |
+| Audit trail | Run records show which instance executed |
+
+This design ensures reliable, exactly-once execution across any number of Scheduler instances.
+
+---
+
 ## Safety Mechanisms
 
 The Scheduler includes several safety mechanisms to handle edge cases:
