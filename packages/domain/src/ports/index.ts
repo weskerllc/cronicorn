@@ -3,6 +3,7 @@
  */
 export * from "./ai.js";
 export * from "./external.js";
+export * from "./notifications.js";
 export * from "./observability.js";
 export * from "./repos.js";
 export * from "./services.js";

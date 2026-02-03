@@ -1,5 +1,5 @@
 import type { Clock, Cron, PaymentProvider } from "@cronicorn/domain";
-import type { DashboardManager, SubscriptionsManager } from "@cronicorn/services";
+import type { DashboardManager, NotificationsManager, SubscriptionsManager } from "@cronicorn/services";
 import type { JobsManager } from "@cronicorn/services/jobs";
 import type { RouteConfig, RouteHandler } from "@hono/zod-openapi";
 
@@ -20,10 +20,13 @@ export type AppBindings = {
     config: Env;
     withJobsManager: <T extends Response>(fn: (manager: JobsManager) => Promise<T>) => Promise<T>;
     withDashboardManager: <T extends Response>(fn: (manager: DashboardManager) => Promise<T>) => Promise<T>;
+    withNotificationsManager: <T extends Response>(fn: (manager: NotificationsManager) => Promise<T>) => Promise<T>;
     // Stripe services
     subscriptionsManager: SubscriptionsManager;
     paymentProvider: PaymentProvider;
     webhookSecret: string;
+    // VAPID public key for web push (undefined if not configured)
+    vapidPublicKey?: string;
     // Set by requireAuth middleware
     session?: AuthContext["session"];
     userId?: string;

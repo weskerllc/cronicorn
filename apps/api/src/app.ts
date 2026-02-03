@@ -1,4 +1,5 @@
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
+import { PinoLoggerAdapter } from "@cronicorn/adapter-pino";
 import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { cors } from "hono/cors";
@@ -12,6 +13,7 @@ import { createAuth } from "./auth/config.js";
 import { requireAuth } from "./auth/middleware.js";
 import { createDashboardManager } from "./lib/create-dashboard-manager.js";
 import { createJobsManager } from "./lib/create-jobs-manager.js";
+import { createNotificationsManager } from "./lib/create-notifications-manager.js";
 import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.js";
 import { errorHandler } from "./lib/error-handler.js";
 import { logger } from "./lib/logger.js";
@@ -20,6 +22,7 @@ import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";
 import jobs from "./routes/jobs/jobs.index.js";
+import notifications from "./routes/notifications/notifications.index.js";
 import subscriptions from "./routes/subscriptions/subscriptions.index.js";
 import webhooks from "./routes/webhooks.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
@@ -115,6 +118,30 @@ export async function createApp(
       }
     });
 
+    // Provide transaction wrapper that auto-creates NotificationsManager
+    const notificationsConfig = {
+      vapidSubject: config.VAPID_SUBJECT,
+      vapidPublicKey: config.VAPID_PUBLIC_KEY,
+      vapidPrivateKey: config.VAPID_PRIVATE_KEY,
+    };
+    const pinoLogger = new PinoLoggerAdapter(logger);
+
+    c.set("withNotificationsManager", (fn) => {
+      if (shouldCreateTransactions) {
+        return db.transaction(async (tx) => {
+          const manager = createNotificationsManager(tx, pinoLogger, notificationsConfig);
+          return fn(manager);
+        });
+      }
+      else {
+        const manager = createNotificationsManager(db, pinoLogger, notificationsConfig);
+        return fn(manager);
+      }
+    });
+
+    // Set VAPID public key for frontend to use (undefined if not configured)
+    c.set("vapidPublicKey", config.VAPID_PUBLIC_KEY);
+
     // Create SubscriptionsManager using composition helper
     // Note: This creates a new instance per request with proper transaction handling
     const subscriptionsManager = createSubscriptionsManager(
@@ -163,6 +190,11 @@ export async function createApp(
     return requireAuth(auth, config)(c, next);
   });
 
+  app.use("/notifications/*", async (c, next) => {
+    const auth = c.get("auth");
+    return requireAuth(auth, config)(c, next);
+  });
+
   // Health check endpoint (no auth required)
   app.get("/health", (c) => {
     return c.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -183,6 +215,7 @@ export async function createApp(
     dashboard,
     devices,
     jobs,
+    notifications,
     subscriptions,
     webhooks,
   ] as const;

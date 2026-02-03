@@ -277,3 +277,56 @@ export const webhookEvents = pgTable("webhook_events", {
 
 export type WebhookEventRow = typeof webhookEvents.$inferSelect;
 export type WebhookEventInsert = typeof webhookEvents.$inferInsert;
+
+/**
+ * Push Subscriptions table.
+ * Stores Web Push subscriptions for browser notifications.
+ *
+ * Each user can have multiple subscriptions (multiple devices/browsers).
+ * Subscriptions are removed when they expire or are unsubscribed.
+ */
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  /** The push endpoint URL - unique per subscription */
+  endpoint: text("endpoint").notNull(),
+  /** Expiration time from browser (null means no expiration) */
+  expirationTime: timestamp("expiration_time", { mode: "date", withTimezone: true }),
+  /** P-256 public key for encryption */
+  p256dh: text("p256dh").notNull(),
+  /** Authentication secret */
+  auth: text("auth").notNull(),
+  /** User agent string for device identification */
+  userAgent: text("user_agent"),
+  /** Optional device name set by user */
+  deviceName: text("device_name"),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+}, table => ({
+  userIdIdx: index("push_subscriptions_user_id_idx").on(table.userId),
+  endpointIdx: index("push_subscriptions_endpoint_idx").on(table.endpoint),
+}));
+
+export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
+export type PushSubscriptionInsert = typeof pushSubscriptions.$inferInsert;
+
+/**
+ * Notification Preferences table.
+ * Stores user preferences for different notification types.
+ */
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  /** Master enable/disable for all notifications */
+  enabled: boolean("enabled").notNull().default(true),
+  /** Enable usage quota alerts */
+  usageAlerts: boolean("usage_alerts").notNull().default(true),
+  /** Usage threshold percentage (0-100) to trigger alert */
+  usageThreshold: integer("usage_threshold").notNull().default(80),
+  /** Enable emergency/outage alerts */
+  emergencyAlerts: boolean("emergency_alerts").notNull().default(true),
+  /** Enable AI planner insights */
+  aiInsights: boolean("ai_insights").notNull().default(false),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+});
+
+export type NotificationPreferencesRow = typeof notificationPreferences.$inferSelect;
+export type NotificationPreferencesInsert = typeof notificationPreferences.$inferInsert;
