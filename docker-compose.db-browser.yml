@@ -8,9 +8,9 @@ services:
     environment:
       PGWEB_DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-db:5432/${POSTGRES_DB:-db}?sslmode=disable
     command:
-      - "/usr/bin/pgweb"
-      - "--bind=0.0.0.0"
-      - "--listen=8081"
+      - /usr/bin/pgweb
+      - --bind=0.0.0.0
+      - --listen=8081
       - "--auth-user=${PGWEB_USER:-admin}"
       - "--auth-pass=${PGWEB_PASSWORD:-changeme}"
     networks:
