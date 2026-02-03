@@ -13,46 +13,47 @@ mcp:
   priority: 0.9
 ---
 
-# Chat Your Way to Scheduled Jobs
+# MCP Server
 
 [![npm version](https://badge.fury.io/js/@cronicorn%2Fmcp-server.svg)](https://www.npmjs.com/package/@cronicorn/mcp-server)
 
-**What if you could manage cron jobs by just talking to your AI assistant?**
+Manage cron jobs by talking to your AI assistant.
 
 ```
-You: "Set up a job that checks my API health every 5 minutes"
+You: "Check my API health every 5 minutes"
 
-AI: *Creates the job, adds the endpoint, configures the schedule*
-    ✅ Done! Your health check is now running every 5 minutes.
+AI: ✅ Done! Health check running every 5 minutes.
 ```
-
-**No forms. No clicking. Just conversation.**
 
 ## Quick Start
 
-### Install
+**1. Install**
 
 ```bash
 npm install -g @cronicorn/mcp-server
 ```
 
-### Configure Your AI Assistant
+**2. Configure your AI assistant**
 
-Add the Cronicorn MCP server to your AI assistant's configuration. The exact setup varies by tool:
+```json
+{
+  "mcpServers": {
+    "cronicorn": {
+      "command": "cronicorn-mcp"
+    }
+  }
+}
+```
 
-- **GitHub Copilot**: Add to VS Code settings
-- **Claude Desktop**: Add to `claude_desktop_config.json`
-- **Cline/Continue/Cursor**: Check your extension's MCP settings
+See the [full README](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server#configuration) for platform-specific config locations.
 
-See the [full installation guide](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server#installation) for platform-specific instructions.
+**3. Authenticate**
 
-### Authenticate
-
-First time you use it, you'll authenticate once via OAuth (browser opens, you approve, done). The MCP server remembers you for 30 days.
+First use triggers OAuth in your browser. Approve once, stay connected for 30 days.
 
 ## What You Can Do
 
-**Create jobs instantly:**
+**Create jobs:**
 ```
 "Check https://api.myapp.com/health every 5 minutes"
 ```
@@ -62,66 +63,44 @@ First time you use it, you'll authenticate once via OAuth (browser opens, you ap
 "My payment-processor job is timing out - fix it"
 ```
 
-**Monitor everything:**
+**Monitor:**
 ```
 "Show me my dashboard stats"
-"What's wrong with that failing endpoint?"
 ```
 
-**Migrate from other systems:**
+**AI-adaptive scheduling:**
 ```
-"Help me move my 15 Vercel cron jobs to Cronicorn"
+"Monitor my API. Check more often if slow, relax when healthy."
 ```
+
+## 21 Tools Available
+
+| Category | Tools |
+|----------|-------|
+| **Jobs** | `createJob`, `listJobs`, `getJob`, `updateJob`, `archiveJob`, `pauseJob`, `resumeJob` |
+| **Endpoints** | `addEndpoint`, `listEndpoints`, `getEndpoint`, `updateEndpoint`, `archiveEndpoint`, `pauseResumeEndpoint` |
+| **AI Scheduling** | `applyIntervalHint`, `scheduleOneShot`, `clearHints`, `resetFailures` |
+| **Monitoring** | `listEndpointRuns`, `getRunDetails`, `getEndpointHealth`, `getDashboardStats` |
 
 ## Built-In Guides
 
-The MCP server includes interactive slash commands that guide you through common workflows:
+| Command | Description |
+|---------|-------------|
+| `/setup-first-job` | Interactive setup for your first scheduled job |
+| `/troubleshoot-failures` | Debug failing endpoints with systematic diagnosis |
 
-**`/setup-first-job`** - Perfect for getting started or migrating
-- Learn jobs vs endpoints, baseline schedules, AI adaptation, safety constraints
-- Get step-by-step guidance for your first scheduled task
+## Works With
 
-**`/troubleshoot-failures`** - Debug failing endpoints
-- Systematic diagnostic process
-- Common issues and fixes (timeouts, rate limits, auth)
-- Emergency actions when needed
+GitHub Copilot, Claude Desktop, Cursor, Cline, Continue, and any MCP-compatible assistant.
 
-## 30+ Tools Available
+## Security
 
-Your AI assistant has access to tools for:
+- OAuth 2.0 Device Flow (same as AWS CLI, GitHub CLI)
+- Credentials stored locally with strict file permissions
+- Tokens auto-refresh, re-auth every 30 days
 
-- **Job Management** - Create, list, update, pause, resume, delete
-- **Endpoint Control** - Add, configure, update URLs/timeouts/schedules
-- **AI Scheduling** - Apply hints, trigger immediate runs, pause/resume
-- **Monitoring** - Health summaries, execution history, run details, dashboard stats
+## Documentation
 
-[See all available tools →](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server#available-tools)
-
-## Example Use Cases
-
-**Health monitoring with AI adaptation:**
-```
-"Monitor https://api.acme.com/health every minute. 
-Check more frequently if slow, relax to 5 minutes when healthy."
-```
-→ AI auto-adjusts interval based on latency in response
-
-**Data sync with queue monitoring:**
-```
-"Sync https://api.acme.com/sync every 5 minutes.
-Speed up when queue_depth > 100, slow down when < 10."
-```
-→ AI monitors queue_depth and adjusts schedule dynamically
-
-**Daily cleanup:**
-```
-"Run cleanup at https://api.acme.com/cleanup daily at 2 AM Pacific"
-```
-→ Simple cron-based schedule
-
-## Security & Compatibility
-
-**Secure authentication** via OAuth 2.0 Device Flow (same as AWS CLI, GitHub CLI). Credentials stored locally with strict permissions. Tokens refresh automatically, re-auth every 30 days.
-
-**Works with** GitHub Copilot, Claude Desktop, Cline, Continue, Cursor, and any MCP-compatible AI assistant.
-
+- [Full README & Tool Reference](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server)
+- [Core Concepts](./core-concepts.md)
+- [How AI Adaptation Works](./technical/how-ai-adaptation-works.md)

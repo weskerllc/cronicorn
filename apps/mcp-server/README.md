@@ -1,44 +1,23 @@
 # Cronicorn MCP Server
 
-Model Context Protocol server that enables AI agents to manage cron jobs through Cronicorn.
+[![npm version](https://badge.fury.io/js/@cronicorn%2Fmcp-server.svg)](https://www.npmjs.com/package/@cronicorn/mcp-server)
 
-## Overview
-
-This MCP server provides tools for AI assistants (like Claude Desktop, Cline, etc.) to:
-- Create and manage cron jobs
-- List existing jobs and their schedules
-- Pause/unpause jobs
-- View job execution history
-
-Authentication uses OAuth 2.0 Device Authorization Grant (RFC 8628) to securely connect to your Cronicorn account.
+MCP server for managing cron jobs through AI assistants (Claude, Copilot, Cursor, etc.).
 
 ## Installation
 
-### Published Package (Recommended)
-
 ```bash
 npm install -g @cronicorn/mcp-server
-# or
-pnpm add -g @cronicorn/mcp-server
 ```
 
-### From Source (Development)
+## Configuration
 
-```bash
-# From monorepo root
-pnpm install
-pnpm --filter @cronicorn/mcp-server build
+Add to your AI assistant's MCP config:
 
-# Link globally (optional)
-cd apps/mcp-server
-pnpm link --global
-```
+<details open>
+<summary><strong>Claude Desktop</strong></summary>
 
-## Usage
-
-### Claude Desktop
-
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 
 ```json
 {
@@ -49,16 +28,12 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
   }
 }
 ```
+</details>
 
-### VS Code / GitHub Copilot
+<details>
+<summary><strong>VS Code / GitHub Copilot</strong></summary>
 
-**Option 1: VS Code with GitHub Copilot (Native MCP Support)**
-
-GitHub Copilot in VS Code supports MCP through [agent mode](https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode). Configure in your VS Code settings:
-
-1. Open VS Code Settings (JSON) via `Cmd+Shift+P` → "Preferences: Open User Settings (JSON)"
-
-2. Add the MCP server configuration:
+In VS Code settings (JSON):
 
 ```json
 {
@@ -70,9 +45,8 @@ GitHub Copilot in VS Code supports MCP through [agent mode](https://code.visuals
 }
 ```
 
-Alternatively, create an `mcp.json` file in your workspace or user config directory:
+Or create `~/.vscode/mcp.json`:
 
-**User config** (`~/.vscode/mcp.json`):
 ```json
 {
   "mcpServers": {
@@ -82,8 +56,11 @@ Alternatively, create an `mcp.json` file in your workspace or user config direct
   }
 }
 ```
+</details>
 
-**Workspace config** (`.vscode/mcp.json` in project root):
+<details>
+<summary><strong>Cursor / Cline / Continue</strong></summary>
+
 ```json
 {
   "mcpServers": {
@@ -93,204 +70,78 @@ Alternatively, create an `mcp.json` file in your workspace or user config direct
   }
 }
 ```
+</details>
 
-**Option 2: VS Code Extensions**
+## Authentication
 
-Popular VS Code extensions with MCP support:
+On first run, the server starts OAuth device flow:
 
-**[Cline](https://github.com/cline/cline)** - Autonomous coding agent
-```json
-// In Cline's MCP settings
-{
-  "mcpServers": {
-    "cronicorn": {
-      "command": "cronicorn-mcp"
-    }
-  }
-}
-```
+1. Opens browser to `https://cronicorn.com/device/approve`
+2. Enter the displayed user code
+3. Credentials stored in `~/.cronicorn/credentials.json`
 
-**[Continue](https://github.com/continuedev/continue)** - AI code assistant
-```json
-// In Continue's config.json
-{
-  "mcpServers": {
-    "cronicorn": {
-      "command": "cronicorn-mcp"
-    }
-  }
-}
-```
+Tokens are valid for 30 days. Re-authentication is automatic when expired.
 
-**[Cursor](https://docs.cursor.com/context/mcp)** - AI code editor (VS Code fork)
-```json
-// In Cursor's MCP settings
-{
-  "mcpServers": {
-    "cronicorn": {
-      "command": "cronicorn-mcp"
-    }
-  }
-}
-```
+## Tools
 
-### First Run - OAuth Device Flow
+### Jobs
+| Tool | Description |
+|------|-------------|
+| `createJob` | Create a new job container |
+| `getJob` | Get job details |
+| `listJobs` | List all jobs |
+| `updateJob` | Update job properties |
+| `archiveJob` | Archive a job (soft delete) |
+| `pauseJob` | Pause job execution |
+| `resumeJob` | Resume paused job |
 
-On first run, the server will:
+### Endpoints
+| Tool | Description |
+|------|-------------|
+| `addEndpoint` | Add HTTP endpoint to a job |
+| `getEndpoint` | Get endpoint details |
+| `listEndpoints` | List endpoints for a job |
+| `updateEndpoint` | Update endpoint config |
+| `archiveEndpoint` | Archive an endpoint |
+| `pauseResumeEndpoint` | Pause/unpause endpoint |
 
-1. Display a device code and user code
-2. Open your browser to https://cronicorn.com/device/approve
-3. Enter the user code and approve access
-4. Store credentials securely in `~/.cronicorn/credentials.json`
+### AI Scheduling
+| Tool | Description |
+|------|-------------|
+| `applyIntervalHint` | Suggest new interval |
+| `scheduleOneShot` | Trigger immediate run |
+| `clearHints` | Remove pending hints |
+| `resetFailures` | Reset failure count |
 
-Subsequent runs will use the stored access token automatically.
+### Monitoring
+| Tool | Description |
+|------|-------------|
+| `listEndpointRuns` | Get execution history |
+| `getRunDetails` | Get specific run details |
+| `getEndpointHealth` | Get health summary |
+| `getDashboardStats` | Get account-wide stats |
 
-## Prompts (Slash Commands)
+## Prompts
 
-Prompts are interactive conversation starters that guide you through common Cronicorn workflows. They're triggered using slash commands in your AI assistant.
+Interactive guides available via slash commands:
 
-### Available Prompts
+| Prompt | Description |
+|--------|-------------|
+| `/setup-first-job` | Step-by-step guide for creating your first job |
+| `/troubleshoot-failures` | Debug failing endpoints |
 
-#### `/setup-first-job` - Get Started with Cronicorn
-
-Interactive guide for creating your first scheduled job. Works for all scenarios including new users and migrations from other cron systems.
-
-**Optional Arguments:**
-- `task_description`: What the job should do
-- `endpoint_url`: HTTP endpoint to call
-- `schedule_type`: "interval" or "cron"
-
-**Example Usage (GitHub Copilot):**
-
-In GitHub Copilot Chat, type:
-```
-@cronicorn /setup-first-job
-```
-
-Or with arguments:
-```
-@cronicorn /setup-first-job task_description="check API health every 5 minutes" endpoint_url="https://api.myapp.com/health"
-```
-
-The prompt will guide you through:
-1. Understanding jobs vs endpoints
-2. Creating a job container
-3. Adding your HTTP endpoint
-4. Configuring baseline schedules
-5. Setting safety constraints
-6. Enabling AI adaptation
-
-**What You'll Learn:**
-- Jobs vs endpoints (containers vs execution units)
-- Baseline schedules (cron vs interval)
-- AI hints for dynamic scheduling
-- Safety constraints (min/max intervals)
-- Response body instrumentation
-
----
-
-#### `/troubleshoot-failures` - Debug Failing Endpoints
-
-Debug failing job executions and identify solutions.
-
-**Optional Arguments:**
-- `job_or_endpoint_name`: Name/ID of failing endpoint
-- `error_description`: Error symptoms
-- `when_started`: "just-now", "today", "this-week", or "longer"
-
-**Example Usage (GitHub Copilot):**
-
-```
-@cronicorn /troubleshoot-failures job_or_endpoint_name="payment-processor" error_description="timeout errors" when_started="today"
-```
-
-The prompt will guide you through:
-1. Identifying the failing endpoint
-2. Reviewing run history for patterns
-3. Analyzing error details (status codes, messages)
-4. Checking AI hints and scheduling state
-5. Inspecting response bodies
-6. Applying fixes (constraints, pausing, configuration)
-
-**Common Issues Covered:**
-- Timeout errors (increase timeout/execution time)
-- Rate limiting (429 errors, adjust min interval)
-- Service unavailable (500/503, pause endpoint)
-- Authentication failures (401/403, fix headers)
-- Network issues (connection refused, DNS)
-- Response body problems (size limits, structure)
-
----
-
-### Using Prompts in GitHub Copilot
-
-**In VS Code with GitHub Copilot Chat:**
-
-1. Open GitHub Copilot Chat (Click the chat icon or `Ctrl+Shift+I` / `Cmd+Shift+I`)
-
-2. Use the `@cronicorn` agent with a slash command:
-   ```
-   @cronicorn /setup-first-job
-   ```
-
-3. Copilot will run the prompt and guide you through the workflow
-
-4. Provide arguments inline:
-   ```
-   @cronicorn /migrate-from-cron current_system="vercel-cron" job_count="10"
-   ```
-
-5. Follow the interactive guidance to complete your task
-
-**Tips for Best Results:**
-
-- **Start broad**: Use prompts without arguments to get full guidance
-- **Provide context**: Include arguments when you have specific info
-- **Follow suggestions**: Prompts reference specific tools to use next
-- **Check resources**: Prompts include doc links for deeper learning
-
-**Note:** GitHub Copilot doesn't automatically load bundled resources like Claude Desktop does, but prompts include embedded summaries and hosted doc URLs for universal access.
-
----
-
-### Using Prompts in Claude Desktop
-
-**In Claude Desktop:**
-
-1. Type a slash command in the chat:
-   ```
-   /setup-first-job
-   ```
-
-2. Claude will execute the prompt and start guiding you
-
-3. Prompts can reference bundled documentation resources:
-   ```
-   file:///docs/quick-start.md
-   file:///docs/core-concepts.md
-   ```
-
-4. Claude automatically loads these resources for additional context
-
----
-
-## Keeping Updated
-
-The MCP server does not automatically update. When using `npx` or global installation, you'll continue using the cached version until you manually update.
-
-### Check Current Version
+## Updating
 
 ```bash
-npx @cronicorn/mcp-server --version
-# or for global install
+# Check version
 cronicorn-mcp --version
+
+# Update global install
+npm update -g @cronicorn/mcp-server
 ```
 
-### Update Methods
+Or use `@latest` in config for automatic updates:
 
-**For npx users (recommended):**
-
-Option 1: Use the `@latest` tag to always get the newest version
 ```json
 {
   "mcpServers": {
@@ -302,225 +153,29 @@ Option 1: Use the `@latest` tag to always get the newest version
 }
 ```
 
-Option 2: Clear npm cache and reinstall
-```bash
-npm cache clean --force
-npx @cronicorn/mcp-server
-```
+## Environment Variables
 
-**For global installations:**
-
-```bash
-npm update -g @cronicorn/mcp-server
-# or
-pnpm update -g @cronicorn/mcp-server
-```
-
-### Why Update?
-
-Regular updates ensure you have:
-- Latest bug fixes and security patches
-- New features and tools
-- Performance improvements
-- Compatibility with latest MCP clients
-
-**Note:** Using `@latest` in your configuration ensures you always run the newest version, but be aware this may occasionally introduce breaking changes. For production use, consider pinning to a specific version and updating manually after reviewing the [changelog](https://github.com/weskerllc/cronicorn/releases).
-
-## Available Tools
-
-### `create_job`
-
-Create a new cron job.
-
-**Parameters:**
-- `name` (string, required): Job name
-- `endpoint` (object, required):
-  - `url` (string): HTTP endpoint URL
-  - `method` (string): HTTP method (GET, POST, etc.)
-  - `headers` (object, optional): HTTP headers
-  - `body` (string, optional): Request body
-- `schedule` (string, required): Cron expression (e.g., "0 9 * * *")
-- `timezone` (string, optional): IANA timezone (e.g., "America/New_York")
-
-**Example:**
-```
-Please create a job that checks my website health every 5 minutes
-```
-
-### `list_jobs`
-
-List all jobs for the authenticated user.
-
-**Parameters:**
-- `status` (string, optional): Filter by status (active, paused, all)
-
-**Example:**
-```
-Show me all my active cron jobs
-```
-
-### `pause_job`
-
-Pause or unpause a job.
-
-**Parameters:**
-- `job_id` (string, required): Job ID
-- `paused` (boolean, required): true to pause, false to unpause
-
-**Example:**
-```
-Pause the job named "website-health-check"
-```
-
-### `get_job_history`
-
-Get execution history for a job.
-
-**Parameters:**
-- `job_id` (string, required): Job ID
-- `limit` (number, optional): Number of recent runs to return (default: 10)
-
-**Example:**
-```
-Show me the last 5 runs of my backup job
-```
-
-## Configuration
-
-### Token Lifetime
-
-Access tokens are valid for **30 days** from authentication. The server automatically:
-- Checks token expiry on startup
-- Displays expiry information and days remaining
-- Triggers re-authentication when tokens expire
-
-**When tokens expire:**
-- You'll see: `⚠️ Token expired at [timestamp]`
-- Server automatically starts device flow
-- Complete authorization in browser to get new 30-day token
-
-**Monitoring token expiry:**
-- On startup, server logs: `📅 Token expires: [ISO timestamp] (in ~X days)`
-- Tokens are refreshed weekly to maintain session
-- Manual re-auth required every 30 days
-
-This follows industry standards (AWS CLI, GitHub CLI use similar lifetimes).
-
-### Credentials Storage
-
-Credentials are stored in `~/.cronicorn/credentials.json` with permissions `0600` (owner read/write only).
-
-**File structure:**
-```json
-{
-  "access_token": "...",
-  "refresh_token": "...",
-  "expires_at": 1234567890000
-}
-```
-
-### Environment Variables
-
-- `CRONICORN_API_URL`: Override API base URL (default: `https://api.cronicorn.com`)
-- `CRONICORN_WEB_URL`: Override web UI URL (default: `https://cronicorn.com`)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CRONICORN_API_URL` | `https://api.cronicorn.com` | API base URL |
+| `CRONICORN_WEB_URL` | `https://cronicorn.com` | Web UI URL |
 
 ## Development
 
 ```bash
-# Build
-pnpm build
-
-# Watch mode
-pnpm watch
-
-# Type check
-pnpm typecheck
+# From monorepo root
+pnpm install
+pnpm --filter @cronicorn/mcp-server build
+pnpm --filter @cronicorn/mcp-server dev
 ```
-
-## Publishing
-
-The MCP server is published as a **bundled package** - all dependencies (including `@cronicorn/api-contracts`) are bundled into a single executable. See [BUNDLING.md](./BUNDLING.md) for technical details.
-
-### Release Workflow
-
-```bash
-# 1. Update version
-cd apps/mcp-server
-npm version patch|minor|major
-
-# 2. Build the bundle
-pnpm build
-
-# 3. Verify bundle contents
-pnpm pack
-tar -tzf cronicorn-mcp-server-*.tgz
-
-# 4. Publish to npm
-pnpm publish --access public
-
-# 5. Tag and push
-git add package.json
-git commit -m "chore(mcp-server): release v0.1.x"
-git tag mcp-server-v0.1.x
-git push --follow-tags
-```
-
-### What Gets Published
-
-- `dist/index.js` (470KB bundled executable)
-- `dist/index.js.map` (source maps)
-- `package.json`
-- `README.md`
-
-**Note**: Only production dependency is `@modelcontextprotocol/sdk` - everything else is bundled.
-
-## Alternative: Context7 Documentation Access
-
-If you have the [Context7 MCP server](https://context7.com) installed alongside Cronicorn MCP, you can access Cronicorn documentation directly in your AI assistant:
-
-```
-@context7 /weskerllc/cronicorn
-```
-
-This provides an alternative way to access up-to-date Cronicorn documentation without leaving your conversation. Context7 complements the Cronicorn MCP server's prompts and bundled resources.
-
-**Use cases:**
-- Quick doc lookups while working with Cronicorn MCP tools
-- Access to the latest documentation updates
-- Cross-reference between different sections of the docs
-
-## Security
-
-- OAuth 2.0 Device Authorization Grant for secure authentication
-- Credentials stored locally with strict file permissions
-- No API keys or secrets stored in server code
-- Uses standard MCP stdio transport (no network exposure)
 
 ## Troubleshooting
 
-### Token expired
+**"No credentials found"** - Delete `~/.cronicorn/credentials.json` and re-authenticate.
 
-**Symptom:** Server shows `⚠️ Token expired at [timestamp]`
+**Browser doesn't open** - Manually visit the URL shown in terminal.
 
-**Solution:** Automatic - server triggers device flow for re-authentication. Complete authorization in browser.
-
-**Manual test:** Run `pnpm test:expiry` to check current token status and test expiry handling.
-
-### "No credentials found" error
-
-Delete `~/.cronicorn/credentials.json` and re-authenticate.
-
-### Browser doesn't open automatically
-
-Manually visit the URL shown in the terminal and enter the user code.
-
-### "Invalid grant" error
-
-Your access token may have expired or been revoked. Delete credentials and re-authenticate:
-
-```bash
-rm ~/.cronicorn/credentials.json
-```
+**"Invalid grant" error** - Token revoked. Delete credentials and re-authenticate.
 
 ## License
 
