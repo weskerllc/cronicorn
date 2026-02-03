@@ -19,6 +19,7 @@
     "@cronicorn/config-defaults": "workspace:*",
     "@cronicorn/domain": "workspace:*",
     "drizzle-orm": "catalog:",
+    "nanoid": "^5.0.9",
     "pg": "^8.16.3"
   },
   "devDependencies": {

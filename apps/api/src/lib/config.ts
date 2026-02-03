@@ -27,6 +27,10 @@ const envSchema = z.object({
   STRIPE_PRICE_PRO_ANNUAL: z.string().min(1).default(DEV_STRIPE.PRICE_PRO_ANNUAL),
   STRIPE_PRICE_ENTERPRISE: z.string().min(1).default(DEV_STRIPE.PRICE_ENTERPRISE),
   BASE_URL: z.string().url("BASE_URL must be a valid URL").default(DEV_URLS.WEB),
+  // Web Push notifications (optional)
+  VAPID_SUBJECT: z.string().optional(), // mailto: or https: URL
+  VAPID_PUBLIC_KEY: z.string().optional(), // Base64url encoded
+  VAPID_PRIVATE_KEY: z.string().optional(), // Base64url encoded
 }).refine(
   (data) => {
     // At least one auth method must be configured
