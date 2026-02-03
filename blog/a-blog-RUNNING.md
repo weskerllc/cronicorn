@@ -323,10 +323,281 @@ You provide the discipline.
 This is how you move fast **without** losing control.
 This is how you build something that survives its own success.
 
-If you want next, we can:
+---
 
-* Add a **“how AI breaks this if you don’t enforce it”** section
-* Show a **real refactor from messy → hexagonal**
-* Or write the **rules you give AI to keep it inside the lines**
+## Next: ADRs (Architectural Decision Records)
 
-This section is strong. Now it’s dangerous — in a good way.
+The second rule is simple: **write things down or expect chaos later.**
+
+I keep a `.adr/` folder at the root of every repo.
+
+Any *meaningful* architectural decision requires a new markdown file. No exceptions. Short, complete, and written while the decision is still fresh — not three weeks later when everyone remembers it differently.
+
+Each ADR answers:
+
+* What decision was made
+* Why it was made
+* What alternatives were considered
+* What tradeoffs were accepted
+
+That’s it. No fluff.
+
+Files are named with a numeric prefix so they’re ordered:
+
+```
+001-use-hexagonal-architecture.md
+002-in-memory-adapter-first.md
+003-postgres-over-mongodb.md
+```
+
+This matters for two reasons.
+
+First, **future you**. You can scan the ADRs and immediately see how the system got here, in order, without archaeology.
+
+Second — and this is new — **AI agents**.
+
+I explicitly tell agents to read and respect the ADRs. When they suggest changes that violate them, I stop them. When they generate code, I expect it to align with the documented decisions. This alone cuts down on a shocking amount of nonsense.
+
+ADRs become guardrails.
+
+---
+
+## When Is a Decision “Big Enough” for an ADR?
+
+Short answer: earlier than you think.
+
+If you’re asking yourself *“should this be an ADR?”* — the answer is almost always yes.
+
+I strongly prefer **too many ADRs over too few**. Writing one takes minutes. Not writing one costs hours later when:
+
+* AI reintroduces something you already rejected
+* You forget why a choice was made
+* The architecture quietly drifts
+
+An ADR doesn’t mean the decision is permanent. It just means it was *intentional*.
+
+And intentional systems age better — especially when AI is writing half the code.
+
+---
+
+## Next: Enforce Code Quality Ruthlessly
+
+This part isn’t optional. This is how you keep AI from quietly wrecking your codebase while smiling about it.
+
+For me, this breaks into three things:
+
+* Tests
+* Linting
+* Enforcement (locally *and* in CI)
+
+If any one of these is missing, the whole system leaks.
+
+---
+
+## Tests: Your Primary Control Mechanism
+
+AI is fast. It’s also very good at subtly breaking things. Off-by-one errors. Slightly changed behavior. “Looks right” bugs.
+
+Tests are how you keep it honest.
+
+### Priority One: Domain Logic
+
+The domain is sacred. Test it heavily.
+
+No mocks.
+No IO.
+No excuses.
+
+If the rules live here, they get locked down.
+
+**Vitest example:**
+
+```ts
+import { describe, it, expect } from "vitest";
+import { confirmOrder } from "./order";
+
+describe("confirmOrder", () => {
+  it("confirms a valid order", () => {
+    const order = {
+      id: "1",
+      items: [{ sku: "abc", quantity: 1 }],
+      status: "pending",
+    };
+
+    const result = confirmOrder(order);
+
+    expect(result.status).toBe("confirmed");
+  });
+
+  it("throws on empty orders", () => {
+    const order = {
+      id: "1",
+      items: [],
+      status: "pending",
+    };
+
+    expect(() => confirmOrder(order)).toThrow();
+  });
+});
+```
+
+This stuff should be boring. Predictable. Locked.
+
+If AI breaks a domain test, that’s a hard stop.
+
+---
+
+### Priority Two: Application Services (Integration Points)
+
+This is where things start touching each other. Repositories. Use cases. Orchestration.
+
+Here you test:
+
+* Happy paths
+* Sad paths
+* Boundary conditions between components
+
+Use real implementations where possible. In-memory adapters are perfect for this.
+
+```ts
+import { describe, it, expect } from "vitest";
+import { confirmOrderUseCase } from "./confirm-order";
+import { InMemoryOrderRepository } from "../adapters/in-memory-order-repo";
+
+describe("confirmOrderUseCase", () => {
+  it("confirms an existing order", async () => {
+    const repo = new InMemoryOrderRepository();
+
+    await repo.save({
+      id: "1",
+      items: [{ sku: "abc", quantity: 1 }],
+      status: "pending",
+    });
+
+    await confirmOrderUseCase(repo, "1");
+
+    const updated = await repo.findById("1");
+    expect(updated?.status).toBe("confirmed");
+  });
+
+  it("fails when order does not exist", async () => {
+    const repo = new InMemoryOrderRepository();
+
+    await expect(
+      confirmOrderUseCase(repo, "missing")
+    ).rejects.toThrow();
+  });
+});
+```
+
+This catches most “AI made a reasonable assumption” bugs before they escape.
+
+---
+
+### Priority Three: Adapter Contracts — The Trust Boundary
+
+This is the part most people miss.
+
+You do *not* need to exhaustively test every adapter. You need to test that **each adapter fulfills the port contract**.
+
+Same tests. Different implementations.
+
+```ts
+export function orderRepositoryContract(
+  createRepo: () => OrderRepository
+) {
+  it("can save and retrieve an order", async () => {
+    const repo = createRepo();
+
+    const order = {
+      id: "1",
+      items: [{ sku: "abc", quantity: 1 }],
+      status: "pending",
+    };
+
+    await repo.save(order);
+    const loaded = await repo.findById("1");
+
+    expect(loaded).toEqual(order);
+  });
+}
+```
+
+Then reuse it:
+
+```ts
+import { describe } from "vitest";
+import { orderRepositoryContract } from "./order-repo.contract";
+import { InMemoryOrderRepository } from "../adapters/in-memory-order-repo";
+
+describe("InMemoryOrderRepository", () => {
+  orderRepositoryContract(() => new InMemoryOrderRepository());
+});
+```
+
+When you later add Postgres, you run the *same contract tests*.
+If it passes, you trust it. If not, it doesn’t ship.
+
+This is gold for AI workflows. You give it a contract, and you don’t argue with the output.
+
+---
+
+## The AI Feedback Loop
+
+This is the workflow I recommend. No shortcuts.
+
+**Step one: write tests first. Always.**
+
+Before you ask AI to implement anything, you write the tests:
+
+* Be explicit
+* Cover edge cases
+* Encode the behavior you actually want
+
+Then you tell the AI two rules:
+
+1. Run tests before marking a task “done”
+2. Don’t break existing tests — ever
+
+That alone prevents 80% of regressions.
+
+---
+
+## Linting: Make Style Non-Negotiable
+
+Tests protect behavior. Linting protects sanity.
+
+I’m strict here on purpose. I don’t want to debate formatting, imports, or “personal style” — especially with AI in the mix.
+
+For TypeScript projects, my go-to is **ESLint with the antfu config**. It enforces:
+
+* Consistent formatting
+* Sensible defaults
+* Modern TypeScript best practices
+
+No bikeshedding. One ruleset. Everyone follows it — humans and agents alike.
+
+Same rule as tests:
+**lint must pass before a task is considered complete.**
+
+AI is actually very good at following lint rules *if you make them real*.
+
+---
+
+## Enforce It Locally *and* in CI
+
+Telling AI to run tests and lint is good.
+
+Making it impossible to merge without them is better.
+
+Put the same checks in CI:
+
+* Run tests
+* Run lint
+* Fail fast
+
+GitHub Actions. GitLab CI. Whatever you use — doesn’t matter.
+
+What matters is that the rules aren’t suggestions.
+
+---
