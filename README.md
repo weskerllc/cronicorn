@@ -2,10 +2,10 @@
 
 # <img src="packages/content/assets/logo.svg" alt="Cronicorn" height="40" align="center"> Cronicorn
 
-**AI-powered HTTP scheduler that adapts based on real response data**
+**AI-native HTTP scheduler that adapts based on real response data**
 
 <p align="center">
-Reads status codes, bodies, and response content. Adjusts schedules using rules you control.
+Reads status codes, bodies, and response content. Adjusts schedules using your rules. 
 </p>
 
 <p align="center">
@@ -14,29 +14,19 @@ Reads status codes, bodies, and response content. Adjusts schedules using rules 
   <em>Activity surge → AI tightens to 30s + triggers recovery actions → stabilizes → back to baseline</em>
 </p>
 
+
 <p align="center">
-<strong>What makes it different:</strong><br>
-Every decision explained • You set the boundaries • Works without AI
+  <a href="https://cronicorn.com">
+    <img src=".github/images/button-start-now.png" alt="Start Now (Free)" width="600" />
+  </a>
 </p>
 
 <p align="center">
-  <a href="https://cronicorn.com"><strong>Start Now (Free) →</strong></a>
-</p>
-
-<p align="center">
-  <small>
-   <a href="https://docs.cronicorn.com/mcp-server">🤖 MCP Server</a> ·
-    <a href="https://docs.cronicorn.com">📖 Docs</a> ·
-    <a href="https://cronicorn.com/api/reference">🎮 API Playground</a> ·
-    <a href="https://docs.cronicorn.com/self-hosting">🐳 Self-Host</a> ·
-    <a href="https://github.com/weskerllc/cronicorn/issues/new">💬 Support</a>
-  </small>
-</p>
-
-<p align="center" style="margin-top: 10px;">
-  <a href="https://github.com/weskerllc/cronicorn/actions"><img src="https://img.shields.io/github/actions/workflow/status/weskerllc/cronicorn/ci.yml?branch=main" alt="Build Status"></a>
-  <a href="https://www.npmjs.com/package/@cronicorn/mcp-server"><img src="https://img.shields.io/npm/v/@cronicorn/mcp-server" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/@cronicorn/mcp-server"><img src="https://img.shields.io/npm/dm/@cronicorn/mcp-server" alt="npm downloads"></a>
+  <a href="https://docs.cronicorn.com/mcp-server"><img src=".github/images/button-mcp-server.png" alt="MCP Server" width="500" /></a><br/>
+  <a href="https://docs.cronicorn.com"><img src=".github/images/button-docs.png" alt="Documentation" width="500" /></a><br/>
+  <a href="https://cronicorn.com/api/reference"><img src=".github/images/button-api-playground.png" alt="API Playground" width="500" /></a><br/>
+  <a href="https://docs.cronicorn.com/self-hosting"><img src=".github/images/button-self-host.png" alt="Self Hosting" width="500" /></a><br/>
+  <a href="https://github.com/weskerllc/cronicorn/issues/new"><img src=".github/images/button-support.png" alt="Support" width="500" /></a>
 </p>
 
 </div>
