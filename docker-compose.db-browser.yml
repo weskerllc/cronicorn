@@ -14,7 +14,7 @@ services:
       - "--auth-user=${PGWEB_USER:-admin}"
       - "--auth-pass=${PGWEB_PASSWORD:-changeme}"
     networks:
-      - cronicorn_cronicorn
+      - cronicorn
 
 networks:
   cronicorn:
