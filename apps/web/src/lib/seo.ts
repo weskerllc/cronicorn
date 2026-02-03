@@ -1,4 +1,4 @@
-import { brand, business, keywords, openGraph, seoDefaults, twitter } from '@cronicorn/content';
+import { brand, business, keywords, metaDescriptions, openGraph, seoDefaults, twitter } from '@cronicorn/content';
 import type { PricingTier } from '@cronicorn/content';
 import { APP_URL } from '@/config';
 
@@ -19,7 +19,7 @@ interface SEOOptions {
  */
 export function createSEOHead({
     title,
-    description = brand.description,
+    description = metaDescriptions.home,
     keywords: additionalKeywords = [],
     image,
     url,

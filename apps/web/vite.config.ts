@@ -94,6 +94,17 @@ export default defineConfig({
       // Pass API_URL to Nitro runtime for SSR
       apiUrl: process.env.API_URL || process.env.VITE_API_URL || "http://localhost:3333",
     },
+    routeRules: {
+      // Static assets - immutable with 1 year cache
+      "/logos/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      "/**/*.png": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      "/**/*.svg": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      "/**/*.ico": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      "/**/*.webp": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      "/**/*.woff2": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+      // HTML pages - no cache, revalidate
+      "/**": { headers: { "cache-control": "public, max-age=0, must-revalidate" } },
+    },
   },
   ssr: {
     noExternal: [

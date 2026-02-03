@@ -6,7 +6,7 @@
 export const brand = {
   /** Core site information */
   name: "Cronicorn",
-  title: "AI Job Scheduler that adapts to your system",
+  title: "AI-Powered Job Scheduler That Adapts to Your System",
   description: "Schedules HTTP jobs that adapt to real-time conditions.",
-  logoAlt: "Cronicorn Logo",
+  logoAlt: "Cronicorn - AI Job Scheduler Logo",
 } as const;

@@ -33,6 +33,9 @@ export const Route = createRootRouteWithContext<{
       { rel: "preconnect", href: "https://fonts.googleapis.com", crossOrigin: "anonymous" },
       { rel: "dns-prefetch", href: "https://fonts.googleapis.com" },
 
+      // Preload CSS for faster rendering
+      { rel: "preload", href: appCss, as: "style" },
+
       // Stylesheet
       { rel: "stylesheet", href: appCss },
 
