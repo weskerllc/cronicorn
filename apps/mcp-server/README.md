@@ -4,17 +4,17 @@
 
 MCP server for managing cron jobs through AI assistants (Claude, Copilot, Cursor, etc.).
 
-## Installation
-
-```bash
-npm install -g @cronicorn/mcp-server
-```
-
-## Configuration
-
-Add to your AI assistant's MCP config:
+## Setup
 
 <details open>
+<summary><strong>Claude Code (CLI)</strong></summary>
+
+```bash
+claude mcp add cronicorn -- npx -y @cronicorn/mcp-server
+```
+</details>
+
+<details>
 <summary><strong>Claude Desktop</strong></summary>
 
 `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
@@ -23,7 +23,8 @@ Add to your AI assistant's MCP config:
 {
   "mcpServers": {
     "cronicorn": {
-      "command": "cronicorn-mcp"
+      "command": "npx",
+      "args": ["-y", "@cronicorn/mcp-server"]
     }
   }
 }
@@ -39,7 +40,8 @@ In VS Code settings (JSON):
 {
   "github.copilot.chat.mcp.servers": {
     "cronicorn": {
-      "command": "cronicorn-mcp"
+      "command": "npx",
+      "args": ["-y", "@cronicorn/mcp-server"]
     }
   }
 }
@@ -51,7 +53,8 @@ Or create `~/.vscode/mcp.json`:
 {
   "mcpServers": {
     "cronicorn": {
-      "command": "cronicorn-mcp"
+      "command": "npx",
+      "args": ["-y", "@cronicorn/mcp-server"]
     }
   }
 }
@@ -65,7 +68,8 @@ Or create `~/.vscode/mcp.json`:
 {
   "mcpServers": {
     "cronicorn": {
-      "command": "cronicorn-mcp"
+      "command": "npx",
+      "args": ["-y", "@cronicorn/mcp-server"]
     }
   }
 }
@@ -132,15 +136,7 @@ Interactive guides available via slash commands:
 
 ## Updating
 
-```bash
-# Check version
-cronicorn-mcp --version
-
-# Update global install
-npm update -g @cronicorn/mcp-server
-```
-
-Or use `@latest` in config for automatic updates:
+Use `@latest` tag to always get the newest version:
 
 ```json
 {
@@ -157,7 +153,7 @@ Or use `@latest` in config for automatic updates:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CRONICORN_API_URL` | `https://api.cronicorn.com` | API base URL |
+| `CRONICORN_API_URL` | `https://cronicorn.com/api` | API base URL |
 | `CRONICORN_WEB_URL` | `https://cronicorn.com` | Web UI URL |
 
 ## Development
