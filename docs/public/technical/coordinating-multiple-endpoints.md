@@ -23,7 +23,7 @@ This example shows how to configure a health check that automatically triggers a
 
 ```bash
 # 1. Create the job
-curl -X POST https://cronicorn.com/api/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"name": "Service Recovery Workflow"}'
@@ -31,7 +31,7 @@ curl -X POST https://cronicorn.com/api/api/jobs \
 # Response: {"id": "job_abc123", "name": "Service Recovery Workflow", ...}
 
 # 2. Add health check endpoint
-curl -X POST https://cronicorn.com/api/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -46,7 +46,7 @@ curl -X POST https://cronicorn.com/api/api/jobs/job_abc123/endpoints \
   }'
 
 # 3. Add recovery action endpoint
-curl -X POST https://cronicorn.com/api/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -123,11 +123,11 @@ curl -X POST https://cronicorn.com/api/api/jobs/job_abc123/endpoints \
 ```bash
 # View recent health check runs
 curl -H "x-api-key: YOUR_KEY" \
-  "https://cronicorn.com/api/api/endpoints/ENDPOINT_ID/runs?limit=10"
+  "https://cronicorn.com/api/endpoints/ENDPOINT_ID/runs?limit=10"
 
 # View AI reasoning for recovery decisions
 curl -H "x-api-key: YOUR_KEY" \
-  "https://cronicorn.com/api/api/endpoints/ENDPOINT_ID/sessions?limit=5"
+  "https://cronicorn.com/api/endpoints/ENDPOINT_ID/sessions?limit=5"
 ```
 
 ## Complete Example: Volume-Based Data Sync
@@ -138,11 +138,11 @@ This example shows how to adjust polling frequency based on the volume of data r
 
 ```bash
 # Create job and endpoint
-curl -X POST https://cronicorn.com/api/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_KEY" \
   -d '{"name": "Data Sync"}'
 
-curl -X POST https://cronicorn.com/api/api/jobs/JOB_ID/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/JOB_ID/endpoints \
   -H "x-api-key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{
