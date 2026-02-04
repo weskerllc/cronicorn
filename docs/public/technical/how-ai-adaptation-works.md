@@ -67,7 +67,7 @@ Cronicorn uses natural language because:
 
 **Create endpoint via API:**
 ```bash
-curl -X POST https://cronicorn.com/api/api/jobs/JOB_ID/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/JOB_ID/endpoints \
   -H "x-api-key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{

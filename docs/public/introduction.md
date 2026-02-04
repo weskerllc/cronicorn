@@ -155,13 +155,13 @@ Every Cronicorn feature is available through **all three interfaces**. Choose ba
 **REST API:**
 ```bash
 # Create job
-curl -X POST https://cronicorn.com/api/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"name": "API Monitoring"}'
 
 # Add endpoint with adaptive config
-curl -X POST https://cronicorn.com/api/api/jobs/JOB_ID/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/JOB_ID/endpoints \
   -H "x-api-key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{

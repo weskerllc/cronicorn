@@ -141,7 +141,7 @@ For programmatic access, create API keys:
 4. Use in your requests:
 
 ```bash
-curl -X GET https://cronicorn.com/api/api/jobs \
+curl -X GET https://cronicorn.com/api/jobs \
   -H "x-api-key: cron_abc123..."
 ```
 
