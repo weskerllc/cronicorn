@@ -201,6 +201,67 @@ The AI Planner runs as a separate service. Verify it's running.
 
 AI controls when it next analyzes. A stable endpoint might not be re-analyzed for hours.
 
+### AI Oscillating Between Intervals
+
+**Symptoms:** Endpoint interval changes frequently, alternating between fast and slow
+
+**Causes:**
+1. Response data is volatile (instantaneous values that spike)
+2. Constraints allow too wide a range
+3. AI hints expiring too quickly
+
+**Solutions:**
+
+1. **Add/tighten constraints**:
+```json
+{
+  "minIntervalMs": 30000,
+  "maxIntervalMs": 120000
+}
+```
+A 4x range limits oscillation even with volatile AI decisions.
+
+2. **Return smoothed metrics in response**:
+```json
+{ "avg_error_rate_5min": 2.3 }  // Instead of instant rate
+```
+
+3. **Request stability in description**:
+```
+"Monitors volatile metrics. Prioritize stability - don't overreact
+to momentary spikes. Only adjust for sustained state changes."
+```
+
+4. **Include trend signals**:
+```json
+{ "trend": "stable", "within_normal_range": true }
+```
+
+See [Stability and Oscillation Prevention](./technical/how-ai-adaptation-works.md#stability-and-oscillation-prevention) for details.
+
+### AI Not Following My Description
+
+**Symptoms:** AI adapts differently than your description specifies
+
+**Check response body data:**
+
+AI uses both description AND response data. If response data strongly suggests a different action, AI may prioritize that.
+
+**Be explicit in description:**
+
+Use clear phrases:
+- ✅ "Poll LESS when load is HIGH" (explicit inverse)
+- ❌ "Adapt to load" (ambiguous)
+
+**Add thresholds:**
+```
+"Poll more frequently when error_rate exceeds 5%."
+```
+
+**Check constraints:**
+
+Constraints override everything. If you describe "poll every 10 seconds" but `minIntervalMs` is 30000, the constraint wins.
+
 ---
 
 ## Authentication Issues
