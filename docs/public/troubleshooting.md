@@ -430,11 +430,11 @@ When reporting issues, include:
 ```bash
 # Get endpoint health
 curl -H "x-api-key: KEY" \
-  https://cronicorn.com/api/api/endpoints/ID/health
+  https://cronicorn.com/api/endpoints/ID/health
 
 # Get recent runs
 curl -H "x-api-key: KEY" \
-  https://cronicorn.com/api/api/endpoints/ID/runs?limit=10
+  https://cronicorn.com/api/endpoints/ID/runs?limit=10
 ```
 
 **Via MCP:**
