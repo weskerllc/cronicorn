@@ -15,10 +15,30 @@ mcp:
 
 This document shows practical patterns for orchestrating workflows across multiple endpoints. Instead of abstract concepts, you'll find concrete examples you can copy and adapt.
 
-## Core Concept: Coordination via Response Bodies
+## Core Concept: Coordination via Descriptions and Response Bodies
 
-Cronicorn doesn't have built-in workflow orchestration or explicit dependencies. Instead, endpoints coordinate by:
+Cronicorn doesn't have built-in workflow orchestration or explicit dependencies. Instead, endpoints coordinate through two mechanisms:
 
+### 1. Descriptions Express Relationships
+
+Use endpoint descriptions to tell the AI how endpoints should interact:
+
+```
+Endpoint: "health-check"
+  Description: "Monitors service health. When errors are detected,
+  the trigger-recovery endpoint should run immediately."
+
+Endpoint: "trigger-recovery"
+  Description: "Recovery action that restarts the service. Should only
+  run when the health-check endpoint shows errors. After triggering,
+  wait at least 5 minutes before allowing another recovery attempt."
+```
+
+The AI reads both descriptions and understands the relationship: health-check triggers recovery when errors occur.
+
+### 2. Response Bodies Provide Signals
+
+Endpoints coordinate by:
 1. Writing signals to their response bodies
 2. Other endpoints reading those signals via `get_sibling_latest_responses`
 3. AI acting on the signals (pause, run immediately, adjust intervals)
