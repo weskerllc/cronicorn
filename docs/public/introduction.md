@@ -133,6 +133,58 @@ When enabled, the AI planner:
 - **Multi-tenant isolation**: Secure separation between accounts
 - **API & Web UI**: Manage jobs programmatically or visually
 
+## Three Ways to Access Cronicorn
+
+Every Cronicorn feature is available through **all three interfaces**. Choose based on your workflow:
+
+| Interface | Best For | Example |
+|-----------|----------|---------|
+| **Web UI** | Visual management, dashboards, quick edits | Point-and-click job creation |
+| **REST API** | Scripts, CI/CD, external integrations | `curl -X POST /api/jobs` |
+| **MCP Server** | AI assistants (Copilot, Claude) | "Create a health check job" |
+
+### Complete Example: Create Adaptive Health Check
+
+**Web UI:**
+1. Click "Create Job" → Name: "API Monitoring"
+2. Click "Add Endpoint" → URL: `https://api.example.com/health`
+3. Set baseline interval: 5 minutes
+4. Set min interval: 30 seconds, max: 15 minutes
+5. Add description: "Poll faster when errors detected, return to baseline when healthy"
+
+**REST API:**
+```bash
+# Create job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "API Monitoring"}'
+
+# Add endpoint with adaptive config
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Health Check",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 900000,
+    "description": "Poll faster when errors detected, return to baseline when healthy"
+  }'
+```
+
+**MCP Server (via AI assistant):**
+```
+"Create a job called API Monitoring with a health check endpoint
+at https://api.example.com/health. Run every 5 minutes normally,
+but allow AI to speed up to 30 seconds during issues and slow
+down to 15 minutes when healthy."
+```
+
+All three methods create identical configurations. The AI reads your description and response data to adapt scheduling within your constraints.
+
 ## How It Works
 
 1. **Create a Job** - Logical container for related endpoints

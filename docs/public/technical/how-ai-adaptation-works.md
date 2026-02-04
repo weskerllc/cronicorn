@@ -17,6 +17,104 @@ mcp:
 
 This document explains how the AI Planner suggests schedule adjustments. See [System Architecture](./system-architecture.md) for context on the dual-worker design.
 
+## No Code Rules—Descriptions + Response Data = Behavior
+
+Cronicorn doesn't have a rule configuration language or DSL. Instead:
+
+1. **You write a natural language description** for your endpoint
+2. **Your endpoint returns structured JSON** with metrics
+3. **The AI interprets both** to decide on scheduling adjustments
+
+### How AI Reads Response Data
+
+The AI automatically parses your response body and looks for relevant fields:
+
+```json
+// Your endpoint returns:
+{
+  "status": "degraded",
+  "error_count": 15,
+  "error_rate_pct": 12.5,
+  "queue_depth": 5000,
+  "latency_ms": 2500
+}
+```
+
+The AI reads this data and matches it against your description:
+
+```
+Description: "Monitor API health. Poll faster when error_rate > 5% or
+latency > 2000ms. Return to baseline when metrics normalize."
+```
+
+**Result**: AI sees `error_rate_pct: 12.5` (> 5%) and `latency_ms: 2500` (> 2000), matches your description, and proposes a shorter interval.
+
+### Why No Code Rules?
+
+Traditional rule engines require learning syntax:
+```
+# This is NOT how Cronicorn works
+IF response.error_rate > 5% THEN interval = 30s
+ELSE IF response.queue > 1000 THEN interval = 60s
+```
+
+Cronicorn uses natural language because:
+- **Easier to write**: Just describe what you want
+- **More flexible**: AI handles edge cases you didn't anticipate
+- **Self-documenting**: Descriptions explain intent, not just mechanics
+
+### Complete Example: Response-Based Scheduling
+
+**Create endpoint via API:**
+```bash
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Queue Monitor",
+    "url": "https://api.example.com/queue/status",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 900000,
+    "description": "Monitors queue depth. Poll every 30 seconds when queue_depth > 1000. Poll every 15 minutes when queue_depth < 100. Otherwise maintain baseline."
+  }'
+```
+
+**Your endpoint returns:**
+```json
+{
+  "queue_depth": 2500,
+  "processing_rate_per_min": 150,
+  "estimated_clear_time_min": 17
+}
+```
+
+**AI interprets:**
+- Reads `queue_depth: 2500` from response
+- Matches against description threshold `> 1000`
+- Proposes interval of 30 seconds (within minIntervalMs constraint)
+
+### Interpreting HTTP Status Codes
+
+The AI also uses execution status (success/failure) and HTTP status codes:
+
+| Status Code | AI Interpretation |
+|-------------|-------------------|
+| 2xx | Success - check response body for metrics |
+| 4xx | Client error - likely misconfiguration |
+| 5xx | Server error - potential incident |
+| Timeout | Performance issue - may need investigation |
+
+**Example description:**
+```
+"Monitor payment API. On HTTP 5xx or timeout, poll every 30 seconds.
+On HTTP 429 (rate limit), pause for 5 minutes. On success, check
+response body for queue metrics."
+```
+
+The AI understands HTTP semantics and applies your preferences.
+
 ## The AI Planner's Job
 
 The AI Planner worker analyzes endpoint execution patterns and suggests scheduling adjustments by writing hints to the database. It doesn't execute jobs or manage locks—it observes and recommends.
