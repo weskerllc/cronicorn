@@ -22,13 +22,13 @@ Understand the key concepts for working with Cronicorn.
 
 ### Job
 
-A **Job** is a container that groups related endpoints together.
+A **Job** is a container that groups related endpoints together. Endpoints in the same job can coordinate through **sibling visibility** - the AI sees all their responses.
 
 **Example**: A "Data Sync" job might contain endpoints for syncing users, products, and orders from different APIs.
 
 **Properties:**
 - **Name**: Descriptive label (e.g., "API Health Checks")
-- **Description**: Optional details about what this job does
+- **Description**: Explains what this job does and how endpoints should coordinate
 - **Status**: Active, paused, or archived
 
 ### Endpoint
@@ -44,10 +44,87 @@ An **Endpoint** is the actual work to be executed - an HTTP request that runs on
 - **Schedule**: Either a cron expression OR an interval in milliseconds
 
 **Optional:**
+- **Description**: Natural language instructions for how the AI should adapt this endpoint (see below)
 - **Headers**: Custom HTTP headers
 - **Body**: Request body (for POST/PUT/PATCH)
 - **Min/Max Intervals**: Safety constraints (see below)
 - **Timeout**: Maximum execution time
+
+### When to Use One Job vs Multiple Jobs
+
+**Use ONE job with multiple endpoints when:**
+- Endpoints are part of the same workflow
+- Coordination between endpoints is needed
+- You want AI to see sibling responses (e.g., health-check triggers recovery)
+
+**Use MULTIPLE separate jobs when:**
+- Workflows are completely independent
+- Different teams own different jobs
+- No coordination needed between them
+
+**Key insight**: Most "multi-job coordination" scenarios are actually **one job with multiple endpoints**.
+
+## How Descriptions Work
+
+Cronicorn uses **natural language descriptions** as your primary way to configure AI behavior. You don't write code rules—you write descriptions, and the AI interprets them.
+
+### The Paradigm
+
+| Traditional Scheduler | Cronicorn |
+|-----------------------|-----------|
+| Write code rules: `if (errors > 5) interval = 30s` | Write description: "Poll faster when errors increase" |
+| Configure explicit triggers | AI interprets intent from description |
+| Manual coordination logic | Automatic sibling awareness |
+| Static configuration | Adaptive with guardrails |
+
+### What Makes a Good Description
+
+A good endpoint description tells the AI:
+1. **What this endpoint does** - The purpose
+2. **When to poll faster or slower** - Conditions for adaptation
+3. **How it relates to siblings** - Coordination with other endpoints
+4. **Stability preferences** - Whether to prioritize stability or responsiveness
+
+### Description Examples
+
+**Health monitoring:**
+```
+"Monitors API health. Poll more frequently when errors are detected
+or latency is high. Return to baseline when metrics normalize."
+```
+
+**Data synchronization:**
+```
+"Syncs data from external source. Poll frequently when there's a
+large backlog to process. Slow down when caught up."
+```
+
+**Recovery action:**
+```
+"Triggers service recovery. Should only run when the health-check
+endpoint shows errors. After triggering, wait at least 5 minutes."
+```
+
+**Stability-focused:**
+```
+"Monitors volatile metrics. Prioritize stability - don't overreact
+to momentary spikes. Only adjust for sustained state changes."
+```
+
+**Inverse scaling:**
+```
+"Monitors system load. INVERSE scaling: poll LESS when load is
+HIGH (reduce overhead), poll MORE when load is LOW."
+```
+
+### How AI Uses Descriptions
+
+1. AI reads your endpoint description
+2. AI reads the response body from your endpoint
+3. AI decides whether to adjust scheduling based on both
+4. Constraints (min/max intervals) provide guardrails
+
+**No code, no DSL** - just natural language that the AI interprets.
 
 ## Scheduling
 
