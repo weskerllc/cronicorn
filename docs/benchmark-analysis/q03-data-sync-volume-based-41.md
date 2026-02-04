@@ -1,4 +1,4 @@
-# Benchmark Analysis: Q3 - Data Sync with Volume-Based Frequency
+# Benchmark Analysis: Q3 - Data Synchronization with Volume-Based Frequency
 
 **Score: 41/100**
 
@@ -6,281 +6,165 @@
 
 > How would you implement a data synchronization job in Cronicorn that adjusts its execution frequency based on the volume of data returned in the HTTP response body?
 
-## Current Capability Assessment
+## Root Cause of Low Score
 
-### What Cronicorn CAN Do Today
+**Missing use case example with description.** This is a straightforward single-endpoint pattern - describe the desired behavior in natural language and let AI interpret volume metrics from the response.
 
-1. **Capture Response Bodies**: Scheduler stores JSON responses (up to `maxResponseSizeKb`, default 100KB) in `runs.responseBody`.
+## Cronicorn's Approach
 
-2. **AI Analyzes Response Content**: AI Planner can query `get_latest_response` and `get_response_history` to read response data including volume indicators.
+This is a **single endpoint** with a natural language description explaining volume-based behavior. No code rules needed - just a clear description.
 
-3. **Dynamic Interval Adjustment**: AI can use `propose_interval` to tighten polling when high volume detected.
+## Solution: Single Endpoint with Volume-Aware Description
 
-4. **Trend Analysis**: AI sees multi-window health metrics (1h, 4h, 24h) and can detect patterns over time.
+```
+Job: "Data Synchronization"
 
-5. **TTL-Based Hints**: Hints expire automatically, returning to baseline when conditions normalize.
+Endpoint: "sync-status"
+  URL: https://api.example.com/sync/check
+  Method: GET
+  Baseline: Every 10 minutes
+  Min Interval: 30 seconds
+  Max Interval: 1 hour
 
-### What Works Well
+  Description:
+  "Checks data synchronization status with external source. The response
+  includes the number of pending records to sync. When there's a large
+  backlog (many pending records), poll more frequently to keep up with
+  the sync. When caught up (few or zero pending records), slow down to
+  the baseline or longer. During active syncing with moderate backlog,
+  maintain frequent polling until the queue is cleared."
+```
 
-The AI Planner is specifically designed to interpret response body data and adjust scheduling. Key response fields the AI looks for:
-- `queue_depth`, `pending_count` → items awaiting processing
-- `record_count`, `batch_size` → volume indicators
-- `has_more`, `next_page` → pagination signals
+## Key Insight: The Description IS the Rule
 
-### What May Be Unclear
+Instead of writing code like:
+```javascript
+// NOT how Cronicorn works
+if (response.records_pending > 1000) {
+  interval = 30000;
+} else if (response.records_pending > 100) {
+  interval = 60000;
+}
+```
 
-1. **How to structure response data** for volume-based decisions
-2. **Specific examples** of data sync patterns
-3. **Thresholds and gradual scaling** behavior
+You write a description:
+```
+"Poll more frequently when there's a large backlog. Slow down when caught up."
+```
+
+The AI interprets this with the response data.
+
+## Expected Response Bodies
+
+**Large Backlog - Needs Frequent Polling:**
+```json
+{
+  "status": "syncing",
+  "records_pending": 15000,
+  "records_synced_last_run": 500,
+  "sync_rate_per_minute": 100,
+  "estimated_completion_minutes": 150
+}
+```
+
+**Moderate Backlog - Active Sync:**
+```json
+{
+  "status": "syncing",
+  "records_pending": 2000,
+  "records_synced_last_run": 500,
+  "estimated_completion_minutes": 20
+}
+```
+
+**Caught Up - Can Slow Down:**
+```json
+{
+  "status": "idle",
+  "records_pending": 0,
+  "records_synced_last_run": 150,
+  "last_sync_completed_at": "2025-01-15T15:15:00Z"
+}
+```
+
+## How AI Interprets Volume
+
+1. **Reads description**: Understands "poll frequently when backlog is high"
+2. **Reads response**: Sees `records_pending: 15000`
+3. **Makes decision**: Large backlog → proposes shorter interval
+4. **Respects constraints**: Won't go below `minIntervalMs`
+5. **Returns to baseline**: When `records_pending: 0`, returns to normal
+
+## What Documentation Needs
+
+### 1. Data Sync Use Case Example
+
+```markdown
+## Use Case: Volume-Based Data Synchronization
+
+**Scenario**: Sync data from an external source, polling more frequently
+when there's a backlog and slowing down when caught up.
+
+### Endpoint Configuration
+
+```
+Endpoint: "data-sync"
+  URL: https://api.example.com/sync/status
+  Baseline: 10 minutes
+  Min: 30 seconds
+  Max: 1 hour
+
+  Description:
+  "Syncs data from external source. Poll frequently when records_pending
+  is high. Slow down when caught up (pending near zero)."
+```
+
+### Response Design
+
+Include volume indicators:
+- `records_pending` - size of backlog
+- `status` - current sync state
+- `has_more` - pagination indicator
+
+### How It Works
+
+AI reads your description + response data. No code rules needed.
+```
+
+### 2. More Description Examples
+
+```markdown
+## Description Examples for Data Sync
+
+**Simple:**
+"Sync data. Poll faster when behind, slower when caught up."
+
+**Detailed:**
+"Monitors data sync queue. When pending records exceed 1000, increase
+polling frequency to clear the backlog faster. When queue is empty or
+near-empty, reduce polling to conserve API calls. Include queue size
+in response body."
+
+**With specific thresholds:**
+"Data sync endpoint. High priority when records_pending > 5000.
+Normal priority when between 100-5000. Low priority when < 100."
+```
 
 ## Gap Analysis
 
-### Documentation Gaps
+| Gap | Type | Fix |
+|-----|------|-----|
+| Data sync use case not documented | Documentation | Add example with description |
+| Volume-based description examples | Documentation | Add sample descriptions |
+| Response body guidance | Documentation | Show what fields to include |
 
-| Gap | Impact | Current State |
-|-----|--------|---------------|
-| No "data sync" specific example | Users don't see this use case | Generic examples only |
-| Volume-based response structure not shown | Users don't know what fields to include | Partial in `configuration-and-constraints.md` |
-| Gradual frequency scaling not documented | Users don't understand AI behavior | Missing |
-| Pagination handling not covered | Common sync pattern missing | Not addressed |
+## Priority
 
-### Functionality Assessment
+**HIGH** - Common use case with simple solution.
 
-**Current functionality is SUFFICIENT** - this is primarily a documentation gap.
+## Expected Improvement
 
-The AI Planner already:
-- Reads response bodies looking for metrics
-- Understands `queue_depth`, `count`, `pending` type fields
-- Proposes interval changes based on trends
-- Returns to baseline when volume normalizes
-
-## Recommended Documentation Improvements
-
-### 1. New Section in `use-cases.md`
-
-Add: **"Data Synchronization with Volume-Based Polling"**
-
-```markdown
-### Data Synchronization with Volume-Based Polling
-
-**Scenario**: Sync data from an external API, polling more frequently when there's more data to fetch.
-
-**Endpoint Configuration**:
-```
-Name: crm-sync
-URL: https://api.external-crm.com/v1/changes
-Method: GET
-Baseline Interval: 300000 (5 minutes)
-Min Interval: 30000 (30 seconds)
-Max Interval: 900000 (15 minutes)
-```
-
-**Response Design**:
-Your sync endpoint should return volume indicators:
-```json
-{
-  "sync_status": "in_progress",
-  "records_synced": 150,
-  "records_pending": 2500,
-  "batch_size": 100,
-  "has_more": true,
-  "estimated_remaining_batches": 25,
-  "timestamp": "2025-01-15T14:30:00Z"
-}
-```
-
-**AI Behavior**:
-- Sees `records_pending: 2500` and `has_more: true`
-- Proposes shorter interval (30 seconds) to clear backlog faster
-- Continues tight polling while `records_pending > 0`
-- Returns to baseline when `has_more: false` and backlog cleared
-
-**Volume Scaling Pattern**:
-| Pending Records | AI Proposed Interval |
-|-----------------|----------------------|
-| > 1000 | 30 seconds (min) |
-| 500-1000 | 60 seconds |
-| 100-500 | 2 minutes |
-| < 100 | 5 minutes (baseline) |
-| 0 | 15 minutes (max, if configured) |
-```
-
-### 2. Add to `how-ai-adaptation-works.md`
-
-Add section: **"Volume-Based Scheduling"**
-
-```markdown
-## Volume-Based Scheduling
-
-The AI Planner interprets volume indicators in response bodies to adjust polling frequency.
-
-### Key Response Fields
-
-Include these fields for volume-aware scheduling:
-
-```json
-{
-  "pending_count": 500,      // Items awaiting processing
-  "queue_depth": 250,        // Alternative naming
-  "has_more": true,          // Pagination indicator
-  "batch_size": 100,         // Items per request
-  "total_remaining": 1500,   // Total items left
-  "processing_rate": 50      // Items processed per interval
-}
-```
-
-### AI Decision Logic
-
-1. **High Volume Detected**: `pending_count > threshold` or `has_more: true`
-   - Action: `propose_interval` with shorter duration
-   - Rationale: Clear backlog faster
-
-2. **Moderate Volume**: Some pending items
-   - Action: Moderate interval adjustment
-   - Rationale: Balance throughput with resource usage
-
-3. **Low/Zero Volume**: Backlog cleared
-   - Action: `clear_hints` to return to baseline
-   - Rationale: No need for aggressive polling
-
-4. **Empty Results Pattern**: Multiple consecutive empty responses
-   - Action: May propose longer interval (up to max)
-   - Rationale: Reduce unnecessary API calls
-
-### Example: Paginated Data Sync
-
-```json
-// First call - lots of data
-{
-  "records": [...],
-  "page": 1,
-  "total_pages": 50,
-  "has_more": true
-}
-// AI: Tightens to 30 seconds
-
-// Middle calls - still syncing
-{
-  "records": [...],
-  "page": 25,
-  "total_pages": 50,
-  "has_more": true
-}
-// AI: Maintains short interval
-
-// Final call - sync complete
-{
-  "records": [...],
-  "page": 50,
-  "total_pages": 50,
-  "has_more": false,
-  "sync_complete": true
-}
-// AI: clear_hints, returns to 5 minute baseline
-```
-```
-
-### 3. Add to `configuration-and-constraints.md`
-
-Add: **"Configuring for Data Sync Workloads"**
-
-```markdown
-## Configuring for Data Sync Workloads
-
-Data synchronization endpoints benefit from specific constraint configurations:
-
-### Recommended Settings
-
-```
-Baseline Interval: 5 minutes (300000ms)
-  - Normal polling when no backlog
-
-Min Interval: 30 seconds (30000ms)
-  - Fast polling during active sync
-  - Respect upstream rate limits
-
-Max Interval: 15-30 minutes
-  - Optional: Reduce polling during known quiet periods
-  - Omit if staleness is a concern
-```
-
-### Response Body Requirements
-
-For AI to make volume-based decisions, include:
-
-1. **Volume Indicator** (required): `pending_count`, `queue_depth`, or `records_remaining`
-2. **Completion Signal** (recommended): `has_more`, `sync_complete`, or `all_synced`
-3. **Progress Metrics** (optional): `page`, `total_pages`, `percent_complete`
-
-### Rate Limit Awareness
-
-If upstream API has rate limits, your sync endpoint should return:
-```json
-{
-  "records_pending": 1000,
-  "rate_limit_remaining": 10,
-  "rate_limit_reset_at": "2025-01-15T15:00:00Z"
-}
-```
-
-AI will interpret low `rate_limit_remaining` as a signal to slow down.
-```
-
-### 4. Add Quick Start Example
-
-In `quick-start.md`, add:
-
-```markdown
-### Example: Data Sync Job
-
-Sync data from an external system with volume-aware polling:
-
-1. **Create Job**: "External CRM Sync"
-
-2. **Add Endpoint**:
-   - Name: `crm-changes`
-   - URL: `https://api.crm.example.com/changes`
-   - Baseline: 5 minutes
-   - Min: 30 seconds
-   - Max: 15 minutes
-
-3. **Design Response**:
-   ```json
-   {
-     "changes": [...],
-     "pending_count": 500,
-     "has_more": true
-   }
-   ```
-
-4. **AI Adapts**: Polls faster when `pending_count` is high, returns to baseline when sync completes.
-```
-
-## Priority Assessment
-
-| Action | Priority | Effort | Impact |
-|--------|----------|--------|--------|
-| Add data sync use case | **HIGH** | Low | High - direct answer to question |
-| Add volume-based section to AI docs | **HIGH** | Low | High - explains mechanism |
-| Add configuration guidance | **MEDIUM** | Low | Medium - practical advice |
-| Add quick start example | **MEDIUM** | Low | Medium - easy entry point |
-
-## Expected Score Improvement
-
-With documentation improvements:
 - Current: 41/100
-- Expected: 80-85/100
+- With use case example and description samples: **80-90/100**
 
-The functionality fully supports this use case. Documentation is the primary gap.
-
-## Summary
-
-**Primary Gap**: Documentation - volume-based scheduling is a core AI capability but lacks specific examples for data synchronization use cases.
-
-**No Functionality Gap**: The AI Planner already interprets volume indicators (`pending_count`, `queue_depth`, `has_more`) and adjusts intervals accordingly.
-
-**Recommendation**: Add comprehensive documentation with:
-1. Data sync-specific use case example
-2. Response body structure guidance for volume indicators
-3. Expected AI behavior at different volume levels
-4. Configuration recommendations for sync workloads
+This is one of the simpler patterns - just needs a good example showing the description text and response format.
