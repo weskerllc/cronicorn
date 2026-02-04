@@ -338,6 +338,94 @@ Governor logic:
 
 **Key insight**: Min/max are hard limits. AI can propose anything, but Governor enforces bounds.
 
+## Decision 6: Writing Effective Descriptions
+
+**Question**: What should I write in my endpoint description?
+
+Your endpoint description tells the AI **when and how** to adapt the schedule. This is your primary configuration mechanism—more important than constraints for controlling behavior.
+
+### What a Good Description Contains:
+
+1. **Purpose**: What does this endpoint do?
+2. **Adaptation triggers**: When should polling change?
+3. **Relationship to siblings**: How does it interact with other endpoints?
+4. **Stability preferences**: Should it react quickly or stay stable?
+
+### Examples by Use Case:
+
+**Health monitoring:**
+```
+"Monitors API health. Poll more frequently when status is degraded
+or error_rate exceeds 5%. Return to baseline when metrics normalize.
+If latency_ms exceeds 2000, investigate more closely."
+```
+
+**Data synchronization:**
+```
+"Checks data sync status. Poll frequently when records_pending is high
+(more than 1000). Slow down when caught up (under 100 pending)."
+```
+
+**Recovery action:**
+```
+"Triggers service recovery. Should only run when the health-check
+endpoint shows errors. After triggering, wait at least 5 minutes
+before allowing another recovery attempt."
+```
+
+**Inverse scaling (reduce load under pressure):**
+```
+"Monitors system load. INVERSE SCALING: when load is HIGH, poll LESS
+frequently to reduce overhead. When load is LOW, poll MORE frequently
+since the system has capacity."
+```
+
+**Stability-focused:**
+```
+"Monitors volatile metrics. PRIORITIZE STABILITY - don't overreact
+to momentary spikes. Only adjust for sustained state changes (5+ minutes).
+Response includes smoothed averages - use those, not instant values."
+```
+
+### What NOT to Write:
+
+❌ **Vague descriptions:**
+```
+"Monitors things and makes adjustments when needed."
+```
+
+❌ **Code-like rules:**
+```
+"if error_rate > 5% then interval = 30s else interval = 5m"
+```
+(AI understands natural language better than pseudo-code)
+
+❌ **Just the purpose:**
+```
+"Health check endpoint."
+```
+(Tells AI what it does, but not when to adapt)
+
+### No Description vs. Description:
+
+**Without description:**
+- AI uses only response data and execution history
+- Adaptation is generic (tighten on errors, relax on success)
+- Works, but less precise
+
+**With description:**
+- AI knows your specific thresholds and preferences
+- Adaptation follows your business logic
+- Much more precise control
+
+### Best Practices:
+
+1. **Be specific about thresholds**: "when queue > 1000" not "when queue is high"
+2. **Mention sibling relationships**: "when health-check shows errors"
+3. **State stability preferences**: "don't overreact to momentary spikes"
+4. **Use natural language**: Write like you're explaining to a colleague
+5. **Include inverse behaviors**: If high load should mean LESS polling, say so explicitly
+
 ## Common Configuration Patterns
 
 ### Pattern 1: Adaptive Monitoring
