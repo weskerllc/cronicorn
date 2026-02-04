@@ -6,445 +6,201 @@
 
 > Write a code example showing how to define custom rules in Cronicorn that parse specific fields from an HTTP response body and use that data to dynamically adjust the job's next execution interval.
 
-## Current Capability Assessment
+## Root Cause of Low Score
 
-### How Cronicorn Works
+**Paradigm mismatch.** The question assumes user-defined parsing rules with explicit field → action mappings. Cronicorn uses **natural language descriptions** instead - you describe what you want, and AI interprets the response fields automatically.
 
-Cronicorn does NOT use user-defined "rules" in the traditional sense. Instead:
+## Cronicorn's Actual Approach
 
-1. **AI Interprets Response Bodies**: The AI Planner reads response bodies and makes intelligent decisions based on field values.
+**Descriptions ARE your rules.** You don't write parsing code.
 
-2. **Semantic Understanding**: AI understands common metric patterns (queue_depth, error_rate, latency) without explicit rule configuration.
+```
+Endpoint: "queue-monitor"
+  URL: https://api.example.com/queue/status
+  Baseline: 5 minutes
+  Min: 30 seconds
 
-3. **No Rule DSL**: There's no declarative rule language like "if queue_depth > 100 then interval = 30s".
-
-4. **Response Design = Rule Design**: You influence AI behavior by designing your response body structure.
-
-### What Works Well
-
-The AI Planner already:
-- Parses JSON response bodies
-- Looks for key metric patterns
-- Interprets numeric thresholds
-- Understands status indicators
-
-### What The Question Expects
-
-The question implies:
-- User-defined parsing rules
-- Explicit field → action mappings
-- Code-level rule definition
-
-### Current Reality
-
-Users influence AI through response body design, not rule configuration. This is a documentation gap, not a functionality gap.
-
-## Gap Analysis
-
-### Documentation Gaps
-
-| Gap | Impact | Current State |
-|-----|--------|---------------|
-| Response design as "rule definition" not explained | Users expect traditional rules | Paradigm not documented |
-| Field naming conventions not comprehensive | Users don't know what AI recognizes | Partial coverage |
-| Threshold guidance not provided | Users don't know what values trigger changes | Missing |
-| No "rule-like" examples | Users want cause-and-effect clarity | Missing |
-
-### Functionality Assessment
-
-**Current functionality is SUFFICIENT** - the AI-driven approach is more flexible than static rules, but this needs better documentation.
-
-## Recommended Documentation Improvements
-
-### 1. New Section: **"Designing Response Bodies for AI Interpretation"**
-
-Add to `how-ai-adaptation-works.md`:
-
-```markdown
-## Designing Response Bodies as "Rules"
-
-Unlike traditional schedulers with explicit rule configurations, Cronicorn uses AI to interpret your response bodies. This provides flexibility without rigid rule syntax.
-
-### Your Response Body IS Your Rule Definition
-
-Instead of:
-```yaml
-# Traditional rule syntax (NOT how Cronicorn works)
-rules:
-  - if: response.queue_depth > 100
-    then: interval = 30s
-  - if: response.error_rate > 5
-    then: interval = 10s
+  Description:
+  "Monitors the processing queue. When queue_depth is high (above 100),
+  increase polling frequency to keep track of backlog. When queue_depth
+  is low or zero, return to baseline. The response includes queue_depth,
+  processing_rate, and estimated_completion_time - use these to judge
+  appropriate polling frequency."
 ```
 
-You design your response body to communicate intent:
+AI reads the description, parses the response fields, and adjusts accordingly. No rule DSL needed.
+
+## Key Insight: Response Design + Description = Rules
+
+Instead of:
+```javascript
+// NOT how Cronicorn works
+rules.add({
+  condition: 'response.queue_depth > 100',
+  action: { interval: '30s' }
+});
+```
+
+You write:
+```
+Description:
+"When queue_depth is high (above 100), increase polling frequency."
+```
+
+And design your response to include the field:
 ```json
 {
   "queue_depth": 150,
-  "queue_threshold_warning": 100,
-  "queue_threshold_critical": 200,
-  "recommended_action": "increase_frequency",
-  "suggested_interval_ms": 30000
+  "status": "backlogged"
 }
 ```
 
-The AI interprets these fields and acts accordingly.
+## Complete Example
 
-### Field Naming Patterns AI Recognizes
+### Endpoint Configuration
 
-The AI Planner looks for these field patterns (case-insensitive):
-
-**Volume/Queue Indicators**:
-```json
-{
-  "queue_depth": 250,
-  "pending_count": 1500,
-  "backlog_size": 50,
-  "items_waiting": 100
-}
 ```
-AI response: May tighten interval when values are high
+Endpoint: "custom-metrics-monitor"
+  URL: https://api.example.com/metrics
+  Baseline: 5 minutes
+  Min: 30 seconds
+  Max: 15 minutes
 
-**Rate/Throughput Indicators**:
-```json
-{
-  "processing_rate": 100,
-  "requests_per_minute": 500,
-  "throughput": 1000
-}
-```
-AI response: May adjust interval based on throughput needs
+  Description:
+  "Monitors custom application metrics. Key fields to watch:
+  - queue_depth: Poll frequently when > 100, relax when < 20
+  - error_rate_pct: Tighten monitoring if > 5%
+  - processing_state: 'backlogged' means speed up, 'idle' means slow down
+  - suggested_interval_ms: If provided, use this as a hint
 
-**Error/Health Indicators**:
-```json
-{
-  "error_rate": 5.5,
-  "error_rate_pct": 5.5,
-  "failure_count": 10,
-  "healthy": false,
-  "status": "degraded"
-}
-```
-AI response: May tighten for investigation or pause for recovery
-
-**Latency/Performance Indicators**:
-```json
-{
-  "latency_ms": 500,
-  "response_time_ms": 450,
-  "p95_latency": 800,
-  "avg_duration_ms": 200
-}
-```
-AI response: May adjust based on performance trends
-
-**Capacity Indicators**:
-```json
-{
-  "capacity_pct": 85,
-  "utilization": 0.75,
-  "load": 0.9
-}
-```
-AI response: May tighten as capacity approaches limits
-
-### Explicit Recommendations (Most Direct)
-
-For clearest AI behavior, include explicit recommendations:
-
-```json
-{
-  "metrics": {
-    "queue_depth": 250,
-    "error_rate_pct": 2.5
-  },
-  "ai_guidance": {
-    "recommended_action": "increase_frequency",
-    "suggested_interval_ms": 30000,
-    "reason": "queue_depth exceeding threshold"
-  }
-}
+  Balance these factors - high queue with low errors is different
+  from high queue with high errors."
 ```
 
-The AI will strongly consider `suggested_interval_ms` when present.
-
-### Threshold Patterns
-
-Include thresholds for context:
+### Expected Response Body
 
 ```json
 {
-  "queue_depth": 250,
-  "queue_warning_threshold": 100,
-  "queue_critical_threshold": 300,
-  "status": "warning"
-}
-```
-
-AI interprets:
-- Value (250) between warning (100) and critical (300)
-- Status explicitly labeled "warning"
-- May propose moderate interval reduction
-
-### Complete Example: Queue Monitoring
-
-```json
-// Response body that acts as "rules" for AI
-{
-  "timestamp": "2025-01-15T14:30:00Z",
-
-  // Primary metrics (AI parses these)
-  "queue_depth": 250,
-  "processing_rate_per_min": 80,
+  "queue_depth": 150,
   "error_rate_pct": 2.5,
+  "processing_state": "backlogged",
+  "processing_rate_per_min": 50,
+  "estimated_clear_time_min": 30,
 
-  // Thresholds (provide context)
-  "thresholds": {
-    "queue_warning": 100,
-    "queue_critical": 300,
-    "error_rate_warning": 5,
-    "error_rate_critical": 10
-  },
-
-  // Computed status (AI uses this directly)
-  "status": "warning",
-  "needs_attention": true,
-
-  // Explicit guidance (most direct influence)
-  "scheduling_guidance": {
-    "suggested_interval_ms": 30000,
-    "min_interval_ms": 10000,
-    "reason": "queue depth approaching critical threshold"
-  }
+  // Optional: explicit hint for AI
+  "suggested_interval_ms": 30000,
+  "suggestion_reason": "High backlog requires frequent monitoring"
 }
 ```
 
-**Equivalent Traditional Rule**:
+### How AI Interprets This
+
+1. Reads description: "queue_depth > 100 means poll frequently"
+2. Reads response: `queue_depth: 150` (above threshold)
+3. Sees `processing_state: "backlogged"` (confirmation)
+4. Notes `suggested_interval_ms: 30000` (explicit hint)
+5. Proposes 30-second interval
+
+## Description Examples for Different "Rules"
+
+**Threshold-based:**
 ```
-IF queue_depth > 100 AND queue_depth < 300 THEN
-  interval = 30 seconds
-  status = warning
-```
-
-### Response Design Patterns
-
-#### Pattern 1: Threshold-Based Intervals
-
-```json
-// Your endpoint calculates the appropriate interval
-{
-  "metrics": { "load": 0.85 },
-  "calculated_interval_ms": 15000,  // You compute based on load
-  "calculation": "15000ms because load > 0.8"
-}
+"When queue_depth exceeds 100, increase frequency.
+When queue_depth is below 20, reduce frequency."
 ```
 
-#### Pattern 2: State Machine Signals
-
-```json
-{
-  "state": "degraded",
-  "previous_state": "healthy",
-  "state_changed_at": "2025-01-15T14:25:00Z",
-  "state_actions": {
-    "healthy": { "interval_ms": 60000 },
-    "degraded": { "interval_ms": 15000 },
-    "critical": { "interval_ms": 5000, "alert": true }
-  }
-}
+**State-based:**
+```
+"When status is 'critical', poll every 30 seconds.
+When status is 'warning', poll every minute.
+When status is 'healthy', use baseline."
 ```
 
-#### Pattern 3: Percentage-Based Scaling
-
-```json
-{
-  "capacity_pct": 75,
-  "scaling_suggestion": {
-    "at_50_pct": { "interval_ms": 60000 },
-    "at_75_pct": { "interval_ms": 30000 },
-    "at_90_pct": { "interval_ms": 10000 }
-  },
-  "current_recommendation": 30000
-}
+**Multi-factor:**
+```
+"Consider both queue_depth and error_rate:
+- High queue + low errors: moderate increase
+- High queue + high errors: maximum frequency
+- Low queue: return to baseline"
 ```
 
-### Best Practices
-
-1. **Be explicit**: Include `suggested_interval_ms` for clearest AI behavior
-2. **Provide context**: Include thresholds so AI understands relative values
-3. **Use clear status**: `healthy`, `warning`, `critical`, `degraded`
-4. **Include reasoning**: `"reason": "queue approaching limit"` helps AI
-5. **Consistent naming**: Use patterns AI recognizes (queue_depth, error_rate, etc.)
+**With explicit hints:**
+```
+"Response includes suggested_interval_ms field.
+Use this value when provided, otherwise interpret
+the metrics to determine appropriate frequency."
 ```
 
-### 2. Add API Examples for Programmatic Hints
+## For Users Who Want Programmatic Control
 
-In `api-reference.md`, add:
-
-```markdown
-## Programmatic Scheduling Control
-
-While AI interprets response bodies automatically, you can also set scheduling hints programmatically via API.
-
-### Set Interval Hint
+If you have an external rule engine, use the API to apply its decisions:
 
 ```typescript
-// Programmatically set a scheduling interval
-await fetch(`${CRONICORN_API}/jobs/${jobId}/endpoints/${endpointId}/ai/interval`, {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${API_KEY}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    intervalMs: 30000,      // 30 second interval
-    ttlMinutes: 60,         // Valid for 1 hour
-    reason: 'High queue depth detected by monitoring system'
-  }),
-});
-```
+// Your rule engine evaluates response
+const response = await fetchMetrics();
+const decision = myRuleEngine.evaluate(response);
 
-### Set One-Shot Execution
-
-```typescript
-// Trigger immediate execution
-await fetch(`${CRONICORN_API}/jobs/${jobId}/endpoints/${endpointId}/ai/next-run`, {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${API_KEY}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    nextRunAtIso: new Date().toISOString(),  // Run now
-    ttlMinutes: 30,
-    reason: 'Urgent: Manual trigger for investigation'
-  }),
-});
-```
-
-### Clear All Hints
-
-```typescript
-// Return to baseline scheduling
-await fetch(`${CRONICORN_API}/jobs/${jobId}/endpoints/${endpointId}/ai/clear`, {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${API_KEY}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    reason: 'Returning to normal after incident resolved'
-  }),
-});
-```
-
-### Use Case: External Rule Engine Integration
-
-If you have an existing rule engine, use the API to apply its decisions:
-
-```typescript
-// Your rule engine evaluates conditions
-const ruleResult = await myRuleEngine.evaluate({
-  queue_depth: response.queue_depth,
-  error_rate: response.error_rate,
-});
-
-// Apply result to Cronicorn
-if (ruleResult.action === 'increase_frequency') {
-  await cronicornClient.setInterval(endpointId, {
-    intervalMs: ruleResult.intervalMs,
-    ttlMinutes: ruleResult.ttlMinutes,
-    reason: ruleResult.reason,
+// Apply to Cronicorn via API
+if (decision.shouldAdjust) {
+  await fetch(`/jobs/${jobId}/endpoints/${endpointId}/ai/interval`, {
+    method: 'POST',
+    body: JSON.stringify({
+      intervalMs: decision.intervalMs,
+      ttlMinutes: decision.ttlMinutes,
+      reason: decision.reason
+    })
   });
 }
 ```
 
-This allows you to define rules in your preferred format while using Cronicorn for execution.
-```
+This allows custom rule logic while using Cronicorn for execution.
 
-### 3. Add Use Case Example
+## What Documentation Needs
 
-In `use-cases.md`:
+### 1. Explain "Descriptions as Rules"
 
 ```markdown
-### Custom Metric-Based Scheduling
+## Your Description IS Your Rule
 
-**Scenario**: Adjust polling frequency based on custom application metrics.
+Instead of code rules, describe what you want:
 
-**Response Design** (your endpoint returns):
-```json
-{
-  "metrics": {
-    "active_sessions": 1500,
-    "session_warning_threshold": 1000,
-    "session_critical_threshold": 2000
-  },
-  "computed_status": "warning",
-  "scheduling": {
-    "recommended_interval_ms": 15000,
-    "reason": "High session count requires closer monitoring"
-  }
-}
+| Traditional Rule | Cronicorn Description |
+|------------------|----------------------|
+| `if queue_depth > 100: interval = 30s` | "When queue_depth is high, poll frequently" |
+| `if error_rate > 5%: alert()` | "Increase monitoring when error_rate exceeds 5%" |
+| `if status == 'idle': interval = 10m` | "Relax polling when status shows idle" |
+
+AI interprets your description with the response data.
 ```
 
-**Endpoint Configuration**:
-```json
-{
-  "name": "session-monitor",
-  "url": "https://api.example.com/metrics/sessions",
-  "baselineIntervalMs": 60000,
-  "minIntervalMs": 10000,
-  "maxIntervalMs": 300000
-}
+### 2. Show Field Naming Patterns
+
+```markdown
+## Fields AI Recognizes
+
+Include these fields in responses:
+
+**Volume indicators**: queue_depth, pending_count, backlog_size
+**Rate metrics**: error_rate_pct, processing_rate, throughput
+**Status fields**: status, state, health
+**Explicit hints**: suggested_interval_ms, recommendation
 ```
 
-**AI Behavior**:
-- Sees `computed_status: warning`
-- Reads `recommended_interval_ms: 15000`
-- Proposes 15-second interval (respecting min constraint of 10s)
-- When sessions drop below warning, AI clears hints
+## Gap Analysis
 
-**Equivalent Rule Logic**:
-```
-IF active_sessions > 1000 AND active_sessions < 2000:
-    interval = 15 seconds
-    status = warning
-ELSE IF active_sessions >= 2000:
-    interval = 10 seconds (minimum)
-    status = critical
-ELSE:
-    interval = 60 seconds (baseline)
-    status = healthy
-```
+| Gap | Type | Fix |
+|-----|------|-----|
+| "Descriptions as rules" not explained | Documentation | Add paradigm section |
+| Description examples for various rules | Documentation | Add samples |
+| Programmatic API for rule integration | Documentation | Add API examples |
 
-Your endpoint implements this logic and returns the appropriate `scheduling.recommended_interval_ms`.
-```
+## Priority
 
-## Priority Assessment
+**MEDIUM** - Score is 75/100; documentation refinements needed.
 
-| Action | Priority | Effort | Impact |
-|--------|----------|--------|--------|
-| Add response design as "rules" section | **HIGH** | Medium | High - paradigm shift |
-| Document field naming patterns | **HIGH** | Low | High - practical guidance |
-| Add programmatic API examples | **MEDIUM** | Low | Medium - alternative approach |
-| Add use case example | **MEDIUM** | Low | Medium - concrete illustration |
+## Expected Improvement
 
-## Expected Score Improvement
-
-With documentation improvements:
 - Current: 75/100
-- Expected: 88-92/100
+- With paradigm explanation and description examples: **88-92/100**
 
-The AI-driven approach is powerful; it just needs clear explanation.
-
-## Summary
-
-**Primary Gap**: Documentation - the paradigm of "response design as rule definition" isn't explained.
-
-**No Functionality Gap**: The AI interprets response bodies intelligently. Including explicit fields like `suggested_interval_ms` gives users direct control.
-
-**Recommendation**:
-1. Document how response body design replaces traditional rule configuration
-2. Provide comprehensive field naming patterns AI recognizes
-3. Show explicit recommendation patterns (`suggested_interval_ms`)
-4. Add programmatic API examples for external rule engine integration
+The AI-driven approach is powerful; documentation needs to explain that descriptions replace traditional rules.
