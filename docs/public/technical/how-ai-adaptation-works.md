@@ -199,17 +199,47 @@ The AI looks for: `queue`, `latency`, `error`, `rate`, `count`, `healthy`, `stat
 ```
 
 ### Coordination Signals
+
+For multi-endpoint workflows:
 ```json
 {
   "ready_for_processing": true,
-  "upstream_completed_at": "2025-11-02T14:45:00Z"
+  "upstream_completed_at": "2025-11-02T14:45:00Z",
+  "needs_downstream_action": true
 }
 ```
+
+### Stability Signals
+
+For volatile workloads:
+```json
+{
+  "trend": "stable",
+  "within_normal_range": true,
+  "avg_5min": 487,
+  "recommendation": "maintain_interval"
+}
+```
+
+### Explicit Recommendations
+
+You can include scheduling hints:
+```json
+{
+  "status": "degraded",
+  "recommendation": "increase_frequency",
+  "suggested_interval_ms": 30000
+}
+```
+
+The AI interprets these as guidance, not commands.
 
 ### Tips
 - Use consistent naming across responses
 - Include timestamps for cooldown patterns
 - Keep it simple (1000 char truncation)
+- Include smoothed averages for volatile data
+- Add explicit signals (`ready_for_*`, `needs_*`, `recommendation`)
 
 ## Decision Framework
 
@@ -227,6 +257,74 @@ The AI follows a conservative approach:
 - Single anomaly (might be transient)
 - Insufficient data (fewer than 10 total runs)
 - Metrics within normal ranges
+
+## Stability and Oscillation Prevention
+
+Cronicorn includes multiple mechanisms to prevent oscillation between extreme scheduling states.
+
+### Built-in Stability Mechanisms
+
+**1. Multi-Window Health Metrics**
+
+The AI sees success rates across three windows (1h, 4h, 24h). This prevents reacting to momentary spikes—the AI compares windows to distinguish genuine state changes from transient noise.
+
+**2. Analysis Cooldown**
+
+The AI Planner doesn't analyze every response. Default 5-minute cooldown between analyses prevents rapid decision changes.
+
+**3. TTL-Based Hints**
+
+All hints expire automatically. When hints expire, endpoints return to baseline—a natural stability anchor.
+
+**4. Hard Constraints**
+
+Min/max intervals provide absolute limits. Even with volatile AI decisions, constraints bound the range.
+
+### Configuring for Volatile Workloads
+
+Use tighter constraint ranges for volatile data:
+
+| Volatility Level | Min Interval | Max Interval | Ratio |
+|------------------|--------------|--------------|-------|
+| Low (stable)     | 10s          | 10min        | 60x   |
+| Medium           | 30s          | 5min         | 10x   |
+| High             | 30s          | 2min         | 4x    |
+| Extreme          | 1min         | 2min         | 2x    |
+
+With a 4x range, even aggressive AI decisions stay bounded.
+
+### Requesting Stability in Descriptions
+
+Include phrases like:
+- "Prioritize stability over responsiveness"
+- "Don't overreact to momentary changes"
+- "Look for sustained trends"
+- "When uncertain, maintain current interval"
+
+### Response Design for Stability
+
+Return smoothed/averaged values instead of instantaneous readings:
+
+```json
+// Volatile (causes oscillation)
+{ "current_value": 523, "instant_error_rate": 15.5 }
+
+// Smoothed (promotes stability)
+{
+  "avg_value_5min": 487,
+  "avg_error_rate_1hr": 2.3,
+  "trend": "stable",
+  "within_normal_range": true
+}
+```
+
+### Debugging Oscillation
+
+If you observe oscillation:
+1. **Check constraints**: Are min/max intervals configured? Is the range appropriate?
+2. **Review response data**: Are you returning instantaneous vs. averaged metrics?
+3. **Check AI analysis sessions**: What reasoning is the AI providing?
+4. **Add stability signals**: Include `trend`, `within_normal_range`, or `recommendation` fields
 
 ## Analysis Sessions
 

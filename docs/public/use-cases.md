@@ -152,6 +152,183 @@ You track competitor pricing across multiple sites, but need to respect their ra
 
 **Result**: You adapt to site changes automatically. Scrapers respect rate limits, pause when blocked, and intensify during competitor sales.
 
+## Configuration Examples
+
+These examples show exactly how to configure endpoints with descriptions for common scenarios.
+
+### Health Monitoring with Degraded State Detection
+
+**Scenario**: Monitor a service and poll faster when degraded.
+
+```
+Endpoint: "api-health-check"
+  URL: https://api.example.com/health
+  Baseline: 5 minutes (300000ms)
+  Min: 30 seconds (30000ms)
+  Max: 15 minutes (900000ms)
+
+  Description:
+  "Monitors API health. Poll more frequently when status is degraded
+  or error_rate exceeds 5%. Return to baseline when metrics normalize.
+  If latency_ms exceeds 2000, investigate more closely."
+```
+
+**Response body:**
+```json
+{
+  "status": "degraded",
+  "error_rate_pct": 8.5,
+  "latency_ms": 1200,
+  "healthy": false
+}
+```
+
+**AI behavior**: Sees `status: degraded` and `error_rate_pct: 8.5` → tightens to 30 seconds.
+
+---
+
+### Data Sync with Volume-Based Polling
+
+**Scenario**: Sync data more frequently when there's a backlog.
+
+```
+Endpoint: "data-sync-status"
+  URL: https://api.example.com/sync/status
+  Baseline: 10 minutes (600000ms)
+  Min: 30 seconds (30000ms)
+  Max: 30 minutes (1800000ms)
+
+  Description:
+  "Checks data sync status. Poll frequently when records_pending is high
+  (more than 1000). Slow down when caught up (under 100 pending).
+  Include estimated completion time in response."
+```
+
+**Response body:**
+```json
+{
+  "records_pending": 15000,
+  "sync_rate_per_minute": 500,
+  "estimated_completion_minutes": 30,
+  "status": "syncing"
+}
+```
+
+**AI behavior**: Sees large backlog → tightens polling. Sees caught up → returns to baseline.
+
+---
+
+### Multi-Endpoint Recovery Workflow
+
+**Scenario**: Health check triggers recovery action when errors detected.
+
+```
+Job: "Service Health Monitor"
+
+Endpoint 1: "health-check"
+  URL: https://api.example.com/health
+  Baseline: 5 minutes (300000ms)
+  Min: 30 seconds (30000ms)
+
+  Description:
+  "Monitors service health. When errors are detected or status is 'error',
+  the trigger-recovery endpoint should run immediately. After recovery
+  triggers, continue monitoring to verify service restoration."
+
+Endpoint 2: "trigger-recovery"
+  URL: https://api.example.com/admin/restart
+  Method: POST
+  Baseline: 24 hours (86400000ms)
+  Min: 5 minutes (300000ms)
+
+  Description:
+  "Recovery action that restarts the service. Should only run when
+  health-check shows errors. After triggering, wait at least 5 minutes
+  before allowing another recovery attempt."
+```
+
+**health-check response:**
+```json
+{
+  "status": "error",
+  "error_count": 15,
+  "last_error": "Connection refused",
+  "needs_recovery": true
+}
+```
+
+**AI behavior**: Sees `needs_recovery: true` in health-check → triggers recovery endpoint → waits for cooldown.
+
+---
+
+### System Load with Inverse Scaling
+
+**Scenario**: Poll less frequently when system is under high load.
+
+```
+Endpoint: "system-load-monitor"
+  URL: https://api.example.com/metrics/load
+  Baseline: 1 minute (60000ms)
+  Min: 10 seconds (10000ms)
+  Max: 5 minutes (300000ms)
+
+  Description:
+  "Monitors system load. INVERSE SCALING: when load is HIGH, poll LESS
+  frequently to reduce overhead. When load is LOW, poll MORE frequently
+  since the system has capacity.
+  - Load > 80%: poll every 5 minutes (minimal)
+  - Load 50-80%: poll every 2-3 minutes
+  - Load < 50%: poll every 30 seconds (aggressive)"
+```
+
+**Response body:**
+```json
+{
+  "load_pct": 85,
+  "cpu_pct": 82,
+  "memory_pct": 78,
+  "recommendation": "reduce_polling"
+}
+```
+
+**AI behavior**: Sees high load → extends interval to reduce overhead.
+
+---
+
+### Volatile System with Stability Focus
+
+**Scenario**: Monitor volatile metrics without overreacting.
+
+```
+Endpoint: "volatile-metrics"
+  URL: https://api.example.com/metrics
+  Baseline: 1 minute (60000ms)
+  Min: 30 seconds (30000ms)
+  Max: 2 minutes (120000ms)
+
+  Description:
+  "Monitors volatile system metrics. Data fluctuates frequently.
+  PRIORITIZE STABILITY - don't overreact to momentary spikes.
+  Only adjust for sustained state changes (5+ minutes).
+  When uncertain, maintain current interval.
+  Response includes smoothed averages - use those, not instant values."
+```
+
+**Response body:**
+```json
+{
+  "instant_value": 523,
+  "avg_5min": 487,
+  "avg_1hr": 502,
+  "trend": "stable",
+  "within_normal_range": true
+}
+```
+
+**AI behavior**: Sees `trend: stable` and smoothed averages → maintains current interval.
+
+---
+
 ## Common Patterns
 
 ### Adaptive Monitoring Frequency

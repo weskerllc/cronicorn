@@ -49,11 +49,16 @@ Now let's add an HTTP endpoint to monitor:
      - **Cron**: `*/5 * * * *` (every 5 minutes)
      - **Interval**: `300000` (milliseconds = 5 minutes)
 
-4. **(Optional)** Add safety constraints:
+4. **(Optional but recommended)** Add a description to guide AI behavior:
+   - **Description**: `Monitors API health. Poll more frequently when status shows errors or latency is high. Return to baseline when metrics normalize.`
+
+5. **(Optional)** Add safety constraints:
    - **Min Interval**: `30000` (30 seconds - prevents over-polling)
    - **Max Interval**: `900000` (15 minutes - ensures regular checks)
 
-5. Click **Add Endpoint**
+6. Click **Add Endpoint**
+
+> **Tip**: The description tells the AI when to adapt. Without a description, AI uses only response data and execution history. With a good description, you can express specific adaptation rules in natural language.
 
 ## 4. View Execution History
 
