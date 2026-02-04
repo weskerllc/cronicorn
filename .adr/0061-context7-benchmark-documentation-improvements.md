@@ -99,7 +99,81 @@ Address gaps through documentation improvements only (no code changes required).
 | Manual coordination logic | Automatic sibling awareness |
 | Static configuration | Adaptive with guardrails |
 
+---
+
+## Round 2: Re-benchmark Results (2026-02-04)
+
+After initial documentation improvements, benchmarks were re-run with new questions.
+
+### New Score Summary
+
+| Question | Score | Gap Identified |
+|----------|-------|----------------|
+| Q7: Automated recovery action | 33 | Missing complete workflow with API examples |
+| Q8: Data sync volume-based | 35 | Missing code showing response → AI hint flow |
+| Q9: HTTP job with status code rules | 43 | Missing job creation API examples |
+| Q1: Oscillation prevention | 49 | Needs config syntax, not just concepts |
+| Q5: Custom rules parsing response | 49 | Paradigm mismatch - need to explain NO code rules |
+| Q2: Interdependent jobs coordination | 58 | Missing API guidance for cascading data |
+| Q3: Baseline with temporary tightening | 68 | Missing concrete JSON config snippets |
+| Q6: Multiple jobs coordination | 70 | Missing job-to-job interaction guidance |
+| Q10: Degraded state polling | 91 | Well documented |
+| Q4: System load inverse scaling | 95 | Well documented |
+
+**Average: 59.1/100** (different questions than round 1)
+
+### Key Gap: UI/API/MCP Parity Not Documented
+
+User feedback: "Most of the cronicorn user-facing functionality is accessible via the UI, API, and MCP server. ALL THREE."
+
+Documentation showed features conceptually but lacked executable examples across all interfaces.
+
+### Round 2 Documentation Changes
+
+**introduction.md:**
+- Added "Three Ways to Access Cronicorn" section
+- Added complete example showing same config via UI, API, and MCP
+- Shows interface parity explicitly
+
+**how-ai-adaptation-works.md:**
+- Added "No Code Rules—Descriptions + Response Data = Behavior" section
+- Added complete API example showing description → response → AI interpretation
+- Added HTTP status code interpretation table
+- Clarified that there is no DSL or rule language
+
+**coordinating-multiple-endpoints.md:**
+- Added "Complete Example: Automated Recovery with Error Detection"
+  - Full API curl commands for job + endpoints
+  - MCP server natural language equivalent
+  - Response body examples (healthy/degraded/recovery)
+  - Step-by-step AI coordination workflow
+  - API calls to check execution history
+- Added "Complete Example: Volume-Based Data Sync"
+  - API setup with description
+  - Response body examples showing volume metrics
+  - Explanation of how AI adapts based on `records_pending`
+
+### Expected Improvements After Round 2
+
+| Question | Before | Expected After |
+|----------|--------|----------------|
+| Q7 | 33 | 85-90 |
+| Q8 | 35 | 85-90 |
+| Q9 | 43 | 85-90 |
+| Q1 | 49 | 85-90 |
+| Q5 | 49 | 85-90 |
+| Q2 | 58 | 85-90 |
+| Q3 | 68 | 90-95 |
+| Q6 | 70 | 85-90 |
+| Q10 | 91 | 95 |
+| Q4 | 95 | 95 |
+
+**Projected Average: 87-91/100** (up from 59.1/100)
+
 ## References
 
-- Benchmark analysis conducted: 2026-02-04
-- Documentation files updated: core-concepts.md, use-cases.md, how-ai-adaptation-works.md, configuration-and-constraints.md, coordinating-multiple-endpoints.md, quick-start.md, troubleshooting.md
+- Round 1 benchmark analysis: 2026-02-04
+- Round 2 benchmark analysis: 2026-02-04
+- Documentation files updated:
+  - Round 1: core-concepts.md, use-cases.md, how-ai-adaptation-works.md, configuration-and-constraints.md, coordinating-multiple-endpoints.md, quick-start.md, troubleshooting.md
+  - Round 2: introduction.md, how-ai-adaptation-works.md, coordinating-multiple-endpoints.md

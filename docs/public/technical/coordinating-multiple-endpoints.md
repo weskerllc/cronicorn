@@ -15,6 +15,176 @@ mcp:
 
 This document shows practical patterns for orchestrating workflows across multiple endpoints. Instead of abstract concepts, you'll find concrete examples you can copy and adapt.
 
+## Complete Example: Automated Recovery with Error Detection
+
+This example shows how to configure a health check that automatically triggers a recovery action when errors are detected, then returns to normal polling.
+
+### Setup via REST API
+
+```bash
+# 1. Create the job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Service Recovery Workflow"}'
+
+# Response: {"id": "job_abc123", "name": "Service Recovery Workflow", ...}
+
+# 2. Add health check endpoint
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Health Check",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 60000,
+    "minIntervalMs": 10000,
+    "maxIntervalMs": 300000,
+    "timeoutMs": 10000,
+    "description": "Monitors service health. When status is degraded or error_count > 0, poll faster. When errors detected, trigger-recovery should run immediately."
+  }'
+
+# 3. Add recovery action endpoint
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Trigger Recovery",
+    "url": "https://api.example.com/admin/restart",
+    "method": "POST",
+    "baselineIntervalMs": 3600000,
+    "minIntervalMs": 300000,
+    "timeoutMs": 30000,
+    "description": "Recovery action that restarts the service. Only run when health-check shows errors. After triggering, wait at least 5 minutes before another attempt. When service recovers, return to hourly baseline."
+  }'
+```
+
+### Setup via MCP Server (AI Assistant)
+
+```
+"Create a job called Service Recovery Workflow with two endpoints:
+
+1. Health Check at https://api.example.com/health - runs every minute,
+   can speed up to 10 seconds during issues. When errors are detected,
+   the recovery endpoint should run.
+
+2. Trigger Recovery at https://api.example.com/admin/restart - normally
+   runs hourly, but should run immediately when health check shows errors.
+   After running, wait at least 5 minutes before running again."
+```
+
+### What Your Endpoints Should Return
+
+**Health Check Response (healthy):**
+```json
+{
+  "status": "healthy",
+  "error_count": 0,
+  "latency_ms": 45,
+  "last_check": "2026-02-04T10:00:00Z"
+}
+```
+
+**Health Check Response (degraded):**
+```json
+{
+  "status": "degraded",
+  "error_count": 15,
+  "error_rate_pct": 12.5,
+  "latency_ms": 2500,
+  "last_check": "2026-02-04T10:05:00Z",
+  "needs_recovery": true
+}
+```
+
+**Recovery Response:**
+```json
+{
+  "action": "restart",
+  "triggered_at": "2026-02-04T10:06:00Z",
+  "status": "initiated",
+  "cooldown_until": "2026-02-04T10:11:00Z"
+}
+```
+
+### How AI Coordinates the Workflow
+
+1. **Health Check runs** → Returns `{"status": "degraded", "needs_recovery": true}`
+2. **AI analyzes Health Check** → Sees errors, calls `propose_interval(10000)` to speed up monitoring
+3. **AI analyzes Trigger Recovery** → Calls `get_sibling_latest_responses()`, sees health check errors
+4. **AI triggers recovery** → Calls `propose_next_time(now)` to run immediately
+5. **Recovery runs** → Returns success with cooldown timestamp
+6. **AI checks cooldown** → Respects 5-minute minimum before next recovery
+7. **Health Check returns healthy** → AI relaxes intervals back to baseline
+
+### Checking Execution History
+
+```bash
+# View recent health check runs
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/runs?limit=10"
+
+# View AI reasoning for recovery decisions
+curl -H "x-api-key: YOUR_KEY" \
+  "https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/sessions?limit=5"
+```
+
+## Complete Example: Volume-Based Data Sync
+
+This example shows how to adjust polling frequency based on the volume of data returned.
+
+### Setup via REST API
+
+```bash
+# Create job and endpoint
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_KEY" \
+  -d '{"name": "Data Sync"}'
+
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Sync Pending Records",
+    "url": "https://api.example.com/sync/pending",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 900000,
+    "description": "Syncs pending records from external source. Poll frequently when records_pending is high (>1000). Slow down when caught up (<100 pending). Volume in response body drives frequency."
+  }'
+```
+
+### What Your Endpoint Should Return
+
+```json
+{
+  "records_pending": 5000,
+  "records_synced_this_run": 500,
+  "sync_rate_per_minute": 150,
+  "estimated_completion_minutes": 33,
+  "status": "syncing"
+}
+```
+
+When caught up:
+```json
+{
+  "records_pending": 45,
+  "records_synced_this_run": 45,
+  "sync_rate_per_minute": 150,
+  "status": "caught_up"
+}
+```
+
+### How AI Adapts
+
+- AI reads `records_pending` from response body
+- High pending count → AI tightens interval (e.g., 30 seconds)
+- Low pending count → AI relaxes interval (e.g., 15 minutes)
+- No custom rules needed—AI interprets description + response data
+
 ## Core Concept: Coordination via Descriptions and Response Bodies
 
 Cronicorn doesn't have built-in workflow orchestration or explicit dependencies. Instead, endpoints coordinate through two mechanisms:
