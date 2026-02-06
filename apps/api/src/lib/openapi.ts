@@ -59,34 +59,27 @@ export default function configureOpenAPI(app: AppOpenAPI, apiURL: string) {
     tags: [
       {
         name: "Jobs",
-        description: `A **Job** in ${brand.name} represents a scheduled task defined with:
-
-- A **plain‑English rule** (e.g. "Run health check every 15 min, but every 3 min if errors > 2%")
-- A list of **Endpoints** (HTTP calls made when the job triggers)
-
-### ✅ Purpose  
-Jobs capture intent, target actions, and context. They're also the scope for incoming messages — each message belongs to a specific job.
-
-### 🔁 How It Behaves  
-The AI agent linked to the job:  
-- Monitors incoming messages (e.g. metrics, state updates)  
-- Decides *when* to run, *how often*, and *which endpoints* to call  
-- Adjusts the schedule in real time based on conditions
-
-### ✏️ Example (JSON)
-
-\`\`\`json
-{
-  "description": "Check health every 15 minutes, but run every 3 minutes if error rate > 2%. Skip when maintenance mode is active.",
-  "endpoints": [
-    {
-      "url": "https://api.mysite.com/check",
-      "method": "GET"
-    }
-  ]
-}
-\`\`\`
-`,
+        description: `Create, update, pause, resume, and archive scheduled jobs. A job groups one or more endpoints under a shared schedule and AI-driven rules.`,
+      },
+      {
+        name: "Endpoints",
+        description: "Manage the HTTP endpoints attached to a job. Each endpoint defines a URL, method, headers, and body that execute when the job triggers.",
+      },
+      {
+        name: "Adaptive Scheduling",
+        description: "Dynamically adjust endpoint timing with AI-suggested interval hints, one-shot runs, pause windows, and failure resets.",
+      },
+      {
+        name: "Execution",
+        description: "View run history, individual run details, and endpoint health summaries including success rates and failure streaks.",
+      },
+      {
+        name: "AI Analysis",
+        description: "Browse AI planner sessions and the reasoning behind scheduling decisions made for each job.",
+      },
+      {
+        name: "Dashboard",
+        description: "Retrieve aggregate statistics, activity timelines, and top-level metrics across all jobs and endpoints.",
       },
     ],
     servers,
