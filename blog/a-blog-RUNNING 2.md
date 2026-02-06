@@ -64,30 +64,31 @@ When AI enters the picture, “less code” stops being the main goal. **Underst
 Everything that follows builds on this.
 
 ---
-
-## Phase One: Let AI Help You Shape the Domain
+### Phase One: Let AI Help You Shape the Domain
 
 This is one of the few prompts I actually reuse.
 
-**Sample prompt:**
+At this stage, I’m not asking AI to build anything. I’m using it to help me think clearly — and name things correctly.
+
+Here’s the shape of the prompt:
 
 > I’m building a system that does **X**.
 > Ignore frameworks, databases, and infrastructure.
 >
-> Identify:
+> Help me identify:
 >
-<<Give examples here. but just keep the code snippets minimal and understandable>>
-> * Core domain entities
-> * Value objects
-<<Idk what an invaraint is. make this in simpler language>>
-> * Domain rules / invariants
-> * Inputs and outputs
+> * The core concepts in the system
+> * The data those concepts need
+> * The rules that must never be broken
+> * What goes in and what comes out
 >
 > Respond using plain TypeScript interfaces and pure functions. No side effects.
 
-You’re not asking AI to *build* anything yet. You’re asking it to help you name things correctly. That alone saves hours.
+The goal isn’t completeness. It’s clarity.
 
-**Example domain sketch:**
+If you get the names wrong here, everything downstream gets harder. If you get them mostly right, the rest of the system tends to fall into place.
+
+Here’s the kind of output I’m looking for:
 
 ```ts
 // domain/order.ts
@@ -107,15 +108,20 @@ export interface OrderItem {
 
 export function confirmOrder(order: Order): Order {
   if (order.items.length === 0) {
-    throw new Error("Cannot confirm empty order");
+    throw new Error("Cannot confirm an empty order");
   }
 
   return { ...order, status: "confirmed" };
 }
 ```
 
-<<dont like this line>>
-No IO. No magic. Just rules.
+No IO.
+No frameworks.
+Just rules.
+
+At this point, nothing is “built.” But you already know more about your system than most projects do after weeks of setup.
+
+That’s the advantage.
 
 ---
 
