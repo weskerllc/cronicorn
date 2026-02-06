@@ -15,7 +15,7 @@ mcp:
 
 This document shows practical patterns for orchestrating workflows across multiple endpoints. Cronicorn is a **hosted scheduling service** where the AI automatically handles coordination — you don't write orchestration code, parsers, or state machines. Instead, you configure endpoints with descriptions and design response bodies with signals. The AI reads both and coordinates automatically.
 
-All configurations use JSON field names that work with the Web UI, MCP Server, and HTTP API. See [Core Concepts](../core-concepts.md#endpoint-configuration-schema-json) for the full schema.
+> **How to apply these examples:** The configurations shown below can be applied through any interface — the Web UI, MCP Server, or HTTP API. See [Core Concepts](../core-concepts.md#endpoint-configuration-schema-json) for details.
 
 ## Core Concept: Coordination via Descriptions and Response Bodies
 
@@ -25,18 +25,17 @@ Cronicorn doesn't have built-in workflow orchestration or explicit dependencies.
 
 Use the `description` field to tell the AI how endpoints should interact. **The AI reads these descriptions and interprets them — you don't write any coordination logic:**
 
-```json
-{
-  "name": "health-check",
-  "description": "Monitors service health. When errors are detected, the trigger-recovery endpoint should run immediately."
-}
+```
+Endpoint: health-check
+  Description: "Monitors service health. When errors are detected,
+  the trigger-recovery endpoint should run immediately."
 ```
 
-```json
-{
-  "name": "trigger-recovery",
-  "description": "Recovery action. Should only run when the health-check endpoint shows errors. Wait at least 5 minutes between attempts."
-}
+```
+Endpoint: trigger-recovery
+  Description: "Recovery action that restarts the service. Should only
+  run when the health-check endpoint shows errors. After triggering,
+  wait at least 5 minutes before allowing another recovery attempt."
 ```
 
 The AI reads both descriptions, calls `get_sibling_latest_responses()` to check each endpoint's status, and uses `propose_next_time()` or `pause_until()` to coordinate — all automatically.
@@ -56,57 +55,55 @@ Endpoints coordinate by:
 
 ### Configuration
 
-**Job:**
-```json
-{ "name": "Flash Sale Management", "description": "Coordinates monitoring during flash sales with priority-based pausing" }
+```
+Job: Flash Sale Management
+  Description: Coordinates monitoring during flash sales with priority-based pausing
 ```
 
-**Endpoints (all added to the same job):**
-
-```json
-{
-  "name": "traffic-monitor",
-  "url": "https://api.example.com/traffic/stats",
-  "method": "GET",
-  "baselineIntervalMs": 60000,
-  "minIntervalMs": 15000,
-  "timeoutMs": 10000,
-  "description": "Monitors traffic load and flash sale status. Returns load_status and recommendations for other endpoints. When load_status is high, siblings with LOW priority should be paused."
-}
 ```
+Endpoint: traffic-monitor
+  URL: https://api.example.com/traffic/stats
+  Method: GET
+  Baseline Interval: 1 minute (60000ms)
+  Min Interval: 15 seconds (15000ms)
+  Timeout: 10 seconds (10000ms)
+  Description:
+    "Monitors traffic load and flash sale status. Returns load_status and
+    recommendations for other endpoints. When load_status is high, siblings
+    with LOW priority should be paused."
 
-```json
-{
-  "name": "order-processor",
-  "url": "https://api.example.com/orders/process",
-  "method": "POST",
-  "baselineIntervalMs": 30000,
-  "minIntervalMs": 10000,
-  "timeoutMs": 30000,
-  "description": "Priority: CRITICAL. Processes customer orders. Must keep running during flash sales. Check traffic-monitor sibling: if load_status is high, tighten to 10 seconds for faster order processing."
-}
-```
+Endpoint: [CRITICAL] order-processor
+  URL: https://api.example.com/orders/process
+  Method: POST
+  Baseline Interval: 30 seconds (30000ms)
+  Min Interval: 10 seconds (10000ms)
+  Timeout: 30 seconds (30000ms)
+  Description:
+    "Priority: CRITICAL. Processes customer orders. Must keep running during
+    flash sales. Check traffic-monitor sibling: if load_status is high,
+    tighten to 10 seconds for faster order processing."
 
-```json
-{
-  "name": "inventory-sync",
-  "url": "https://api.example.com/inventory/sync",
-  "method": "POST",
-  "baselineIntervalMs": 300000,
-  "timeoutMs": 30000,
-  "description": "Priority: NORMAL. Syncs inventory to warehouse. Check traffic-monitor sibling: if load_status is high and recommendations.pause_low_priority is true, continue running but extend interval to reduce load. Resume normal when load_status returns to normal."
-}
-```
+Endpoint: [NORMAL] inventory-sync
+  URL: https://api.example.com/inventory/sync
+  Method: POST
+  Baseline Interval: 5 minutes (300000ms)
+  Timeout: 30 seconds (30000ms)
+  Description:
+    "Priority: NORMAL. Syncs inventory to warehouse. Check traffic-monitor
+    sibling: if load_status is high and recommendations.pause_low_priority
+    is true, continue running but extend interval to reduce load. Resume
+    normal when load_status returns to normal."
 
-```json
-{
-  "name": "analytics-updater",
-  "url": "https://api.example.com/analytics/update",
-  "method": "POST",
-  "baselineIntervalMs": 600000,
-  "timeoutMs": 30000,
-  "description": "Priority: LOW. Updates dashboards. Check traffic-monitor sibling: if load_status is high and recommendations.pause_low_priority is true, pause until the recommended time. Resume when load_status returns to normal."
-}
+Endpoint: [LOW] analytics-updater
+  URL: https://api.example.com/analytics/update
+  Method: POST
+  Baseline Interval: 10 minutes (600000ms)
+  Timeout: 30 seconds (30000ms)
+  Description:
+    "Priority: LOW. Updates dashboards. Check traffic-monitor sibling: if
+    load_status is high and recommendations.pause_low_priority is true,
+    pause until the recommended time. Resume when load_status returns
+    to normal."
 ```
 
 ### Response Body Structure
@@ -168,46 +165,45 @@ When load drops (Traffic Monitor returns `"load_status": "normal"`):
 
 ### Configuration
 
-**Job:**
-```json
-{ "name": "Customer Data Pipeline", "description": "ETL pipeline: Extract → Transform → Load with cascading dependencies" }
+```
+Job: Customer Data Pipeline
+  Description: ETL pipeline: Extract → Transform → Load with cascading dependencies
 ```
 
-**Endpoints (all added to the same job — sibling visibility enables coordination):**
-
-```json
-{
-  "name": "extract-data",
-  "url": "https://api.example.com/etl/extract",
-  "method": "POST",
-  "baselineCron": "0 2 * * *",
-  "timeoutMs": 120000,
-  "description": "Extracts customer data from upstream API daily at 2 AM. Response includes ready_for_transform flag and batch_id that downstream siblings use to coordinate."
-}
 ```
+Endpoint: extract-data (Stage 1)
+  URL: https://api.example.com/etl/extract
+  Method: POST
+  Baseline Schedule: Cron "0 2 * * *" (daily at 2 AM)
+  Timeout: 2 minutes (120000ms)
+  Description:
+    "Extracts customer data from upstream API daily at 2 AM. Response
+    includes ready_for_transform flag and batch_id that downstream siblings
+    use to coordinate."
 
-```json
-{
-  "name": "transform-data",
-  "url": "https://api.example.com/etl/transform",
-  "method": "POST",
-  "baselineIntervalMs": 60000,
-  "minIntervalMs": 30000,
-  "timeoutMs": 120000,
-  "description": "Transforms extracted data. Check extract-data sibling: only process when ready_for_transform is true and batch_id is newer than last processed batch. After success, response includes ready_for_load=true for the load-data sibling. Tighten to 30 seconds when actively processing a batch."
-}
-```
+Endpoint: transform-data (Stage 2)
+  URL: https://api.example.com/etl/transform
+  Method: POST
+  Baseline Interval: 1 minute (60000ms)
+  Min Interval: 30 seconds (30000ms)
+  Timeout: 2 minutes (120000ms)
+  Description:
+    "Transforms extracted data. Check extract-data sibling: only process
+    when ready_for_transform is true and batch_id is newer than last
+    processed batch. After success, response includes ready_for_load=true
+    for the load-data sibling. Tighten to 30 seconds when actively
+    processing a batch."
 
-```json
-{
-  "name": "load-data",
-  "url": "https://api.example.com/etl/load",
-  "method": "POST",
-  "baselineIntervalMs": 60000,
-  "minIntervalMs": 30000,
-  "timeoutMs": 180000,
-  "description": "Loads transformed data to production database. Check transform-data sibling: only process when ready_for_load is true and batch_id matches. After success, set pipeline_complete=true."
-}
+Endpoint: load-data (Stage 3)
+  URL: https://api.example.com/etl/load
+  Method: POST
+  Baseline Interval: 1 minute (60000ms)
+  Min Interval: 30 seconds (30000ms)
+  Timeout: 3 minutes (180000ms)
+  Description:
+    "Loads transformed data to production database. Check transform-data
+    sibling: only process when ready_for_load is true and batch_id matches.
+    After success, set pipeline_complete=true."
 ```
 
 ### Endpoints
@@ -430,49 +426,49 @@ The downstream endpoint checks upstream health directly and embeds the result in
 
 **Job 1: Upstream Service**
 
-```json
-{ "name": "Upstream Service", "description": "Monitors upstream API health" }
 ```
+Job: Upstream Service
+  Description: Monitors upstream API health
 
-```json
-{
-  "name": "upstream-health",
-  "url": "https://upstream.example.com/health",
-  "method": "GET",
-  "baselineIntervalMs": 60000,
-  "timeoutMs": 10000,
-  "description": "Monitors upstream service health. Response includes service_status field used by downstream consumers in other jobs."
-}
+Endpoint: upstream-health
+  URL: https://upstream.example.com/health
+  Method: GET
+  Baseline Interval: 1 minute (60000ms)
+  Timeout: 10 seconds (10000ms)
+  Description:
+    "Monitors upstream service health. Response includes service_status
+    field used by downstream consumers in other jobs."
 ```
 
 **Job 2: Downstream Consumers** (separate job — cannot use `get_sibling_latest_responses()`)
 
-```json
-{ "name": "Downstream Consumers", "description": "Processes data from upstream, embeds upstream health in responses for cross-job coordination" }
 ```
+Job: Downstream Consumers
+  Description: Processes data from upstream, embeds upstream health in responses
+    for cross-job coordination
 
-```json
-{
-  "name": "data-processor",
-  "url": "https://downstream.example.com/process",
-  "method": "POST",
-  "baselineIntervalMs": 300000,
-  "minIntervalMs": 60000,
-  "timeoutMs": 60000,
-  "description": "Processes data from upstream service. Response body includes upstream_status from upstream health check. When upstream_status is unavailable, pause for 15 minutes to wait for recovery. When upstream_status returns to healthy, resume immediately."
-}
-```
+Endpoint: data-processor
+  URL: https://downstream.example.com/process
+  Method: POST
+  Baseline Interval: 5 minutes (300000ms)
+  Min Interval: 1 minute (60000ms)
+  Timeout: 1 minute (60000ms)
+  Description:
+    "Processes data from upstream service. Response body includes
+    upstream_status from upstream health check. When upstream_status is
+    unavailable, pause for 15 minutes to wait for recovery. When
+    upstream_status returns to healthy, resume immediately."
 
-```json
-{
-  "name": "analytics-pipeline",
-  "url": "https://downstream.example.com/analytics",
-  "method": "POST",
-  "baselineIntervalMs": 600000,
-  "minIntervalMs": 60000,
-  "timeoutMs": 60000,
-  "description": "Runs analytics on upstream data. Response includes upstream_status. When upstream_status is unavailable, pause for 30 minutes. Resume when upstream_status is healthy."
-}
+Endpoint: analytics-pipeline
+  URL: https://downstream.example.com/analytics
+  Method: POST
+  Baseline Interval: 10 minutes (600000ms)
+  Min Interval: 1 minute (60000ms)
+  Timeout: 1 minute (60000ms)
+  Description:
+    "Runs analytics on upstream data. Response includes upstream_status.
+    When upstream_status is unavailable, pause for 30 minutes. Resume
+    when upstream_status is healthy."
 ```
 
 ### How It Works
