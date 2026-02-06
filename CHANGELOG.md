@@ -1,3 +1,10 @@
+## [1.19.3](https://github.com/weskerllc/cronicorn/compare/v1.19.2...v1.19.3) (2026-02-06)
+
+
+### Bug Fixes
+
+* Docs ([9efed6d](https://github.com/weskerllc/cronicorn/commit/9efed6dd4ac9b6140561fc953cf45201d5af9718))
+
 ## [1.19.2](https://github.com/weskerllc/cronicorn/compare/v1.19.1...v1.19.2) (2026-02-06)
 
 
