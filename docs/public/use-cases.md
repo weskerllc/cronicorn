@@ -154,178 +154,247 @@ You track competitor pricing across multiple sites, but need to respect their ra
 
 ## Configuration Examples
 
-These examples show exactly how to configure endpoints with descriptions for common scenarios.
+These examples show exactly how to configure endpoints with descriptions for common scenarios. Each includes the full curl command to create the endpoint and the AI's decision-making process.
 
 ### Health Monitoring with Degraded State Detection
 
-**Scenario**: Monitor a service and poll faster when degraded.
+**Scenario**: Monitor a service and automatically increase polling from 5 minutes to 30 seconds when the HTTP response indicates a degraded state.
 
+```bash
+# Create the job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "API Health Monitoring" }'
+
+# Add health check endpoint
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "api-health-check",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 900000,
+    "timeoutMs": 10000,
+    "description": "Monitors API health. Poll more frequently (every 30 seconds) when status is degraded or error_rate_pct exceeds 5%. Return to baseline when status is healthy and error_rate_pct drops below 2%. If latency_ms exceeds 2000, tighten to 1-minute intervals."
+  }'
 ```
-Endpoint: "api-health-check"
-  URL: https://api.example.com/health
-  Baseline: 5 minutes (300000ms)
-  Min: 30 seconds (30000ms)
-  Max: 15 minutes (900000ms)
 
-  Description:
-  "Monitors API health. Poll more frequently when status is degraded
-  or error_rate exceeds 5%. Return to baseline when metrics normalize.
-  If latency_ms exceeds 2000, investigate more closely."
-```
-
-**Response body:**
+**Response body your endpoint should return:**
 ```json
 {
   "status": "degraded",
   "error_rate_pct": 8.5,
   "latency_ms": 1200,
-  "healthy": false
+  "healthy": false,
+  "timestamp": "2026-02-03T12:05:00Z"
 }
 ```
 
-**AI behavior**: Sees `status: degraded` and `error_rate_pct: 8.5` → tightens to 30 seconds.
+**AI behavior step-by-step:**
+1. AI calls `get_latest_response()` → sees `status: "degraded"` and `error_rate_pct: 8.5`
+2. AI calls `get_response_history(limit=5)` → confirms error_rate rising over multiple readings
+3. AI reads description: "Poll more frequently when status is degraded or error_rate_pct exceeds 5%"
+4. AI calls `propose_interval(intervalMs=30000, ttlMinutes=60, reason="Status degraded, error rate 8.5% exceeds 5% threshold")`
+5. When status returns to healthy: AI calls `clear_hints()` → returns to 5-minute baseline
 
 ---
 
 ### Data Sync with Volume-Based Polling
 
-**Scenario**: Sync data more frequently when there's a backlog.
+**Scenario**: Sync data more frequently when there's a large backlog, relax when caught up.
 
+```bash
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "data-sync-status",
+    "url": "https://api.example.com/sync/status",
+    "method": "GET",
+    "baselineIntervalMs": 600000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 1800000,
+    "timeoutMs": 15000,
+    "description": "Checks data sync status. Poll every 30 seconds when records_pending exceeds 1000. Poll every 2 minutes when records_pending is 100-1000. Return to 10-minute baseline when records_pending drops below 100 (caught up). Monitor sync_rate_per_minute - if it drops below 50, tighten to track potential stall."
+  }'
 ```
-Endpoint: "data-sync-status"
-  URL: https://api.example.com/sync/status
-  Baseline: 10 minutes (600000ms)
-  Min: 30 seconds (30000ms)
-  Max: 30 minutes (1800000ms)
 
-  Description:
-  "Checks data sync status. Poll frequently when records_pending is high
-  (more than 1000). Slow down when caught up (under 100 pending).
-  Include estimated completion time in response."
-```
-
-**Response body:**
+**Response body your endpoint should return:**
 ```json
 {
   "records_pending": 15000,
   "sync_rate_per_minute": 500,
   "estimated_completion_minutes": 30,
-  "status": "syncing"
+  "status": "syncing",
+  "timestamp": "2026-02-03T12:00:00Z"
 }
 ```
 
-**AI behavior**: Sees large backlog → tightens polling. Sees caught up → returns to baseline.
+**AI behavior step-by-step:**
+1. AI calls `get_latest_response()` → sees `records_pending: 15000`
+2. AI reads description: "Poll every 30 seconds when records_pending exceeds 1000"
+3. AI calls `propose_interval(intervalMs=30000, ttlMinutes=30, reason="15000 records pending, above 1000 threshold")`
+4. When caught up (`records_pending: 50`): AI calls `clear_hints()` → returns to 10-minute baseline
 
 ---
 
 ### Multi-Endpoint Recovery Workflow
 
-**Scenario**: Health check triggers recovery action when errors detected.
+**Scenario**: Health check detects errors and triggers automated recovery. Recovery respects cooldown. Returns to normal when service recovers.
 
+```bash
+# Create the job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Service Recovery Automation" }'
+
+# Add health check endpoint
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "health-check",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "timeoutMs": 10000,
+    "description": "Monitors service health. When status is error or needs_recovery is true, the trigger-recovery sibling should run immediately. During errors, tighten monitoring to 30 seconds. Return to 5-minute baseline when status is ok and error_count is 0."
+  }'
+
+# Add recovery endpoint
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "trigger-recovery",
+    "url": "https://api.example.com/admin/restart",
+    "method": "POST",
+    "baselineIntervalMs": 86400000,
+    "minIntervalMs": 300000,
+    "timeoutMs": 30000,
+    "description": "Recovery action that restarts the service. Only run when health-check sibling shows status error or needs_recovery is true. After triggering, wait at least 5 minutes (minInterval). Return to 24-hour baseline when health-check shows ok. Maximum 3 recovery attempts before pausing 1 hour."
+  }'
 ```
-Job: "Service Health Monitor"
 
-Endpoint 1: "health-check"
-  URL: https://api.example.com/health
-  Baseline: 5 minutes (300000ms)
-  Min: 30 seconds (30000ms)
-
-  Description:
-  "Monitors service health. When errors are detected or status is 'error',
-  the trigger-recovery endpoint should run immediately. After recovery
-  triggers, continue monitoring to verify service restoration."
-
-Endpoint 2: "trigger-recovery"
-  URL: https://api.example.com/admin/restart
-  Method: POST
-  Baseline: 24 hours (86400000ms)
-  Min: 5 minutes (300000ms)
-
-  Description:
-  "Recovery action that restarts the service. Should only run when
-  health-check shows errors. After triggering, wait at least 5 minutes
-  before allowing another recovery attempt."
-```
-
-**health-check response:**
+**health-check response (error state):**
 ```json
 {
   "status": "error",
   "error_count": 15,
   "last_error": "Connection refused",
-  "needs_recovery": true
+  "needs_recovery": true,
+  "timestamp": "2026-02-03T12:05:00Z"
 }
 ```
 
-**AI behavior**: Sees `needs_recovery: true` in health-check → triggers recovery endpoint → waits for cooldown.
+**health-check response (after recovery):**
+```json
+{
+  "status": "ok",
+  "error_count": 0,
+  "needs_recovery": false,
+  "recovered_at": "2026-02-03T12:07:00Z",
+  "timestamp": "2026-02-03T12:08:00Z"
+}
+```
+
+**AI behavior step-by-step:**
+1. AI analyzes health-check → calls `get_latest_response()` → sees `needs_recovery: true`
+2. AI calls `get_sibling_latest_responses()` → sees trigger-recovery on 24h baseline
+3. AI calls `propose_next_time()` on trigger-recovery for immediate run
+4. AI calls `propose_interval(intervalMs=30000)` on health-check for close monitoring
+5. After recovery: AI calls `clear_hints()` on both → returns to baseline schedules
+6. If 3 recovery attempts fail: AI calls `pause_until(now + 1 hour)` on trigger-recovery
 
 ---
 
 ### System Load with Inverse Scaling
 
-**Scenario**: Poll less frequently when system is under high load.
+**Scenario**: Poll less frequently when system is under high load (to reduce overhead), more frequently when load is low.
 
+```bash
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "system-load-monitor",
+    "url": "https://api.example.com/metrics/load",
+    "method": "GET",
+    "baselineIntervalMs": 60000,
+    "minIntervalMs": 10000,
+    "maxIntervalMs": 300000,
+    "timeoutMs": 10000,
+    "description": "Monitors system load. INVERSE SCALING: when load is HIGH, poll LESS frequently to reduce overhead. When load is LOW, poll MORE frequently since the system has capacity. Rules: load_pct > 80 → poll every 5 minutes (minimal overhead). load_pct 50-80 → poll every 2-3 minutes. load_pct < 50 → poll every 30 seconds (system has capacity). If recommendation field says reduce_polling, always extend interval."
+  }'
 ```
-Endpoint: "system-load-monitor"
-  URL: https://api.example.com/metrics/load
-  Baseline: 1 minute (60000ms)
-  Min: 10 seconds (10000ms)
-  Max: 5 minutes (300000ms)
 
-  Description:
-  "Monitors system load. INVERSE SCALING: when load is HIGH, poll LESS
-  frequently to reduce overhead. When load is LOW, poll MORE frequently
-  since the system has capacity.
-  - Load > 80%: poll every 5 minutes (minimal)
-  - Load 50-80%: poll every 2-3 minutes
-  - Load < 50%: poll every 30 seconds (aggressive)"
-```
-
-**Response body:**
+**Response body your endpoint should return:**
 ```json
 {
   "load_pct": 85,
   "cpu_pct": 82,
   "memory_pct": 78,
-  "recommendation": "reduce_polling"
+  "recommendation": "reduce_polling",
+  "timestamp": "2026-02-03T12:00:00Z"
 }
 ```
 
-**AI behavior**: Sees high load → extends interval to reduce overhead.
+**AI behavior step-by-step:**
+1. AI calls `get_latest_response()` → sees `load_pct: 85` and `recommendation: "reduce_polling"`
+2. AI reads description: "load_pct > 80 → poll every 5 minutes"
+3. AI calls `propose_interval(intervalMs=300000, ttlMinutes=30, reason="Load at 85%, reducing polling to minimize overhead")`
+4. When load drops to 35%: AI calls `propose_interval(intervalMs=30000, reason="Load at 35%, increasing polling - system has capacity")`
 
 ---
 
 ### Volatile System with Stability Focus
 
-**Scenario**: Monitor volatile metrics without overreacting.
+**Scenario**: Monitor volatile metrics without oscillating between extreme frequencies.
 
+```bash
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "volatile-metrics",
+    "url": "https://api.example.com/metrics",
+    "method": "GET",
+    "baselineIntervalMs": 60000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 120000,
+    "timeoutMs": 10000,
+    "description": "Monitors volatile system metrics. STABILITY IS TOP PRIORITY. Rules: (1) Only use avg_5min and avg_1hr fields - never instant_value. (2) Only adjust for sustained trends visible in 3+ consecutive responses. (3) When trend is stable and within_normal_range is true, maintain current interval. (4) When uncertain, do nothing rather than oscillate."
+  }'
 ```
-Endpoint: "volatile-metrics"
-  URL: https://api.example.com/metrics
-  Baseline: 1 minute (60000ms)
-  Min: 30 seconds (30000ms)
-  Max: 2 minutes (120000ms)
 
-  Description:
-  "Monitors volatile system metrics. Data fluctuates frequently.
-  PRIORITIZE STABILITY - don't overreact to momentary spikes.
-  Only adjust for sustained state changes (5+ minutes).
-  When uncertain, maintain current interval.
-  Response includes smoothed averages - use those, not instant values."
-```
+Note the tight min/max ratio (30s to 120s = 4x). This bounds AI decisions to a narrow range, preventing oscillation even with volatile data.
 
-**Response body:**
+**Response body your endpoint should return:**
 ```json
 {
   "instant_value": 523,
   "avg_5min": 487,
   "avg_1hr": 502,
   "trend": "stable",
-  "within_normal_range": true
+  "within_normal_range": true,
+  "normal_range_min": 400,
+  "normal_range_max": 600,
+  "timestamp": "2026-02-03T12:00:00Z"
 }
 ```
 
-**AI behavior**: Sees `trend: stable` and smoothed averages → maintains current interval.
+**AI behavior step-by-step:**
+1. AI calls `get_latest_response()` → sees `instant_value: 523` (high) but `avg_5min: 487` (normal)
+2. AI reads description: "Only use avg_5min - never instant_value"
+3. AI checks: `trend: "stable"`, `within_normal_range: true`
+4. **No action** — maintains current interval despite the volatile instant_value
+5. Only tightens when: `avg_5min` shows sustained rise, `trend: "rising"`, `within_normal_range: false`
 
 ---
 
