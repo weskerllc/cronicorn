@@ -31,10 +31,11 @@ Cronicorn is a **hosted scheduling service** that replaces traditional cron with
 5. **You monitor results** — view run history, AI decisions, and scheduling changes
 
 **What you DON'T do:**
-- Write scheduling code or rules (the AI interprets your descriptions)
-- Create configuration files (everything is stored in the service)
-- Import an SDK or library (Cronicorn is a service, not a package)
+- Write scheduling code, polling loops, or rules (the AI interprets your descriptions)
+- Create configuration files or deploy anything (everything is stored in the service database)
+- Import an SDK or library (Cronicorn is a hosted service, not a package you install)
 - Parse response bodies yourself (the AI reads and interprets them automatically)
+- Set up the AI separately (it runs automatically for all endpoints when enabled)
 
 ## Three Interfaces
 
@@ -78,6 +79,40 @@ This is the canonical configuration format. All fields shown in examples through
 | `headers` | object | No | Custom HTTP headers |
 | `body` | string | No | Request body (for POST/PUT/PATCH) |
 | `description` | string | No | Natural language instructions for AI adaptation |
+
+### Quick Example: Creating a Job and Endpoint via API
+
+```bash
+# Step 1: Create a job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production API Monitoring",
+    "description": "Monitors production API health with adaptive frequency"
+  }'
+# Returns: { "id": "job_abc123", "name": "Production API Monitoring", ... }
+
+# Step 2: Add an endpoint to the job
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "api-health-check",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 900000,
+    "timeoutMs": 10000,
+    "description": "Monitors API health. Poll more frequently when status is degraded."
+  }'
+# Cronicorn immediately starts executing this endpoint every 5 minutes.
+# The AI Planner automatically analyzes responses and adjusts frequency.
+# No additional setup required.
+```
+
+The same configuration can be applied via the Web UI forms or MCP Server tool calls — all three interfaces accept the same fields.
 
 ## Jobs and Endpoints
 
