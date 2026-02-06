@@ -265,7 +265,13 @@ I’ve saved days by doing this first. More than once.
 
 ## Phase Five: Wire It Up and Prove It Works
 
-This is your **composition root** — the only place things are allowed to touch.
+This is where everything finally touches.
+
+There should be exactly one place where this happens.
+
+The composition root.
+
+It’s the only part of the system allowed to know about concrete implementations. Everything else stays ignorant on purpose.
 
 ```ts
 // main.ts
@@ -278,72 +284,98 @@ const repo = new InMemoryOrderRepository();
 await confirmOrderUseCase(repo, "order-123");
 ```
 
-Before you even think about a real database, stop here and validate:
+That’s it.
 
-* Write unit tests against the **domain**
-* Write tests for the **application layer** using the in-memory adapter
-* Throw weird inputs at it
-* Break it on purpose
+Before you add a real database, stop here.
 
-If something feels unclear now, adding Postgres will not fix it. It will only bury the problem.
+Try to break it.
+
+Throw bad inputs at it.
+Call things in the wrong order.
+See what happens when assumptions fail.
+
+If something feels unclear now, adding Postgres will not fix it. It will just bury the problem under configuration and ceremony.
+
+Clarity is cheapest at this stage. Don’t waste it.
 
 ---
 
 ## Phase Six: Now — And Only Now — The Database
 
-You’ve validated the logic.
-You know what needs to be stored.
-You know the queries you actually need.
+At this point, the system already works.
 
-Now you bring in the heavy machinery.
+You know:
 
-This is a commitment. It slows things down. Migrations, schemas, environments, credentials. Don’t underestimate that cost.
+* What needs to be stored
+* When it’s read
+* When it’s written
+* What happens when it isn’t there
 
-But now it’s worth paying — because the system already works.
+Only now does a real database make sense.
+
+This is a commitment. It slows things down. Schemas, migrations, credentials, environments. All of that friction is real.
+
+But now it’s worth paying.
+
+You’re not guessing anymore. You’re implementing something you already understand.
+
+That difference matters.
 
 ---
 
 ## Phase Seven: Wire for Production
 
-Swap the adapter.
+Once the database adapter exists, you swap it in.
+
 Nothing else changes.
 
 That’s the whole point.
+
+If wiring for production requires touching your domain or application logic, something went wrong earlier.
+
+When this works, it feels boring.
+
+Boring is good.
 
 ---
 
 ## Why This Matters More in the AI Era
 
-Before AI, small teams often skipped this because it took too long.
+Before AI, small teams often skipped this structure because it took too long.
 
 That excuse is gone.
 
-AI can generate the scaffolding.
-You provide the discipline.
+AI can generate scaffolding instantly. What it can’t do is decide where boundaries should exist — or defend them over time.
 
-This is how you move fast **without** losing control.
-This is how you build something that survives its own success.
+That part is still on you.
+
+This is how you move fast without losing control.
+This is how systems survive their own growth.
 
 ---
 
-## Next: ADRs (Architectural Decision Records)
+## Next Rule: Write Decisions Down or Expect Chaos
 
-The second rule is simple: **write things down or expect chaos later.**
+The second rule is simple.
+
+If you don’t write decisions down, you’ll argue with your past self later. Or worse — with an AI that has no idea why something exists.
 
 I keep a `.adr/` folder at the root of every repo.
 
-Any *meaningful* architectural decision requires a new markdown file. No exceptions. Short, complete, and written while the decision is still fresh — not three weeks later when everyone remembers it differently.
+Any meaningful architectural decision gets a short markdown file. No exceptions. Written while the decision is still fresh.
 
-Each ADR answers:
+Each ADR answers four things:
 
 * What decision was made
 * Why it was made
 * What alternatives were considered
 * What tradeoffs were accepted
 
-That’s it. No fluff.
+That’s it.
 
-Files are named with a numeric prefix so they’re ordered:
+No essays. No philosophy.
+
+Files are numbered so they’re ordered:
 
 ```
 001-use-hexagonal-architecture.md
@@ -353,11 +385,11 @@ Files are named with a numeric prefix so they’re ordered:
 
 This matters for two reasons.
 
-First, **future you**. You can scan the ADRs and immediately see how the system got here, in order, without archaeology.
+First, future you. You can scan the folder and immediately see how the system got here, in order, without archaeology.
 
-Second — and this is new — **AI agents**.
+Second — and this is new — AI agents.
 
-I explicitly tell agents to read and respect the ADRs. When they suggest changes that violate them, I stop them. When they generate code, I expect it to align with the documented decisions. This alone cuts down on a shocking amount of nonsense.
+I explicitly tell agents to read and respect ADRs. When they suggest changes that violate them, I stop them. When they generate code, I expect it to align with documented decisions.
 
 ADRs become guardrails.
 
@@ -365,56 +397,55 @@ ADRs become guardrails.
 
 ## When Is a Decision “Big Enough” for an ADR?
 
-Short answer: earlier than you think.
+Earlier than you think.
 
-If you’re asking yourself *“should this be an ADR?”* — the answer is almost always yes.
+If you catch yourself asking, “should this be an ADR?” — the answer is almost always yes.
 
-I strongly prefer **too many ADRs over too few**. Writing one takes minutes. Not writing one costs hours later when:
+I strongly prefer too many ADRs over too few. Writing one takes minutes. Not writing one costs hours later when:
 
 * AI reintroduces something you already rejected
 * You forget why a choice was made
 * The architecture quietly drifts
 
-An ADR doesn’t mean the decision is permanent. It just means it was *intentional*.
+An ADR doesn’t mean the decision is permanent.
 
-And intentional systems age better — especially when AI is writing half the code.
+It just means it was intentional.
+
+Intentional systems age better.
 
 ---
 
-## Next: Enforce Code Quality Ruthlessly
+## Enforce Code Quality Ruthlessly
 
-This part isn’t optional. This is how you keep AI from quietly wrecking your codebase while smiling about it.
+This part isn’t optional.
+
+This is how you keep AI from quietly wrecking your codebase while smiling about it.
 
 For me, this breaks into three things:
 
 * Tests
 * Linting
-* Enforcement (locally *and* in CI)
+* Enforcement
 
-If any one of these is missing, the whole system leaks.
+If any one of these is missing, the system leaks.
 
 ---
 
-<<for this testing section lets ensure its concise and punchy. alot of people will eye roll when it comes to tests. lets just get the point across that the most imporatnt part is keeping the domain tested, and a few crucial other tests>>
-
-
 ## Tests: Your Primary Control Mechanism
 
-AI is fast. It’s also very good at subtly breaking things. Off-by-one errors. Slightly changed behavior. “Looks right” bugs.
+AI is fast. It’s also very good at being slightly wrong.
 
 Tests are how you keep it honest.
 
 ### Priority One: Domain Logic
 
-The domain is sacred. Test it heavily.
+The domain is sacred.
 
 No mocks.
 No IO.
 No excuses.
 
 If the rules live here, they get locked down.
-
-**Vitest example:**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -445,309 +476,152 @@ describe("confirmOrder", () => {
 });
 ```
 
-This stuff should be boring. Predictable. Locked.
+This should be boring.
 
 If AI breaks a domain test, that’s a hard stop.
 
 ---
 
-### Priority Two: Application Services (Integration Points)
+### Priority Two: Application Logic
 
-This is where things start touching each other. Repositories. Use cases. Orchestration.
+This is where things touch.
 
-Here you test:
+Repositories.
+Use cases.
+Sequencing.
 
-* Happy paths
-* Sad paths
-* Boundary conditions between components
+Use real implementations where possible. In-memory adapters are perfect here.
 
-Use real implementations where possible. In-memory adapters are perfect for this.
+You’re testing that pieces work together, not that mocks behave.
 
-```ts
-import { describe, it, expect } from "vitest";
-import { confirmOrderUseCase } from "./confirm-order";
-import { InMemoryOrderRepository } from "../adapters/in-memory-order-repo";
-
-describe("confirmOrderUseCase", () => {
-  it("confirms an existing order", async () => {
-    const repo = new InMemoryOrderRepository();
-
-    await repo.save({
-      id: "1",
-      items: [{ sku: "abc", quantity: 1 }],
-      status: "pending",
-    });
-
-    await confirmOrderUseCase(repo, "1");
-
-    const updated = await repo.findById("1");
-    expect(updated?.status).toBe("confirmed");
-  });
-
-  it("fails when order does not exist", async () => {
-    const repo = new InMemoryOrderRepository();
-
-    await expect(
-      confirmOrderUseCase(repo, "missing")
-    ).rejects.toThrow();
-  });
-});
-```
-
-This catches most “AI made a reasonable assumption” bugs before they escape.
+Most “reasonable” AI mistakes die here.
 
 ---
 
-### Priority Three: Adapter Contracts — The Trust Boundary
+### Priority Three: Adapter Contracts
 
-This is the part most people miss.
+You don’t need to test every adapter exhaustively.
 
-<<this needs to be explained in a more dumbed down way>>
-You do *not* need to exhaustively test every adapter. You need to test that **each adapter fulfills the port contract**.
+You need to test that each adapter fulfills the contract it claims to implement.
 
 Same tests. Different implementations.
 
-```ts
-export function orderRepositoryContract(
-  createRepo: () => OrderRepository
-) {
-  it("can save and retrieve an order", async () => {
-    const repo = createRepo();
+If the contract passes, you trust it.
+If it fails, it doesn’t ship.
 
-    const order = {
-      id: "1",
-      items: [{ sku: "abc", quantity: 1 }],
-      status: "pending",
-    };
-
-    await repo.save(order);
-    const loaded = await repo.findById("1");
-
-    expect(loaded).toEqual(order);
-  });
-}
-```
-
-Then reuse it:
-
-```ts
-import { describe } from "vitest";
-import { orderRepositoryContract } from "./order-repo.contract";
-import { InMemoryOrderRepository } from "../adapters/in-memory-order-repo";
-
-describe("InMemoryOrderRepository", () => {
-  orderRepositoryContract(() => new InMemoryOrderRepository());
-});
-```
-<<how?>>
-When you later add Postgres, you run the *same contract tests*.
-If it passes, you trust it. If not, it doesn’t ship.
-
-This is gold for AI workflows. You give it a contract, and you don’t argue with the output.
+This is a gift to AI workflows. You give it a clear bar and stop debating the output.
 
 ---
 
 ## The AI Feedback Loop
 
-This is the workflow I recommend. No shortcuts.
+Here’s the workflow I actually use.
 
-**Step one: write tests first. Always.**
-<<i have never done this - i have the ai think of what the functionality should do, implement , THEN write the test , then ensure it passes. if it fails, most likely the logic needs tweaked>>
+I don’t start with perfect tests. I start by being explicit about behavior.
 
-Before you ask AI to implement anything, you write the tests:
+I ask the AI to:
 
-* Be explicit
-* Cover edge cases
-* Encode the behavior you actually want
+* Describe what the function should do
+* Implement it
+* Write tests that reflect that behavior
 
-Then you tell the AI two rules:
+Then I tighten the tests until they match what I *actually* want.
 
-1. Run tests before marking a task “done”
-2. Don’t break existing tests — ever
+Two rules after that:
 
-That alone prevents 80% of regressions.
+1. Tests must pass before a task is done
+2. Existing tests never break
+
+That alone prevents most regressions.
 
 ---
 
-<<doing this from the start of a project ensures you never get buried with lint errors. Quality is established from the start>>
-## Linting: Make Style Non-Negotiable
+## Linting and Enforcement
 
 Tests protect behavior. Linting protects sanity.
 
-I’m strict here on purpose. I don’t want to debate formatting, imports, or “personal style” — especially with AI in the mix.
+I don’t want to debate formatting or style — especially with AI involved.
 
-For TypeScript projects, my go-to is **ESLint with the antfu config**. It enforces:
+Pick a strict ruleset. Make it non-negotiable. Run it locally and in CI.
 
-* Consistent formatting
-* Sensible defaults
-* Modern TypeScript best practices
+If lint fails, the work isn’t done.
 
-No bikeshedding. One ruleset. Everyone follows it — humans and agents alike.
-
-Same rule as tests:
-**lint must pass before a task is considered complete.**
-
-AI is actually very good at following lint rules *if you make them real*.
+AI is very good at following rules when they’re real.
 
 ---
 
-<<this is especially important on multi-person teams - or teams where agents are pushing pull requests - so that the pull request workflow can show if the quality passed or failed>>
-## Enforce It Locally *and* in CI
+## Other Things That Actually Matter
 
-Telling AI to run tests and lint is good.
+A few patterns that decide whether AI helps you or slowly derails you.
 
-Making it impossible to merge without them is better.
+### Be Explicit With Agent Instructions
 
-Put the same checks in CI:
+Agent config files are part of the system.
 
-* Run tests
-* Run lint
-* Fail fast
+I include rules like:
 
-GitHub Actions. GitLab CI. Whatever you use — doesn’t matter.
-
-What matters is that the rules aren’t suggestions.
-
----
-
-## Other Tips That Actually Matter
-
-<<this is especially important on multi-person teams - or teams where agents are pushing pull requests - so that the pull request workflow can show if the quality passed or failed>>
-
-Other things that I havent mentioned yet but determine if AI helps you or slowly derails you.
-
-### Be Explicit With Your Agent Config
-
-<<keep these concise, and reference other files such as docs / etc. this goes back to the issue of having multiple areas to maintain with similar content. i.e. if you have an architecture doc in your CONTRIBUTING.md and your docs site , do you want to duplicate it here? no. maybe link to the doc or something>>
-Your agent config files (`claude.md`, `copilot-instructions.md`, etc.) are not decoration. They’re part of the system.
-
-I always include rules like:
-
-* Favor simplicity and readability over cleverness
-* Do not over-engineer
-* Do not add features that were not explicitly requested
-* Do not reinvent existing abstractions
-* ALways use up to date docs for libraries
+* Favor simplicity over cleverness
+* Don’t add features that weren’t asked for
+* Don’t reinvent existing abstractions
 * Stay on task
 
-This sounds obvious. It isn’t.
-
-Left alone, AI tends to chase “complete” instead of “correct.” These rules pull it back toward boring, understandable code.
-
-### Force Fresh Docs for Library Work
-
-Any time AI touches an external library, framework, or API, I require it to consult up-to-date documentation. That means tools like Context7 or web search — not training-data memory.
-
-This avoids a whole class of bugs where the code *looks* right but relies on APIs that changed six months ago.
-
-If the agent can’t cite the docs, I don’t trust the code.
-
-### Comments Are Fine. Just Keep Them Short.
-
-I’m not anti-comments. I’m anti-essays.
-
-<<concise is my favorite word - with everything . docs, comments, code, you name it. ai likes to be wordy>>
-When I want comments, I say one word: **concise**.
-
-Good comments explain *why something exists*, not *what the code already says*. AI is especially bad at over-commenting. You have to rein that in early or you’ll end up with noise instead of clarity.
-
-This could honestly be its own rule.
-
----
-
-## Common Failure Modes (And How to Stop Them)
-
-These are patterns I’ve seen repeatedly. If you’re using AI seriously, you’ll recognize them.
-
-### AI Rewrites What Already Exists
-
-This one’s subtle and dangerous.
-
-AI will happily reimplement logic that already exists elsewhere in your codebase — sometimes identical, sometimes slightly different. Either way, you now have two sources of truth.
-
-When this happens, it usually means one of two things:
-
-* The agent isn’t being instructed to search for existing code
-* Your codebase doesn’t make it obvious *where* that logic lives
-
-Fixes:
-
-* Tell the agent to search for existing implementations before writing new ones
-* Strengthen boundaries and naming so reuse is obvious
-* Document key entry points in ADRs or agent instructions
-
-Duplication is rarely an AI problem. It’s a signaling problem.
-
----
-
-### AI Adds “Helpful” Extra Features
-
-AI loves bells and whistles. Pagination you didn’t ask for. Retry logic you didn’t need. Optional configs nobody will use.
-
-That’s scope creep, just faster.
-
-One solution that works surprisingly well:
-**tell the AI to write things down instead of implementing them.**
-
-If it notices:
-
-* A security concern
-* A performance improvement
-* A future feature
-
-Have it log the idea in:
-<<these tips need to be brought earlier in the doc i think. they are actually very important>>
-* A `TECH_DEBT.md`
-* A `FUTURE_IDEAS.md`
-* Or even an ADR marked as “deferred”
-
-This keeps momentum without letting the feature balloon.
+Left alone, AI tends to chase “complete” instead of “correct.” These rules pull it back.
 
 ---
 
 ### Define an MVP or You’ll Drown
 
-At the start of any project, I force myself to define a strict MVP:
+At the start of any project, define a strict MVP.
 
-* A short list of features that *must* exist
-* Everything else is explicitly labeled “post-MVP”
+Everything else goes into:
 
-This matters even more with AI, because it will happily build *everything* you vaguely imply.
+* `TECH_DEBT.md`
+* `FUTURE_IDEAS.md`
+* or a deferred ADR
 
-You will still accumulate:
+Write it down. Then ignore it.
 
-* Tech debt
-* Security notes
-* Nice-to-haves
-
-That’s fine. That’s healthy.
-What’s not fine is pretending all of that belongs in v1.
-
-Backlogs are better than scope creep.
-<<keeping these in markdown - and any other 'categories' of running note pads the agent can use is great. have a whole folder of them. and dont even worry about then til later. DONT EVEN GET TEMPTED>>
+Backlogs are healthier than scope creep.
 
 ---
 
-### Multiple Sources of Truth Will Confuse Everyone — Especially AI
+### One Source of Truth
 
-This is an underrated pain point.
+If your system is described in:
 
-You describe what your app does:
+* the README
+* the docs
+* the landing page
+* comments
 
-* On the landing page
-* In the README
-* In the docs
-* In code comments
+They will drift.
 
-Now they’re slightly different.
+Pick one canonical source. Everything else points to it.
 
-Humans notice this eventually. AI notices immediately — and gets confused.
+Consistency isn’t aesthetics. It’s how you keep humans and AI aligned.
 
-Where possible, enforce a single source of truth. For example:
+Got it. Same tone. Fewer words. Cleaner stop.
 
-* A shared `content` or `docs` package
-* One canonical “what this app does” document
+Here’s a tighter version that leaves the reader satisfied without lingering.
 
-Everything else should reference it, not rephrase it.
+---
 
-Consistency isn’t just cleanliness. It’s how you keep agents aligned.
+## Closing
+
+None of this is theoretical.
+
+Every rule here came from watching projects slowly slip out of my hands. Not blow up. Just get harder to change. Harder to trust. Easier to walk away from.
+
+AI didn’t cause that. It just sped it up.
+
+Speed isn’t the enemy. **Uncontrolled speed is.** When code grows faster than understanding, discipline stops being optional.
+
+You don’t need to follow this exactly. You don’t need my architecture or my setup.
+
+But you do need boundaries.
+You do need decisions written down.
+And you do need a way to say “no” — especially to a tool that’s always eager to say “yes.”
+
+This is just what’s worked for me, after doing it wrong enough times to notice the pattern.
+
+The rest is details.
