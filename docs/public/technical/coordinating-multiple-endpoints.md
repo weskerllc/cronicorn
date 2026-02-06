@@ -13,39 +13,41 @@ mcp:
 
 # Coordinating Multiple Endpoints
 
-This document shows practical patterns for orchestrating workflows across multiple endpoints. Instead of abstract concepts, you'll find concrete examples you can copy and adapt.
+This document shows practical patterns for orchestrating workflows across multiple endpoints. Cronicorn is a **hosted scheduling service** where the AI automatically handles coordination — you don't write orchestration code, parsers, or state machines. Instead, you configure endpoints with descriptions and design response bodies with signals. The AI reads both and coordinates automatically.
 
-> **How to apply these examples:** The configurations shown below can be applied through any interface — the Web UI, MCP Server, or HTTP API. See [Core Concepts](../core-concepts.md#how-to-use-these-docs) for details.
+> **How to apply these examples:** The configurations shown below can be applied through any interface — the Web UI, MCP Server, or HTTP API. See [Core Concepts](../core-concepts.md#endpoint-configuration-schema-json) for details.
 
 ## Core Concept: Coordination via Descriptions and Response Bodies
 
-Cronicorn doesn't have built-in workflow orchestration or explicit dependencies. Instead, endpoints coordinate through two mechanisms:
+Cronicorn doesn't have built-in workflow orchestration or explicit dependencies. Instead, endpoints coordinate through two mechanisms that the AI processes automatically:
 
 ### 1. Descriptions Express Relationships
 
-Use endpoint descriptions to tell the AI how endpoints should interact:
+Use the `description` field to tell the AI how endpoints should interact. **The AI reads these descriptions and interprets them — you don't write any coordination logic:**
 
 ```
 Endpoint: health-check
   Description: "Monitors service health. When errors are detected,
   the trigger-recovery endpoint should run immediately."
+```
 
+```
 Endpoint: trigger-recovery
   Description: "Recovery action that restarts the service. Should only
   run when the health-check endpoint shows errors. After triggering,
   wait at least 5 minutes before allowing another recovery attempt."
 ```
 
-The AI reads both descriptions and understands the relationship: health-check triggers recovery when errors occur.
+The AI reads both descriptions, calls `get_sibling_latest_responses()` to check each endpoint's status, and uses `propose_next_time()` or `pause_until()` to coordinate — all automatically.
 
 ### 2. Response Bodies Provide Signals
 
 Endpoints coordinate by:
-1. Writing signals to their response bodies
-2. Other endpoints reading those signals via `get_sibling_latest_responses`
-3. AI acting on the signals (pause, run immediately, adjust intervals)
+1. Your endpoints writing signals to their HTTP response bodies (e.g., `"ready_for_transform": true`)
+2. The AI calling `get_sibling_latest_responses()` to read those signals
+3. The AI acting on the signals (pause, run immediately, adjust intervals)
 
-This approach is flexible—you define the coordination protocol in your response data.
+**You design the response bodies. The AI parses them automatically.** There is no parsing code to write — the AI interprets JSON fields based on the endpoint descriptions.
 
 ## Pattern 1: Flash Sale Load Management
 
@@ -56,7 +58,9 @@ This approach is flexible—you define the coordination protocol in your respons
 ```
 Job: Flash Sale Management
   Description: Coordinates monitoring during flash sales with priority-based pausing
+```
 
+```
 Endpoint: traffic-monitor
   URL: https://api.example.com/traffic/stats
   Method: GET
@@ -164,7 +168,9 @@ When load drops (Traffic Monitor returns `"load_status": "normal"`):
 ```
 Job: Customer Data Pipeline
   Description: ETL pipeline: Extract → Transform → Load with cascading dependencies
+```
 
+```
 Endpoint: extract-data (Stage 1)
   URL: https://api.example.com/etl/extract
   Method: POST
@@ -434,7 +440,7 @@ Endpoint: upstream-health
     field used by downstream consumers in other jobs."
 ```
 
-**Job 2: Downstream Consumers**
+**Job 2: Downstream Consumers** (separate job — cannot use `get_sibling_latest_responses()`)
 
 ```
 Job: Downstream Consumers
