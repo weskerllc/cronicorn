@@ -28,7 +28,7 @@ Cronicorn is a **hosted scheduling service** — there are no config files to de
 3. **Add Endpoints** with the configurations shown below
 4. **AI runs automatically** — no per-endpoint AI setup required
 
-See [Core Concepts](./core-concepts.md#endpoint-configuration-schema-json) for the full JSON schema reference.
+The configurations below use the JSON format accepted by the Web UI, MCP Server, and HTTP API. See [Core Concepts](./core-concepts.md#endpoint-configuration-schema-json) for the full schema.
 
 ---
 
@@ -38,27 +38,26 @@ See [Core Concepts](./core-concepts.md#endpoint-configuration-schema-json) for t
 
 ### Step 1: Create the Job
 
-```
-Job: Production API Monitoring
-  Description: Monitors production API health with adaptive frequency during incidents
+```json
+{
+  "name": "Production API Monitoring",
+  "description": "Monitors production API health with adaptive frequency during incidents"
+}
 ```
 
 ### Step 2: Add Endpoint with Adaptive Description
 
-```
-Endpoint: api-health-check
-  URL: https://api.example.com/health
-  Method: GET
-  Baseline Interval: 5 minutes (300000ms)
-  Min Interval: 30 seconds (30000ms)
-  Max Interval: 15 minutes (900000ms)
-  Timeout: 10 seconds (10000ms)
-  Description:
-    "Monitors API health. Poll more frequently (every 30 seconds) when
-    status is degraded or error_rate_pct exceeds 5%. Return to baseline
-    (5 minutes) when status returns to healthy and error_rate_pct drops
-    below 2%. If latency_ms exceeds 2000, tighten to 1-minute intervals
-    to track recovery."
+```json
+{
+  "name": "api-health-check",
+  "url": "https://api.example.com/health",
+  "method": "GET",
+  "baselineIntervalMs": 300000,
+  "minIntervalMs": 30000,
+  "maxIntervalMs": 900000,
+  "timeoutMs": 10000,
+  "description": "Monitors API health. Poll more frequently (every 30 seconds) when status is degraded or error_rate_pct exceeds 5%. Return to baseline (5 minutes) when status returns to healthy and error_rate_pct drops below 2%. If latency_ms exceeds 2000, tighten to 1-minute intervals to track recovery."
+}
 ```
 
 ### Step 3: Design Your Health Endpoint Response Body
@@ -172,44 +171,39 @@ A single 2xx response resets the failure count to 0 and restores normal scheduli
 
 ### Step 1: Create the Job
 
-```
-Job: Service Recovery Automation
-  Description: Monitors service health and triggers automated recovery when errors are detected
+```json
+{
+  "name": "Service Recovery Automation",
+  "description": "Monitors service health and triggers automated recovery when errors are detected"
+}
 ```
 
 ### Step 2: Add Health Check Endpoint
 
-```
-Endpoint: health-check
-  URL: https://api.example.com/health
-  Method: GET
-  Baseline Interval: 5 minutes (300000ms)
-  Min Interval: 30 seconds (30000ms)
-  Timeout: 10 seconds (10000ms)
-  Description:
-    "Monitors service health. When status is error, needs_recovery is true,
-    or HTTP response returns 5xx status codes, the trigger-recovery sibling
-    endpoint should run immediately via one-shot. During errors, tighten
-    monitoring to every 30 seconds to track recovery progress. Return to
-    5-minute baseline when status returns to ok and error_count drops to 0."
+```json
+{
+  "name": "health-check",
+  "url": "https://api.example.com/health",
+  "method": "GET",
+  "baselineIntervalMs": 300000,
+  "minIntervalMs": 30000,
+  "timeoutMs": 10000,
+  "description": "Monitors service health. When status is error, needs_recovery is true, or HTTP response returns 5xx status codes, the trigger-recovery sibling endpoint should run immediately via one-shot. During errors, tighten monitoring to every 30 seconds to track recovery progress. Return to 5-minute baseline when status returns to ok and error_count drops to 0."
+}
 ```
 
 ### Step 3: Add Recovery Endpoint
 
-```
-Endpoint: trigger-recovery
-  URL: https://api.example.com/admin/restart
-  Method: POST
-  Baseline Interval: 24 hours (86400000ms)
-  Min Interval: 5 minutes (300000ms)
-  Timeout: 30 seconds (30000ms)
-  Description:
-    "Recovery action that restarts the service. Should only run when
-    health-check sibling shows status error or needs_recovery is true.
-    After triggering, wait at least 5 minutes (minInterval) before allowing
-    another attempt. If recovery succeeds (health-check returns to ok),
-    return to 24-hour baseline. Maximum 3 recovery attempts before pausing
-    for 1 hour to avoid recovery loops."
+```json
+{
+  "name": "trigger-recovery",
+  "url": "https://api.example.com/admin/restart",
+  "method": "POST",
+  "baselineIntervalMs": 86400000,
+  "minIntervalMs": 300000,
+  "timeoutMs": 30000,
+  "description": "Recovery action that restarts the service. Should only run when health-check sibling shows status error or needs_recovery is true. After triggering, wait at least 5 minutes (minInterval) before allowing another attempt. If recovery succeeds (health-check returns to ok), return to 24-hour baseline. Maximum 3 recovery attempts before pausing for 1 hour to avoid recovery loops."
+}
 ```
 
 ### Step 4: Design Your Response Bodies
@@ -308,29 +302,26 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures 
 
 ### Step 1: Create the Job
 
-```
-Job: Data Sync Monitor
-  Description: Monitors data synchronization status and adapts polling based on pending record volume
+```json
+{
+  "name": "Data Sync Monitor",
+  "description": "Monitors data synchronization status and adapts polling based on pending record volume"
+}
 ```
 
 ### Step 2: Add the Sync Status Endpoint
 
-```
-Endpoint: sync-status
-  URL: https://api.example.com/sync/status
-  Method: GET
-  Baseline Interval: 10 minutes (600000ms)
-  Min Interval: 30 seconds (30000ms)
-  Max Interval: 30 minutes (1800000ms)
-  Timeout: 15 seconds (15000ms)
-  Description:
-    "Checks data sync status. Adjust polling frequency based on
-    records_pending volume: when records_pending exceeds 1000, poll every
-    30 seconds to track sync progress closely. When records_pending is
-    between 100-1000, poll every 2 minutes. When records_pending drops
-    below 100 (caught up), return to 10-minute baseline. Also monitor
-    sync_rate_per_minute - if it drops below 50, investigate by tightening
-    interval."
+```json
+{
+  "name": "sync-status",
+  "url": "https://api.example.com/sync/status",
+  "method": "GET",
+  "baselineIntervalMs": 600000,
+  "minIntervalMs": 30000,
+  "maxIntervalMs": 1800000,
+  "timeoutMs": 15000,
+  "description": "Checks data sync status. Adjust polling frequency based on records_pending volume: when records_pending exceeds 1000, poll every 30 seconds to track sync progress closely. When records_pending is between 100-1000, poll every 2 minutes. When records_pending drops below 100 (caught up), return to 10-minute baseline. Also monitor sync_rate_per_minute - if it drops below 50, investigate by tightening interval."
+}
 ```
 
 ### Step 3: Design Your Sync Status Response Body
@@ -445,34 +436,28 @@ In Cronicorn, **descriptions are your rules engine**. You write natural language
 
 ### Step 1: Create the Job
 
-```
-Job: Smart Queue Monitor
-  Description: Monitors queue metrics and adapts scheduling based on response body field values
+```json
+{
+  "name": "Smart Queue Monitor",
+  "description": "Monitors queue metrics and adapts scheduling based on response body field values"
+}
 ```
 
 ### Step 2: Add Endpoint with Field-Parsing Description
 
-The description tells the AI exactly which fields to read and what thresholds trigger changes:
+The `description` field tells the AI exactly which response body fields to read and what thresholds trigger scheduling changes. The AI parses the response body automatically — you don't write any parsing code:
 
-```
-Endpoint: queue-metrics
-  URL: https://api.example.com/queue/metrics
-  Method: GET
-  Baseline Interval: 5 minutes (300000ms)
-  Min Interval: 15 seconds (15000ms)
-  Max Interval: 15 minutes (900000ms)
-  Timeout: 10 seconds (10000ms)
-  Description:
-    "Monitors queue processing metrics. Parse the response body fields as
-    follows: (1) If queue_depth exceeds queue_warning_threshold, tighten
-    polling to every 30 seconds. (2) If queue_depth exceeds queue_max,
-    tighten to every 15 seconds (minInterval). (3) If processing_rate_per_min
-    drops below 50, tighten to 1 minute to monitor for stalls. (4) If
-    error_rate_pct exceeds 5, tighten to 30 seconds. (5) If all metrics are
-    within normal ranges (queue_depth < queue_warning_threshold, error_rate_pct
-    < 2, processing_rate_per_min > 100), return to 5-minute baseline. Use the
-    trend field to avoid overreacting to momentary spikes - only act on
-    sustained changes."
+```json
+{
+  "name": "queue-metrics",
+  "url": "https://api.example.com/queue/metrics",
+  "method": "GET",
+  "baselineIntervalMs": 300000,
+  "minIntervalMs": 15000,
+  "maxIntervalMs": 900000,
+  "timeoutMs": 10000,
+  "description": "Monitors queue processing metrics. Parse the response body fields as follows: (1) If queue_depth exceeds queue_warning_threshold, tighten polling to every 30 seconds. (2) If queue_depth exceeds queue_max, tighten to every 15 seconds (minInterval). (3) If processing_rate_per_min drops below 50, tighten to 1 minute to monitor for stalls. (4) If error_rate_pct exceeds 5, tighten to 30 seconds. (5) If all metrics are within normal ranges (queue_depth < queue_warning_threshold, error_rate_pct < 2, processing_rate_per_min > 100), return to 5-minute baseline. Use the trend field to avoid overreacting to momentary spikes - only act on sustained changes."
+}
 ```
 
 ### Step 3: Design Response Body with Parseable Fields
@@ -523,20 +508,16 @@ Endpoint: queue-metrics
 
 **CPU load with inverse scaling (poll LESS under load):**
 
-```
-Endpoint: system-load-monitor
-  URL: https://api.example.com/metrics/load
-  Method: GET
-  Baseline Interval: 1 minute (60000ms)
-  Min Interval: 10 seconds (10000ms)
-  Max Interval: 5 minutes (300000ms)
-  Description:
-    "Monitors system load. INVERSE SCALING: when cpu_pct is HIGH, poll LESS
-    frequently to reduce overhead. Parse response fields: (1) cpu_pct > 80:
-    extend to 5 minutes (reduce load). (2) cpu_pct 50-80: maintain 2-3 minute
-    interval. (3) cpu_pct < 50: tighten to 30 seconds (system has capacity).
-    (4) If recommendation field is reduce_polling, always extend interval.
-    (5) If memory_pct > 90, pause for 5 minutes regardless of CPU."
+```json
+{
+  "name": "system-load-monitor",
+  "url": "https://api.example.com/metrics/load",
+  "method": "GET",
+  "baselineIntervalMs": 60000,
+  "minIntervalMs": 10000,
+  "maxIntervalMs": 300000,
+  "description": "Monitors system load. INVERSE SCALING: when cpu_pct is HIGH, poll LESS frequently to reduce overhead. Parse response fields: (1) cpu_pct > 80: extend to 5 minutes (reduce load). (2) cpu_pct 50-80: maintain 2-3 minute interval. (3) cpu_pct < 50: tighten to 30 seconds (system has capacity). (4) If recommendation field is reduce_polling, always extend interval. (5) If memory_pct > 90, pause for 5 minutes regardless of CPU."
+}
 ```
 
 **Response body:**
@@ -553,21 +534,16 @@ Endpoint: system-load-monitor
 
 **Payment processor with amount-based monitoring:**
 
-```
-Endpoint: payment-monitor
-  URL: https://api.example.com/payments/status
-  Method: GET
-  Baseline Interval: 1 minute (60000ms)
-  Min Interval: 10 seconds (10000ms)
-  Max Interval: 10 minutes (600000ms)
-  Description:
-    "Monitors payment processing. Parse response fields: (1) If
-    failed_transactions > 0, tighten to 10 seconds immediately. (2) If
-    pending_amount_usd > 100000, tighten to 30 seconds (high-value
-    transactions pending). (3) If processing_lag_seconds > 60, tighten to
-    15 seconds. (4) If all fields normal (failed_transactions=0,
-    pending_amount_usd < 10000, processing_lag_seconds < 10), return to
-    1-minute baseline."
+```json
+{
+  "name": "payment-monitor",
+  "url": "https://api.example.com/payments/status",
+  "method": "GET",
+  "baselineIntervalMs": 60000,
+  "minIntervalMs": 10000,
+  "maxIntervalMs": 600000,
+  "description": "Monitors payment processing. Parse response fields: (1) If failed_transactions > 0, tighten to 10 seconds immediately. (2) If pending_amount_usd > 100000, tighten to 30 seconds (high-value transactions pending). (3) If processing_lag_seconds > 60, tighten to 15 seconds. (4) If all fields normal (failed_transactions=0, pending_amount_usd < 10000, processing_lag_seconds < 10), return to 1-minute baseline."
+}
 ```
 
 ---
@@ -578,34 +554,28 @@ Endpoint: payment-monitor
 
 ### Step 1: Create the Job
 
-```
-Job: Volatile System Monitor
-  Description: Monitors volatile system metrics with stability-focused adaptive scheduling
+```json
+{
+  "name": "Volatile System Monitor",
+  "description": "Monitors volatile system metrics with stability-focused adaptive scheduling"
+}
 ```
 
 ### Step 2: Configure with Anti-Oscillation Settings
 
 The key to preventing oscillation is a **tight min/max ratio** combined with a **stability-focused description**:
 
-```
-Endpoint: volatile-metrics
-  URL: https://api.example.com/metrics
-  Method: GET
-  Baseline Interval: 1 minute (60000ms)
-  Min Interval: 30 seconds (30000ms)
-  Max Interval: 2 minutes (120000ms)
-  Timeout: 10 seconds (10000ms)
-  Description:
-    "Monitors volatile system metrics. STABILITY IS THE TOP PRIORITY. Do NOT
-    overreact to momentary spikes or drops in values. Rules for adaptation:
-    (1) ONLY use the smoothed avg_5min and avg_1hr fields, NEVER use
-    instant_value for decisions. (2) Only adjust interval for SUSTAINED state
-    changes visible across at least 3 consecutive responses. (3) When trend
-    field is stable, maintain current interval regardless of individual metric
-    values. (4) When within_normal_range is true, always return to baseline.
-    (5) Only tighten interval when avg_5min shows a clear directional trend
-    AND avg_1hr confirms it. (6) When uncertain, ALWAYS maintain the current
-    interval - do nothing rather than oscillate."
+```json
+{
+  "name": "volatile-metrics",
+  "url": "https://api.example.com/metrics",
+  "method": "GET",
+  "baselineIntervalMs": 60000,
+  "minIntervalMs": 30000,
+  "maxIntervalMs": 120000,
+  "timeoutMs": 10000,
+  "description": "Monitors volatile system metrics. STABILITY IS THE TOP PRIORITY. Do NOT overreact to momentary spikes or drops in values. Rules for adaptation: (1) ONLY use the smoothed avg_5min and avg_1hr fields, NEVER use instant_value for decisions. (2) Only adjust interval for SUSTAINED state changes visible across at least 3 consecutive responses. (3) When trend field is stable, maintain current interval regardless of individual metric values. (4) When within_normal_range is true, always return to baseline. (5) Only tighten interval when avg_5min shows a clear directional trend AND avg_1hr confirms it. (6) When uncertain, ALWAYS maintain the current interval - do nothing rather than oscillate."
+}
 ```
 
 ### Constraint Ratio Guide
@@ -731,61 +701,52 @@ curl -X PATCH https://api.cronicorn.com/api/jobs/JOB_ID/endpoints/ENDPOINT_ID \
 
 ### Step 1: Create the Job
 
-```
-Job: ETL Pipeline
-  Description: Extract-Transform-Load pipeline where each stage depends on
-    the previous stage completing successfully. Stages coordinate via
-    response body signals.
+```json
+{
+  "name": "ETL Pipeline",
+  "description": "Extract-Transform-Load pipeline where each stage depends on the previous stage completing successfully. Stages coordinate via response body signals."
+}
 ```
 
 ### Step 2: Add Extract Endpoint (Upstream)
 
-```
-Endpoint: extract-data
-  URL: https://api.example.com/etl/extract
-  Method: POST
-  Baseline Schedule: Cron "0 2 * * *" (daily at 2 AM)
-  Timeout: 2 minutes (120000ms)
-  Description:
-    "Extracts customer data from upstream API daily at 2 AM. After successful
-    extraction, the response body will contain ready_for_transform=true and a
-    batch_id. The transform-data sibling endpoint should check for this signal
-    before processing."
+```json
+{
+  "name": "extract-data",
+  "url": "https://api.example.com/etl/extract",
+  "method": "POST",
+  "baselineCron": "0 2 * * *",
+  "timeoutMs": 120000,
+  "description": "Extracts customer data from upstream API daily at 2 AM. After successful extraction, the response body will contain ready_for_transform=true and a batch_id. The transform-data sibling endpoint should check for this signal before processing."
+}
 ```
 
 ### Step 3: Add Transform Endpoint (Midstream)
 
-```
-Endpoint: transform-data
-  URL: https://api.example.com/etl/transform
-  Method: POST
-  Baseline Interval: 1 minute (60000ms)
-  Min Interval: 30 seconds (30000ms)
-  Timeout: 2 minutes (120000ms)
-  Description:
-    "Transforms extracted data. Check extract-data sibling response: only
-    process when ready_for_transform is true and batch_id is newer than our
-    last processed batch_id. After successful transformation, set
-    ready_for_load=true so the load-data sibling can proceed. If waiting for
-    data (no new batch), maintain 1-minute baseline. When actively processing
-    a batch, tighten to 30 seconds to track progress."
+```json
+{
+  "name": "transform-data",
+  "url": "https://api.example.com/etl/transform",
+  "method": "POST",
+  "baselineIntervalMs": 60000,
+  "minIntervalMs": 30000,
+  "timeoutMs": 120000,
+  "description": "Transforms extracted data. Check extract-data sibling response: only process when ready_for_transform is true and batch_id is newer than our last processed batch_id. After successful transformation, set ready_for_load=true so the load-data sibling can proceed. If waiting for data (no new batch), maintain 1-minute baseline. When actively processing a batch, tighten to 30 seconds to track progress."
+}
 ```
 
 ### Step 4: Add Load Endpoint (Downstream)
 
-```
-Endpoint: load-data
-  URL: https://api.example.com/etl/load
-  Method: POST
-  Baseline Interval: 1 minute (60000ms)
-  Min Interval: 30 seconds (30000ms)
-  Timeout: 3 minutes (180000ms)
-  Description:
-    "Loads transformed data to production database. Check transform-data
-    sibling response: only process when ready_for_load is true and batch_id
-    matches current batch. After successful load, set pipeline_complete=true.
-    If waiting for transform (no new batch ready), maintain 1-minute baseline
-    to check periodically."
+```json
+{
+  "name": "load-data",
+  "url": "https://api.example.com/etl/load",
+  "method": "POST",
+  "baselineIntervalMs": 60000,
+  "minIntervalMs": 30000,
+  "timeoutMs": 180000,
+  "description": "Loads transformed data to production database. Check transform-data sibling response: only process when ready_for_load is true and batch_id matches current batch. After successful load, set pipeline_complete=true. If waiting for transform (no new batch ready), maintain 1-minute baseline to check periodically."
+}
 ```
 
 ### Step 5: Design Cascading Response Bodies
@@ -889,41 +850,36 @@ If endpoints are in separate jobs, they can't use `get_sibling_latest_responses(
 
 **Job 1: Upstream Service**
 
-```
-Job: Upstream Service
-  Description: Monitors upstream API health
+```json
+{ "name": "Upstream Service", "description": "Monitors upstream API health" }
 ```
 
-```
-Endpoint: upstream-health
-  URL: https://upstream.example.com/health
-  Method: GET
-  Baseline Interval: 1 minute (60000ms)
-  Timeout: 10 seconds (10000ms)
-  Description:
-    "Monitors upstream service health. Response includes service_status
-    field used by downstream consumers in other jobs."
+```json
+{
+  "name": "upstream-health",
+  "url": "https://upstream.example.com/health",
+  "method": "GET",
+  "baselineIntervalMs": 60000,
+  "timeoutMs": 10000,
+  "description": "Monitors upstream service health. Response includes service_status field used by downstream consumers in other jobs."
+}
 ```
 
 **Job 2: Downstream Consumer** (embeds upstream check in its response)
 
-```
-Job: Downstream Consumers
-  Description: Processes data from upstream, embeds upstream health in responses
-    for cross-job coordination
+```json
+{ "name": "Downstream Consumers", "description": "Processes data from upstream, embeds upstream health in responses for cross-job coordination" }
 ```
 
-```
-Endpoint: data-processor
-  URL: https://downstream.example.com/process
-  Method: POST
-  Baseline Interval: 5 minutes (300000ms)
-  Min Interval: 1 minute (60000ms)
-  Description:
-    "Processes data from upstream service. The response body includes
-    upstream_status from upstream health check. When upstream_status is
-    unavailable, pause for 15 minutes. When upstream_status returns to
-    healthy, resume processing immediately."
+```json
+{
+  "name": "data-processor",
+  "url": "https://downstream.example.com/process",
+  "method": "POST",
+  "baselineIntervalMs": 300000,
+  "minIntervalMs": 60000,
+  "description": "Processes data from upstream service. The response body includes upstream_status from upstream health check. When upstream_status is unavailable, pause for 15 minutes. When upstream_status returns to healthy, resume processing immediately."
+}
 ```
 
 **Downstream response (upstream healthy):**
