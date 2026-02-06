@@ -156,7 +156,7 @@ You track competitor pricing across multiple sites, but need to respect their ra
 
 These examples show exactly how to configure endpoints with descriptions for common scenarios. Each includes the full endpoint configuration and the AI's decision-making process.
 
-> **How to apply these examples:** The configurations shown below can be applied through any interface — the Web UI, MCP Server, or HTTP API. See [Core Concepts](./core-concepts.md#how-to-use-these-docs) for details.
+> **How to apply these examples:** The configurations shown below can be applied through any interface — the Web UI, MCP Server, or HTTP API. See [Core Concepts](./core-concepts.md#endpoint-configuration-schema-json) for details.
 
 ### Health Monitoring with Degraded State Detection
 

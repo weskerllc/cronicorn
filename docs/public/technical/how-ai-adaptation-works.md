@@ -21,7 +21,62 @@ This document explains how the AI Planner suggests schedule adjustments. See [Sy
 
 The AI Planner worker analyzes endpoint execution patterns and suggests scheduling adjustments by writing hints to the database. It doesn't execute jobs or manage locks—it observes and recommends.
 
-The AI Planner runs independently from the Scheduler, typically waking up every 5 minutes to analyze recently active endpoints.
+The AI Planner runs **automatically** — no per-endpoint configuration is required. When AI is enabled on your account, the planner analyzes all endpoints with recent activity. There is no code to write, no rules engine to configure, and no parsing logic to implement. You provide descriptions and response bodies; the AI handles everything else.
+
+## End-to-End Processing Pipeline
+
+Here is the complete flow from endpoint execution to AI-adjusted scheduling:
+
+```
+1. SCHEDULER EXECUTES ENDPOINT
+   ├─ Makes HTTP request to your URL
+   ├─ Records: status (success/failed), duration, response body
+   └─ Updates failure count (reset on 2xx, increment on non-2xx/timeout)
+
+2. AI PLANNER DISCOVERS ENDPOINT (every 5 minutes)
+   ├─ Queries for endpoints with recent activity
+   ├─ Checks: is this endpoint due for analysis?
+   │   ├─ First analysis (never analyzed before)
+   │   ├─ Scheduled time passed (AI requested re-analysis)
+   │   └─ State change (new failures since last analysis)
+   └─ Skips endpoints not due for analysis
+
+3. AI BUILDS CONTEXT (per endpoint)
+   ├─ Endpoint config: name, description, baseline, min/max constraints
+   ├─ Health metrics: success rates over 1h, 4h, 24h windows
+   ├─ Active hints: current interval/one-shot hints and expiry
+   └─ Job context: job description, sibling endpoint names
+
+4. AI CALLS TOOLS (max 15 calls per session)
+   ├─ Query tools: get_latest_response, get_response_history,
+   │   get_sibling_latest_responses
+   ├─ Action tools: propose_interval, propose_next_time,
+   │   pause_until, clear_hints
+   └─ Terminal tool: submit_analysis (ends session, sets next analysis time)
+
+5. HINTS WRITTEN TO DATABASE
+   ├─ ai_hint_interval_ms: proposed frequency override
+   ├─ ai_hint_next_run_at: one-shot execution time
+   ├─ ai_hint_expires_at: TTL expiration
+   └─ ai_hint_reason: explanation for audit trail
+
+6. SCHEDULER PICKS UP HINTS (next execution cycle)
+   ├─ Governor calculates next run using priority order:
+   │   1. Pause (highest priority — stops all execution)
+   │   2. AI hints (interval overrides baseline, one-shot competes)
+   │   3. Baseline schedule + exponential backoff
+   │   4. Clamp to min/max constraints (always applied)
+   └─ Updates nextRunAt in database
+
+7. CYCLE REPEATS
+   └─ Scheduler executes → AI analyzes → hints applied → ...
+```
+
+**Key points:**
+- The Scheduler and AI Planner are **independent workers** communicating only through the database
+- AI hints are **temporary** (TTL-based) — they expire and revert to baseline automatically
+- The Scheduler **never stops** even if the AI is unavailable — it continues on baseline schedules
+- AI analysis sessions are **recorded** for debugging (tools called, reasoning, token usage)
 
 ## Discovery: Finding Endpoints to Analyze
 
@@ -440,6 +495,23 @@ AI analysis has quota controls:
 - If quota exceeded, skip analysis (Scheduler continues on baseline)
 
 This ensures jobs keep running even if AI becomes unavailable or too expensive.
+
+## Failure Modes and Graceful Degradation
+
+Cronicorn is designed to keep running regardless of what fails:
+
+| Failure | What Happens | User Impact |
+|---------|-------------|-------------|
+| **AI Planner unavailable** | Scheduler continues on baseline schedules. Existing hints remain until TTL expires. | Endpoints run normally, just without AI adaptation |
+| **AI quota exceeded** | Analysis skipped for billing period. Scheduler unaffected. | Same as above |
+| **Endpoint returns non-2xx** | Failure count increments. Exponential backoff applies (2^failures, cap at 32x). AI analyzes the failure pattern. | Endpoint slows down but doesn't stop |
+| **Endpoint times out** | Recorded as `failed`. Same backoff as non-2xx. | Same as above |
+| **Response body empty/malformed** | AI still sees HTTP status, duration, and health metrics. Gracefully handles any content. | AI makes decisions based on available data |
+| **Response body too large** | Truncated to 500 characters. AI works with truncated data. | Design response bodies with key fields first |
+| **AI proposes invalid interval** | Governor clamps to min/max constraints. | Constraints always enforced regardless of AI |
+| **Database connection lost** | Both workers retry with backoff. No data lost. | Brief scheduling delay |
+
+**The system self-heals:** When AI recovers, it resumes analysis. When endpoints recover (return 2xx), failure counts reset to 0 immediately. When hints expire, schedules revert to baseline. No manual intervention is required for any failure scenario.
 
 ## Key Takeaways
 

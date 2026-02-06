@@ -19,7 +19,16 @@ mcp:
 
 Each recipe below is a **complete workflow**: configure the job and endpoints, design response bodies, and understand exactly what the AI does at each step.
 
-> **How to apply these examples:** The configurations shown below can be applied through any interface — the Web UI, MCP Server, or HTTP API. See [Core Concepts](./core-concepts.md#how-to-use-these-docs) for details.
+## Before You Begin
+
+Cronicorn is a **hosted scheduling service** — there are no config files to deploy, no SDK to import, and no scheduling code to write. To follow these recipes:
+
+1. **Sign up** at cronicorn.com (or use a self-hosted instance)
+2. **Create a Job** through the Web UI, MCP Server, or HTTP API
+3. **Add Endpoints** with the configurations shown below
+4. **AI runs automatically** — no per-endpoint AI setup required
+
+See [Core Concepts](./core-concepts.md#endpoint-configuration-schema-json) for the full JSON schema reference.
 
 ---
 
@@ -724,8 +733,9 @@ curl -X PATCH https://api.cronicorn.com/api/jobs/JOB_ID/endpoints/ENDPOINT_ID \
 
 ```
 Job: ETL Pipeline
-  Description: Extract-Transform-Load pipeline where each stage depends on the previous
-    stage completing successfully. Stages coordinate via response body signals.
+  Description: Extract-Transform-Load pipeline where each stage depends on
+    the previous stage completing successfully. Stages coordinate via
+    response body signals.
 ```
 
 ### Step 2: Add Extract Endpoint (Upstream)
@@ -880,16 +890,28 @@ If endpoints are in separate jobs, they can't use `get_sibling_latest_responses(
 **Job 1: Upstream Service**
 
 ```
+Job: Upstream Service
+  Description: Monitors upstream API health
+```
+
+```
 Endpoint: upstream-health
   URL: https://upstream.example.com/health
   Method: GET
   Baseline Interval: 1 minute (60000ms)
+  Timeout: 10 seconds (10000ms)
   Description:
     "Monitors upstream service health. Response includes service_status
     field used by downstream consumers in other jobs."
 ```
 
 **Job 2: Downstream Consumer** (embeds upstream check in its response)
+
+```
+Job: Downstream Consumers
+  Description: Processes data from upstream, embeds upstream health in responses
+    for cross-job coordination
+```
 
 ```
 Endpoint: data-processor
@@ -899,9 +921,9 @@ Endpoint: data-processor
   Min Interval: 1 minute (60000ms)
   Description:
     "Processes data from upstream service. The response body includes
-    upstream_status from the upstream health check. When upstream_status
-    is unavailable, pause for 15 minutes. When upstream_status returns
-    to healthy, resume processing immediately."
+    upstream_status from upstream health check. When upstream_status is
+    unavailable, pause for 15 minutes. When upstream_status returns to
+    healthy, resume processing immediately."
 ```
 
 **Downstream response (upstream healthy):**

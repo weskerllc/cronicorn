@@ -18,15 +18,66 @@ mcp:
 
 Understand the key concepts for working with Cronicorn.
 
-## How to Use These Docs
+## What is Cronicorn?
 
-You can manage Cronicorn through three interfaces:
+Cronicorn is a **hosted scheduling service** that replaces traditional cron with adaptive, AI-powered HTTP job scheduling. It is not a library, not an SDK, and there are no configuration files to deploy. You configure everything through the service — there is no code to write.
 
-- **Web UI** — The primary interface for most users. Create jobs, add endpoints, configure schedules, and monitor runs visually.
-- **MCP Server** — Manage everything through your AI assistant (Claude, Copilot, Cursor). See [MCP Server](./mcp-server.md) for setup.
-- **HTTP API** — Programmatic access for scripts, CI/CD, and custom integrations. See [API Reference](./api-reference.md).
+**How it works:**
 
-Examples throughout these docs show **endpoint configurations** in a neutral format. Every configuration shown can be applied through any of the three interfaces. The API Reference contains HTTP-specific details for programmatic use cases.
+1. **You create a Job** — a container for related endpoints
+2. **You add Endpoints** — HTTP requests (URL, method, schedule) with optional natural language descriptions
+3. **Cronicorn executes them** — the Scheduler worker makes the HTTP calls on schedule
+4. **AI adapts automatically** — the AI Planner analyzes responses and adjusts frequency based on your descriptions. No per-endpoint AI setup required — it runs automatically for all endpoints.
+5. **You monitor results** — view run history, AI decisions, and scheduling changes
+
+**What you DON'T do:**
+- Write scheduling code or rules (the AI interprets your descriptions)
+- Create configuration files (everything is stored in the service)
+- Import an SDK or library (Cronicorn is a service, not a package)
+- Parse response bodies yourself (the AI reads and interprets them automatically)
+
+## Three Interfaces
+
+You can manage Cronicorn through three interfaces — **all configurations shown in these docs can be applied through any of them**:
+
+- **Web UI** — The primary interface for most users. Create jobs, add endpoints, configure schedules, and monitor runs visually at cronicorn.com.
+- **MCP Server** — Manage everything through your AI assistant (Claude, Copilot, Cursor). Install via `npm install -g @cronicorn/mcp-server`. See [MCP Server](./mcp-server.md) for setup.
+- **HTTP API** — Programmatic access for scripts, CI/CD, and custom integrations. Authenticate with API keys. See [API Reference](./api-reference.md).
+
+All three interfaces use the same underlying data model. When these docs show endpoint configurations, the field names map directly to the JSON schema accepted by the API and used internally by the Web UI and MCP Server.
+
+### Endpoint Configuration Schema (JSON)
+
+This is the canonical configuration format. All fields shown in examples throughout these docs map to these JSON fields:
+
+```json
+{
+  "name": "api-health-check",
+  "url": "https://api.example.com/health",
+  "method": "GET",
+  "baselineIntervalMs": 300000,
+  "minIntervalMs": 30000,
+  "maxIntervalMs": 900000,
+  "timeoutMs": 10000,
+  "headers": { "Authorization": "Bearer token" },
+  "body": null,
+  "description": "Monitors API health. Poll more frequently when errors are detected."
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | What this endpoint does |
+| `url` | string | Yes | HTTP endpoint to call |
+| `method` | string | Yes | GET, POST, PUT, PATCH, or DELETE |
+| `baselineIntervalMs` | number | One of interval/cron | Milliseconds between runs |
+| `baselineCron` | string | One of interval/cron | Cron expression (e.g., `"0 */5 * * *"`) |
+| `minIntervalMs` | number | No | Minimum allowed interval (safety floor) |
+| `maxIntervalMs` | number | No | Maximum allowed interval (freshness guarantee) |
+| `timeoutMs` | number | No | Request timeout (default: 30000ms) |
+| `headers` | object | No | Custom HTTP headers |
+| `body` | string | No | Request body (for POST/PUT/PATCH) |
+| `description` | string | No | Natural language instructions for AI adaptation |
 
 ## Jobs and Endpoints
 
@@ -312,6 +363,49 @@ AI behavior:
 - Never exceeds API rate limits (min)
 - Ensures data freshness (max)
 ```
+
+## Failure Handling
+
+### HTTP Status Codes
+
+Cronicorn interprets HTTP responses automatically:
+
+| Status Code | Result | Failure Count | Effect |
+|-------------|--------|---------------|--------|
+| 2xx | Success | Resets to 0 | Normal scheduling continues |
+| 3xx | Success | Resets to 0 | Follows redirects |
+| 4xx | Failure | Increments +1 | Exponential backoff applies |
+| 5xx | Failure | Increments +1 | Exponential backoff applies |
+| Timeout | Failure | Increments +1 | Exponential backoff applies |
+
+### Exponential Backoff
+
+When an endpoint fails, the next run is delayed by a multiplier on the baseline interval:
+
+| Consecutive Failures | Multiplier | 5-min baseline becomes |
+|---------------------|------------|----------------------|
+| 0 | 1x | 5 minutes |
+| 1 | 2x | 10 minutes |
+| 2 | 4x | 20 minutes |
+| 3 | 8x | 40 minutes |
+| 4 | 16x | 80 minutes |
+| 5+ | 32x (cap) | 160 minutes |
+
+A single successful response (2xx) resets the failure count to 0 and restores normal scheduling immediately.
+
+### AI Graceful Degradation
+
+If the AI Planner is unavailable (API down, quota exceeded, disabled):
+- The Scheduler continues running on baseline schedules
+- Existing AI hints remain active until their TTL expires
+- When hints expire, endpoints revert to baseline automatically
+- No manual intervention required — the system self-heals
+
+### Response Body Handling
+
+- The AI reads response bodies up to **500 characters** (truncated for cost efficiency)
+- If the response body is empty, malformed, or unparseable, the AI still sees the HTTP status code and execution metadata
+- The AI never crashes or stops analyzing due to unexpected response formats — it gracefully handles any content
 
 ---
 
