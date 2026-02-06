@@ -154,29 +154,26 @@ You track competitor pricing across multiple sites, but need to respect their ra
 
 ## Configuration Examples
 
-These examples show exactly how to configure endpoints with descriptions for common scenarios. Each includes the full endpoint configuration and the AI's decision-making process.
-
-> **How to apply these examples:** The configurations shown below can be applied through any interface — the Web UI, MCP Server, or HTTP API. See [Core Concepts](./core-concepts.md#how-to-use-these-docs) for details.
+These examples show exactly how to configure endpoints for common scenarios. Each includes the JSON configuration, expected response body, and the AI's step-by-step decision process. Configurations use the JSON field names accepted by the Web UI, MCP Server, and HTTP API — see [Core Concepts](./core-concepts.md#endpoint-configuration-schema-json) for the full schema.
 
 ### Health Monitoring with Degraded State Detection
 
 **Scenario**: Monitor a service and automatically increase polling from 5 minutes to 30 seconds when the HTTP response indicates a degraded state.
 
-```
-Job: API Health Monitoring
+**Job:** `{ "name": "API Health Monitoring" }`
 
-Endpoint: api-health-check
-  URL: https://api.example.com/health
-  Method: GET
-  Baseline Interval: 5 minutes (300000ms)
-  Min Interval: 30 seconds (30000ms)
-  Max Interval: 15 minutes (900000ms)
-  Timeout: 10 seconds (10000ms)
-  Description:
-    "Monitors API health. Poll more frequently (every 30 seconds) when
-    status is degraded or error_rate_pct exceeds 5%. Return to baseline
-    when status is healthy and error_rate_pct drops below 2%. If
-    latency_ms exceeds 2000, tighten to 1-minute intervals."
+**Endpoint:**
+```json
+{
+  "name": "api-health-check",
+  "url": "https://api.example.com/health",
+  "method": "GET",
+  "baselineIntervalMs": 300000,
+  "minIntervalMs": 30000,
+  "maxIntervalMs": 900000,
+  "timeoutMs": 10000,
+  "description": "Monitors API health. Poll more frequently (every 30 seconds) when status is degraded or error_rate_pct exceeds 5%. Return to baseline when status is healthy and error_rate_pct drops below 2%. If latency_ms exceeds 2000, tighten to 1-minute intervals."
+}
 ```
 
 **Response body your endpoint should return:**
@@ -203,20 +200,17 @@ Endpoint: api-health-check
 
 **Scenario**: Sync data more frequently when there's a large backlog, relax when caught up.
 
-```
-Endpoint: data-sync-status
-  URL: https://api.example.com/sync/status
-  Method: GET
-  Baseline Interval: 10 minutes (600000ms)
-  Min Interval: 30 seconds (30000ms)
-  Max Interval: 30 minutes (1800000ms)
-  Timeout: 15 seconds (15000ms)
-  Description:
-    "Checks data sync status. Poll every 30 seconds when records_pending
-    exceeds 1000. Poll every 2 minutes when records_pending is 100-1000.
-    Return to 10-minute baseline when records_pending drops below 100
-    (caught up). Monitor sync_rate_per_minute - if it drops below 50,
-    tighten to track potential stall."
+```json
+{
+  "name": "data-sync-status",
+  "url": "https://api.example.com/sync/status",
+  "method": "GET",
+  "baselineIntervalMs": 600000,
+  "minIntervalMs": 30000,
+  "maxIntervalMs": 1800000,
+  "timeoutMs": 15000,
+  "description": "Checks data sync status. Poll every 30 seconds when records_pending exceeds 1000. Poll every 2 minutes when records_pending is 100-1000. Return to 10-minute baseline when records_pending drops below 100 (caught up). Monitor sync_rate_per_minute - if it drops below 50, tighten to track potential stall."
+}
 ```
 
 **Response body your endpoint should return:**
@@ -242,33 +236,32 @@ Endpoint: data-sync-status
 
 **Scenario**: Health check detects errors and triggers automated recovery. Recovery respects cooldown. Returns to normal when service recovers.
 
+**Job:** `{ "name": "Service Recovery Automation" }`
+
+**Endpoints (both in the same job for sibling visibility):**
+
+```json
+{
+  "name": "health-check",
+  "url": "https://api.example.com/health",
+  "method": "GET",
+  "baselineIntervalMs": 300000,
+  "minIntervalMs": 30000,
+  "timeoutMs": 10000,
+  "description": "Monitors service health. When status is error or needs_recovery is true, the trigger-recovery sibling should run immediately. During errors, tighten monitoring to 30 seconds. Return to 5-minute baseline when status is ok and error_count is 0."
+}
 ```
-Job: Service Recovery Automation
 
-Endpoint: health-check
-  URL: https://api.example.com/health
-  Method: GET
-  Baseline Interval: 5 minutes (300000ms)
-  Min Interval: 30 seconds (30000ms)
-  Timeout: 10 seconds (10000ms)
-  Description:
-    "Monitors service health. When status is error or needs_recovery is
-    true, the trigger-recovery sibling should run immediately. During
-    errors, tighten monitoring to 30 seconds. Return to 5-minute baseline
-    when status is ok and error_count is 0."
-
-Endpoint: trigger-recovery
-  URL: https://api.example.com/admin/restart
-  Method: POST
-  Baseline Interval: 24 hours (86400000ms)
-  Min Interval: 5 minutes (300000ms)
-  Timeout: 30 seconds (30000ms)
-  Description:
-    "Recovery action that restarts the service. Only run when health-check
-    sibling shows status error or needs_recovery is true. After triggering,
-    wait at least 5 minutes (minInterval). Return to 24-hour baseline when
-    health-check shows ok. Maximum 3 recovery attempts before pausing
-    1 hour."
+```json
+{
+  "name": "trigger-recovery",
+  "url": "https://api.example.com/admin/restart",
+  "method": "POST",
+  "baselineIntervalMs": 86400000,
+  "minIntervalMs": 300000,
+  "timeoutMs": 30000,
+  "description": "Recovery action that restarts the service. Only run when health-check sibling shows status error or needs_recovery is true. After triggering, wait at least 5 minutes (minInterval). Return to 24-hour baseline when health-check shows ok. Maximum 3 recovery attempts before pausing 1 hour."
+}
 ```
 
 **health-check response (error state):**
@@ -307,21 +300,17 @@ Endpoint: trigger-recovery
 
 **Scenario**: Poll less frequently when system is under high load (to reduce overhead), more frequently when load is low.
 
-```
-Endpoint: system-load-monitor
-  URL: https://api.example.com/metrics/load
-  Method: GET
-  Baseline Interval: 1 minute (60000ms)
-  Min Interval: 10 seconds (10000ms)
-  Max Interval: 5 minutes (300000ms)
-  Timeout: 10 seconds (10000ms)
-  Description:
-    "Monitors system load. INVERSE SCALING: when load is HIGH, poll LESS
-    frequently to reduce overhead. When load is LOW, poll MORE frequently
-    since the system has capacity. Rules: load_pct > 80 → poll every
-    5 minutes (minimal overhead). load_pct 50-80 → poll every 2-3 minutes.
-    load_pct < 50 → poll every 30 seconds (system has capacity). If
-    recommendation field says reduce_polling, always extend interval."
+```json
+{
+  "name": "system-load-monitor",
+  "url": "https://api.example.com/metrics/load",
+  "method": "GET",
+  "baselineIntervalMs": 60000,
+  "minIntervalMs": 10000,
+  "maxIntervalMs": 300000,
+  "timeoutMs": 10000,
+  "description": "Monitors system load. INVERSE SCALING: when load is HIGH, poll LESS frequently to reduce overhead. When load is LOW, poll MORE frequently since the system has capacity. Rules: load_pct > 80 → poll every 5 minutes (minimal overhead). load_pct 50-80 → poll every 2-3 minutes. load_pct < 50 → poll every 30 seconds (system has capacity). If recommendation field says reduce_polling, always extend interval."
+}
 ```
 
 **Response body your endpoint should return:**
@@ -347,21 +336,17 @@ Endpoint: system-load-monitor
 
 **Scenario**: Monitor volatile metrics without oscillating between extreme frequencies.
 
-```
-Endpoint: volatile-metrics
-  URL: https://api.example.com/metrics
-  Method: GET
-  Baseline Interval: 1 minute (60000ms)
-  Min Interval: 30 seconds (30000ms)
-  Max Interval: 2 minutes (120000ms)
-  Timeout: 10 seconds (10000ms)
-  Description:
-    "Monitors volatile system metrics. STABILITY IS TOP PRIORITY. Rules:
-    (1) Only use avg_5min and avg_1hr fields - never instant_value.
-    (2) Only adjust for sustained trends visible in 3+ consecutive
-    responses. (3) When trend is stable and within_normal_range is true,
-    maintain current interval. (4) When uncertain, do nothing rather
-    than oscillate."
+```json
+{
+  "name": "volatile-metrics",
+  "url": "https://api.example.com/metrics",
+  "method": "GET",
+  "baselineIntervalMs": 60000,
+  "minIntervalMs": 30000,
+  "maxIntervalMs": 120000,
+  "timeoutMs": 10000,
+  "description": "Monitors volatile system metrics. STABILITY IS TOP PRIORITY. Rules: (1) Only use avg_5min and avg_1hr fields - never instant_value. (2) Only adjust for sustained trends visible in 3+ consecutive responses. (3) When trend is stable and within_normal_range is true, maintain current interval. (4) When uncertain, do nothing rather than oscillate."
+}
 ```
 
 Note the tight min/max ratio (30s to 120s = 4x). This bounds AI decisions to a narrow range, preventing oscillation even with volatile data.
