@@ -25,6 +25,7 @@ mcp:
 | **Interactive UI** | [`/api/reference`](https://cronicorn.com/api/reference) | Browsing and testing endpoints in a browser |
 | **OpenAPI spec** | [`/api/doc`](https://cronicorn.com/api/doc) | Code generation, client SDKs, tooling |
 | **LLM-friendly Markdown** | [`/api/llms.txt`](https://cronicorn.com/api/llms.txt) | AI agents and coding assistants |
+| **Context7** | [`context7.com/weskerllc/cronicorn`](https://context7.com/weskerllc/cronicorn) | AI agents via Context7 MCP — up-to-date, version-specific docs injected into prompts |
 
 The `/api/llms.txt` endpoint serves the full API spec as Markdown optimized for AI consumption, following the [llms.txt standard](https://llmstxt.org/). Point your AI assistant here for accurate, up-to-date API context.
 
