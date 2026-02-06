@@ -1,12 +1,18 @@
 ---
 id: recipes
 title: Recipes & Complete Examples
-description: Complete examples for common Cronicorn scenarios with endpoint configuration, response body design, and AI behavior walkthrough
+description: Complete examples for health monitoring, automated error recovery, data sync, response field parsing, oscillation prevention, and multi-endpoint coordination — with AI behavior walkthroughs
 tags:
   - user
   - examples
   - recipes
   - cookbook
+  - error-recovery
+  - status-codes
+  - health-monitoring
+  - data-sync
+  - coordination
+  - degraded-state
 sidebar_position: 4
 mcp:
   uri: file:///docs/recipes.md
@@ -29,6 +35,41 @@ Cronicorn is a **hosted scheduling service** — there are no config files to de
 4. **AI runs automatically** — no per-endpoint AI setup required
 
 The configurations below use the JSON format accepted by the Web UI, MCP Server, and HTTP API. See [Core Concepts](./core-concepts.md#endpoint-configuration-schema-json) for the full schema.
+
+## Prerequisites
+
+1. **Sign up** at cronicorn.com (or use a self-hosted instance)
+2. **Get an API key** from Settings → API Keys in the Web UI
+3. **Authenticate** using `x-api-key: YOUR_API_KEY` header (API) or OAuth device flow (MCP Server)
+4. **Have an HTTP endpoint** that returns JSON with relevant metrics
+
+All examples below use the HTTP API with cURL. The same configurations work via the [MCP Server](./mcp-server.md) tools and the Web UI forms. See [Code Examples](./code-examples.md) for JavaScript/TypeScript/Python.
+
+## How Cronicorn Processes Response Bodies (The Mechanism)
+
+**You write no parsing code, no rules engine, and no DSL.** Here is exactly what happens:
+
+1. The **Scheduler** executes your endpoint (makes the HTTP request)
+2. The **AI Planner** reads the HTTP response body (up to 500 characters of JSON or text)
+3. The AI interprets field names and values against your endpoint's `description` text
+4. The AI calls scheduling tools (`propose_interval`, `clear_hints`, `pause_until`, `propose_next_time`) based on its analysis
+5. The **Governor** applies the AI's suggestion, clamped to your `minIntervalMs`/`maxIntervalMs` constraints
+
+**Your three levers of control:**
+
+| Lever | What It Does | Example |
+|-------|-------------|---------|
+| **`description` field** | Natural language rules the AI follows | "Poll every 30s when error_rate_pct > 5%. Return to baseline when < 2%." |
+| **`minIntervalMs` / `maxIntervalMs`** | Hard guardrails the AI cannot override | min: 30000 (30s floor), max: 900000 (15min ceiling) |
+| **Response body design** | The data the AI reads and interprets | `{ "error_rate_pct": 8.5, "status": "degraded" }` |
+
+The description is your rules engine. The constraints are your safety net. The response body is your data contract.
+
+**Edge cases:**
+- If the response body is empty or malformed → AI falls back to HTTP status code and health metrics
+- If a field referenced in the description is missing → AI uses available data and notes the absence
+- If the AI proposes an interval outside constraints → Governor clamps it to min/max
+- If AI is unavailable (quota, outage) → Scheduler continues on baseline schedule
 
 ---
 
@@ -148,9 +189,56 @@ curl -X DELETE https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/hints \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
+### Writing the Description for Degraded State Detection
+
+The `description` field is the primary way you control AI behavior. Here's how to write effective descriptions for health monitoring:
+
+**Good description (specific thresholds, both directions):**
+```
+"Monitors API health. Poll every 30 seconds when status is degraded or error_rate_pct exceeds 5%.
+Return to baseline when status returns to healthy and error_rate_pct drops below 2%.
+If latency_ms exceeds 2000, tighten to 1-minute intervals."
+```
+
+**Bad description (vague, no recovery condition):**
+```
+"Monitors API health. Poll faster when things look bad."
+```
+
+**Why the good version works:**
+- Names specific response body fields (`status`, `error_rate_pct`, `latency_ms`)
+- Provides exact thresholds (5%, 2%, 2000ms) not vague terms like "high"
+- Specifies both tightening AND recovery conditions
+- References specific interval values (30s, 1min)
+
+### Error Handling
+
+What happens when edge cases occur:
+
+- **Health endpoint returns HTTP 500** → Failure count increments, exponential backoff applies automatically (no description needed). AI also sees the failure and may tighten monitoring.
+- **Response body is empty** → AI uses HTTP status code and execution metadata (duration, failure count) to make decisions.
+- **`status` field is missing from response** → AI notes the absence and makes decisions based on available fields (`error_rate_pct`, `latency_ms`, etc.).
+- **Response body exceeds 500 characters** → Truncated. Keep response bodies concise with the most important fields first.
+
+### Verifying AI Decisions
+
+Check what the AI decided and why using the analysis sessions API:
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=5"
+```
+
+Look for:
+- `reasoning` — The AI's explanation of what it saw and why it acted
+- `toolsCalled` — Which scheduling tools the AI invoked (`propose_interval`, `clear_hints`, etc.)
+- `actionsApplied` — The actual parameter values used
+
 ---
 
 ## Recipe 2: Automated Error Recovery with Status Code Handling
+
+> This recipe is also available as a standalone guide: [Automated Error Recovery](./automated-error-recovery.md)
 
 **Goal**: Set up a job where a health endpoint detects errors (including specific HTTP status codes like 500/503), triggers an automated recovery action, respects a cooldown period, and returns to normal polling once the service recovers.
 
@@ -429,6 +517,26 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 1. AI calls `get_latest_response()` → sees `{ "sync_rate_per_minute": 10, "status": "degraded" }`
 2. AI reads description: "if sync_rate_per_minute drops below 50, investigate by tightening interval"
 3. AI calls `propose_interval(intervalMs=30000, ttlMinutes=15, reason="Sync rate dropped to 10/min, investigating")`
+
+### Error Handling
+
+What happens when edge cases occur:
+
+- **Sync-status endpoint returns HTTP 500** → Failure count increments, exponential backoff applies. AI detects the failure and may tighten monitoring to track recovery.
+- **`records_pending` field is missing** → AI falls back to other available fields (`status`, `sync_rate_per_minute`) and the HTTP status code.
+- **Response body is malformed (not valid JSON)** → AI uses HTTP status code and execution metadata only. The endpoint is still tracked normally.
+- **Sync rate drops to 0** → AI reads the `status: "degraded"` and `sync_rate_per_minute: 0` fields, tightens polling per the description.
+
+### Verifying AI Decisions
+
+Check what the AI decided and why:
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=5"
+```
+
+Look for `reasoning` to see the AI's interpretation of `records_pending` values and `toolsCalled` to see which scheduling tools were invoked.
 
 ### Adjust Frequency Programmatically (Optional)
 
@@ -930,6 +1038,8 @@ Cronicorn prevents race conditions at multiple levels:
 3. All endpoints return to baseline schedules until tomorrow's extraction
 
 ### Preventing Conflicting Decisions
+
+For a detailed explanation of how conflict resolution works, see [Coordinating Multiple Endpoints — Conflict Resolution](./technical/coordinating-multiple-endpoints.md#how-conflict-resolution-works).
 
 To avoid conflicting AI decisions across interdependent endpoints:
 

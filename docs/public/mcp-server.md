@@ -97,11 +97,82 @@ GitHub Copilot, Claude Desktop, Cursor, Cline, Continue, and any MCP-compatible 
 - Credentials stored locally with strict file permissions
 - Tokens auto-refresh, re-auth every 30 days
 
+## Example Tool Calls
+
+Concrete examples of MCP tool invocations showing inputs and responses.
+
+### Creating a Health Monitoring Job
+
+```json
+// Tool: createJob
+// Input:
+{ "name": "Production API Monitoring", "description": "Monitors API health with adaptive frequency" }
+// Response:
+{ "id": "job_abc123", "name": "Production API Monitoring", "status": "active" }
+
+// Tool: addEndpoint
+// Input:
+{
+  "jobId": "job_abc123",
+  "name": "api-health-check",
+  "url": "https://api.example.com/health",
+  "method": "GET",
+  "baselineIntervalMs": 300000,
+  "minIntervalMs": 30000,
+  "maxIntervalMs": 900000,
+  "description": "Poll every 30s when status is degraded or error_rate_pct > 5%. Return to baseline when healthy."
+}
+// Response:
+{ "id": "ep_xyz789", "name": "api-health-check", "jobId": "job_abc123" }
+```
+
+### Manually Overriding Frequency During an Incident
+
+```json
+// Tool: applyIntervalHint
+// Input:
+{ "id": "ep_xyz789", "intervalMs": 30000, "ttlMinutes": 60, "reason": "Incident detected" }
+// Response:
+{ "success": true, "intervalMs": 30000, "expiresAt": "2026-02-03T13:00:00Z" }
+```
+
+### Checking Endpoint Health
+
+```json
+// Tool: getEndpointHealth
+// Input:
+{ "id": "ep_xyz789", "sinceHours": 24 }
+// Response:
+{ "successCount": 285, "failureCount": 3, "successRate": 98.96, "failureStreak": 0 }
+```
+
+### Debugging a Failing Endpoint
+
+```json
+// Tool: listEndpointRuns
+// Input:
+{ "id": "ep_xyz789", "limit": 5, "status": "failed" }
+// Response:
+{ "runs": [
+  { "id": "run_001", "status": "failed", "statusCode": 503, "error": "Service Unavailable" },
+  { "id": "run_002", "status": "failed", "statusCode": 500, "error": "Internal Server Error" }
+]}
+
+// Tool: resetFailures
+// Input:
+{ "id": "ep_xyz789" }
+// Response:
+{ "success": true, "failureCount": 0 }
+```
+
+For more language examples (JavaScript, TypeScript, Python), see [Code Examples](./code-examples.md).
+
 ---
 
 ## See Also
 
 - [Full README & Tool Reference](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server)
 - [Core Concepts](./core-concepts.md) - Understanding jobs and endpoints
+- [Code Examples](./code-examples.md) - JavaScript, TypeScript, Python examples
 - [How AI Adaptation Works](./technical/how-ai-adaptation-works.md) - AI tools and hints
 - [API Reference](./api-reference.md) - HTTP API for programmatic access

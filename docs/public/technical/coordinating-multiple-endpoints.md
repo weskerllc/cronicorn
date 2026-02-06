@@ -1,14 +1,14 @@
 ---
 id: coordinating-endpoints
 title: Coordinating Multiple Endpoints
-description: Orchestration patterns and multi-endpoint examples
-tags: [assistant, technical, orchestration]
+description: Orchestration patterns for interdependent jobs, cross-job coordination, conflict resolution, and multi-endpoint workflows
+tags: [assistant, technical, orchestration, interdependent-jobs, conflict-resolution, cross-job-coordination]
 sidebar_position: 4
 mcp:
   uri: file:///docs/technical/coordinating-multiple-endpoints.md
   mimeType: text/markdown
-  priority: 0.75
-  lastModified: 2026-02-03T00:00:00Z
+  priority: 0.85
+  lastModified: 2026-02-06T00:00:00Z
 ---
 
 # Coordinating Multiple Endpoints
@@ -16,6 +16,22 @@ mcp:
 This document shows practical patterns for orchestrating workflows across multiple endpoints. Cronicorn is a **hosted scheduling service** where the AI automatically handles coordination — you don't write orchestration code, parsers, or state machines. Instead, you configure endpoints with descriptions and design response bodies with signals. The AI reads both and coordinates automatically.
 
 All configurations use JSON field names that work with the Web UI, MCP Server, and HTTP API. See [Core Concepts](../core-concepts.md#endpoint-configuration-schema-json) for the full schema.
+
+## Coordinating Interdependent Jobs
+
+Cronicorn supports coordination between interdependent HTTP jobs through two mechanisms: **sibling visibility** (endpoints in the same job) and **embedded status** (endpoints in different jobs). Both approaches are covered below with complete examples.
+
+## How Conflict Resolution Works
+
+Cronicorn prevents conflicting AI decisions through architectural design:
+
+1. **Independent analysis**: The AI analyzes each endpoint in its own session. It can READ sibling state but can only WRITE to the endpoint currently being analyzed.
+2. **One-directional dependencies**: Upstream endpoints write signals (e.g., `ready_for_transform: true`). Downstream endpoints read those signals. Dependencies flow one way — no circular references.
+3. **Batch ID idempotency**: Pipeline stages include batch_id in responses. If a downstream endpoint has already processed a batch, it skips — preventing duplicate work even if the AI triggers it multiple times.
+4. **Atomic claiming**: The Scheduler uses database-level atomic operations (SELECT ... FOR UPDATE SKIP LOCKED) to claim endpoints. No two scheduler instances execute the same endpoint simultaneously.
+5. **TTL auto-revert**: All AI hints expire. Even if the AI makes a suboptimal decision, the endpoint returns to baseline when the TTL expires.
+
+**What this means in practice:** If the AI analyzes endpoint A and endpoint B at the same time, they cannot create conflicting schedules because each session only modifies its own endpoint. The AI reads sibling state as a snapshot — it doesn't lock or modify siblings.
 
 ## Core Concept: Coordination via Descriptions and Response Bodies
 
@@ -469,9 +485,9 @@ When AI analyzes any endpoint:
 - AI interprets recommendations and applies to individual endpoints
 - Centralized policy (health monitor) with distributed execution (AI per endpoint)
 
-## Pattern 5: Cross-Job Coordination
+## Pattern 5: Cross-Job Coordination (Interdependent Jobs)
 
-**Scenario**: Endpoints in different jobs need to coordinate (e.g., upstream service health affects downstream consumers).
+**Scenario**: Endpoints in different jobs need to coordinate (e.g., upstream service health affects downstream consumers). This is the pattern for **interdependent HTTP jobs** that span separate job containers.
 
 ### Challenge
 
@@ -588,12 +604,108 @@ When AI analyzes Data Processor:
 2. Sees: `{ "upstream_health": { "status": "unavailable" } }`
 3. Calls `pause_until(now + 15_minutes, reason="Upstream service unavailable")`
 
+### What the AI Does: Step-by-Step
+
+**Step 1: Upstream is healthy**
+
+1. AI analyzes data-processor → calls `get_latest_response()`
+2. Sees `{ "processed_count": 100, "upstream_health": { "status": "healthy" } }`
+3. Reads description: "When upstream_status returns to healthy, resume immediately"
+4. No action needed — maintains baseline
+
+**Step 2: Upstream goes down**
+
+1. AI analyzes data-processor → calls `get_latest_response()`
+2. Sees `{ "processed_count": 0, "upstream_health": { "status": "unavailable" } }`
+3. Reads description: "When upstream_status is unavailable, pause for 15 minutes"
+4. Calls `pause_until(now + 15 minutes, reason="Upstream unavailable")`
+5. AI analyzes analytics-pipeline → same pattern, pauses for 30 minutes (per its description)
+
+**Step 3: Upstream recovers**
+
+1. AI analyzes data-processor → calls `get_latest_response()`
+2. Sees `{ "processed_count": 50, "upstream_health": { "status": "healthy" } }`
+3. Reads description: "When upstream_status returns to healthy, resume immediately"
+4. Calls `pause_until(null, reason="Upstream recovered")`
+
+### What Happens When Both Jobs' AI Analyzes Simultaneously
+
+No conflicts occur because each AI session only modifies its own endpoint:
+
+- The AI analyzing upstream-health can only modify upstream-health's schedule
+- The AI analyzing data-processor can only modify data-processor's schedule
+- Both sessions read response bodies as snapshots — no locking or mutual modification
+- Even if both run at the exact same moment, their actions are independent and non-conflicting
+
+This is by design: the [conflict resolution architecture](#how-conflict-resolution-works) ensures that independent analysis sessions cannot create contradictory scheduling decisions.
+
+### Practical Example: Three Endpoints Across Two Interdependent Jobs
+
+**Job 1: "Data Ingestion"** — Pulls data from external sources
+
+```bash
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Data Ingestion", "description": "Ingests data from external APIs" }'
+
+# Endpoint: fetch-orders (runs every 5 minutes)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB1_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "fetch-orders",
+    "url": "https://api.example.com/orders/recent",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 60000,
+    "description": "Fetches recent orders. Response includes new_order_count and ingestion_status."
+  }'
+```
+
+**Job 2: "Order Processing"** — Processes ingested orders (separate team, separate job)
+
+```bash
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Order Processing", "description": "Processes ingested orders, checks ingestion status" }'
+
+# Endpoint: process-orders (checks ingestion status via its own response body)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB2_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "process-orders",
+    "url": "https://downstream.example.com/process",
+    "method": "POST",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 60000,
+    "description": "Processes ingested orders. Response includes ingestion_status from upstream. When ingestion_status is stale (no new data for 15 minutes), relax to 10-minute interval. When ingestion_status is active with high volume, tighten to 1 minute."
+  }'
+
+# Endpoint: generate-reports (depends on processed orders)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB2_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "generate-reports",
+    "url": "https://downstream.example.com/reports",
+    "method": "POST",
+    "baselineIntervalMs": 600000,
+    "description": "Generates reports from processed orders. Check process-orders sibling: only generate when orders_processed_count > 0 in latest response. If no new data, maintain baseline."
+  }'
+```
+
+In this setup, `process-orders` and `generate-reports` are siblings (same job), so the AI coordinates them via `get_sibling_latest_responses()`. The cross-job dependency (Job 1 → Job 2) is handled by embedding ingestion status in the downstream response body.
+
 ### Key Points
 
 - Endpoints embed external dependency status in their response bodies
 - AI reacts to dependency signals
 - Works across jobs (no sibling query needed)
 - Endpoint is responsible for checking upstream status
+- No conflicts: each AI session only modifies its own endpoint
 
 ## Common Coordination Signals
 

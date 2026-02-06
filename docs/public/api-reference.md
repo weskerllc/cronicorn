@@ -334,6 +334,30 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
 
 The AI interval hint overrides the baseline (including backoff). When the hint expires (after TTL), scheduling returns to the backoff-adjusted baseline.
 
+### JavaScript Example
+
+```javascript
+// Create a job with status-code-aware scheduling
+const response = await fetch('https://api.cronicorn.com/api/jobs/job_abc123/endpoints', {
+  method: 'POST',
+  headers: {
+    'x-api-key': 'YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'api-health-check',
+    url: 'https://api.example.com/health',
+    method: 'GET',
+    baselineIntervalMs: 300000,
+    minIntervalMs: 30000,
+    description: 'Monitor API health. When HTTP 5xx errors occur, Cronicorn automatically applies exponential backoff. Additionally, when the response body shows error_rate_pct > 5%, tighten polling to 30 seconds. Return to baseline when error_rate_pct < 2%.'
+  })
+});
+const endpoint = await response.json();
+```
+
+For more language examples (TypeScript, Python, MCP), see [Code Examples](./code-examples.md).
+
 ### Reset Failures Manually
 
 If exponential backoff has kicked in and you want to immediately return to baseline without waiting for a successful response:
