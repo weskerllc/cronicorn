@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/weskerllc/cronicorn/compare/v1.20.0...v1.20.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* **web:** replace tab bottom border with pill-style background ([#117](https://github.com/weskerllc/cronicorn/issues/117)) ([082bc9e](https://github.com/weskerllc/cronicorn/commit/082bc9ef0f6f3f27a393db56faf4840247e07be5))
+
 # [1.20.0](https://github.com/weskerllc/cronicorn/compare/v1.19.3...v1.20.0) (2026-02-06)
 
 
