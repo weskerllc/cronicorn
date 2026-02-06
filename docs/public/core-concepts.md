@@ -229,6 +229,8 @@ An **Endpoint** is the actual work to be executed - an HTTP request that runs on
 
 **Key insight**: Most "multi-job coordination" scenarios are actually **one job with multiple endpoints**.
 
+For how endpoints coordinate across jobs and how conflicting AI decisions are prevented, see [Coordinating Multiple Endpoints](./technical/coordinating-multiple-endpoints.md#how-conflict-resolution-works).
+
 ## How Descriptions Work
 
 Cronicorn uses **natural language descriptions** as your primary way to configure AI behavior. You don't write code rules—you write descriptions, and the AI interprets them.
@@ -284,17 +286,37 @@ HIGH (reduce overhead), poll MORE when load is LOW."
 
 ### How AI Uses Descriptions and Response Bodies
 
-The AI Planner processes your endpoints automatically — no per-endpoint AI setup required:
+### The Core Mechanism: No Code Required
 
-1. AI reads your endpoint **description** to understand what to monitor and what thresholds matter
-2. AI reads the **response body** from your endpoint (up to 500 characters of JSON or text)
-3. AI reads **sibling responses** from other endpoints in the same job (via `get_sibling_latest_responses()`)
-4. AI decides whether to adjust scheduling based on all three inputs
-5. Constraints (min/max intervals) provide hard guardrails that the AI cannot override
+**You write no parsing code, no rules engine, and no DSL.** Here is exactly what happens:
 
-**You don't write any parsing code, rules, or logic.** The AI interprets response body fields based on your description. For example, if your description says "tighten polling when error_rate_pct exceeds 5%" and your response body contains `{ "error_rate_pct": 8.5 }`, the AI reads the field, compares it to the threshold in the description, and calls `propose_interval()` to tighten the schedule.
+1. The **Scheduler** executes your endpoint (makes the HTTP request)
+2. The **AI Planner** reads the HTTP response body (up to 500 characters of JSON or text)
+3. The AI interprets field names and values against your endpoint's `description` text
+4. The AI calls scheduling tools (`propose_interval`, `clear_hints`, `pause_until`, `propose_next_time`) based on its analysis
+5. The **Governor** applies the AI's suggestion, clamped to your `minIntervalMs`/`maxIntervalMs` constraints
 
-**No code, no DSL, no rules engine** — just natural language descriptions that the AI interprets.
+The AI also reads **sibling responses** from other endpoints in the same job (via `get_sibling_latest_responses()`) to coordinate multi-endpoint workflows.
+
+For example, if your description says "tighten polling when error_rate_pct exceeds 5%" and your response body contains `{ "error_rate_pct": 8.5 }`, the AI reads the field, compares it to the threshold in the description, and calls `propose_interval()` to tighten the schedule.
+
+### Your Three Levers of Control
+
+Every endpoint's adaptive behavior is governed by three things you configure:
+
+| Lever | What It Does | Where to Set It |
+|-------|-------------|-----------------|
+| **`description`** | Natural language rules — tells the AI what to monitor and when to act | API: `description` field / MCP: `addEndpoint` / UI: Endpoint form |
+| **`minIntervalMs` / `maxIntervalMs`** | Hard guardrails — AI cannot schedule outside these bounds | API: endpoint fields / MCP: `addEndpoint` / UI: Advanced Configuration |
+| **Response body design** | The data the AI interprets — include the fields your description references | Your HTTP endpoint's JSON response |
+
+The description is your rules engine. The constraints are your safety net. The response body is your data contract. Together, they give you full control over AI behavior without writing any code.
+
+**Edge cases:**
+- If the response body is empty or malformed → AI falls back to HTTP status code and health metrics
+- If a field referenced in the description is missing → AI uses available data and notes the absence
+- If the AI proposes an interval outside constraints → Governor clamps it to min/max
+- If AI is unavailable (quota, outage) → Scheduler continues on baseline schedule
 
 ## Scheduling
 
@@ -474,6 +496,8 @@ AI behavior:
 ```
 
 ## Failure Handling
+
+For a complete automated error recovery workflow, see [Automated Error Recovery](./automated-error-recovery.md).
 
 ### HTTP Status Codes
 

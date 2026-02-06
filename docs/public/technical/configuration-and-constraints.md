@@ -418,6 +418,35 @@ Response includes smoothed averages - use those, not instant values."
 - Adaptation follows your business logic
 - Much more precise control
 
+### Example: Degraded State Detection
+
+For a health monitoring endpoint that should increase frequency during degradation:
+
+```json
+{
+  "description": "Monitors API health. Poll every 30 seconds when status is degraded or error_rate_pct exceeds 5%. Return to 5-minute baseline when status returns to healthy and error_rate_pct drops below 2%. If latency_ms exceeds 2000, tighten to 1-minute intervals."
+}
+```
+
+**Why this works well:**
+- Names specific response body fields (`status`, `error_rate_pct`, `latency_ms`)
+- Provides exact thresholds (5%, 2%, 2000ms) not vague terms
+- Specifies both tightening AND recovery conditions
+- References specific interval values (30s, 1min, 5min)
+
+**Corresponding response body:**
+```json
+{
+  "status": "degraded",
+  "error_rate_pct": 8.5,
+  "latency_ms": 1200,
+  "active_connections": 890,
+  "timestamp": "2026-02-03T12:05:00Z"
+}
+```
+
+The AI reads `status: "degraded"` and `error_rate_pct: 8.5`, matches both against the description thresholds, and calls `propose_interval(intervalMs=30000)` to tighten polling to 30 seconds.
+
 ### Best Practices:
 
 1. **Be specific about thresholds**: "when queue > 1000" not "when queue is high"
