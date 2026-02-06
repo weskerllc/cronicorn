@@ -601,3 +601,149 @@ GitHub Actions. GitLab CI. Whatever you use — doesn’t matter.
 What matters is that the rules aren’t suggestions.
 
 ---
+
+Other Tips That Actually Matter
+
+These don’t get as much airtime as architecture or tests, but they quietly determine whether AI helps you or slowly derails you.
+
+Be Explicit With Your Agent Config
+
+Your agent config files (claude.md, copilot-instructions.md, etc.) are not decoration. They’re part of the system.
+
+I always include rules like:
+
+Favor simplicity and readability over cleverness
+
+Do not over-engineer
+
+Do not add features that were not explicitly requested
+
+Do not reinvent existing abstractions
+
+Stay on task
+
+This sounds obvious. It isn’t.
+
+Left alone, AI tends to chase “complete” instead of “correct.” These rules pull it back toward boring, understandable code.
+
+Force Fresh Docs for Library Work
+
+Any time AI touches an external library, framework, or API, I require it to consult up-to-date documentation. That means tools like Context7 or web search — not training-data memory.
+
+This avoids a whole class of bugs where the code looks right but relies on APIs that changed six months ago.
+
+If the agent can’t cite the docs, I don’t trust the code.
+
+Comments Are Fine. Just Keep Them Short.
+
+I’m not anti-comments. I’m anti-essays.
+
+When I want comments, I say one word: concise.
+
+Good comments explain why something exists, not what the code already says. AI is especially bad at over-commenting. You have to rein that in early or you’ll end up with noise instead of clarity.
+
+This could honestly be its own rule.
+
+Common Failure Modes (And How to Stop Them)
+
+These are patterns I’ve seen repeatedly. If you’re using AI seriously, you’ll recognize them.
+
+AI Rewrites What Already Exists
+
+This one’s subtle and dangerous.
+
+AI will happily reimplement logic that already exists elsewhere in your codebase — sometimes identical, sometimes slightly different. Either way, you now have two sources of truth.
+
+When this happens, it usually means one of two things:
+
+The agent isn’t being instructed to search for existing code
+
+Your codebase doesn’t make it obvious where that logic lives
+
+Fixes:
+
+Tell the agent to search for existing implementations before writing new ones
+
+Strengthen boundaries and naming so reuse is obvious
+
+Document key entry points in ADRs or agent instructions
+
+Duplication is rarely an AI problem. It’s a signaling problem.
+
+AI Adds “Helpful” Extra Features
+
+AI loves bells and whistles. Pagination you didn’t ask for. Retry logic you didn’t need. Optional configs nobody will use.
+
+That’s scope creep, just faster.
+
+One solution that works surprisingly well:
+tell the AI to write things down instead of implementing them.
+
+If it notices:
+
+A security concern
+
+A performance improvement
+
+A future feature
+
+Have it log the idea in:
+
+A TECH_DEBT.md
+
+A FUTURE_IDEAS.md
+
+Or even an ADR marked as “deferred”
+
+This keeps momentum without letting the feature balloon.
+
+Define an MVP or You’ll Drown
+
+At the start of any project, I force myself to define a strict MVP:
+
+A short list of features that must exist
+
+Everything else is explicitly labeled “post-MVP”
+
+This matters even more with AI, because it will happily build everything you vaguely imply.
+
+You will still accumulate:
+
+Tech debt
+
+Security notes
+
+Nice-to-haves
+
+That’s fine. That’s healthy.
+What’s not fine is pretending all of that belongs in v1.
+
+Backlogs are better than scope creep.
+
+Multiple Sources of Truth Will Confuse Everyone — Especially AI
+
+This is an underrated pain point.
+
+You describe what your app does:
+
+On the landing page
+
+In the README
+
+In the docs
+
+In code comments
+
+Now they’re slightly different.
+
+Humans notice this eventually. AI notices immediately — and gets confused.
+
+Where possible, enforce a single source of truth. For example:
+
+A shared content or docs package
+
+One canonical “what this app does” document
+
+Everything else should reference it, not rephrase it.
+
+Consistency isn’t just cleanliness. It’s how you keep agents aligned.
