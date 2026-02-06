@@ -8,6 +8,6 @@ export const brand = {
   name: "Cronicorn",
   title: "HTTP Jobs That Understand Their Own Responses",
   description:
-    "Endpoints adapt, coordinate, and trigger each other — controlled by descriptions, not code.",
+    "Set a baseline schedule and describe what matters in plain English. AI reads your endpoint's response body and adjusts frequency — within your min/max constraints.",
   logoAlt: "Cronicorn - Adaptive HTTP Job Scheduler Logo",
 } as const;

@@ -142,11 +142,12 @@ export const createSoftwareApplicationSchema = () => ({
     url: APP_URL,
     softwareVersion: "1.0",
     featureList: [
-        "AI-powered adaptive scheduling",
-        "Cron expression support",
-        "REST API endpoints",
-        "Real-time monitoring",
-        "Intelligent failure handling"
+        "AI reads endpoint response bodies and adjusts scheduling frequency",
+        "Natural language descriptions control AI behavior — no code rules",
+        "Min/max interval constraints with TTL-based hints that auto-expire",
+        "Sibling endpoint coordination within the same job",
+        "Cron expressions and interval-based baseline scheduling",
+        "Graceful degradation — baseline continues if AI is unavailable",
     ],
     offers: {
         "@type": "Offer",
