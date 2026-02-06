@@ -36,31 +36,41 @@ The configurations below use the JSON format accepted by the Web UI, MCP Server,
 
 **Goal**: Monitor a service endpoint and automatically increase polling frequency from 5 minutes to 30 seconds when the HTTP response indicates a degraded state, then return to baseline when conditions normalize.
 
-### Step 1: Create the Job
+### Step 1: Create the Job and Endpoint via API
 
-```json
-{
-  "name": "Production API Monitoring",
-  "description": "Monitors production API health with adaptive frequency during incidents"
-}
+Create the job and add the endpoint using the HTTP API (the same fields work in the Web UI and MCP Server):
+
+```bash
+# Create the job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production API Monitoring",
+    "description": "Monitors production API health with adaptive frequency during incidents"
+  }'
+# Returns: { "id": "job_abc123", "name": "Production API Monitoring", ... }
+
+# Add the health-check endpoint to the job
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "api-health-check",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 900000,
+    "timeoutMs": 10000,
+    "description": "Monitors API health. Poll more frequently (every 30 seconds) when status is degraded or error_rate_pct exceeds 5%. Return to baseline (5 minutes) when status returns to healthy and error_rate_pct drops below 2%. If latency_ms exceeds 2000, tighten to 1-minute intervals to track recovery."
+  }'
+# Cronicorn immediately starts executing this endpoint every 5 minutes.
+# The AI Planner automatically analyzes responses and adjusts frequency.
+# No additional setup required — no code to write, no rules to configure.
 ```
 
-### Step 2: Add Endpoint with Adaptive Description
-
-```json
-{
-  "name": "api-health-check",
-  "url": "https://api.example.com/health",
-  "method": "GET",
-  "baselineIntervalMs": 300000,
-  "minIntervalMs": 30000,
-  "maxIntervalMs": 900000,
-  "timeoutMs": 10000,
-  "description": "Monitors API health. Poll more frequently (every 30 seconds) when status is degraded or error_rate_pct exceeds 5%. Return to baseline (5 minutes) when status returns to healthy and error_rate_pct drops below 2%. If latency_ms exceeds 2000, tighten to 1-minute intervals to track recovery."
-}
-```
-
-### Step 3: Design Your Health Endpoint Response Body
+### Step 2: Design Your Health Endpoint Response Body
 
 Your `https://api.example.com/health` endpoint should return:
 
@@ -169,44 +179,55 @@ When failures occur, exponential backoff multiplies the baseline interval:
 
 A single 2xx response resets the failure count to 0 and restores normal scheduling immediately.
 
-### Step 1: Create the Job
+### Step 1: Create the Job and Endpoints via API
 
-```json
-{
-  "name": "Service Recovery Automation",
-  "description": "Monitors service health and triggers automated recovery when errors are detected"
-}
+Create a single job with TWO endpoints — placing them in the same job gives the AI **sibling visibility**, so it can coordinate between them:
+
+```bash
+# Create the job (container for both endpoints)
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Service Recovery Automation",
+    "description": "Monitors service health and triggers automated recovery when errors are detected"
+  }'
+# Returns: { "id": "job_abc123", ... }
+
+# Add the health-check endpoint
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "health-check",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "timeoutMs": 10000,
+    "description": "Monitors service health. When status is error, needs_recovery is true, or HTTP response returns 5xx status codes, the trigger-recovery sibling endpoint should run immediately via one-shot. During errors, tighten monitoring to every 30 seconds to track recovery progress. Return to 5-minute baseline when status returns to ok and error_count drops to 0."
+  }'
+# Returns: { "id": "ep_health123", ... }
+
+# Add the recovery endpoint (same job = sibling of health-check)
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "trigger-recovery",
+    "url": "https://api.example.com/admin/restart",
+    "method": "POST",
+    "baselineIntervalMs": 86400000,
+    "minIntervalMs": 300000,
+    "timeoutMs": 30000,
+    "description": "Recovery action that restarts the service. Should only run when health-check sibling shows status error or needs_recovery is true. After triggering, wait at least 5 minutes (minInterval) before allowing another attempt. If recovery succeeds (health-check returns to ok), return to 24-hour baseline. Maximum 3 recovery attempts before pausing for 1 hour to avoid recovery loops."
+  }'
+# Returns: { "id": "ep_recovery456", ... }
+# Both endpoints are now siblings in the same job.
+# The AI automatically uses get_sibling_latest_responses() to coordinate between them.
 ```
 
-### Step 2: Add Health Check Endpoint
-
-```json
-{
-  "name": "health-check",
-  "url": "https://api.example.com/health",
-  "method": "GET",
-  "baselineIntervalMs": 300000,
-  "minIntervalMs": 30000,
-  "timeoutMs": 10000,
-  "description": "Monitors service health. When status is error, needs_recovery is true, or HTTP response returns 5xx status codes, the trigger-recovery sibling endpoint should run immediately via one-shot. During errors, tighten monitoring to every 30 seconds to track recovery progress. Return to 5-minute baseline when status returns to ok and error_count drops to 0."
-}
-```
-
-### Step 3: Add Recovery Endpoint
-
-```json
-{
-  "name": "trigger-recovery",
-  "url": "https://api.example.com/admin/restart",
-  "method": "POST",
-  "baselineIntervalMs": 86400000,
-  "minIntervalMs": 300000,
-  "timeoutMs": 30000,
-  "description": "Recovery action that restarts the service. Should only run when health-check sibling shows status error or needs_recovery is true. After triggering, wait at least 5 minutes (minInterval) before allowing another attempt. If recovery succeeds (health-check returns to ok), return to 24-hour baseline. Maximum 3 recovery attempts before pausing for 1 hour to avoid recovery loops."
-}
-```
-
-### Step 4: Design Your Response Bodies
+### Step 2: Design Your Response Bodies
 
 **Health check endpoint (`GET /health`) - when healthy:**
 ```json
@@ -300,31 +321,38 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures 
 
 **Goal**: Create a data synchronization job that polls more frequently when there is a large data backlog (high `records_pending`), and relaxes to baseline when the data is caught up.
 
-### Step 1: Create the Job
+### Step 1: Create the Job and Endpoint via API
 
-```json
-{
-  "name": "Data Sync Monitor",
-  "description": "Monitors data synchronization status and adapts polling based on pending record volume"
-}
+```bash
+# Create the job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Data Sync Monitor",
+    "description": "Monitors data synchronization status and adapts polling based on pending record volume"
+  }'
+# Returns: { "id": "job_abc123", ... }
+
+# Add the sync status endpoint
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "sync-status",
+    "url": "https://api.example.com/sync/status",
+    "method": "GET",
+    "baselineIntervalMs": 600000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 1800000,
+    "timeoutMs": 15000,
+    "description": "Checks data sync status. Adjust polling frequency based on records_pending volume: when records_pending exceeds 1000, poll every 30 seconds to track sync progress closely. When records_pending is between 100-1000, poll every 2 minutes. When records_pending drops below 100 (caught up), return to 10-minute baseline. Also monitor sync_rate_per_minute - if it drops below 50, investigate by tightening interval."
+  }'
+# Cronicorn immediately starts polling every 10 minutes.
+# AI reads the records_pending field from responses and adjusts frequency automatically.
 ```
 
-### Step 2: Add the Sync Status Endpoint
-
-```json
-{
-  "name": "sync-status",
-  "url": "https://api.example.com/sync/status",
-  "method": "GET",
-  "baselineIntervalMs": 600000,
-  "minIntervalMs": 30000,
-  "maxIntervalMs": 1800000,
-  "timeoutMs": 15000,
-  "description": "Checks data sync status. Adjust polling frequency based on records_pending volume: when records_pending exceeds 1000, poll every 30 seconds to track sync progress closely. When records_pending is between 100-1000, poll every 2 minutes. When records_pending drops below 100 (caught up), return to 10-minute baseline. Also monitor sync_rate_per_minute - if it drops below 50, investigate by tightening interval."
-}
-```
-
-### Step 3: Design Your Sync Status Response Body
+### Step 2: Design Your Sync Status Response Body
 
 **Large backlog:**
 ```json
@@ -434,33 +462,51 @@ fi
 
 In Cronicorn, **descriptions are your rules engine**. You write natural language that tells the AI which response body fields to monitor and what actions to take based on their values. The AI reads the response body, interprets the fields, and applies the scheduling tools accordingly.
 
-### Step 1: Create the Job
+### How AI Response Body Parsing Works
 
-```json
-{
-  "name": "Smart Queue Monitor",
-  "description": "Monitors queue metrics and adapts scheduling based on response body field values"
-}
+In Cronicorn, **you don't write parsing code**. The AI Planner automatically:
+1. Reads the HTTP response body (up to 500 characters, JSON or plain text)
+2. Interprets field names and values based on your endpoint's `description`
+3. Compares values against thresholds you specify in the description
+4. Calls scheduling tools (`propose_interval`, `clear_hints`, etc.) based on its analysis
+
+Your job is to: (a) return useful fields in your response body, and (b) tell the AI what those fields mean via the `description`.
+
+### Step 1: Create the Job and Endpoint via API
+
+```bash
+# Create the job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Smart Queue Monitor",
+    "description": "Monitors queue metrics and adapts scheduling based on response body field values"
+  }'
+# Returns: { "id": "job_abc123", ... }
+
+# Add the endpoint with field-parsing description
+# The description tells the AI exactly which fields to read and what thresholds to use.
+# The AI parses the response body automatically — no parsing code to write.
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "queue-metrics",
+    "url": "https://api.example.com/queue/metrics",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 15000,
+    "maxIntervalMs": 900000,
+    "timeoutMs": 10000,
+    "description": "Monitors queue processing metrics. Parse the response body fields as follows: (1) If queue_depth exceeds queue_warning_threshold, tighten polling to every 30 seconds. (2) If queue_depth exceeds queue_max, tighten to every 15 seconds (minInterval). (3) If processing_rate_per_min drops below 50, tighten to 1 minute to monitor for stalls. (4) If error_rate_pct exceeds 5, tighten to 30 seconds. (5) If all metrics are within normal ranges (queue_depth < queue_warning_threshold, error_rate_pct < 2, processing_rate_per_min > 100), return to 5-minute baseline. Use the trend field to avoid overreacting to momentary spikes - only act on sustained changes."
+  }'
+# Cronicorn starts executing every 5 minutes.
+# The AI reads queue_depth, processing_rate_per_min, error_rate_pct, and trend
+# from the response body and adjusts polling frequency based on the description rules.
 ```
 
-### Step 2: Add Endpoint with Field-Parsing Description
-
-The `description` field tells the AI exactly which response body fields to read and what thresholds trigger scheduling changes. The AI parses the response body automatically — you don't write any parsing code:
-
-```json
-{
-  "name": "queue-metrics",
-  "url": "https://api.example.com/queue/metrics",
-  "method": "GET",
-  "baselineIntervalMs": 300000,
-  "minIntervalMs": 15000,
-  "maxIntervalMs": 900000,
-  "timeoutMs": 10000,
-  "description": "Monitors queue processing metrics. Parse the response body fields as follows: (1) If queue_depth exceeds queue_warning_threshold, tighten polling to every 30 seconds. (2) If queue_depth exceeds queue_max, tighten to every 15 seconds (minInterval). (3) If processing_rate_per_min drops below 50, tighten to 1 minute to monitor for stalls. (4) If error_rate_pct exceeds 5, tighten to 30 seconds. (5) If all metrics are within normal ranges (queue_depth < queue_warning_threshold, error_rate_pct < 2, processing_rate_per_min > 100), return to 5-minute baseline. Use the trend field to avoid overreacting to momentary spikes - only act on sustained changes."
-}
-```
-
-### Step 3: Design Response Body with Parseable Fields
+### Step 2: Design Response Body with Parseable Fields
 
 ```json
 {
@@ -552,30 +598,36 @@ The `description` field tells the AI exactly which response body fields to read 
 
 **Goal**: Monitor a system with highly volatile HTTP response patterns and prevent the adaptive scheduling from oscillating between extreme frequencies — maintaining stability while still responding to genuine state changes.
 
-### Step 1: Create the Job
+### Step 1: Create the Job and Endpoint via API
 
-```json
-{
-  "name": "Volatile System Monitor",
-  "description": "Monitors volatile system metrics with stability-focused adaptive scheduling"
-}
-```
+```bash
+# Create the job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Volatile System Monitor",
+    "description": "Monitors volatile system metrics with stability-focused adaptive scheduling"
+  }'
+# Returns: { "id": "job_abc123", ... }
 
-### Step 2: Configure with Anti-Oscillation Settings
-
-The key to preventing oscillation is a **tight min/max ratio** combined with a **stability-focused description**:
-
-```json
-{
-  "name": "volatile-metrics",
-  "url": "https://api.example.com/metrics",
-  "method": "GET",
-  "baselineIntervalMs": 60000,
-  "minIntervalMs": 30000,
-  "maxIntervalMs": 120000,
-  "timeoutMs": 10000,
-  "description": "Monitors volatile system metrics. STABILITY IS THE TOP PRIORITY. Do NOT overreact to momentary spikes or drops in values. Rules for adaptation: (1) ONLY use the smoothed avg_5min and avg_1hr fields, NEVER use instant_value for decisions. (2) Only adjust interval for SUSTAINED state changes visible across at least 3 consecutive responses. (3) When trend field is stable, maintain current interval regardless of individual metric values. (4) When within_normal_range is true, always return to baseline. (5) Only tighten interval when avg_5min shows a clear directional trend AND avg_1hr confirms it. (6) When uncertain, ALWAYS maintain the current interval - do nothing rather than oscillate."
-}
+# Add the endpoint with anti-oscillation configuration.
+# Key: tight min/max ratio (30s-120s = 4x range) + stability-focused description.
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "volatile-metrics",
+    "url": "https://api.example.com/metrics",
+    "method": "GET",
+    "baselineIntervalMs": 60000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 120000,
+    "timeoutMs": 10000,
+    "description": "Monitors volatile system metrics. STABILITY IS THE TOP PRIORITY. Do NOT overreact to momentary spikes or drops in values. Rules for adaptation: (1) ONLY use the smoothed avg_5min and avg_1hr fields, NEVER use instant_value for decisions. (2) Only adjust interval for SUSTAINED state changes visible across at least 3 consecutive responses. (3) When trend field is stable, maintain current interval regardless of individual metric values. (4) When within_normal_range is true, always return to baseline. (5) Only tighten interval when avg_5min shows a clear directional trend AND avg_1hr confirms it. (6) When uncertain, ALWAYS maintain the current interval - do nothing rather than oscillate."
+  }'
+# The tight 4x constraint ratio (30s min, 120s max) bounds AI decisions.
+# Even with volatile data, scheduling stays within a narrow range.
 ```
 
 ### Constraint Ratio Guide
@@ -591,7 +643,7 @@ The min/max ratio directly controls how much the AI can swing:
 
 With a 2x ratio (like our recipe above: 30s min, 120s max), even aggressive AI decisions stay bounded within a narrow range.
 
-### Step 3: Design Your Response Body for Stability
+### Step 2: Design Your Response Body for Stability
 
 **Critical: Include smoothed values, not just instantaneous readings:**
 
@@ -699,57 +751,100 @@ curl -X PATCH https://api.cronicorn.com/api/jobs/JOB_ID/endpoints/ENDPOINT_ID \
 
 **Goal**: Set up multiple interdependent HTTP jobs where endpoints coordinate their execution based on cascading response data, with one endpoint's response influencing the scheduling of others — without creating conflicting AI decisions.
 
-### Step 1: Create the Job
+### Step 1: Create the Job and All Endpoints via API
 
-```json
-{
-  "name": "ETL Pipeline",
-  "description": "Extract-Transform-Load pipeline where each stage depends on the previous stage completing successfully. Stages coordinate via response body signals."
-}
+Create ONE job with THREE endpoints. Placing them in the same job enables **sibling visibility** — the AI can call `get_sibling_latest_responses()` to read data from other endpoints and coordinate the pipeline:
+
+```bash
+# Create the job (container for the entire pipeline)
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "ETL Pipeline",
+    "description": "Extract-Transform-Load pipeline where each stage depends on the previous stage completing successfully. Stages coordinate via response body signals."
+  }'
+# Returns: { "id": "job_abc123", ... }
+
+# Add Extract endpoint (upstream — runs on cron schedule)
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "extract-data",
+    "url": "https://api.example.com/etl/extract",
+    "method": "POST",
+    "baselineCron": "0 2 * * *",
+    "timeoutMs": 120000,
+    "description": "Extracts customer data from upstream API daily at 2 AM. After successful extraction, the response body will contain ready_for_transform=true and a batch_id. The transform-data sibling endpoint should check for this signal before processing."
+  }'
+# Returns: { "id": "ep_extract123", ... }
+
+# Add Transform endpoint (midstream — polls and waits for extract signal)
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "transform-data",
+    "url": "https://api.example.com/etl/transform",
+    "method": "POST",
+    "baselineIntervalMs": 60000,
+    "minIntervalMs": 30000,
+    "timeoutMs": 120000,
+    "description": "Transforms extracted data. Check extract-data sibling response: only process when ready_for_transform is true and batch_id is newer than our last processed batch_id. After successful transformation, set ready_for_load=true so the load-data sibling can proceed. If waiting for data (no new batch), maintain 1-minute baseline. When actively processing a batch, tighten to 30 seconds to track progress."
+  }'
+# Returns: { "id": "ep_transform456", ... }
+
+# Add Load endpoint (downstream — polls and waits for transform signal)
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "load-data",
+    "url": "https://api.example.com/etl/load",
+    "method": "POST",
+    "baselineIntervalMs": 60000,
+    "minIntervalMs": 30000,
+    "timeoutMs": 180000,
+    "description": "Loads transformed data to production database. Check transform-data sibling response: only process when ready_for_load is true and batch_id matches current batch. After successful load, set pipeline_complete=true. If waiting for transform (no new batch ready), maintain 1-minute baseline to check periodically."
+  }'
+# Returns: { "id": "ep_load789", ... }
+# All three endpoints are siblings in the same job.
+# The AI coordinates them using get_sibling_latest_responses().
+# No orchestration code to write — the AI handles dependency coordination.
 ```
 
-### Step 2: Add Extract Endpoint (Upstream)
+### Error Handling in Pipelines
 
-```json
-{
-  "name": "extract-data",
-  "url": "https://api.example.com/etl/extract",
-  "method": "POST",
-  "baselineCron": "0 2 * * *",
-  "timeoutMs": 120000,
-  "description": "Extracts customer data from upstream API daily at 2 AM. After successful extraction, the response body will contain ready_for_transform=true and a batch_id. The transform-data sibling endpoint should check for this signal before processing."
-}
+If any stage fails:
+- **HTTP 4xx/5xx or timeout**: The failed endpoint enters exponential backoff (baseline × 2^failures, capped at 32×). Downstream stages see no new `ready_for_*` signal, so they stay on baseline and wait.
+- **AI intervention**: The AI Planner detects the failure pattern, can override backoff with a tighter hint to retry sooner, or pause the endpoint if failures persist.
+- **Manual recovery**: Use the API to reset failures and clear hints:
+
+```bash
+# Reset the failed endpoint's backoff
+curl -X POST https://api.cronicorn.com/api/endpoints/ep_extract123/reset-failures \
+  -H "x-api-key: YOUR_API_KEY"
+
+# Or manually trigger a one-shot retry
+curl -X POST https://api.cronicorn.com/api/endpoints/ep_extract123/hints/oneshot \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nextRunAt": "2026-02-03T02:30:00Z",
+    "ttlMinutes": 30,
+    "reason": "Manual retry after fixing upstream API"
+  }'
 ```
 
-### Step 3: Add Transform Endpoint (Midstream)
+### Race Condition Prevention
 
-```json
-{
-  "name": "transform-data",
-  "url": "https://api.example.com/etl/transform",
-  "method": "POST",
-  "baselineIntervalMs": 60000,
-  "minIntervalMs": 30000,
-  "timeoutMs": 120000,
-  "description": "Transforms extracted data. Check extract-data sibling response: only process when ready_for_transform is true and batch_id is newer than our last processed batch_id. After successful transformation, set ready_for_load=true so the load-data sibling can proceed. If waiting for data (no new batch), maintain 1-minute baseline. When actively processing a batch, tighten to 30 seconds to track progress."
-}
-```
+Cronicorn prevents race conditions at multiple levels:
+- **Atomic job claiming**: The Scheduler uses database-level atomic operations to claim endpoints for execution. No two scheduler instances can execute the same endpoint simultaneously.
+- **Batch ID idempotency**: Each pipeline stage checks the batch_id from its upstream sibling. If it already processed that batch, it skips execution — preventing duplicate work.
+- **AI analysis serialization**: Each endpoint gets analyzed independently. The AI reads sibling state but only modifies the endpoint it's currently analyzing.
 
-### Step 4: Add Load Endpoint (Downstream)
-
-```json
-{
-  "name": "load-data",
-  "url": "https://api.example.com/etl/load",
-  "method": "POST",
-  "baselineIntervalMs": 60000,
-  "minIntervalMs": 30000,
-  "timeoutMs": 180000,
-  "description": "Loads transformed data to production database. Check transform-data sibling response: only process when ready_for_load is true and batch_id matches current batch. After successful load, set pipeline_complete=true. If waiting for transform (no new batch ready), maintain 1-minute baseline to check periodically."
-}
-```
-
-### Step 5: Design Cascading Response Bodies
+### Step 2: Design Cascading Response Bodies
 
 **Extract endpoint response (after success):**
 ```json
