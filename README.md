@@ -64,4 +64,5 @@ adjusting frequency, coordinating between endpoints, and recovering from failure
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-FSL--1.1--MIT-blue" alt="License: FSL-1.1-MIT"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="https://docs.cronicorn.com"><img src="https://img.shields.io/badge/Docs-docs.cronicorn.com-green" alt="Docs"></a>
+  <a href="https://context7.com/weskerllc/cronicorn"><img src="https://img.shields.io/badge/Context7-Docs-blue?logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnoiIGZpbGw9IndoaXRlIi8+PC9zdmc+" alt="Context7"></a>
 </p>
