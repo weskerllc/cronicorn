@@ -82,29 +82,41 @@ Everything else can wait.
 
 ---
 
-## What *Not* to Do
+Alright. Next section in order:
 
-What you don’t want to do is this:
+> **What Not to Do**
+
+This is the one you already flagged as repetitive — and you were right. The idea is good. The execution just needed a harder cut.
+
+Same process.
+
+---
+
+### What Not to Do
+
+What you don’t want to do is spin up infrastructure before you understand the problem.
 
 Fire up the terminal.
-Install seventeen packages.
-Spin up Postgres.
-<<I dont like this line>>
-Add Redis because someone on Hacker News said it was “basically free performance.”
+Install a pile of dependencies.
+Set up a database.
+Add Redis because someone online said it was “basically free performance.”
 
-And still not have a single line of code that actually *does* anything.
+And still not have a single line of code that actually does anything.
+
+I’ve done this. More than once.
+
+It feels productive. Things are happening. Containers are running. Logs are scrolling. But none of it answers the only question that matters:
+
+What is this thing supposed to do?
 
 That’s backwards.
 
-<<I dont like this line>>
-That’s like buying a $400 Japanese knife before you know how to hold an onion.
+It’s like buying an expensive knife before you know how to hold an onion. You can admire it all day. You still won’t cook anything.
 
-<<This is maybe duplicate - we already kind of said this>>
 Forget the database.
 Forget the framework.
 Forget Docker.
 
-<<We're repeating. This section could be more concise and punchy>>
 Start with the domain.
 
 What is this thing?
@@ -112,7 +124,7 @@ What are the nouns?
 What are the verbs?
 What must always be true?
 
-This is a perfect moment to use AI — not to write code, but to **think clearly**.
+If you can’t answer those in plain language, adding infrastructure won’t help. It will just give you more places to hide the confusion.
 
 ---
 
