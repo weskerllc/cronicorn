@@ -43,16 +43,16 @@ So now I optimize for one thing above almost everything else:
 
 ---
 
-## Start With the Domain. Always.
+## ALWAYS Start With the Domain.
 
-When I start a new app, I want the domain to be boringly clean.
+When I start a new app, I want the domain to be stupid clean.
 
 No frameworks.
 No database.
 No HTTP.
 No imports I’ll regret later.
 
-Just logic.
+Just LOGIC.
 
 The domain should define:
 
@@ -81,18 +81,22 @@ What you don’t want to do is this:
 Fire up the terminal.
 Install seventeen packages.
 Spin up Postgres.
+<<I dont like this line>>
 Add Redis because someone on Hacker News said it was “basically free performance.”
 
 And still not have a single line of code that actually *does* anything.
 
 That’s backwards.
 
+<<I dont like this line>>
 That’s like buying a $400 Japanese knife before you know how to hold an onion.
 
+<<This is maybe duplicate - we already kind of said this>>
 Forget the database.
 Forget the framework.
 Forget Docker.
 
+<<We're repeating. This section could be more concise and punchy>>
 Start with the domain.
 
 What is this thing?
@@ -115,8 +119,10 @@ This is one of the few prompts I actually reuse.
 >
 > Identify:
 >
+<<Give examples here. but just keep the code snippets minimal and understandable>>
 > * Core domain entities
 > * Value objects
+<<Idk what an invaraint is. make this in simpler language>>
 > * Domain rules / invariants
 > * Inputs and outputs
 >
@@ -151,6 +157,7 @@ export function confirmOrder(order: Order): Order {
 }
 ```
 
+<<dont like this line>>
 No IO. No magic. Just rules.
 
 ---
@@ -162,7 +169,7 @@ Now you ask a different question:
 **What does my domain need from the outside world?**
 
 Not *how* it gets it. Just *what*.
-
+<<give more relatable examples>>
 Persistence.
 Time.
 IDs.
@@ -190,6 +197,8 @@ Notice what’s missing:
 This is deliberate. You’re keeping options open.
 
 ---
+
+<<this needs to be explained in a more dumbed down way>>
 
 ## Phase Three: Application Layer (The Recipes)
 
@@ -227,7 +236,7 @@ But now you can *do* something.
 
 Now you finally write implementations.
 
-Start with the simplest possible adapter.
+I recommend starting with the simplest possible adapter.
 Not Postgres. Not Prisma. Not migrations.
 
 An in-memory adapter.
@@ -394,6 +403,9 @@ If any one of these is missing, the whole system leaks.
 
 ---
 
+<<for this testing section lets ensure its concise and punchy. alot of people will eye roll when it comes to tests. lets just get the point across that the most imporatnt part is keeping the domain tested, and a few crucial other tests>>
+
+
 ## Tests: Your Primary Control Mechanism
 
 AI is fast. It’s also very good at subtly breaking things. Off-by-one errors. Slightly changed behavior. “Looks right” bugs.
@@ -498,6 +510,7 @@ This catches most “AI made a reasonable assumption” bugs before they escape.
 
 This is the part most people miss.
 
+<<this needs to be explained in a more dumbed down way>>
 You do *not* need to exhaustively test every adapter. You need to test that **each adapter fulfills the port contract**.
 
 Same tests. Different implementations.
@@ -534,7 +547,7 @@ describe("InMemoryOrderRepository", () => {
   orderRepositoryContract(() => new InMemoryOrderRepository());
 });
 ```
-
+<<how?>>
 When you later add Postgres, you run the *same contract tests*.
 If it passes, you trust it. If not, it doesn’t ship.
 
@@ -547,6 +560,7 @@ This is gold for AI workflows. You give it a contract, and you don’t argue wit
 This is the workflow I recommend. No shortcuts.
 
 **Step one: write tests first. Always.**
+<<i have never done this - i have the ai think of what the functionality should do, implement , THEN write the test , then ensure it passes. if it fails, most likely the logic needs tweaked>>
 
 Before you ask AI to implement anything, you write the tests:
 
@@ -563,6 +577,7 @@ That alone prevents 80% of regressions.
 
 ---
 
+<<doing this from the start of a project ensures you never get buried with lint errors. Quality is established from the start>>
 ## Linting: Make Style Non-Negotiable
 
 Tests protect behavior. Linting protects sanity.
@@ -584,6 +599,7 @@ AI is actually very good at following lint rules *if you make them real*.
 
 ---
 
+<<this is especially important on multi-person teams - or teams where agents are pushing pull requests - so that the pull request workflow can show if the quality passed or failed>>
 ## Enforce It Locally *and* in CI
 
 Telling AI to run tests and lint is good.
@@ -602,53 +618,56 @@ What matters is that the rules aren’t suggestions.
 
 ---
 
-Other Tips That Actually Matter
+## Other Tips That Actually Matter
 
-These don’t get as much airtime as architecture or tests, but they quietly determine whether AI helps you or slowly derails you.
+<<this is especially important on multi-person teams - or teams where agents are pushing pull requests - so that the pull request workflow can show if the quality passed or failed>>
 
-Be Explicit With Your Agent Config
+Other things that I havent mentioned yet but determine if AI helps you or slowly derails you.
 
-Your agent config files (claude.md, copilot-instructions.md, etc.) are not decoration. They’re part of the system.
+### Be Explicit With Your Agent Config
+
+<<keep these concise, and reference other files such as docs / etc. this goes back to the issue of having multiple areas to maintain with similar content. i.e. if you have an architecture doc in your CONTRIBUTING.md and your docs site , do you want to duplicate it here? no. maybe link to the doc or something>>
+Your agent config files (`claude.md`, `copilot-instructions.md`, etc.) are not decoration. They’re part of the system.
 
 I always include rules like:
 
-Favor simplicity and readability over cleverness
-
-Do not over-engineer
-
-Do not add features that were not explicitly requested
-
-Do not reinvent existing abstractions
-
-Stay on task
+* Favor simplicity and readability over cleverness
+* Do not over-engineer
+* Do not add features that were not explicitly requested
+* Do not reinvent existing abstractions
+* ALways use up to date docs for libraries
+* Stay on task
 
 This sounds obvious. It isn’t.
 
 Left alone, AI tends to chase “complete” instead of “correct.” These rules pull it back toward boring, understandable code.
 
-Force Fresh Docs for Library Work
+### Force Fresh Docs for Library Work
 
 Any time AI touches an external library, framework, or API, I require it to consult up-to-date documentation. That means tools like Context7 or web search — not training-data memory.
 
-This avoids a whole class of bugs where the code looks right but relies on APIs that changed six months ago.
+This avoids a whole class of bugs where the code *looks* right but relies on APIs that changed six months ago.
 
 If the agent can’t cite the docs, I don’t trust the code.
 
-Comments Are Fine. Just Keep Them Short.
+### Comments Are Fine. Just Keep Them Short.
 
 I’m not anti-comments. I’m anti-essays.
 
-When I want comments, I say one word: concise.
+<<concise is my favorite word - with everything . docs, comments, code, you name it. ai likes to be wordy>>
+When I want comments, I say one word: **concise**.
 
-Good comments explain why something exists, not what the code already says. AI is especially bad at over-commenting. You have to rein that in early or you’ll end up with noise instead of clarity.
+Good comments explain *why something exists*, not *what the code already says*. AI is especially bad at over-commenting. You have to rein that in early or you’ll end up with noise instead of clarity.
 
 This could honestly be its own rule.
 
-Common Failure Modes (And How to Stop Them)
+---
+
+## Common Failure Modes (And How to Stop Them)
 
 These are patterns I’ve seen repeatedly. If you’re using AI seriously, you’ll recognize them.
 
-AI Rewrites What Already Exists
+### AI Rewrites What Already Exists
 
 This one’s subtle and dangerous.
 
@@ -656,83 +675,77 @@ AI will happily reimplement logic that already exists elsewhere in your codebase
 
 When this happens, it usually means one of two things:
 
-The agent isn’t being instructed to search for existing code
-
-Your codebase doesn’t make it obvious where that logic lives
+* The agent isn’t being instructed to search for existing code
+* Your codebase doesn’t make it obvious *where* that logic lives
 
 Fixes:
 
-Tell the agent to search for existing implementations before writing new ones
-
-Strengthen boundaries and naming so reuse is obvious
-
-Document key entry points in ADRs or agent instructions
+* Tell the agent to search for existing implementations before writing new ones
+* Strengthen boundaries and naming so reuse is obvious
+* Document key entry points in ADRs or agent instructions
 
 Duplication is rarely an AI problem. It’s a signaling problem.
 
-AI Adds “Helpful” Extra Features
+---
+
+### AI Adds “Helpful” Extra Features
 
 AI loves bells and whistles. Pagination you didn’t ask for. Retry logic you didn’t need. Optional configs nobody will use.
 
 That’s scope creep, just faster.
 
 One solution that works surprisingly well:
-tell the AI to write things down instead of implementing them.
+**tell the AI to write things down instead of implementing them.**
 
 If it notices:
 
-A security concern
-
-A performance improvement
-
-A future feature
+* A security concern
+* A performance improvement
+* A future feature
 
 Have it log the idea in:
-
-A TECH_DEBT.md
-
-A FUTURE_IDEAS.md
-
-Or even an ADR marked as “deferred”
+<<these tips need to be brought earlier in the doc i think. they are actually very important>>
+* A `TECH_DEBT.md`
+* A `FUTURE_IDEAS.md`
+* Or even an ADR marked as “deferred”
 
 This keeps momentum without letting the feature balloon.
 
-Define an MVP or You’ll Drown
+---
+
+### Define an MVP or You’ll Drown
 
 At the start of any project, I force myself to define a strict MVP:
 
-A short list of features that must exist
+* A short list of features that *must* exist
+* Everything else is explicitly labeled “post-MVP”
 
-Everything else is explicitly labeled “post-MVP”
-
-This matters even more with AI, because it will happily build everything you vaguely imply.
+This matters even more with AI, because it will happily build *everything* you vaguely imply.
 
 You will still accumulate:
 
-Tech debt
-
-Security notes
-
-Nice-to-haves
+* Tech debt
+* Security notes
+* Nice-to-haves
 
 That’s fine. That’s healthy.
 What’s not fine is pretending all of that belongs in v1.
 
 Backlogs are better than scope creep.
+<<keeping these in markdown - and any other 'categories' of running note pads the agent can use is great. have a whole folder of them. and dont even worry about then til later. DONT EVEN GET TEMPTED>>
 
-Multiple Sources of Truth Will Confuse Everyone — Especially AI
+---
+
+### Multiple Sources of Truth Will Confuse Everyone — Especially AI
 
 This is an underrated pain point.
 
 You describe what your app does:
 
-On the landing page
-
-In the README
-
-In the docs
-
-In code comments
+* On the landing page
+* In the README
+* In the docs
+* In code comments
 
 Now they’re slightly different.
 
@@ -740,9 +753,8 @@ Humans notice this eventually. AI notices immediately — and gets confused.
 
 Where possible, enforce a single source of truth. For example:
 
-A shared content or docs package
-
-One canonical “what this app does” document
+* A shared `content` or `docs` package
+* One canonical “what this app does” document
 
 Everything else should reference it, not rephrase it.
 
