@@ -35,84 +35,33 @@ Let’s get into it.
 ---------------------------------------
 
 
-## Rule #1: Enforce Clean Architecture or Don’t Bother
+### Rule #1: Enforce Clean Architecture or Don’t Bother
 
-The most important rule I’ve learned is this:
-**if you don’t enforce a clean architecture early, AI will happily destroy your project for you.**
+This is the most important rule I’ve learned working with AI:
 
-After a lot of experimentation, I’ve landed on **hexagonal architecture** as the most reliable option.
+If you don’t enforce clean boundaries early, AI will happily wreck your project for you.
 
-I used to think it was overkill. Too much boilerplate. Too many files. I was firmly in the “less code is better” camp, and at the time, that wasn’t totally wrong.
+Not all at once. Quietly.
 
-What changed is scale — not team size, but *output*. AI can generate code faster than you can reason about it. That flips the problem. The bottleneck isn’t typing anymore. It’s **understanding**.
+The problem isn’t that the code is bad. It’s that it grows faster than your ability to understand it. AI can generate far more code than you can reason about, and that flips the usual bottleneck. Typing stops being the issue. Comprehension becomes the problem.
 
-So now I optimize for one thing above almost everything else:
-**clear, enforced boundaries.**
+When there aren’t hard boundaries, everything starts bleeding into everything else. Logic drifts. Responsibilities blur. Small changes get risky. Eventually, the project becomes something you don’t want to touch.
 
----
+I’ve watched this happen more times than I’d like to admit.
 
-## ALWAYS Start With the Domain.
+After enough of that, I stopped optimizing for speed or elegance. I started optimizing for one thing:
 
-When I start a new app, I want the domain to be stupid clean.
+Clear, enforced boundaries.
 
-No frameworks.
-No database.
-No HTTP.
-No imports I’ll regret later.
+After a lot of trial and error, the structure that’s held up best for me is **hexagonal architecture**. Not because it’s trendy or elegant, but because it makes it hard to mix concerns — even when code is being generated faster than you can read it.
 
-Just LOGIC.
+I used to think it was overkill. Too many files. Too much ceremony. I was firmly in the “less code is better” camp, and at the time, that wasn’t wrong.
 
-The domain should define:
+What changed wasn’t team size. It was output.
 
-* What goes *in*
-* What comes *out*
-* And the rules in between
+When AI enters the picture, “less code” stops being the main goal. **Understanding** does. And strict boundaries turn out to be the cheapest way to buy that back.
 
-That’s it.
-
-If you can’t explain what your application does without mentioning Postgres, Kafka, or Docker, you don’t understand it yet.
-
-This has real benefits:
-
-* You can test everything without spinning up infrastructure
-* You can read the code and actually understand the behavior
-* AI has less surface area to hallucinate garbage
-
-And most importantly: you’re forced to answer the hard questions early.
-
----
-
-## What *Not* to Do
-
-What you don’t want to do is this:
-
-Fire up the terminal.
-Install seventeen packages.
-Spin up Postgres.
-<<I dont like this line>>
-Add Redis because someone on Hacker News said it was “basically free performance.”
-
-And still not have a single line of code that actually *does* anything.
-
-That’s backwards.
-
-<<I dont like this line>>
-That’s like buying a $400 Japanese knife before you know how to hold an onion.
-
-<<This is maybe duplicate - we already kind of said this>>
-Forget the database.
-Forget the framework.
-Forget Docker.
-
-<<We're repeating. This section could be more concise and punchy>>
-Start with the domain.
-
-What is this thing?
-What are the nouns?
-What are the verbs?
-What must always be true?
-
-This is a perfect moment to use AI — not to write code, but to **think clearly**.
+Everything that follows builds on this.
 
 ---
 
