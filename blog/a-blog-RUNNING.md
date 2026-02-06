@@ -43,34 +43,42 @@ So now I optimize for one thing above almost everything else:
 
 ---
 
-## ALWAYS Start With the Domain.
+### ALWAYS Start With the Domain
 
-When I start a new app, I want the domain to be stupid clean.
+When I start a new project, I start with the domain. Always.
 
-No frameworks.
+No framework.
 No database.
 No HTTP.
-No imports I’ll regret later.
+Nothing I’ll regret importing later.
 
-Just LOGIC.
+Just logic.
 
-The domain should define:
+The domain should answer three things, clearly:
 
-* What goes *in*
-* What comes *out*
-* And the rules in between
+* What goes in
+* What comes out
+* What rules sit in between
 
 That’s it.
 
-If you can’t explain what your application does without mentioning Postgres, Kafka, or Docker, you don’t understand it yet.
+If you can’t explain what your system does without mentioning Postgres, Kafka, or Docker, you don’t understand it yet.
 
-This has real benefits:
+Starting this way forces uncomfortable clarity. You have to decide what actually matters before hiding behind infrastructure. There’s nowhere to dump half-formed ideas. No schemas to lean on. No APIs to distract you.
 
-* You can test everything without spinning up infrastructure
-* You can read the code and actually understand the behavior
-* AI has less surface area to hallucinate garbage
+That constraint is the point.
 
-And most importantly: you’re forced to answer the hard questions early.
+Practically, it buys you a few things right away:
+
+* You can test behavior without spinning up anything
+* You can read the code and understand what it does
+* AI has less room to hallucinate nonsense
+
+But the real benefit is simpler.
+
+You’re forced to answer the hard questions early — when changing your mind is still cheap.
+
+Everything else can wait.
 
 ---
 
