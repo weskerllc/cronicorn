@@ -258,6 +258,100 @@ The AI follows a conservative approach:
 - Insufficient data (fewer than 10 total runs)
 - Metrics within normal ranges
 
+## Complete AI Decision Examples
+
+These examples show the exact sequence of tool calls the AI makes in common scenarios.
+
+### Example: Tightening During Degradation
+
+Endpoint: `api-health-check` (baseline 5 minutes, min 30 seconds)
+Description: "Poll more frequently when error_rate_pct exceeds 5%. Return to baseline when below 2%."
+
+1. AI calls `get_latest_response()`
+   → Returns: `{ "status": "degraded", "error_rate_pct": 8.5, "latency_ms": 1200 }`
+2. AI calls `get_response_history(limit=5)`
+   → Shows error_rate climbing: 2.1 → 3.5 → 5.2 → 7.1 → 8.5
+3. AI reads description: threshold is 5%, current is 8.5%, sustained upward trend across 5 readings
+4. AI calls `propose_interval(intervalMs=30000, ttlMinutes=60, reason="Error rate climbing to 8.5%, above 5% threshold - tightening to 30s")`
+5. Governor applies: next run in 30 seconds (within min constraint)
+
+### Example: Recovery and Return to Baseline
+
+Endpoint: same `api-health-check`, currently running at 30-second hint
+
+1. AI calls `get_latest_response()`
+   → Returns: `{ "status": "healthy", "error_rate_pct": 0.5, "latency_ms": 145 }`
+2. AI calls `get_response_history(limit=5)`
+   → Shows error_rate declining: 8.5 → 5.2 → 2.1 → 0.8 → 0.5
+3. AI reads description: "Return to baseline when below 2%" — current is 0.5%, sustained downward trend
+4. AI calls `clear_hints(reason="Error rate normalized to 0.5%, below 2% threshold - returning to baseline")`
+5. Governor falls back to baseline: next run in 5 minutes
+
+### Example: Data Volume Driving Frequency
+
+Endpoint: `sync-status` (baseline 10 minutes, min 30 seconds)
+Description: "Poll every 30 seconds when records_pending > 1000. Return to baseline when below 100."
+
+1. AI calls `get_latest_response()`
+   → Returns: `{ "records_pending": 15000, "sync_rate_per_minute": 500, "status": "syncing" }`
+2. AI reads description: "records_pending > 1000" threshold — current is 15000
+3. AI calls `propose_interval(intervalMs=30000, ttlMinutes=30, reason="15000 records pending, above 1000 threshold")`
+4. Next analysis: AI calls `get_latest_response()` → `{ "records_pending": 50, "status": "idle" }`
+5. AI reads description: "Return to baseline when below 100" — current is 50
+6. AI calls `clear_hints(reason="Records pending at 50, below 100 threshold - returning to baseline")`
+
+### Example: Sibling-Triggered Recovery
+
+Endpoint: `trigger-recovery` (baseline 24 hours, min 5 minutes)
+Description: "Only run when health-check sibling shows needs_recovery=true."
+
+1. AI calls `get_sibling_latest_responses()`
+   → Returns: `{ "health-check": { "body": { "status": "error", "needs_recovery": true }, "statusCode": 500 } }`
+2. AI reads description: "run when health-check sibling shows needs_recovery=true"
+3. AI sees: health-check returned `needs_recovery: true`
+4. AI calls `propose_next_time(now, ttlMinutes=30, reason="Health-check shows needs_recovery=true, triggering immediate recovery")`
+5. Governor schedules: immediate execution
+
+After recovery succeeds:
+1. AI calls `get_sibling_latest_responses()`
+   → Returns: `{ "health-check": { "body": { "status": "ok", "needs_recovery": false } } }`
+2. AI reads description: no trigger condition met
+3. No action — trigger-recovery returns to 24-hour baseline
+
+### Example: Inverse Scaling (Reduce Load Under Pressure)
+
+Endpoint: `system-load-monitor` (baseline 1 minute, min 10 seconds, max 5 minutes)
+Description: "INVERSE SCALING: when cpu_pct > 80, poll LESS frequently. When cpu_pct < 50, poll MORE frequently."
+
+1. AI calls `get_latest_response()`
+   → Returns: `{ "cpu_pct": 92, "memory_pct": 78, "recommendation": "reduce_polling" }`
+2. AI reads description: "when cpu_pct > 80, poll LESS frequently" — current is 92
+3. AI calls `propose_interval(intervalMs=300000, ttlMinutes=30, reason="CPU at 92%, reducing polling to 5min to lower overhead")`
+
+When load drops:
+1. AI calls `get_latest_response()` → Returns: `{ "cpu_pct": 35, "recommendation": "normal" }`
+2. AI reads description: "when cpu_pct < 50, poll MORE frequently"
+3. AI calls `propose_interval(intervalMs=30000, ttlMinutes=30, reason="CPU at 35%, increasing polling - system has capacity")`
+
+### Example: Oscillation Prevention
+
+Endpoint: `volatile-metrics` (baseline 1 minute, min 30 seconds, max 2 minutes)
+Description: "STABILITY PRIORITY. Only use avg_5min, never instant_value. Only act on sustained trends."
+
+Transient spike — AI does NOT react:
+1. AI calls `get_latest_response()`
+   → Returns: `{ "instant_value": 950, "avg_5min": 510, "trend": "stable", "within_normal_range": true }`
+2. AI reads description: "Only use avg_5min" — avg_5min is 510 (normal)
+3. AI reads description: "within_normal_range is true" — no action needed
+4. **No action** — maintains current interval despite extreme instant_value
+5. Reasoning: "Transient spike in instant_value but smoothed avg_5min is normal and trend is stable"
+
+Genuine state change — AI does react:
+1. AI calls `get_latest_response()` → Returns: `{ "avg_5min": 780, "trend": "rising", "within_normal_range": false }`
+2. AI calls `get_response_history(limit=5)` → avg_5min rising: 510 → 580 → 650 → 720 → 780
+3. AI reads description: "Only act on sustained trends" — 5 consecutive readings show rise
+4. AI calls `propose_interval(intervalMs=30000, ttlMinutes=30, reason="Sustained rise in avg_5min, outside normal range")`
+
 ## Stability and Oscillation Prevention
 
 Cronicorn includes multiple mechanisms to prevent oscillation between extreme scheduling states.
