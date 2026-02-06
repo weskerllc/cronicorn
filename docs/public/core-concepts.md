@@ -110,6 +110,75 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 # Cronicorn immediately starts executing this endpoint every 5 minutes.
 # The AI Planner automatically analyzes responses and adjusts frequency.
 # No additional setup required.
+
+# Step 3: Check endpoint health and run history
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://api.cronicorn.com/api/endpoints/ep_xyz789/runs?limit=5"
+# Returns recent runs with status, duration, and response bodies
+
+# Step 4: Manually override scheduling during an incident
+curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "intervalMs": 30000,
+    "ttlMinutes": 60,
+    "reason": "Incident detected — tightening monitoring to every 30 seconds"
+  }'
+# Overrides baseline for 1 hour, then automatically reverts to 5-minute baseline
+```
+
+**Complete script example with error handling:**
+
+```bash
+#!/bin/bash
+# create-monitoring-job.sh — Creates a health monitoring job in Cronicorn
+API_KEY="YOUR_API_KEY"
+BASE_URL="https://api.cronicorn.com"
+
+# Create the job
+JOB_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/jobs" \
+  -H "x-api-key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Production API Monitoring", "description": "Health checks with adaptive frequency" }')
+
+HTTP_CODE=$(echo "$JOB_RESPONSE" | tail -1)
+JOB_BODY=$(echo "$JOB_RESPONSE" | head -1)
+
+if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "201" ]; then
+  echo "Error creating job: $JOB_BODY"
+  exit 1
+fi
+
+JOB_ID=$(echo "$JOB_BODY" | jq -r '.id')
+echo "Created job: $JOB_ID"
+
+# Add the endpoint
+EP_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/jobs/$JOB_ID/endpoints" \
+  -H "x-api-key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "api-health-check",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 900000,
+    "timeoutMs": 10000,
+    "description": "Monitors API health. Poll every 30 seconds when status is degraded or error_rate_pct > 5%. Return to baseline when healthy."
+  }')
+
+HTTP_CODE=$(echo "$EP_RESPONSE" | tail -1)
+EP_BODY=$(echo "$EP_RESPONSE" | head -1)
+
+if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "201" ]; then
+  echo "Error creating endpoint: $EP_BODY"
+  exit 1
+fi
+
+EP_ID=$(echo "$EP_BODY" | jq -r '.id')
+echo "Created endpoint: $EP_ID"
+echo "Cronicorn is now executing every 5 minutes with AI adaptation enabled."
 ```
 
 The same configuration can be applied via the Web UI forms or MCP Server tool calls — all three interfaces accept the same fields.
@@ -213,14 +282,19 @@ to momentary spikes. Only adjust for sustained state changes."
 HIGH (reduce overhead), poll MORE when load is LOW."
 ```
 
-### How AI Uses Descriptions
+### How AI Uses Descriptions and Response Bodies
 
-1. AI reads your endpoint description
-2. AI reads the response body from your endpoint
-3. AI decides whether to adjust scheduling based on both
-4. Constraints (min/max intervals) provide guardrails
+The AI Planner processes your endpoints automatically — no per-endpoint AI setup required:
 
-**No code, no DSL** - just natural language that the AI interprets.
+1. AI reads your endpoint **description** to understand what to monitor and what thresholds matter
+2. AI reads the **response body** from your endpoint (up to 500 characters of JSON or text)
+3. AI reads **sibling responses** from other endpoints in the same job (via `get_sibling_latest_responses()`)
+4. AI decides whether to adjust scheduling based on all three inputs
+5. Constraints (min/max intervals) provide hard guardrails that the AI cannot override
+
+**You don't write any parsing code, rules, or logic.** The AI interprets response body fields based on your description. For example, if your description says "tighten polling when error_rate_pct exceeds 5%" and your response body contains `{ "error_rate_pct": 8.5 }`, the AI reads the field, compares it to the threshold in the description, and calls `propose_interval()` to tighten the schedule.
+
+**No code, no DSL, no rules engine** — just natural language descriptions that the AI interprets.
 
 ## Scheduling
 
