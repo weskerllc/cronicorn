@@ -18,6 +18,16 @@ mcp:
 
 Understand the key concepts for working with Cronicorn.
 
+## How to Use These Docs
+
+You can manage Cronicorn through three interfaces:
+
+- **Web UI** — The primary interface for most users. Create jobs, add endpoints, configure schedules, and monitor runs visually.
+- **MCP Server** — Manage everything through your AI assistant (Claude, Copilot, Cursor). See [MCP Server](./mcp-server.md) for setup.
+- **HTTP API** — Programmatic access for scripts, CI/CD, and custom integrations. See [API Reference](./api-reference.md).
+
+Examples throughout these docs show **endpoint configurations** in a neutral format. Every configuration shown can be applied through any of the three interfaces. The API Reference contains HTTP-specific details for programmatic use cases.
+
 ## Jobs and Endpoints
 
 ### Job
@@ -241,7 +251,7 @@ If the request takes longer, it's cancelled and marked as timeout.
 
 Every execution creates a **run** record with:
 
-- **Status**: success, failure, timeout, or cancelled
+- **Status**: `success` or `failed` (timeouts are recorded as `failed` with a timeout error message)
 - **Duration**: How long the execution took (milliseconds)
 - **Timestamps**: When it started and finished
 - **Error**: Error message (if failed)
