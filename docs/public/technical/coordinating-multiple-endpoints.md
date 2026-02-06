@@ -704,6 +704,64 @@ curl -X POST https://api.cronicorn.com/api/jobs/JOB2_ID/endpoints \
 
 In this setup, `process-orders` and `generate-reports` are siblings (same job), so the AI coordinates them via `get_sibling_latest_responses()`. The cross-job dependency (Job 1 → Job 2) is handled by embedding ingestion status in the downstream response body.
 
+**fetch-orders response body (Job 1):**
+```json
+{
+  "new_order_count": 150,
+  "ingestion_status": "active",
+  "last_order_id": "ord_98765",
+  "ingested_at": "2026-02-03T14:30:00Z",
+  "timestamp": "2026-02-03T14:30:00Z"
+}
+```
+
+**process-orders response body (Job 2 — embeds upstream status):**
+```json
+{
+  "orders_processed_count": 120,
+  "orders_pending": 30,
+  "ingestion_status": "active",
+  "ingestion_checked_at": "2026-02-03T14:31:00Z",
+  "processing_rate_per_min": 40,
+  "status": "processing",
+  "timestamp": "2026-02-03T14:31:00Z"
+}
+```
+
+**generate-reports response body (Job 2 — reads sibling process-orders):**
+```json
+{
+  "reports_generated": 3,
+  "last_report_batch": "2026-02-03",
+  "orders_available": 120,
+  "status": "complete",
+  "timestamp": "2026-02-03T14:35:00Z"
+}
+```
+
+**When ingestion stalls (fetch-orders returns no new data):**
+```json
+{
+  "new_order_count": 0,
+  "ingestion_status": "stale",
+  "last_order_id": "ord_98765",
+  "stale_since": "2026-02-03T14:30:00Z",
+  "timestamp": "2026-02-03T14:45:00Z"
+}
+```
+
+The AI reads `ingestion_status: "stale"` from the process-orders response, matches it against the description ("When ingestion_status is stale, relax to 10-minute interval"), and calls `propose_interval(600000)`.
+
+**Verifying cross-job coordination is working:**
+
+```bash
+# Check AI analysis sessions for the downstream endpoint
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://api.cronicorn.com/api/endpoints/PROCESS_ORDERS_EP_ID/analysis-sessions?limit=5"
+```
+
+Look for `reasoning` entries that mention `ingestion_status` — this confirms the AI is reading the embedded upstream status from the response body and acting on it.
+
 ### Key Points
 
 - Endpoints embed external dependency status in their response bodies

@@ -17,7 +17,7 @@ mcp:
 
 Create your first scheduled job and start monitoring executions.
 
-> **Note**: This guide is for using Cronicorn as a hosted service. If you're self-hosting, see the [Technical Documentation](./technical/system-architecture.md).
+> **Note**: This guide is for using Cronicorn as a hosted service. If you're self-hosting, see the [Self Hosting Documentation](./self-hosting.md).
 
 ## 1. Sign Up
 
