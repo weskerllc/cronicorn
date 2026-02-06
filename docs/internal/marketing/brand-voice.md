@@ -2,7 +2,7 @@
 
 ## 🎯 Brand Positioning Statement
 
-**For** DevOps teams, SRE engineers, and technical leaders **who** struggle with rigid scheduling and alert fatigue, **Cronicorn** is an AI-powered job scheduler **that** automatically adapts to real-time system conditions, enabling faster incident response and reduced operational burden **unlike** traditional cron jobs and static schedulers **which** treat every moment the same regardless of context.
+**For** developers and operations teams **who** schedule HTTP calls and struggle with rigid, blind-to-context cron jobs, **Cronicorn** is a hosted scheduling service **that** reads response data, interprets natural language descriptions, and adapts execution frequency automatically **unlike** traditional cron jobs and static schedulers **which** ignore what endpoints return and treat every moment the same.
 
 ---
 
@@ -162,7 +162,7 @@ We focus on solving real problems, not showcasing technology for its own sake.
 ## 💬 Messaging Framework
 
 ### Primary Message
-**"Intelligent job scheduling that adapts to your reality"**
+**"HTTP jobs that understand their own responses — controlled by descriptions, not code"**
 
 Use when: Headlines, taglines, elevator pitch
 
@@ -175,7 +175,7 @@ Use when: Headlines, taglines, elevator pitch
 "Detect problems earlier. Resolve them faster."
 
 **3. For Automation:**
-"Set your schedule once. Let AI handle the rest."
+"Write a description, set your constraints. AI reads responses and adapts."
 
 **4. For Trust:**
 "Every decision explained. No black boxes."
@@ -341,37 +341,37 @@ Result: 80% fewer false alerts and 5x faster issue resolution."
 ## 📞 Audience-Specific Variations
 
 ### For DevOps Engineers
-**Tone:** Technical, peer-to-peer  
-**Focus:** Automation, reliability, reducing toil  
+**Tone:** Technical, peer-to-peer
+**Focus:** Automation, reliability, reducing toil
 **Language:** Use terms like "runbooks," "oncall," "SLOs"
 
 **Example:**
-"Adaptive monitoring that tightens during incidents and relaxes during recovery. Set min/max clamps and let the governor handle cadence."
+"Describe what matters in plain English — 'tighten to 30s when error_rate_pct > 5%' — and the AI reads your response bodies and adapts. Set min/max clamps and let the governor handle cadence."
 
 ### For Engineering Managers
-**Tone:** Strategic, outcome-focused  
-**Focus:** Team efficiency, cost reduction, reliability  
+**Tone:** Strategic, outcome-focused
+**Focus:** Team efficiency, cost reduction, reliability
 **Language:** Use terms like "productivity," "operational costs," "MTTR"
 
 **Example:**
-"Reduce alert fatigue by 80% and cut incident response time in half. Your team spends less time firefighting, more time building."
+"Replace hand-tuned schedules with natural language descriptions. Your team writes what matters, the AI handles frequency adjustments based on real response data."
 
 ### For CTOs/Technical Leaders
-**Tone:** Strategic, architectural  
-**Focus:** Scalability, competitive advantage, risk reduction  
+**Tone:** Strategic, architectural
+**Focus:** Scalability, competitive advantage, risk reduction
 **Language:** Use terms like "resilience," "operational excellence," "automation maturity"
 
 **Example:**
-"Move from reactive operations to proactive automation. Build self-healing systems that scale with your business."
+"Scheduling that adapts from response data, coordinates across endpoints, and operates within hard constraints. No custom code, no rule engines — descriptions and guardrails."
 
 ---
 
 ## 🎤 Sample Copy Examples
 
 ### Homepage Hero (Good)
-**Headline:** Never Miss the Perfect Moment to Run Your Code  
-**Subhead:** Cronicorn is an AI-powered HTTP job scheduler that automatically adjusts to real-time conditions—tightening monitoring during incidents and relaxing during recovery.  
-**CTA:** Get Early Access
+**Headline:** HTTP Jobs That Understand Their Own Responses
+**Subhead:** Endpoints adapt, coordinate, and trigger each other — controlled by descriptions, not code.
+**CTA:** Get Started
 
 ### Feature Description (Good)
 **Adaptive Intervals**
@@ -438,13 +438,12 @@ This brand voice should evolve based on:
 
 ## 🎯 Tagline Options
 
-**Current:** "Intelligent job scheduling that adapts to your reality"
+**Current:** "HTTP Jobs That Understand Their Own Responses"
 
 **Alternatives:**
-- "Never miss the perfect moment to run your code"
-- "Your jobs deserve a smarter scheduler"
-- "Stop fighting your scheduler"
+- "Scheduled HTTP calls that adapt in real time"
+- "Describe what matters. AI reads responses and adapts."
 - "Adaptive scheduling for modern operations"
-- "The scheduler that thinks"
+- "The scheduler that reads your responses"
 
 **Testing:** A/B test on homepage, track resonance in user interviews.
