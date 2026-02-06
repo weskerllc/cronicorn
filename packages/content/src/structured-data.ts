@@ -6,25 +6,25 @@
 export const structuredData = {
   /** Software application metadata */
   software: {
-    releaseNotes: "Early access version with adaptive scheduling capabilities",
+    releaseNotes: "Early access version with response-driven adaptive scheduling",
     featureList: [
+      "Response Body Parsing",
       "Adaptive Intervals",
-      "Multi-Tier Coordination",
-      "AI Hints System",
-      "Transparent AI Decisions",
-      "Cloud-Native Architecture",
-      "Real-Time Adaptation",
-      "Workflow Orchestration",
-      "Auto-Recovery",
-      "Intelligent Monitoring",
-      "Event-Driven Scheduling",
+      "Natural Language Descriptions",
+      "Sibling Endpoint Coordination",
+      "AI Scheduling Hints with TTL",
+      "Min/Max Constraint Guardrails",
+      "Automated Error Recovery",
+      "Multi-Endpoint Pipelines",
+      "Exponential Backoff",
+      "MCP Server Integration",
     ],
   },
 
   /** Login page metadata */
   login: {
     pageName: "Login - Cronicorn",
-    description: "Sign in to your Cronicorn account to access AI-powered job scheduling tools",
+    description: "Sign in to your Cronicorn account to manage adaptive HTTP job scheduling",
     accountDescription: "Access to Cronicorn scheduling platform",
   },
 } as const;

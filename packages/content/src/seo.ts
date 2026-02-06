@@ -5,11 +5,11 @@
 
 /** Meta descriptions optimized for search engines (150-220 characters each) */
 export const metaDescriptions = {
-  home: "Cronicorn is an AI-powered adaptive job scheduler that intelligently manages HTTP endpoints with dynamic intervals. Automate monitoring, data pipelines, and workflows that respond to real-time conditions. Start free today.",
+  home: "Cronicorn schedules HTTP endpoints that read their own response data, adapt their timing, and trigger each other automatically. Describe behavior in natural language — no code required. Start free.",
   pricing: "Choose the right plan for your AI scheduling needs. Start free with 5 jobs, upgrade to Pro for unlimited endpoints and priority support. Enterprise plans available. 14-day money-back guarantee.",
-  docs: "Complete documentation for Cronicorn's adaptive scheduling platform. Quick start guides, API reference, use cases, and best practices for intelligent job automation.",
-  faq: "Get answers to common questions about Cronicorn's AI-powered job scheduling. Learn how adaptive intervals work, understand pricing, and discover best practices for automation.",
-  login: "Sign in to your Cronicorn account to manage AI-driven job scheduling, view analytics, configure adaptive monitoring, and access your automation dashboard.",
+  docs: "Complete documentation for Cronicorn. Quick start guides, API reference, recipes, and best practices for HTTP endpoints that adapt their own scheduling.",
+  faq: "Get answers to common questions about Cronicorn. Learn how endpoints adapt from their own responses, how descriptions control behavior, and discover best practices.",
+  login: "Sign in to your Cronicorn account to manage scheduled HTTP endpoints, view run history, configure adaptive behavior, and access your dashboard.",
 } as const;
 
 /** Page titles for SEO (used with titleTemplate) */
@@ -23,45 +23,45 @@ export const pageTitles = {
 export const keywords = {
   /** Tier 1: Primary keywords (High Intent, High Competition) */
   tier1: [
-    "adaptive task scheduler",
-    "intelligent cron",
+    "adaptive HTTP job scheduler",
+    "AI cron alternative",
     "AI job scheduler",
-    "event-driven job scheduler",
-    "smart cron jobs",
+    "self-adapting cron jobs",
+    "response-aware scheduler",
   ],
 
   /** Tier 2: Secondary keywords (Good Intent, Lower Competition) */
   tier2: [
     "cron alternative with AI",
     "adaptive monitoring scheduler",
-    "intelligent http scheduler",
-    "devops automation scheduler",
-    "automatic job scheduling",
+    "HTTP endpoint scheduler",
+    "natural language job scheduling",
+    "response-body-driven scheduling",
   ],
 
   /** Core authentic keywords based on real capabilities */
   core: [
     "adaptive job scheduling",
-    "intelligent job scheduling",
-    "AI hints system",
-    "multi-tier coordination",
+    "response body parsing scheduler",
+    "endpoint coordination",
+    "sibling endpoint triggers",
     "adaptive intervals",
-    "cloud-native scheduler",
-    "transparent AI scheduling",
-    "workflow orchestration",
+    "description-controlled scheduling",
+    "AI scheduling hints",
+    "multi-endpoint orchestration",
   ],
 
   /** Technical terms from documentation */
   technical: [
     "adaptive monitoring",
     "condition-based scheduling",
-    "real-time job adaptation",
-    "intelligent workflow coordination",
-    "adaptive automation platform",
-    "transparent scheduling decisions",
-    "cloud job orchestration",
-    "intelligent cron alternative",
-    "adaptive task automation",
+    "response-driven frequency adjustment",
+    "endpoint cascading coordination",
+    "natural language scheduling rules",
+    "degraded state detection scheduler",
+    "HTTP response adaptive scheduling",
+    "cron job with AI adaptation",
+    "automated error recovery scheduler",
   ],
 
   /** Use case specific */
@@ -76,11 +76,11 @@ export const keywords = {
 
   /** Long-tail conversational queries */
   longTail: [
-    "how to schedule jobs that adapt to conditions",
-    "intelligent monitoring that adjusts automatically",
-    "AI scheduler that explains decisions",
-    "scheduler that learns from patterns",
-    "adaptive intervals for monitoring",
+    "schedule HTTP jobs that adapt based on response data",
+    "cron jobs that read their own responses",
+    "endpoints that trigger each other automatically",
+    "natural language controlled job scheduling",
+    "adaptive intervals based on response body fields",
   ],
 } as const;
 
@@ -104,13 +104,13 @@ export const openGraph = {
       url: "/og-image.png",
       width: 1200,
       height: 630,
-      alt: "Cronicorn - Adaptive Job Scheduling Platform",
+      alt: "Cronicorn - HTTP Jobs That Understand Their Own Responses",
     },
     {
       url: "/og-image-square.png",
       width: 1200,
       height: 1200,
-      alt: "Cronicorn - AI-Powered Job Scheduling",
+      alt: "Cronicorn - Adaptive HTTP Job Scheduler",
     },
   ],
 } as const;
@@ -125,6 +125,6 @@ export const twitter = {
 
 /** SEO defaults */
 export const seoDefaults = {
-  defaultTitle: "Cronicorn: AI-Powered HTTP Job Scheduler | Adaptive Cron Alternative",
-  titleTemplate: "%s | Cronicorn - AI Job Scheduling",
+  defaultTitle: "Cronicorn: HTTP Jobs That Understand Their Own Responses",
+  titleTemplate: "%s | Cronicorn - Adaptive Job Scheduling",
 } as const;
