@@ -72,16 +72,16 @@ At this stage, I'm not asking AI to build anything. I'm using it to help me thin
 
 Here's the shape of the prompt:
 
-> I'm building a system that does **X**.
-> Ignore frameworks, databases, and infrastructure.
->
-> Help me identify:
-> - The core concepts in the system
-> - The data those concepts need
-> - The rules that must never be broken
-> - What goes in and what comes out
->
-> Respond using plain TypeScript interfaces and pure functions. No side effects.
+```
+I'm building a system that does X.
+Ignore frameworks, databases, and infrastructure.
+Help me identify:
+- The core concepts in the system
+- The data those concepts need
+- The rules that must never be broken
+- What goes in and what comes out
+Respond using plain TypeScript interfaces and pure functions. No side effects.
+```
 
 The goal isn't completeness. It's clarity.
 
@@ -89,29 +89,25 @@ If you get the names wrong here, everything downstream gets harder. If you get t
 
 Here's the kind of output I'm looking for:
 
+**domain/booking.ts**
+
 ```ts
-// domain/booking.ts
-
 export type BookingId = string;
-
 export interface Booking {
   id: BookingId;
   guestName: string;
   slot: TimeSlot;
   status: "held" | "confirmed" | "cancelled";
 }
-
 export interface TimeSlot {
   date: string;
   startHour: number;
   durationMinutes: number;
 }
-
 export function confirmBooking(booking: Booking): Booking {
   if (!booking.slot) {
     throw new Error("Cannot confirm a booking with no time slot");
   }
-
   return { ...booking, status: "confirmed" };
 }
 ```
@@ -140,11 +136,10 @@ These needs become ports.
 
 A port is just a contract. It's the domain saying, "I need this to exist, but I don't care how you do it."
 
+**ports/booking-repository.ts**
+
 ```ts
-// ports/booking-repository.ts
-
 import { Booking, BookingId } from "../domain/booking";
-
 export interface BookingRepository {
   findById(id: BookingId): Promise<Booking | null>;
   save(booking: Booking): Promise<void>;
@@ -163,22 +158,19 @@ The application layer doesn't contain business rules. It doesn't decide what's a
 
 This layer just strings steps together.
 
-```ts
-// application/confirm-booking.ts
+**application/confirm-booking.ts**
 
+```ts
 import { BookingRepository } from "../ports/booking-repository";
 import { confirmBooking } from "../domain/booking";
-
 export async function confirmBookingUseCase(
   repo: BookingRepository,
   bookingId: string
 ) {
   const booking = await repo.findById(bookingId);
-
   if (!booking) {
     throw new Error("Booking not found");
   }
-
   const confirmed = confirmBooking(booking);
   await repo.save(confirmed);
 }
@@ -201,19 +193,16 @@ Start with the dumbest one that could possibly work. Not a real database — not
 
 An in‑memory adapter.
 
-```ts
-// adapters/in-memory-booking-repo.ts
+**adapters/in-memory-booking-repo.ts**
 
+```ts
 import { BookingRepository } from "../ports/booking-repository";
 import { Booking } from "../domain/booking";
-
 export class InMemoryBookingRepository implements BookingRepository {
   private store = new Map<string, Booking>();
-
   async findById(id: string) {
     return this.store.get(id) ?? null;
   }
-
   async save(booking: Booking) {
     this.store.set(booking.id, booking);
   }
@@ -238,14 +227,12 @@ There should be exactly one place where this happens.
 
 The only place allowed to know about concrete implementations.
 
-```ts
-// main.ts
+**main.ts**
 
+```ts
 import { InMemoryBookingRepository } from "./adapters/in-memory-booking-repo";
 import { confirmBookingUseCase } from "./application/confirm-booking";
-
 const repo = new InMemoryBookingRepository();
-
 await confirmBookingUseCase(repo, "booking-471");
 ```
 
