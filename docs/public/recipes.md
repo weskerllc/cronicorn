@@ -1,7 +1,7 @@
 ---
 id: recipes
 title: Recipes & Complete Examples
-description: Copy-paste-ready curl examples for common Cronicorn scenarios with full API setup, response body design, and AI behavior walkthrough
+description: Complete examples for common Cronicorn scenarios with endpoint configuration, response body design, and AI behavior walkthrough
 tags:
   - user
   - examples
@@ -17,9 +17,9 @@ mcp:
 
 # Recipes & Complete Examples
 
-Each recipe below is a **complete, copy-paste-ready workflow**: create the job, add endpoints with descriptions, design response bodies, and understand exactly what the AI does at each step.
+Each recipe below is a **complete workflow**: configure the job and endpoints, design response bodies, and understand exactly what the AI does at each step.
 
-Replace `YOUR_API_KEY` with your actual API key and `https://api.cronicorn.com` with your API host.
+> **How to apply these examples:** The configurations shown below can be applied through any interface — the Web UI, MCP Server, or HTTP API. See [Core Concepts](./core-concepts.md#how-to-use-these-docs) for details.
 
 ---
 
@@ -29,48 +29,27 @@ Replace `YOUR_API_KEY` with your actual API key and `https://api.cronicorn.com` 
 
 ### Step 1: Create the Job
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Production API Monitoring",
-    "description": "Monitors production API health with adaptive frequency during incidents"
-  }'
 ```
-
-Response:
-```json
-{ "id": "job_abc123", "name": "Production API Monitoring", "status": "active" }
+Job: Production API Monitoring
+  Description: Monitors production API health with adaptive frequency during incidents
 ```
 
 ### Step 2: Add Endpoint with Adaptive Description
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "api-health-check",
-    "url": "https://api.example.com/health",
-    "method": "GET",
-    "baselineIntervalMs": 300000,
-    "minIntervalMs": 30000,
-    "maxIntervalMs": 900000,
-    "timeoutMs": 10000,
-    "description": "Monitors API health. Poll more frequently (every 30 seconds) when status is degraded or error_rate_pct exceeds 5%. Return to baseline (5 minutes) when status returns to healthy and error_rate_pct drops below 2%. If latency_ms exceeds 2000, tighten to 1-minute intervals to track recovery."
-  }'
 ```
-
-Response:
-```json
-{
-  "id": "ep_health01",
-  "name": "api-health-check",
-  "baselineIntervalMs": 300000,
-  "minIntervalMs": 30000,
-  "maxIntervalMs": 900000
-}
+Endpoint: api-health-check
+  URL: https://api.example.com/health
+  Method: GET
+  Baseline Interval: 5 minutes (300000ms)
+  Min Interval: 30 seconds (30000ms)
+  Max Interval: 15 minutes (900000ms)
+  Timeout: 10 seconds (10000ms)
+  Description:
+    "Monitors API health. Poll more frequently (every 30 seconds) when
+    status is degraded or error_rate_pct exceeds 5%. Return to baseline
+    (5 minutes) when status returns to healthy and error_rate_pct drops
+    below 2%. If latency_ms exceeds 2000, tighten to 1-minute intervals
+    to track recovery."
 ```
 
 ### Step 3: Design Your Health Endpoint Response Body
@@ -131,13 +110,13 @@ Your `https://api.example.com/health` endpoint should return:
 4. AI calls `clear_hints(reason="Error rate at 0.5%, status healthy - returning to baseline")`
 5. Governor falls back to baseline: next run in 5 minutes
 
-### Manual Override (Optional)
+### Manual Override via API (Optional)
 
-You can also manually trigger surge monitoring from an external system:
+You can also programmatically trigger surge monitoring from an external system using the HTTP API:
 
 ```bash
 # Tighten monitoring to every 30 seconds for 1 hour
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_health01/hints/interval \
+curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/hints/interval \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -147,7 +126,7 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_health01/hints/interval 
   }'
 
 # Return to baseline by clearing hints
-curl -X DELETE https://api.cronicorn.com/api/endpoints/ep_health01/hints \
+curl -X DELETE https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/hints \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -184,48 +163,44 @@ A single 2xx response resets the failure count to 0 and restores normal scheduli
 
 ### Step 1: Create the Job
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Service Recovery Automation",
-    "description": "Monitors service health and triggers automated recovery when errors are detected"
-  }'
+```
+Job: Service Recovery Automation
+  Description: Monitors service health and triggers automated recovery when errors are detected
 ```
 
 ### Step 2: Add Health Check Endpoint
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "health-check",
-    "url": "https://api.example.com/health",
-    "method": "GET",
-    "baselineIntervalMs": 300000,
-    "minIntervalMs": 30000,
-    "timeoutMs": 10000,
-    "description": "Monitors service health. When status is error, needs_recovery is true, or HTTP response returns 5xx status codes, the trigger-recovery sibling endpoint should run immediately via one-shot. During errors, tighten monitoring to every 30 seconds to track recovery progress. Return to 5-minute baseline when status returns to ok and error_count drops to 0."
-  }'
+```
+Endpoint: health-check
+  URL: https://api.example.com/health
+  Method: GET
+  Baseline Interval: 5 minutes (300000ms)
+  Min Interval: 30 seconds (30000ms)
+  Timeout: 10 seconds (10000ms)
+  Description:
+    "Monitors service health. When status is error, needs_recovery is true,
+    or HTTP response returns 5xx status codes, the trigger-recovery sibling
+    endpoint should run immediately via one-shot. During errors, tighten
+    monitoring to every 30 seconds to track recovery progress. Return to
+    5-minute baseline when status returns to ok and error_count drops to 0."
 ```
 
 ### Step 3: Add Recovery Endpoint
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "trigger-recovery",
-    "url": "https://api.example.com/admin/restart",
-    "method": "POST",
-    "baselineIntervalMs": 86400000,
-    "minIntervalMs": 300000,
-    "timeoutMs": 30000,
-    "description": "Recovery action that restarts the service. Should only run when health-check sibling shows status error or needs_recovery is true. After triggering, wait at least 5 minutes (minInterval) before allowing another attempt. If recovery succeeds (health-check returns to ok), return to 24-hour baseline. Maximum 3 recovery attempts before pausing for 1 hour to avoid recovery loops."
-  }'
+```
+Endpoint: trigger-recovery
+  URL: https://api.example.com/admin/restart
+  Method: POST
+  Baseline Interval: 24 hours (86400000ms)
+  Min Interval: 5 minutes (300000ms)
+  Timeout: 30 seconds (30000ms)
+  Description:
+    "Recovery action that restarts the service. Should only run when
+    health-check sibling shows status error or needs_recovery is true.
+    After triggering, wait at least 5 minutes (minInterval) before allowing
+    another attempt. If recovery succeeds (health-check returns to ok),
+    return to 24-hour baseline. Maximum 3 recovery attempts before pausing
+    for 1 hour to avoid recovery loops."
 ```
 
 ### Step 4: Design Your Response Bodies
@@ -307,12 +282,12 @@ curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
 5. Keeps health-check on tight monitoring to detect external intervention
 6. Reasoning: "3 recovery attempts failed, pausing recovery to avoid loops"
 
-### Reset Failures Manually (Optional)
+### Reset Failures via API (Optional)
 
-If exponential backoff has kicked in and you want to reset:
+If exponential backoff has kicked in and you want to reset programmatically:
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_health01/reset-failures \
+curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -324,32 +299,29 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_health01/reset-failures 
 
 ### Step 1: Create the Job
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Data Sync Monitor",
-    "description": "Monitors data synchronization status and adapts polling based on pending record volume"
-  }'
+```
+Job: Data Sync Monitor
+  Description: Monitors data synchronization status and adapts polling based on pending record volume
 ```
 
 ### Step 2: Add the Sync Status Endpoint
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "sync-status",
-    "url": "https://api.example.com/sync/status",
-    "method": "GET",
-    "baselineIntervalMs": 600000,
-    "minIntervalMs": 30000,
-    "maxIntervalMs": 1800000,
-    "timeoutMs": 15000,
-    "description": "Checks data sync status. Adjust polling frequency based on records_pending volume: when records_pending exceeds 1000, poll every 30 seconds to track sync progress closely. When records_pending is between 100-1000, poll every 2 minutes. When records_pending drops below 100 (caught up), return to 10-minute baseline. Also monitor sync_rate_per_minute - if it drops below 50, investigate by tightening interval."
-  }'
+```
+Endpoint: sync-status
+  URL: https://api.example.com/sync/status
+  Method: GET
+  Baseline Interval: 10 minutes (600000ms)
+  Min Interval: 30 seconds (30000ms)
+  Max Interval: 30 minutes (1800000ms)
+  Timeout: 15 seconds (15000ms)
+  Description:
+    "Checks data sync status. Adjust polling frequency based on
+    records_pending volume: when records_pending exceeds 1000, poll every
+    30 seconds to track sync progress closely. When records_pending is
+    between 100-1000, poll every 2 minutes. When records_pending drops
+    below 100 (caught up), return to 10-minute baseline. Also monitor
+    sync_rate_per_minute - if it drops below 50, investigate by tightening
+    interval."
 ```
 
 ### Step 3: Design Your Sync Status Response Body
@@ -432,7 +404,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
 
 ### Adjust Frequency Programmatically (Optional)
 
-You can also use an external script to adjust sync frequency based on external metrics:
+You can also use an external script to adjust sync frequency based on external metrics via the HTTP API:
 
 ```bash
 #!/bin/bash
@@ -464,34 +436,34 @@ In Cronicorn, **descriptions are your rules engine**. You write natural language
 
 ### Step 1: Create the Job
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Smart Queue Monitor",
-    "description": "Monitors queue metrics and adapts scheduling based on response body field values"
-  }'
+```
+Job: Smart Queue Monitor
+  Description: Monitors queue metrics and adapts scheduling based on response body field values
 ```
 
 ### Step 2: Add Endpoint with Field-Parsing Description
 
 The description tells the AI exactly which fields to read and what thresholds trigger changes:
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "queue-metrics",
-    "url": "https://api.example.com/queue/metrics",
-    "method": "GET",
-    "baselineIntervalMs": 300000,
-    "minIntervalMs": 15000,
-    "maxIntervalMs": 900000,
-    "timeoutMs": 10000,
-    "description": "Monitors queue processing metrics. Parse the response body fields as follows: (1) If queue_depth exceeds queue_warning_threshold, tighten polling to every 30 seconds. (2) If queue_depth exceeds queue_max, tighten to every 15 seconds (minInterval). (3) If processing_rate_per_min drops below 50, tighten to 1 minute to monitor for stalls. (4) If error_rate_pct exceeds 5, tighten to 30 seconds. (5) If all metrics are within normal ranges (queue_depth < queue_warning_threshold, error_rate_pct < 2, processing_rate_per_min > 100), return to 5-minute baseline. Use the trend field to avoid overreacting to momentary spikes - only act on sustained changes."
-  }'
+```
+Endpoint: queue-metrics
+  URL: https://api.example.com/queue/metrics
+  Method: GET
+  Baseline Interval: 5 minutes (300000ms)
+  Min Interval: 15 seconds (15000ms)
+  Max Interval: 15 minutes (900000ms)
+  Timeout: 10 seconds (10000ms)
+  Description:
+    "Monitors queue processing metrics. Parse the response body fields as
+    follows: (1) If queue_depth exceeds queue_warning_threshold, tighten
+    polling to every 30 seconds. (2) If queue_depth exceeds queue_max,
+    tighten to every 15 seconds (minInterval). (3) If processing_rate_per_min
+    drops below 50, tighten to 1 minute to monitor for stalls. (4) If
+    error_rate_pct exceeds 5, tighten to 30 seconds. (5) If all metrics are
+    within normal ranges (queue_depth < queue_warning_threshold, error_rate_pct
+    < 2, processing_rate_per_min > 100), return to 5-minute baseline. Use the
+    trend field to avoid overreacting to momentary spikes - only act on
+    sustained changes."
 ```
 
 ### Step 3: Design Response Body with Parseable Fields
@@ -541,19 +513,21 @@ curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
 ### More Field-Parsing Description Examples
 
 **CPU load with inverse scaling (poll LESS under load):**
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "system-load-monitor",
-    "url": "https://api.example.com/metrics/load",
-    "method": "GET",
-    "baselineIntervalMs": 60000,
-    "minIntervalMs": 10000,
-    "maxIntervalMs": 300000,
-    "description": "Monitors system load. INVERSE SCALING: when cpu_pct is HIGH, poll LESS frequently to reduce overhead. Parse response fields: (1) cpu_pct > 80: extend to 5 minutes (reduce load). (2) cpu_pct 50-80: maintain 2-3 minute interval. (3) cpu_pct < 50: tighten to 30 seconds (system has capacity). (4) If recommendation field is reduce_polling, always extend interval. (5) If memory_pct > 90, pause for 5 minutes regardless of CPU."
-  }'
+
+```
+Endpoint: system-load-monitor
+  URL: https://api.example.com/metrics/load
+  Method: GET
+  Baseline Interval: 1 minute (60000ms)
+  Min Interval: 10 seconds (10000ms)
+  Max Interval: 5 minutes (300000ms)
+  Description:
+    "Monitors system load. INVERSE SCALING: when cpu_pct is HIGH, poll LESS
+    frequently to reduce overhead. Parse response fields: (1) cpu_pct > 80:
+    extend to 5 minutes (reduce load). (2) cpu_pct 50-80: maintain 2-3 minute
+    interval. (3) cpu_pct < 50: tighten to 30 seconds (system has capacity).
+    (4) If recommendation field is reduce_polling, always extend interval.
+    (5) If memory_pct > 90, pause for 5 minutes regardless of CPU."
 ```
 
 **Response body:**
@@ -569,19 +543,22 @@ curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
 ```
 
 **Payment processor with amount-based monitoring:**
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "payment-monitor",
-    "url": "https://api.example.com/payments/status",
-    "method": "GET",
-    "baselineIntervalMs": 60000,
-    "minIntervalMs": 10000,
-    "maxIntervalMs": 600000,
-    "description": "Monitors payment processing. Parse response fields: (1) If failed_transactions > 0, tighten to 10 seconds immediately. (2) If pending_amount_usd > 100000, tighten to 30 seconds (high-value transactions pending). (3) If processing_lag_seconds > 60, tighten to 15 seconds. (4) If all fields normal (failed_transactions=0, pending_amount_usd < 10000, processing_lag_seconds < 10), return to 1-minute baseline."
-  }'
+
+```
+Endpoint: payment-monitor
+  URL: https://api.example.com/payments/status
+  Method: GET
+  Baseline Interval: 1 minute (60000ms)
+  Min Interval: 10 seconds (10000ms)
+  Max Interval: 10 minutes (600000ms)
+  Description:
+    "Monitors payment processing. Parse response fields: (1) If
+    failed_transactions > 0, tighten to 10 seconds immediately. (2) If
+    pending_amount_usd > 100000, tighten to 30 seconds (high-value
+    transactions pending). (3) If processing_lag_seconds > 60, tighten to
+    15 seconds. (4) If all fields normal (failed_transactions=0,
+    pending_amount_usd < 10000, processing_lag_seconds < 10), return to
+    1-minute baseline."
 ```
 
 ---
@@ -592,34 +569,34 @@ curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
 
 ### Step 1: Create the Job
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Volatile System Monitor",
-    "description": "Monitors volatile system metrics with stability-focused adaptive scheduling"
-  }'
+```
+Job: Volatile System Monitor
+  Description: Monitors volatile system metrics with stability-focused adaptive scheduling
 ```
 
 ### Step 2: Configure with Anti-Oscillation Settings
 
 The key to preventing oscillation is a **tight min/max ratio** combined with a **stability-focused description**:
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "volatile-metrics",
-    "url": "https://api.example.com/metrics",
-    "method": "GET",
-    "baselineIntervalMs": 60000,
-    "minIntervalMs": 30000,
-    "maxIntervalMs": 120000,
-    "timeoutMs": 10000,
-    "description": "Monitors volatile system metrics. STABILITY IS THE TOP PRIORITY. Do NOT overreact to momentary spikes or drops in values. Rules for adaptation: (1) ONLY use the smoothed avg_5min and avg_1hr fields, NEVER use instant_value for decisions. (2) Only adjust interval for SUSTAINED state changes visible across at least 3 consecutive responses. (3) When trend field is stable, maintain current interval regardless of individual metric values. (4) When within_normal_range is true, always return to baseline. (5) Only tighten interval when avg_5min shows a clear directional trend AND avg_1hr confirms it. (6) When uncertain, ALWAYS maintain the current interval - do nothing rather than oscillate."
-  }'
+```
+Endpoint: volatile-metrics
+  URL: https://api.example.com/metrics
+  Method: GET
+  Baseline Interval: 1 minute (60000ms)
+  Min Interval: 30 seconds (30000ms)
+  Max Interval: 2 minutes (120000ms)
+  Timeout: 10 seconds (10000ms)
+  Description:
+    "Monitors volatile system metrics. STABILITY IS THE TOP PRIORITY. Do NOT
+    overreact to momentary spikes or drops in values. Rules for adaptation:
+    (1) ONLY use the smoothed avg_5min and avg_1hr fields, NEVER use
+    instant_value for decisions. (2) Only adjust interval for SUSTAINED state
+    changes visible across at least 3 consecutive responses. (3) When trend
+    field is stable, maintain current interval regardless of individual metric
+    values. (4) When within_normal_range is true, always return to baseline.
+    (5) Only tighten interval when avg_5min shows a clear directional trend
+    AND avg_1hr confirms it. (6) When uncertain, ALWAYS maintain the current
+    interval - do nothing rather than oscillate."
 ```
 
 ### Constraint Ratio Guide
@@ -713,9 +690,9 @@ With a 2x ratio (like our recipe above: 30s min, 120s max), even aggressive AI d
 3. AI reads description: "When within_normal_range is true, always return to baseline"
 4. AI calls `clear_hints(reason="Metrics returned to normal range, avg_5min at 490, trend stable")`
 
-### Debugging Oscillation
+### Debugging Oscillation via API (Optional)
 
-If you observe oscillation in an existing setup:
+If you observe oscillation in an existing setup, you can investigate using the HTTP API:
 
 ```bash
 # Check if constraints are set
@@ -745,64 +722,60 @@ curl -X PATCH https://api.cronicorn.com/api/jobs/JOB_ID/endpoints/ENDPOINT_ID \
 
 ### Step 1: Create the Job
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "ETL Pipeline",
-    "description": "Extract-Transform-Load pipeline where each stage depends on the previous stage completing successfully. Stages coordinate via response body signals."
-  }'
+```
+Job: ETL Pipeline
+  Description: Extract-Transform-Load pipeline where each stage depends on the previous
+    stage completing successfully. Stages coordinate via response body signals.
 ```
 
 ### Step 2: Add Extract Endpoint (Upstream)
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "extract-data",
-    "url": "https://api.example.com/etl/extract",
-    "method": "POST",
-    "baselineCron": "0 2 * * *",
-    "timeoutMs": 120000,
-    "description": "Extracts customer data from upstream API daily at 2 AM. After successful extraction, the response body will contain ready_for_transform=true and a batch_id. The transform-data sibling endpoint should check for this signal before processing."
-  }'
+```
+Endpoint: extract-data
+  URL: https://api.example.com/etl/extract
+  Method: POST
+  Baseline Schedule: Cron "0 2 * * *" (daily at 2 AM)
+  Timeout: 2 minutes (120000ms)
+  Description:
+    "Extracts customer data from upstream API daily at 2 AM. After successful
+    extraction, the response body will contain ready_for_transform=true and a
+    batch_id. The transform-data sibling endpoint should check for this signal
+    before processing."
 ```
 
 ### Step 3: Add Transform Endpoint (Midstream)
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "transform-data",
-    "url": "https://api.example.com/etl/transform",
-    "method": "POST",
-    "baselineIntervalMs": 60000,
-    "minIntervalMs": 30000,
-    "timeoutMs": 120000,
-    "description": "Transforms extracted data. Check extract-data sibling response: only process when ready_for_transform is true and batch_id is newer than our last processed batch_id. After successful transformation, set ready_for_load=true so the load-data sibling can proceed. If waiting for data (no new batch), maintain 1-minute baseline. When actively processing a batch, tighten to 30 seconds to track progress."
-  }'
+```
+Endpoint: transform-data
+  URL: https://api.example.com/etl/transform
+  Method: POST
+  Baseline Interval: 1 minute (60000ms)
+  Min Interval: 30 seconds (30000ms)
+  Timeout: 2 minutes (120000ms)
+  Description:
+    "Transforms extracted data. Check extract-data sibling response: only
+    process when ready_for_transform is true and batch_id is newer than our
+    last processed batch_id. After successful transformation, set
+    ready_for_load=true so the load-data sibling can proceed. If waiting for
+    data (no new batch), maintain 1-minute baseline. When actively processing
+    a batch, tighten to 30 seconds to track progress."
 ```
 
 ### Step 4: Add Load Endpoint (Downstream)
 
-```bash
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "load-data",
-    "url": "https://api.example.com/etl/load",
-    "method": "POST",
-    "baselineIntervalMs": 60000,
-    "minIntervalMs": 30000,
-    "timeoutMs": 180000,
-    "description": "Loads transformed data to production database. Check transform-data sibling response: only process when ready_for_load is true and batch_id matches current batch. After successful load, set pipeline_complete=true. If waiting for transform (no new batch ready), maintain 1-minute baseline to check periodically."
-  }'
+```
+Endpoint: load-data
+  URL: https://api.example.com/etl/load
+  Method: POST
+  Baseline Interval: 1 minute (60000ms)
+  Min Interval: 30 seconds (30000ms)
+  Timeout: 3 minutes (180000ms)
+  Description:
+    "Loads transformed data to production database. Check transform-data
+    sibling response: only process when ready_for_load is true and batch_id
+    matches current batch. After successful load, set pipeline_complete=true.
+    If waiting for transform (no new batch ready), maintain 1-minute baseline
+    to check periodically."
 ```
 
 ### Step 5: Design Cascading Response Bodies
@@ -904,31 +877,31 @@ To avoid conflicting AI decisions across interdependent endpoints:
 
 If endpoints are in separate jobs, they can't use `get_sibling_latest_responses()`. Instead, embed dependency status in the response body:
 
-```bash
-# Job 1: Upstream Service
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_UPSTREAM/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "upstream-health",
-    "url": "https://upstream.example.com/health",
-    "method": "GET",
-    "baselineIntervalMs": 60000,
-    "description": "Monitors upstream service health. Response includes service_status field."
-  }'
+**Job 1: Upstream Service**
 
-# Job 2: Downstream Consumer (embeds upstream check in its response)
-curl -X POST https://api.cronicorn.com/api/jobs/JOB_DOWNSTREAM/endpoints \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "data-processor",
-    "url": "https://downstream.example.com/process",
-    "method": "POST",
-    "baselineIntervalMs": 300000,
-    "minIntervalMs": 60000,
-    "description": "Processes data from upstream service. The response body includes upstream_status from the upstream health check. When upstream_status is unavailable, pause for 15 minutes. When upstream_status returns to healthy, resume processing immediately."
-  }'
+```
+Endpoint: upstream-health
+  URL: https://upstream.example.com/health
+  Method: GET
+  Baseline Interval: 1 minute (60000ms)
+  Description:
+    "Monitors upstream service health. Response includes service_status
+    field used by downstream consumers in other jobs."
+```
+
+**Job 2: Downstream Consumer** (embeds upstream check in its response)
+
+```
+Endpoint: data-processor
+  URL: https://downstream.example.com/process
+  Method: POST
+  Baseline Interval: 5 minutes (300000ms)
+  Min Interval: 1 minute (60000ms)
+  Description:
+    "Processes data from upstream service. The response body includes
+    upstream_status from the upstream health check. When upstream_status
+    is unavailable, pause for 15 minutes. When upstream_status returns
+    to healthy, resume processing immediately."
 ```
 
 **Downstream response (upstream healthy):**
@@ -970,7 +943,7 @@ AI sees `upstream_status: "unavailable"` → calls `pause_until(now + 15 minutes
 
 ## See Also
 
-- **[API Reference](./api-reference.md)** - Complete endpoint documentation
+- **[API Reference](./api-reference.md)** - Complete HTTP API documentation
 - **[Core Concepts](./core-concepts.md)** - Understanding jobs, endpoints, and descriptions
 - **[How AI Adaptation Works](./technical/how-ai-adaptation-works.md)** - AI tools and decision framework
 - **[Configuration & Constraints](./technical/configuration-and-constraints.md)** - Setting up min/max intervals
