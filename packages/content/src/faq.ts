@@ -17,7 +17,7 @@ export const faq: FAQItem[] = [
   },
   {
     question: "How does AI make scheduling decisions?",
-    answer: "Cronicorn's AI analyzes execution patterns including success rates, response times, and failure streaks. It applies proven strategies like increasing monitoring frequency when metrics deteriorate, pausing endpoints during persistent failures, activating investigation tools when health checks detect issues, and gradually relaxing monitoring as systems recover.",
+    answer: "The AI reads each endpoint's HTTP response body (up to 500 characters of JSON) and compares field values against thresholds you define in the endpoint's description. For example, if your description says 'tighten when error_rate_pct > 5%' and the response contains error_rate_pct: 8.5, the AI calls propose_interval to tighten polling. It also reads sibling endpoint responses to coordinate actions like triggering recovery. All decisions are constrained by your min/max interval guardrails.",
     category: "ai-features",
   },
   {
@@ -27,7 +27,7 @@ export const faq: FAQItem[] = [
   },
   {
     question: "What happens if AI makes a bad decision?",
-    answer: "AI hints have TTL (time-to-live) and automatically expire. You set min/max intervals that AI cannot violate. Manual overrides always take priority. Every decision includes clear reasoning, making the system predictable and debuggable.",
+    answer: "All AI hints have TTL (time-to-live) and automatically expire back to your baseline schedule. Your min/max interval constraints are hard guardrails the AI cannot violate. Manual overrides always take priority. Every decision includes clear reasoning showing which response body fields were read and why the AI acted, making the system predictable and debuggable.",
     category: "safety",
   },
   {
@@ -42,22 +42,22 @@ export const faq: FAQItem[] = [
   },
   {
     question: "How does adaptive scheduling work during traffic spikes?",
-    answer: "During traffic surges, Cronicorn automatically tightens monitoring intervals (e.g., 5min → 30sec), activates diagnostic tools, attempts proactive optimizations like cache warming, and coordinates multi-tier responses to prevent system overload while maintaining visibility.",
+    answer: "When your endpoint's response body shows degraded metrics (e.g., error_rate_pct > 5% or status: degraded), the AI tightens polling frequency — from 5 minutes to 30 seconds, for example. If you have a recovery sibling endpoint, the AI triggers it automatically. When metrics normalize, hints expire and the endpoint returns to its baseline schedule. Your min/max constraints guarantee the AI stays within bounds throughout.",
     category: "adaptive-features",
   },
   {
     question: "What's different about Cronicorn's AI compared to other tools?",
-    answer: "Unlike black-box AI systems, Cronicorn provides transparent reasoning for every decision. Our AI hints system uses TTL, respects your boundaries, and explains adjustments like 'Traffic surge detected—tightening monitoring to 30 seconds.' You always know why the system made a change.",
+    answer: "Cronicorn's AI reads actual response body data from your endpoints — it doesn't just monitor success/failure. You control behavior through natural language descriptions (not code or config), and min/max constraints act as hard guardrails. Every AI hint has a TTL and auto-expires to baseline. Every decision includes reasoning showing which fields were read and what thresholds were triggered.",
     category: "differentiation",
   },
   {
     question: "Is this an intelligent cron replacement?",
-    answer: "Yes, Cronicorn is designed as an intelligent cron alternative that goes beyond fixed schedules. Our adaptive task scheduler learns from your system patterns, adjusts to real-time conditions, and provides event-driven job scheduling that traditional cron cannot match.",
+    answer: "Yes. Cronicorn replaces fixed-schedule cron with HTTP endpoints that understand their own responses. Your endpoints return JSON data, the AI reads the response body fields, and scheduling adapts based on rules you write in plain English descriptions. Endpoints can also trigger each other — a health-check can automatically trigger a recovery action. Traditional cron can't do any of this.",
     category: "comparison",
   },
   {
-    question: "How does your AI job scheduler reduce alert fatigue?",
-    answer: "Our AI analyzes failure patterns and attempts auto-recovery before alerting humans. Example: Health check fails → AI activates diagnostics → Attempts cache warming → Only alerts if recovery fails. This reduces unnecessary pages by 80%.",
+    question: "How does Cronicorn reduce alert fatigue?",
+    answer: "Sibling endpoints coordinate automatically. A health-check endpoint detects errors in its response body, the AI triggers a recovery sibling endpoint, waits for a cooldown period, and checks again. Only if recovery fails after multiple attempts does the system escalate. This replaces manual runbooks with description-driven coordination — no webhooks or glue code required.",
     category: "ai-benefits",
   },
 ];

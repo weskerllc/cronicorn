@@ -16,8 +16,8 @@ export type PricingFAQ = {
 /** Feature highlights for pricing page */
 export const pricingFeatures: PricingFeature[] = [
   {
-    title: "AI-powered scheduling",
-    description: "Adaptive scheduling with soft token limits per tier",
+    title: "Response-driven scheduling",
+    description: "Endpoints adapt from their own response data with AI analysis per tier",
   },
   {
     title: "Built-in guardrails",
@@ -74,6 +74,6 @@ export const pricingText = {
     heading: "Trusted by Developers Worldwide",
   },
   cta: {
-    subtitle: "Sign in with GitHub to start scheduling with AI intelligence",
+    subtitle: "Sign in with GitHub to start scheduling endpoints that adapt on their own",
   },
 } as const;
