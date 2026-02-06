@@ -72,14 +72,15 @@ At this stage, I’m not asking AI to build anything. I’m using it to help me 
 
 Here’s the shape of the prompt:
 
-> I’m building a system that does **X**.  
+> I’m building a system that does **X**.
 > Ignore frameworks, databases, and infrastructure.
 >
 > Help me identify:
-> - The core concepts in the system  
-> - The data those concepts need  
-> - The rules that must never be broken  
-> - What goes in and what comes out  
+>
+> * The core concepts in the system
+> * The data those concepts need
+> * The rules that must never be broken
+> * What goes in and what comes out
 >
 > Respond using plain TypeScript interfaces and pure functions. No side effects.
 
@@ -114,8 +115,8 @@ export function confirmOrder(order: Order): Order {
 }
 ```
 
-No IO.  
-No frameworks.  
+No IO.
+No frameworks.
 Just rules.
 
 You already know more about your system here than most projects do after weeks of setup.
@@ -133,10 +134,11 @@ What does this logic need from the outside world?
 Not how it gets it. Just what.
 
 Things like:
-- Saving and loading data  
-- Getting the current time  
-- Generating IDs  
-- Sending notifications  
+
+* Saving and loading data
+* Getting the current time
+* Generating IDs
+* Sending notifications
 
 These needs become ports.
 
@@ -155,11 +157,11 @@ export interface OrderRepository {
 
 There’s a lot missing here, on purpose.
 
-No SQL.  
-No ORM.  
+No SQL.
+No ORM.
 No database client.
 
-The domain stays honest about what it needs.  
+The domain stays honest about what it needs.
 Everything else figures out how to supply it.
 
 ---
@@ -195,9 +197,9 @@ export async function confirmOrderUseCase(
 }
 ```
 
-Load something.  
-Check it exists.  
-Apply a rule.  
+Load something.
+Check it exists.
+Apply a rule.
 Save the result.
 
 This code knows when things happen, not why they’re allowed.
@@ -210,8 +212,8 @@ Now you finally write implementations.
 
 Start with the dumbest one that could possibly work.
 
-Not Postgres.  
-Not Drizzle.  
+Not Postgres.
+Not Drizzle.
 Not migrations.
 
 An in‑memory adapter.
@@ -237,8 +239,8 @@ export class InMemoryOrderRepository implements OrderRepository {
 
 This adapter is boring. That’s a feature.
 
-It lets you run the system immediately.  
-It keeps feedback loops short.  
+It lets you run the system immediately.
+It keeps feedback loops short.
 It gives AI something safe to refactor without touching real data.
 
 It proves the architecture works before you’ve committed to anything expensive.
@@ -276,9 +278,9 @@ If something feels unclear now, adding Postgres won’t fix it. It will just bur
 
 At this point, the system already works.
 
-You know what needs to be stored.  
-When it’s read.  
-When it’s written.  
+You know what needs to be stored.
+When it’s read.
+When it’s written.
 What happens when it isn’t there.
 
 Only now does a real database make sense.
@@ -318,10 +320,11 @@ I keep a `.adr/` folder at the root of every repo.
 Any meaningful architectural decision gets a short markdown file.
 
 Each ADR answers:
-- What decision was made  
-- Why it was made  
-- What alternatives were considered  
-- What tradeoffs were accepted  
+
+* What decision was made
+* Why it was made
+* What alternatives were considered
+* What tradeoffs were accepted
 
 ADRs become guardrails.
 
@@ -331,8 +334,8 @@ ADRs become guardrails.
 
 This is how you keep AI from quietly wrecking your codebase.
 
-Tests protect behavior.  
-Linting protects sanity.  
+Tests protect behavior.
+Linting protects sanity.
 Enforcement makes it real.
 
 ---
@@ -353,13 +356,14 @@ If AI breaks a domain test, that’s a hard stop.
 
 Be explicit about behavior first.
 
-Have AI implement it.  
-Have it write tests.  
+Have AI implement it.
+Have it write tests.
 Tighten the tests until they match what you actually want.
 
 Two rules after that:
-1. Tests must pass  
-2. Existing tests never break  
+
+1. Tests must pass
+2. Existing tests never break
 
 ---
 
@@ -367,7 +371,7 @@ Two rules after that:
 
 Pick a strict ruleset.
 
-Run it locally.  
+Run it locally.
 Run it in CI.
 
 If it fails, the work isn’t done.
@@ -394,7 +398,73 @@ Speed isn’t the enemy. Uncontrolled speed is.
 
 You don’t need my setup. You don’t need my architecture.
 
-But you do need clear, enforced boundaries.  
+But you do need clear, enforced boundaries.
 And you do need a way to say no.
 
 The rest is details.
+
+---
+
+## One Night Things Went Sideways
+
+There’s a specific moment that made all of this click.
+
+It was a small internal tool. Nothing fancy. I asked AI to help refactor a chunk of logic that had gotten messy. It did great. Too great. Files multiplied. Abstractions appeared. Tests passed.
+
+Later that night, I tried to rename a field.
+
+That single change touched fourteen files. Three of them I didn’t recognize. One test failed, two passed that probably shouldn’t have existed, and one change fixed the bug while introducing another one I didn’t understand.
+
+Nothing crashed.
+
+That was the worst part.
+
+I closed the laptop and didn’t open it again until the next afternoon. When I did, starting over felt cheaper than fixing it. That’s when I knew I’d lost the thread.
+
+---
+
+## The Part I Don’t Love Admitting
+
+Letting AI run feels good.
+
+Watching files appear, functions fill in, edge cases get handled — it scratches the same itch as rapid prototyping used to, except faster and quieter. You tell yourself you’ll come back and clean it up. You tell yourself you understand it well enough.
+
+Most of the time, that’s a lie you don’t catch until later.
+
+By then, the system technically works. It’s just hostile. Every change feels like you’re touching something brittle. You move slower than before, except now you have more code to maintain.
+
+That’s the trap.
+
+---
+
+## A Hard Opinion I Won’t Over-Explain
+
+Most people struggling with AI don’t have a tooling problem.
+
+They have a boundary problem.
+
+The model will happily generate whatever fits the shape you allow. If that shape is vague, you’ll get something impressive and untrustworthy at the same time. Speed just gets you there faster.
+
+---
+
+## The Part That Still Goes Wrong
+
+I still mess this up.
+
+I still let it generate more than I should. I still catch myself reading code that technically makes sense but doesn’t feel owned yet. The difference now is that I notice sooner.
+
+When something feels slippery, I stop. I cut it back to the domain. I rewrite the boundaries if I have to. It’s annoying. It’s slower.
+
+It’s also cheaper than losing two days to a system I don’t trust.
+
+---
+
+## One Last Detail That Probably Matters
+
+I usually realize things have gone wrong late at night.
+
+Tests are green. The house is quiet. I’m rereading the same function for the third time, and I can’t explain why it exists without scrolling.
+
+That’s my cue.
+
+That’s when I know the code got ahead of me — not because it’s bad, but because I let something else drive for too long.
