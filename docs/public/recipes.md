@@ -77,6 +77,8 @@ The description is your rules engine. The constraints are your safety net. The r
 
 **Goal**: Monitor a service endpoint and automatically increase polling frequency from 5 minutes to 30 seconds when the HTTP response indicates a degraded state, then return to baseline when conditions normalize.
 
+> **No code required.** Cronicorn's AI reads response body fields and adjusts scheduling automatically based on your `description`. You configure the endpoint — the AI handles runtime decisions. See [How Response Body Fields Drive Scheduling](./core-concepts.md#how-response-body-fields-drive-adaptive-scheduling) and [Code Examples](./code-examples.md) for programmatic setup.
+
 ### Step 1: Create the Job and Endpoint via API
 
 Create the job and add the endpoint using the HTTP API (the same fields work in the Web UI and MCP Server):
@@ -254,6 +256,8 @@ Look for:
 
 **Goal**: Set up a job where a health endpoint detects errors (including specific HTTP status codes like 500/503), triggers an automated recovery action, respects a cooldown period, and returns to normal polling once the service recovers.
 
+> **No code required.** The AI reads sibling response bodies and triggers recovery actions automatically. You configure two endpoints in the same job — the AI coordinates between them. See [Code Examples](./code-examples.md) for JavaScript setup.
+
 ### How HTTP Status Codes Affect Scheduling
 
 Before setting up, understand how Cronicorn handles status codes:
@@ -421,6 +425,8 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures 
 
 **Goal**: Create a data synchronization job that polls more frequently when there is a large data backlog (high `records_pending`), and relaxes to baseline when the data is caught up.
 
+> **No code required.** The AI reads `records_pending` and other fields from your response body and adjusts frequency automatically. You don't write frequency-adjustment logic. See [Code Examples: Data Sync](./code-examples.md#javascripttypescript-data-sync-with-volume-based-frequency) for programmatic setup.
+
 ### Step 1: Create the Job and Endpoint via API
 
 ```bash
@@ -582,6 +588,8 @@ fi
 
 In Cronicorn, **descriptions are your rules engine**. You write natural language that tells the AI which response body fields to monitor and what actions to take based on their values. The AI reads the response body, interprets the fields, and applies the scheduling tools accordingly.
 
+> **No code required.** You don't write parsing code, if/else trees, or rules engines. The AI reads JSON fields from the response body and compares them against thresholds in your `description`. See [Code Examples](./code-examples.md) for programmatic setup.
+
 ### How AI Response Body Parsing Works
 
 In Cronicorn, **you don't write parsing code**. The AI Planner automatically:
@@ -717,6 +725,8 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 ## Recipe 5: Oscillation Prevention for Volatile Systems
 
 **Goal**: Monitor a system with highly volatile HTTP response patterns and prevent the adaptive scheduling from oscillating between extreme frequencies — maintaining stability while still responding to genuine state changes.
+
+> **No code required.** The AI reads smoothed metrics from your response body and applies stability rules from your `description`. Tight min/max constraints limit how far the AI can swing. See [Code Examples](./code-examples.md) for programmatic setup.
 
 ### Step 1: Create the Job and Endpoint via API
 
@@ -870,6 +880,8 @@ curl -X PATCH https://api.cronicorn.com/api/jobs/JOB_ID/endpoints/ENDPOINT_ID \
 ## Recipe 6: Multi-Endpoint Cascading Coordination
 
 **Goal**: Set up multiple interdependent HTTP jobs where endpoints coordinate their execution based on cascading response data, with one endpoint's response influencing the scheduling of others — without creating conflicting AI decisions.
+
+> **No code required.** The AI coordinates sibling endpoints automatically via `get_sibling_latest_responses()`. You design response bodies with coordination signals — the AI reads them and orchestrates the pipeline. See [Code Examples](./code-examples.md) for programmatic setup.
 
 ### Step 1: Create the Job and All Endpoints via API
 
