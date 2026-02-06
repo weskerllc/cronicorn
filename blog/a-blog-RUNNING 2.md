@@ -170,11 +170,19 @@ That separation buys you control.
 The domain stays honest about what it needs.
 Everything else figures out how to supply it.
 
-## Phase Three: Application Layer (The Recipes)
+---
+
+### Phase Three: Application Layer (The Recipes)
 
 This is where things get assembled.
 
-The application layer doesn’t contain business rules — it **orchestrates** them. Think of it as a recipe, not a chef.
+The application layer doesn’t contain business rules. It doesn’t decide what’s allowed or forbidden. That all lives in the domain.
+
+This layer just strings steps together.
+
+Think of it like a recipe. It doesn’t invent ingredients. It just says what happens, and in what order.
+
+Here’s a simple example:
 
 ```ts
 // application/confirm-order.ts
@@ -197,8 +205,18 @@ export async function confirmOrderUseCase(
 }
 ```
 
-Still no database. Still no framework.
-But now you can *do* something.
+There’s nothing clever here.
+
+Load something.
+Check it exists.
+Apply a rule.
+Save the result.
+
+That’s the point.
+
+This code knows *when* things happen, not *why* they’re allowed. If the rules change, this layer barely moves.
+
+That separation is what keeps systems from turning into knots.
 
 ---
 
