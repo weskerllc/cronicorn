@@ -11,9 +11,14 @@ mcp:
   lastModified: 2026-02-06T00:00:00Z
 ---
 
-# Coordinating Multiple Endpoints
+# Coordinating Multiple Endpoints and Jobs
 
-This document shows practical patterns for orchestrating workflows across multiple endpoints. Cronicorn is a **hosted scheduling service** where the AI automatically handles coordination — you don't write orchestration code, parsers, or state machines. Instead, you configure endpoints with descriptions and design response bodies with signals. The AI reads both and coordinates automatically.
+This document shows practical patterns for orchestrating workflows across **multiple HTTP jobs** and endpoints. Cronicorn is a **hosted scheduling service** where the AI automatically handles coordination — you don't write orchestration code, parsers, or state machines. Instead, you configure endpoints with descriptions and design response bodies with signals. The AI reads both and coordinates automatically.
+
+**Use this guide when you need:**
+- Multiple HTTP jobs to work together, where one job's response data influences the scheduling of another job
+- Endpoints within the same job to coordinate (e.g., health-check triggers recovery)
+- Cascading pipelines where each stage depends on the previous stage completing
 
 All configurations use JSON field names that work with the Web UI, MCP Server, and HTTP API. See [Core Concepts](../core-concepts.md#endpoint-configuration-schema-json) for the full schema.
 

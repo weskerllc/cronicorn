@@ -18,6 +18,16 @@ mcp:
 
 **TL;DR:** Access Cronicorn programmatically using API keys (`x-api-key` header) or bearer tokens (OAuth device flow). Base URL is your API host (e.g., `https://api.cronicorn.com` or `http://localhost:3333`).
 
+## API Documentation Formats
+
+| Format | URL | Best for |
+|--------|-----|----------|
+| **Interactive UI** | [`/api/reference`](https://cronicorn.com/api/reference) | Browsing and testing endpoints in a browser |
+| **OpenAPI spec** | [`/api/doc`](https://cronicorn.com/api/doc) | Code generation, client SDKs, tooling |
+| **LLM-friendly Markdown** | [`/api/llms.txt`](https://cronicorn.com/api/llms.txt) | AI agents and coding assistants |
+
+The `/api/llms.txt` endpoint serves the full API spec as Markdown optimized for AI consumption, following the [llms.txt standard](https://llmstxt.org/). Point your AI assistant here for accurate, up-to-date API context.
+
 ## Authentication
 
 ### API Keys

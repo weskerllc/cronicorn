@@ -175,4 +175,4 @@ pnpm --filter @cronicorn/mcp-server dev
 
 ## License
 
-MIT
+[FSL-1.1-MIT](../../LICENSE)

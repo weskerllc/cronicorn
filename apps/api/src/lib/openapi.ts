@@ -4,6 +4,7 @@ import { brand } from "@cronicorn/content/brand";
 import { business } from "@cronicorn/content/business";
 import { urls } from "@cronicorn/content/urls";
 import { apiReference } from "@scalar/hono-api-reference";
+import { createMarkdownFromOpenApi } from "@scalar/openapi-to-markdown";
 
 import type { AppBindings, AppOpenAPI } from "../types.js";
 
@@ -46,8 +47,8 @@ export default function configureOpenAPI(app: AppOpenAPI, apiURL: string) {
         email: business.contactPoint.email,
       },
       license: {
-        name: "MIT",
-        url: "https://opensource.org/licenses/MIT",
+        name: "FSL-1.1-MIT",
+        url: "https://fsl.software/",
       },
     },
     // Link to full documentation site - Scalar renders this in the UI
@@ -147,4 +148,16 @@ The AI agent linked to the job:
       },
     }),
   );
+
+  // Serve LLM-friendly Markdown version of the API spec
+  // @see https://llmstxt.org/
+  let cachedMarkdown: string | null = null;
+  app.get("/llms.txt", async (c) => {
+    if (!cachedMarkdown) {
+      const specResponse = await app.request("/api/doc");
+      const spec = await specResponse.text();
+      cachedMarkdown = await createMarkdownFromOpenApi(spec);
+    }
+    return c.text(cachedMarkdown);
+  });
 }
