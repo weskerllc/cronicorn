@@ -289,6 +289,81 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/reset-failures \
 
 ---
 
+## How HTTP Status Codes Affect Scheduling
+
+When Cronicorn executes an endpoint, the HTTP response status code determines how the result is recorded and how it affects future scheduling:
+
+| Status Code | Result | Failure Count | Effect on Scheduling |
+|-------------|--------|---------------|---------------------|
+| 2xx (200, 201, etc.) | Success | Resets to 0 | Normal scheduling continues at baseline or AI-hinted interval |
+| 3xx (301, 302, etc.) | Success | Resets to 0 | Follows redirects, final response determines status |
+| 4xx (400, 404, etc.) | Failure | Increments +1 | Exponential backoff multiplies baseline interval |
+| 5xx (500, 503, etc.) | Failure | Increments +1 | Exponential backoff multiplies baseline interval |
+| Timeout | Failure | Increments +1 | Exponential backoff multiplies baseline interval |
+
+### Exponential Backoff on Failures
+
+When failures occur, the baseline interval is multiplied by an exponential backoff factor:
+
+| Failure Count | Backoff Multiplier | 1-min baseline becomes | 5-min baseline becomes |
+|---------------|-------------------|----------------------|----------------------|
+| 0 | 1x | 1 minute | 5 minutes |
+| 1 | 2x | 2 minutes | 10 minutes |
+| 2 | 4x | 4 minutes | 20 minutes |
+| 3 | 8x | 8 minutes | 40 minutes |
+| 4 | 16x | 16 minutes | 80 minutes |
+| 5+ | 32x (cap) | 32 minutes | 160 minutes |
+
+A single successful response (2xx) resets the failure count to 0 and restores normal scheduling immediately. The backoff multiplier caps at 32x (failure count 5+) to prevent intervals from growing indefinitely.
+
+### AI Override During Failures
+
+The AI Planner can override exponential backoff by proposing a tighter interval hint. This is useful when you want to actively monitor a failing service rather than backing off:
+
+```bash
+# Override backoff: monitor failing endpoint every 30 seconds
+curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "intervalMs": 30000,
+    "ttlMinutes": 15,
+    "reason": "Override backoff - actively monitoring failing endpoint for recovery"
+  }'
+```
+
+The AI interval hint overrides the baseline (including backoff). When the hint expires (after TTL), scheduling returns to the backoff-adjusted baseline.
+
+### Reset Failures Manually
+
+If exponential backoff has kicked in and you want to immediately return to baseline without waiting for a successful response:
+
+```bash
+curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/reset-failures \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+This resets the failure count to 0, removing all backoff and returning to the normal baseline interval.
+
+### Run Status Values
+
+Each execution run is recorded with one of these statuses:
+
+| Run Status | Description | Triggers |
+|------------|-------------|----------|
+| `success` | HTTP 2xx/3xx response received | Failure count resets to 0 |
+| `failed` | HTTP 4xx/5xx response received | Failure count increments |
+| `timeout` | Request exceeded `timeoutMs` | Failure count increments |
+
+You can query run history to see status codes and response bodies:
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://api.cronicorn.com/api/endpoints/ep_xyz789/runs?limit=10"
+```
+
+---
+
 ## Runs API
 
 ### List Endpoint Runs

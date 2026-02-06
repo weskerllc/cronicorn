@@ -49,9 +49,71 @@ This approach is flexible—you define the coordination protocol in your respons
 
 **Scenario**: E-commerce site with flash sale. Need to prioritize critical endpoints and pause low-priority work during traffic spikes.
 
-### Endpoints
+### Setup via API
 
-**Job**: "Flash Sale Management"
+```bash
+# Create the job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Flash Sale Management", "description": "Coordinates monitoring during flash sales with priority-based pausing" }'
+
+# Endpoint 1: Traffic Monitor (coordinator)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "traffic-monitor",
+    "url": "https://api.example.com/traffic/stats",
+    "method": "GET",
+    "baselineIntervalMs": 60000,
+    "minIntervalMs": 15000,
+    "timeoutMs": 10000,
+    "description": "Monitors traffic load and flash sale status. Returns load_status and recommendations for other endpoints. When load_status is high, siblings with LOW priority should be paused."
+  }'
+
+# Endpoint 2: Order Processor (CRITICAL priority)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "[CRITICAL] order-processor",
+    "url": "https://api.example.com/orders/process",
+    "method": "POST",
+    "baselineIntervalMs": 30000,
+    "minIntervalMs": 10000,
+    "timeoutMs": 30000,
+    "description": "Priority: CRITICAL. Processes customer orders. Must keep running during flash sales. Check traffic-monitor sibling: if load_status is high, tighten to 10 seconds for faster order processing."
+  }'
+
+# Endpoint 3: Inventory Sync (NORMAL priority)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "[NORMAL] inventory-sync",
+    "url": "https://api.example.com/inventory/sync",
+    "method": "POST",
+    "baselineIntervalMs": 300000,
+    "timeoutMs": 30000,
+    "description": "Priority: NORMAL. Syncs inventory to warehouse. Check traffic-monitor sibling: if load_status is high and recommendations.pause_low_priority is true, continue running but extend interval to reduce load. Resume normal when load_status returns to normal."
+  }'
+
+# Endpoint 4: Analytics Updater (LOW priority)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "[LOW] analytics-updater",
+    "url": "https://api.example.com/analytics/update",
+    "method": "POST",
+    "baselineIntervalMs": 600000,
+    "timeoutMs": 30000,
+    "description": "Priority: LOW. Updates dashboards. Check traffic-monitor sibling: if load_status is high and recommendations.pause_low_priority is true, pause until the recommended time. Resume when load_status returns to normal."
+  }'
+```
+
+### Endpoints
 
 **Endpoint 1: Traffic Monitor** (1-minute interval)
 - Checks current traffic load
@@ -126,9 +188,58 @@ When load drops (Traffic Monitor returns `"load_status": "normal"`):
 
 **Scenario**: Extract-Transform-Load pipeline where each stage depends on the previous stage completing.
 
-### Endpoints
+### Setup via API
 
-**Job**: "Customer Data Pipeline"
+```bash
+# Create the job
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Customer Data Pipeline", "description": "ETL pipeline: Extract → Transform → Load with cascading dependencies" }'
+
+# Stage 1: Extract (runs on cron)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "extract-data",
+    "url": "https://api.example.com/etl/extract",
+    "method": "POST",
+    "baselineCron": "0 2 * * *",
+    "timeoutMs": 120000,
+    "description": "Extracts customer data from upstream API daily at 2 AM. Response includes ready_for_transform flag and batch_id that downstream siblings use to coordinate."
+  }'
+
+# Stage 2: Transform (waits for extract via sibling signals)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "transform-data",
+    "url": "https://api.example.com/etl/transform",
+    "method": "POST",
+    "baselineIntervalMs": 60000,
+    "minIntervalMs": 30000,
+    "timeoutMs": 120000,
+    "description": "Transforms extracted data. Check extract-data sibling: only process when ready_for_transform is true and batch_id is newer than last processed batch. After success, response includes ready_for_load=true for the load-data sibling. Tighten to 30 seconds when actively processing a batch."
+  }'
+
+# Stage 3: Load (waits for transform via sibling signals)
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "load-data",
+    "url": "https://api.example.com/etl/load",
+    "method": "POST",
+    "baselineIntervalMs": 60000,
+    "minIntervalMs": 30000,
+    "timeoutMs": 180000,
+    "description": "Loads transformed data to production database. Check transform-data sibling: only process when ready_for_load is true and batch_id matches. After success, set pipeline_complete=true."
+  }'
+```
+
+### Endpoints
 
 **Endpoint 1: Extract Customer Data** (cron: `0 2 * * *` - 2 AM daily)
 - Pulls data from external API
@@ -341,6 +452,64 @@ When AI analyzes any endpoint:
 `get_sibling_latest_responses()` only works within the same job. Cross-job coordination requires a different approach.
 
 ### Solution: Shared State Endpoint
+
+The downstream endpoint checks upstream health directly and embeds the result in its own response body. The AI reads the embedded status and reacts accordingly.
+
+### Setup via API
+
+```bash
+# Job 1: Upstream Service
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Upstream Service", "description": "Monitors upstream API health" }'
+
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_UPSTREAM_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "upstream-health",
+    "url": "https://upstream.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 60000,
+    "timeoutMs": 10000,
+    "description": "Monitors upstream service health. Response includes service_status field used by downstream consumers in other jobs."
+  }'
+
+# Job 2: Downstream Consumers
+curl -X POST https://api.cronicorn.com/api/jobs \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Downstream Consumers", "description": "Processes data from upstream, embeds upstream health in responses for cross-job coordination" }'
+
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_DOWNSTREAM_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "data-processor",
+    "url": "https://downstream.example.com/process",
+    "method": "POST",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 60000,
+    "timeoutMs": 60000,
+    "description": "Processes data from upstream service. Response body includes upstream_status from upstream health check. When upstream_status is unavailable, pause for 15 minutes to wait for recovery. When upstream_status returns to healthy, resume immediately."
+  }'
+
+curl -X POST https://api.cronicorn.com/api/jobs/JOB_DOWNSTREAM_ID/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "analytics-pipeline",
+    "url": "https://downstream.example.com/analytics",
+    "method": "POST",
+    "baselineIntervalMs": 600000,
+    "minIntervalMs": 60000,
+    "timeoutMs": 60000,
+    "description": "Runs analytics on upstream data. Response includes upstream_status. When upstream_status is unavailable, pause for 30 minutes. Resume when upstream_status is healthy."
+  }'
+```
+
+### How It Works
 
 **Job 1**: "Upstream Service"
 - **Endpoint**: Health Check (1-minute interval)
