@@ -220,12 +220,15 @@ That separation is what keeps systems from turning into knots.
 
 ---
 
-## Phase Four: Adapters (Start Stupid on Purpose)
+### Phase Four: Adapters (Start Stupid on Purpose)
 
 Now you finally write implementations.
 
-I recommend starting with the simplest possible adapter.
-Not Postgres. Not Prisma. Not migrations.
+Start with the dumbest one that could possibly work.
+
+Not Postgres.
+Not Drizzle.
+Not migrations.
 
 An in-memory adapter.
 
@@ -248,14 +251,15 @@ export class InMemoryOrderRepository implements OrderRepository {
 }
 ```
 
-This lets you:
+This adapter is boring. That’s a feature.
 
-* Run the app immediately
-* Iterate fast
-* Avoid infrastructure drag
-* Let AI refactor safely without breaking production data
+It lets you run the system immediately.
+It keeps feedback loops short.
+It gives AI something safe to refactor without touching real data.
 
-This step alone has saved me *days*.
+Most importantly, it proves the architecture works before you’ve committed to anything expensive.
+
+I’ve saved days by doing this first. More than once.
 
 ---
 
