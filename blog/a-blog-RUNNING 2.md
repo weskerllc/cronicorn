@@ -1,26 +1,30 @@
-This is my first and maybe last blog post.
+This is my first — and maybe last — blog post.
 
-I’ve avoided writing one for years because I never felt like an expert. There’s always someone smarter, deeper, and already writing about the same thing — usually better than I could.
+I’ve avoided writing one for years because I never felt like an expert. There’s always someone smarter, deeper, already writing about the same thing. Usually better than I could.
 
-That’s still true. I’m not an AI expert. I’m not the cleanest developer either.
+That’s still true.
 
-I am a senior software engineer with 8+ years of experience. Enough scars to know when something’s going wrong. Not enough ego to pretend I’ve got it all figured out.
+I’m not an AI expert. I’m not the cleanest developer either.
+
+What I am is a senior software engineer with 8+ years of experience. Enough scars to recognize when something’s going wrong. Not enough ego to pretend I’ve got it all figured out.
 
 So why write this?
 
-Because AI has been my main side obsession as a developer for the last two or three years. I've seen the glow-up from a clumsy helper to something that can write serious amounts of code. And I’ve spent hundreds — probably thousands — of hours building with it. Not demos. Things with consequences.
+Because AI has been my main side obsession for the last two or three years. I’ve watched it go from a clumsy helper to something that can generate serious amounts of code. And I’ve spent hundreds — probably thousands — of hours building with it. Not demos. Real projects. Stuff with consequences.
 
-Most of my early projects ended badly.
+A lot of those early projects failed.
 
-I over-prompted. I over-generated. I let the code grow faster than my understanding. At some point, I wasn’t driving anymore. The project became messy, fragile, and exhausting to work on. Hours gone. Sometimes days. Starting over felt easier than fixing it.
+I over-prompted. I over-generated. I let the codebase grow faster than my understanding. At some point, I wasn’t driving anymore. The project became fragile, exhausting, and hard to reason about. Hours disappeared. Sometimes days. Starting over felt easier than fixing what I had.
 
-That kind of failure sticks with you. Not just because of the wasted time, but because you start wondering whether you’re actually getting better or just burning attention.
+That kind of failure sticks with you.
 
-After enough of those failures, patterns started to emerge. Rules. Ways of working where AI stays useful without taking over. Those rules weren’t researched or generated — they came from building the wrong way over and over.
+Not just because of the wasted time, but because you start wondering whether you’re actually improving — or just burning attention.
+
+After enough of those failures, patterns started to emerge. Rules. Ways of working where AI stays useful without taking control. None of these came from theory or research. They came from doing it wrong, over and over, until the shape of “right” became obvious.
 
 That’s what this post is about.
 
-If this helps you avoid even a fraction of the mistakes I made, it’s worth writing.
+If it helps you avoid even a fraction of the mistakes I made, it’s worth writing.
 
 Let’s get into it.
 
