@@ -1,3 +1,10 @@
+## [1.19.2](https://github.com/weskerllc/cronicorn/compare/v1.19.1...v1.19.2) (2026-02-06)
+
+
+### Bug Fixes
+
+* openapi ([fe68e4d](https://github.com/weskerllc/cronicorn/commit/fe68e4d755699d877a4a796322028f3f417cb8bb))
+
 ## [1.19.1](https://github.com/weskerllc/cronicorn/compare/v1.19.0...v1.19.1) (2026-02-03)
 
 
