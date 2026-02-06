@@ -125,20 +125,26 @@ That’s the advantage.
 
 ---
 
-## Phase Two: Ports — What the Domain Needs
+### Phase Two: Ports — What the Domain Needs
 
-Now you ask a different question:
+Once the domain is clear, the next question is simple:
 
-**What does my domain need from the outside world?**
+What does this logic need from the outside world?
 
 Not *how* it gets it. Just *what*.
-<<give more relatable examples>>
-Persistence.
-Time.
-IDs.
-Notifications.
 
-These become **ports** — contracts, not implementations.
+Things like:
+
+* Saving and loading data
+* Getting the current time
+* Generating IDs
+* Sending notifications
+
+These needs become **ports**.
+
+A port is just a contract. It’s the domain saying, “I need this to exist, but I don’t care how you do it.”
+
+Here’s what that looks like in code:
 
 ```ts
 // ports/order-repository.ts
@@ -151,17 +157,18 @@ export interface OrderRepository {
 }
 ```
 
-Notice what’s missing:
+There’s a lot missing here, on purpose.
 
-* No SQL
-* No ORM
-* No database client
+No SQL.
+No ORM.
+No database client.
 
-This is deliberate. You’re keeping options open.
+This file doesn’t know — or care — whether the data lives in memory, Postgres, or a spreadsheet someone updates by hand.
 
----
+That separation buys you control.
 
-<<this needs to be explained in a more dumbed down way>>
+The domain stays honest about what it needs.
+Everything else figures out how to supply it.
 
 ## Phase Three: Application Layer (The Recipes)
 
