@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/weskerllc/cronicorn/compare/v1.19.3...v1.20.0) (2026-02-06)
+
+
+### Features
+
+* **claude:** add update-docs skill for documentation maintenance ([#116](https://github.com/weskerllc/cronicorn/issues/116)) ([744b3fb](https://github.com/weskerllc/cronicorn/commit/744b3fb8162f00e308e930d9cd4490a964d108e4))
+
 ## [1.19.3](https://github.com/weskerllc/cronicorn/compare/v1.19.2...v1.19.3) (2026-02-06)
 
 
