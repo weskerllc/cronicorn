@@ -352,8 +352,9 @@ Each execution run is recorded with one of these statuses:
 | Run Status | Description | Triggers |
 |------------|-------------|----------|
 | `success` | HTTP 2xx/3xx response received | Failure count resets to 0 |
-| `failed` | HTTP 4xx/5xx response received | Failure count increments |
-| `timeout` | Request exceeded `timeoutMs` | Failure count increments |
+| `failed` | HTTP 4xx/5xx, timeout, or connection error | Failure count increments |
+
+Note: Timeouts (request exceeds `timeoutMs`) are recorded as `failed` with an error message indicating the timeout. There is no separate timeout status.
 
 You can query run history to see status codes and response bodies:
 
