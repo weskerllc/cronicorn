@@ -5,9 +5,9 @@
 **Scheduled HTTP calls that adapt in real time**
 
 <p align="center">
-Add endpoints, describe what matters in plain English, and the AI adapts —
+Add HTTP endpoints with a baseline schedule. Describe what matters in plain English —
 <br/>
-adjusting frequency, coordinating between endpoints, and recovering from failures based on real response data
+the AI reads your response bodies, adjusts frequency, and coordinates across endpoints. All within your min/max constraints.
 </p>
 
 <p align="center">
@@ -29,12 +29,12 @@ adjusting frequency, coordinating between endpoints, and recovering from failure
 
 ## Features
 
-- **Adaptive scheduling** — AI adjusts polling frequency based on real response data
-- **Plain English descriptions** — no config files, no SDK required
-- **Safety constraints** — min/max intervals and TTL-based hints that auto-expire
-- **Multi-endpoint coordination** — endpoints are aware of siblings and adapt together
-- **Automatic error recovery** — backoff, retry, and recovery actions out of the box
-- **Works without AI** — traditional cron and interval scheduling as a fallback
+- **Response body parsing** — AI reads your endpoint's JSON (`status`, `error_rate_pct`, `queue_depth`) and interprets values against your description
+- **Plain English descriptions** — write "tighten when error_rate_pct > 5%" instead of code rules. No SDK, no config files
+- **Safety constraints** — min/max intervals the AI cannot exceed. TTL-based hints auto-expire to baseline
+- **Endpoint coordination** — endpoints in the same job see each other's responses and adapt together
+- **Automatic error recovery** — exponential backoff, configurable timeouts, recovery actions
+- **Reliable baseline** — cron expressions and intervals run with or without AI adaptation
 
 ## How It Works
 
