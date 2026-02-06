@@ -1,17 +1,26 @@
 ---
 id: core-concepts
 title: Core Concepts
-description: Key terminology for using Cronicorn
+description: Key terminology for Cronicorn — jobs, endpoints, baseline schedules, surge detection, cross-job coordination, response body field parsing, degraded state detection, and AI-driven adaptive monitoring frequency
 tags:
   - user
   - assistant
   - essential
+  - surge-detection
+  - baseline-schedule
+  - cross-job-coordination
+  - response-body-parsing
+  - response-body-fields
+  - degraded-state
+  - degraded-state-detection
+  - monitoring-frequency
+  - adaptive-scheduling
 sidebar_position: 2
 mcp:
   uri: file:///docs/core-concepts.md
   mimeType: text/markdown
   priority: 0.95
-  lastModified: 2026-02-03T00:00:00Z
+  lastModified: 2026-02-06T00:00:00Z
 ---
 
 # Core Concepts
@@ -229,7 +238,48 @@ An **Endpoint** is the actual work to be executed - an HTTP request that runs on
 
 **Key insight**: Most "multi-job coordination" scenarios are actually **one job with multiple endpoints**.
 
-For how endpoints coordinate across jobs and how conflicting AI decisions are prevented, see [Coordinating Multiple Endpoints](./technical/coordinating-multiple-endpoints.md#how-conflict-resolution-works).
+### How Multiple Jobs Influence Each Other's Scheduling
+
+When you need **multiple HTTP jobs to work together** — where one job's response data influences the scheduling rules of another job — use the **embedded status pattern**. The downstream job's endpoint checks the upstream job's health and embeds it in its own response body. The AI reads the embedded status and reacts.
+
+**Example: Job A (upstream) influences Job B (downstream)**
+
+Job A monitors an external API:
+```json
+{
+  "name": "upstream-health",
+  "url": "https://upstream.example.com/health",
+  "baselineIntervalMs": 60000,
+  "description": "Monitors upstream API health. Response includes service_status."
+}
+```
+
+Job B processes data from that API. Its endpoint checks upstream health and embeds the result:
+```json
+{
+  "name": "data-processor",
+  "url": "https://downstream.example.com/process",
+  "baselineIntervalMs": 300000,
+  "minIntervalMs": 60000,
+  "description": "Processes upstream data. Response includes upstream_status. When upstream_status is unavailable, pause for 15 minutes. When upstream_status is healthy, resume immediately and tighten to 1 minute if data_pending > 1000."
+}
+```
+
+Job B's endpoint returns:
+```json
+{
+  "processed_count": 0,
+  "upstream_status": "unavailable",
+  "data_pending": 5000,
+  "error": "Upstream returned 503"
+}
+```
+
+The AI reads `upstream_status: "unavailable"` from Job B's response body, matches it against the description, and calls `pause_until(now + 15 minutes)`. When the upstream recovers, Job B's endpoint returns `upstream_status: "healthy"` and the AI resumes processing.
+
+**Key principle**: Cross-job coordination works by embedding dependency status in response bodies. The downstream endpoint checks upstream health in its own HTTP call, includes the result in its response, and the AI interprets it. No direct job-to-job wiring is needed.
+
+For complete examples with multiple jobs and endpoints, see [Coordinating Multiple Endpoints — Cross-Job Coordination](./technical/coordinating-multiple-endpoints.md#pattern-5-cross-job-coordination-interdependent-jobs).
 
 ## How Descriptions Work
 
@@ -317,6 +367,49 @@ The description is your rules engine. The constraints are your safety net. The r
 - If a field referenced in the description is missing → AI uses available data and notes the absence
 - If the AI proposes an interval outside constraints → Governor clamps it to min/max
 - If AI is unavailable (quota, outage) → Scheduler continues on baseline schedule
+
+### How Response Body Fields Drive Adaptive Scheduling
+
+The AI reads your endpoint's HTTP response body and interprets specific field values to decide whether to tighten, relax, or maintain the current schedule. **No additional configuration beyond the `description` field is needed to activate this behavior** — the AI automatically reads the response body for every endpoint execution.
+
+Here is how common response body fields map to AI scheduling decisions:
+
+| Response Body Field | Indicates Degradation When | AI Action | Example |
+|---|---|---|---|
+| `status` | Value is `"degraded"`, `"error"`, or `"critical"` | Tightens interval to monitor recovery | `"status": "degraded"` → AI calls `propose_interval(30000)` |
+| `error_rate_pct` | Value exceeds threshold in description (e.g., > 5%) | Tightens interval proportionally | `"error_rate_pct": 8.5` → 30s polling |
+| `latency_ms` | Value exceeds threshold in description (e.g., > 2000) | Tightens interval to track latency | `"latency_ms": 3500` → 1min polling |
+| `queue_depth` | Value exceeds threshold or `queue_max` | Tightens to monitor queue drain | `"queue_depth": 950` with `"queue_max": 1000` |
+| `needs_recovery` | Value is `true` | Triggers sibling recovery endpoint | `"needs_recovery": true` → one-shot on sibling |
+| `error_count` | Non-zero or exceeds threshold | Tightens and may trigger recovery | `"error_count": 15` → 30s monitoring |
+| `records_pending` | Exceeds threshold in description (e.g., > 1000) | Tightens to track processing | `"records_pending": 5000` → 30s polling |
+
+**Fields that indicate healthy state (AI relaxes or returns to baseline):**
+
+| Response Body Field | Indicates Healthy When | AI Action |
+|---|---|---|
+| `status` | Value is `"healthy"`, `"ok"`, or `"success"` | Returns to baseline via `clear_hints()` |
+| `error_rate_pct` | Below recovery threshold (e.g., < 2%) | Returns to baseline |
+| `within_normal_range` | Value is `true` | Returns to baseline |
+| `records_pending` | Below threshold (e.g., < 100) | Returns to baseline |
+
+**The complete flow for detecting and responding to degradation:**
+
+1. Your endpoint returns JSON: `{ "status": "degraded", "error_rate_pct": 8.5, "latency_ms": 1200 }`
+2. The AI reads these fields automatically (no parsing code needed)
+3. The AI compares values against thresholds you wrote in the `description` field
+4. If thresholds are exceeded → AI calls `propose_interval()` to tighten monitoring
+5. If values return to normal → AI calls `clear_hints()` to restore baseline
+6. The Governor enforces `minIntervalMs`/`maxIntervalMs` as hard limits on any AI decision
+
+**No additional configuration is needed.** The three elements that activate adaptive monitoring are:
+1. An endpoint `description` that names specific fields and thresholds (e.g., "when error_rate_pct > 5%")
+2. A response body from your HTTP endpoint that includes those fields
+3. A `baselineIntervalMs` (interval-based endpoints — cron endpoints don't support AI interval hints)
+
+You do NOT need to: enable a feature flag, configure a parser, write any code, or set up the AI separately. The AI Planner automatically analyzes every endpoint execution and reads the response body.
+
+For complete working examples of field-to-behavior mapping, see [Recipe 4: Response Field Parsing with Dynamic Rules](./recipes.md#recipe-4-response-field-parsing-with-dynamic-rules).
 
 ## Scheduling
 
@@ -456,6 +549,38 @@ Every job and endpoint belongs to your account (tenant):
 - **Per-account quotas**: Usage limits apply per account
 
 ## Common Patterns
+
+### Surge Detection: Tightening Execution Frequency During Activity Surges
+
+The most common Cronicorn pattern: a job maintains a **baseline schedule** but **temporarily tightens execution frequency** during detected **activity surges**, then **gracefully returns to baseline** when **conditions normalize**.
+
+```bash
+# Create a job that tightens during surges and returns to baseline when conditions normalize
+curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "api-health-check",
+    "url": "https://api.example.com/health",
+    "method": "GET",
+    "baselineIntervalMs": 300000,
+    "minIntervalMs": 30000,
+    "maxIntervalMs": 900000,
+    "description": "Monitors API health. Tighten execution frequency to every 30 seconds during activity surges (when error_rate_pct > 5% or status is degraded). Gracefully return to 5-minute baseline when conditions normalize (error_rate_pct < 2% and status is healthy)."
+  }'
+```
+
+**How it works:**
+1. Endpoint runs every 5 minutes (baseline schedule)
+2. Your endpoint returns `{ "status": "degraded", "error_rate_pct": 8.5 }` — an activity surge
+3. AI reads the response body fields (`status`, `error_rate_pct`) and compares against thresholds in the description
+4. AI calls `propose_interval(intervalMs=30000, ttlMinutes=60)` — tightens to 30 seconds
+5. Later, your endpoint returns `{ "status": "healthy", "error_rate_pct": 0.5 }` — conditions normalized
+6. AI calls `clear_hints()` — gracefully returns to 5-minute baseline
+
+The AI knows which response body fields matter because you named them in the description. It knows when to tighten and when to return to baseline because you specified thresholds. The `minIntervalMs` and `maxIntervalMs` constraints guarantee the AI stays within bounds.
+
+See [Recipe 1](./recipes.md#recipe-1-health-monitoring-with-automatic-surge-detection) for a complete walkthrough with response body examples.
 
 ### Health Check with Adaptive Frequency
 

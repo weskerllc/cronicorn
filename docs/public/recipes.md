@@ -211,6 +211,18 @@ If latency_ms exceeds 2000, tighten to 1-minute intervals."
 - Specifies both tightening AND recovery conditions
 - References specific interval values (30s, 1min)
 
+### Exactly Which Response Body Fields Trigger Adaptive Behavior
+
+The AI parses your response body fields and compares them against the thresholds in your `description`. Here is the exact mapping for this recipe:
+
+| Response Body Field | Degradation Threshold | AI Action When Exceeded | Recovery Threshold | AI Action on Recovery |
+|---|---|---|---|---|
+| `status` | `"degraded"` or `"critical"` | `propose_interval(30000)` — 30s polling | `"healthy"` | `clear_hints()` — return to 5min baseline |
+| `error_rate_pct` | > 5% (from description) | `propose_interval(30000)` — 30s polling | < 2% (from description) | `clear_hints()` — return to baseline |
+| `latency_ms` | > 2000 (from description) | `propose_interval(60000)` — 1min polling | < 2000 | Maintains current or returns to baseline |
+
+**No additional configuration beyond the `description` field is needed.** The AI automatically reads the response body for every execution, parses the JSON fields, and compares values against the thresholds you wrote in the description. You do not need to enable a feature flag, write parsing code, or configure a rules engine.
+
 ### Error Handling
 
 What happens when edge cases occur:

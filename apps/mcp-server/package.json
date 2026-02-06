@@ -4,7 +4,7 @@
   "type": "module",
   "description": "MCP server for Cronicorn - enables AI agents to manage cron jobs via Model Context Protocol",
   "author": "Cronicorn",
-  "license": "MIT",
+  "license": "FSL-1.1-MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/weskerllc/cronicorn.git",
