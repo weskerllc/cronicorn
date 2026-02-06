@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 15: Log All Untracked TODOs to Tech Debt Document\nPriority: MEDIUM | Type: Documentation | Estimated scope: 1 file\n\nContext:\nThe project has a mandatory rule that all TODOs must be logged in docs/_RUNNING_TECH_DEBT.md. There are 8 TODO comments in the codebase that are NOT logged:\n\nFile\tLine\tTODO\npackages/adapter-ai/src/client.ts\t95\tConsider using modelName for per-call model selection\npackages/services/src/subscriptions/manager.ts\t97-98\tAdd status and endsAt to getUserById return type\npackages/adapter-drizzle/src/runs-repo.ts\t156\tOptimize count query with window functions\napps/ai-planner/src/index.ts\t78\tUse real Pino logger instead of stub\napps/mcp-server/src/resources/README.md\t54\tImplementation TODO\napps/web/src/lib/api-client/format-api-error.ts\t2\tFormat zod validation errors from API\napps/web/src/lib/api-client/queries/api-keys.queries.ts\t21\tRefactor to use api contracts package\napps/web/src/routes/_authed/endpoints.$id.runs.tsx\t171\tImplement backend searching for runs\nWhat to implement:\n\nRead the current docs/_RUNNING_TECH_DEBT.md.\n\nAdd a new section for each untracked TODO, grouped by area:\n\nAI Planner section: logger stub, model selection\nAdapter Drizzle section: count query optimization\nSubscriptions section: return type fields\nWeb App section: error formatting, api-keys refactor, backend search\nMCP Server section: resource implementation\nUse the existing format with checkboxes (- [ ]) and file references.\n\nAlso add tech debt entries for the issues found in this assessment that require future work:\n\nRate limiting needs Redis for multi-instance deployment\nSentry/error tracking not yet integrated\nNo database backup strategy\nResponse body storage is unencrypted\nMissing webhook events (charge.dispute.created, charge.refunded)\nConventions:\n\nCommit as docs: log untracked TODOs and assessment findings to tech debt doc\nFollow the existing format in the file",
+  "title": "Log untracked TODOs to tech debt document",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770420095789-sqyao09co",
+  "descriptionHistory": [
+    {
+      "description": "TASK 15: Log All Untracked TODOs to Tech Debt Document\nPriority: MEDIUM | Type: Documentation | Estimated scope: 1 file\n\nContext:\nThe project has a mandatory rule that all TODOs must be logged in docs/_RUNNING_TECH_DEBT.md. There are 8 TODO comments in the codebase that are NOT logged:\n\nFile\tLine\tTODO\npackages/adapter-ai/src/client.ts\t95\tConsider using modelName for per-call model selection\npackages/services/src/subscriptions/manager.ts\t97-98\tAdd status and endsAt to getUserById return type\npackages/adapter-drizzle/src/runs-repo.ts\t156\tOptimize count query with window functions\napps/ai-planner/src/index.ts\t78\tUse real Pino logger instead of stub\napps/mcp-server/src/resources/README.md\t54\tImplementation TODO\napps/web/src/lib/api-client/format-api-error.ts\t2\tFormat zod validation errors from API\napps/web/src/lib/api-client/queries/api-keys.queries.ts\t21\tRefactor to use api contracts package\napps/web/src/routes/_authed/endpoints.$id.runs.tsx\t171\tImplement backend searching for runs\nWhat to implement:\n\nRead the current docs/_RUNNING_TECH_DEBT.md.\n\nAdd a new section for each untracked TODO, grouped by area:\n\nAI Planner section: logger stub, model selection\nAdapter Drizzle section: count query optimization\nSubscriptions section: return type fields\nWeb App section: error formatting, api-keys refactor, backend search\nMCP Server section: resource implementation\nUse the existing format with checkboxes (- [ ]) and file references.\n\nAlso add tech debt entries for the issues found in this assessment that require future work:\n\nRate limiting needs Redis for multi-instance deployment\nSentry/error tracking not yet integrated\nNo database backup strategy\nResponse body storage is unencrypted\nMissing webhook events (charge.dispute.created, charge.refunded)\nConventions:\n\nCommit as docs: log untracked TODOs and assessment findings to tech debt doc\nFollow the existing format in the file",
+      "timestamp": "2026-02-06T23:21:36.076Z",
+      "source": "initial"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 12: Add Backfill Migration for Existing Pro Users' Refund Status\nPriority: HIGH | Type: Data migration | Estimated scope: 1 file\n\nContext:\nMigration packages/adapter-drizzle/migrations/0018_yielding_spencer_smythe.sql added refund_status column but didn't set it for existing Pro users. Currently existing Pro users have refund_status = NULL, which accidentally works because the eligibility check requires refundStatus === \"eligible\". But this is fragile. The tech debt doc at docs/_RUNNING_TECH_DEBT.md:35-37 explicitly calls this out as a TODO.\n\nWhat to implement:\n\nGenerate a new migration (or create one manually in packages/adapter-drizzle/migrations/) that runs:\n\n-- Backfill: Mark existing Pro users as expired for refund\n-- (they were subscribed before the refund feature existed)\nUPDATE \"user\" \nSET refund_status = 'expired' \nWHERE tier = 'pro' \n  AND refund_status IS NULL;\n\n-- Also mark free users as N/A (optional, for data cleanliness)\nUPDATE \"user\" \nSET refund_status = 'expired' \nWHERE tier = 'free' \n  AND refund_status IS NOT NULL \n  AND refund_status != 'issued';\n\nRun pnpm db:migrate to verify it applies cleanly.\n\nUpdate docs/_RUNNING_TECH_DEBT.md to check off the TODO at line 35-37 about the backfill migration.\n\nConventions:\n\nCommit as fix(db): backfill refund_status for existing users\nMigration file naming follows Drizzle Kit conventions (auto-generated name)",
+  "title": "Backfill refund status for existing Pro users",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770420060850-h7z38tafa",
+  "descriptionHistory": [
+    {
+      "description": "TASK 12: Add Backfill Migration for Existing Pro Users' Refund Status\nPriority: HIGH | Type: Data migration | Estimated scope: 1 file\n\nContext:\nMigration packages/adapter-drizzle/migrations/0018_yielding_spencer_smythe.sql added refund_status column but didn't set it for existing Pro users. Currently existing Pro users have refund_status = NULL, which accidentally works because the eligibility check requires refundStatus === \"eligible\". But this is fragile. The tech debt doc at docs/_RUNNING_TECH_DEBT.md:35-37 explicitly calls this out as a TODO.\n\nWhat to implement:\n\nGenerate a new migration (or create one manually in packages/adapter-drizzle/migrations/) that runs:\n\n-- Backfill: Mark existing Pro users as expired for refund\n-- (they were subscribed before the refund feature existed)\nUPDATE \"user\" \nSET refund_status = 'expired' \nWHERE tier = 'pro' \n  AND refund_status IS NULL;\n\n-- Also mark free users as N/A (optional, for data cleanliness)\nUPDATE \"user\" \nSET refund_status = 'expired' \nWHERE tier = 'free' \n  AND refund_status IS NOT NULL \n  AND refund_status != 'issued';\n\nRun pnpm db:migrate to verify it applies cleanly.\n\nUpdate docs/_RUNNING_TECH_DEBT.md to check off the TODO at line 35-37 about the backfill migration.\n\nConventions:\n\nCommit as fix(db): backfill refund_status for existing users\nMigration file naming follows Drizzle Kit conventions (auto-generated name)",
+      "timestamp": "2026-02-06T23:21:01.161Z",
+      "source": "initial"
+    }
+  ]
+}

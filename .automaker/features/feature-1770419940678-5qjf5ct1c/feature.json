@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 4: Add Missing Database Indexes\nPriority: CRITICAL | Type: Performance | Estimated scope: 1 migration file\n\nContext:\nThe schema at packages/adapter-drizzle/src/schema.ts is missing indexes on frequently-queried columns. Current indexes exist on jobEndpoints.jobId, jobEndpoints.nextRunAt, and several on runs. But these high-traffic columns have no index:\n\njobs.userId — every job listing and authorization check filters by this\njobEndpoints.tenantId — used in endpoint authorization checks (endpoint.tenantId !== userId)\nuser.stripeCustomerId — looked up on every Stripe webhook\njobEndpoints.archivedAt — filtered in every endpoint listing (exclude archived)\nWhat to implement:\n\nAdd indexes to packages/adapter-drizzle/src/schema.ts:\n\nOn jobs table: add userIdIdx: index(\"jobs_user_id_idx\").on(table.userId) in the table's index callback\nOn jobEndpoints table: add tenantIdIdx: index(\"job_endpoints_tenant_id_idx\").on(table.tenantId) (the table already has an index callback at line 104-107, add to it)\nOn user table: add stripeCustomerIdIdx: index(\"user_stripe_customer_id_idx\").on(table.stripeCustomerId) — add an index callback to the table definition\nOn jobEndpoints table: add composite tenantIdArchivedIdx: index(\"job_endpoints_tenant_archived_idx\").on(table.tenantId, table.archivedAt) for filtered endpoint listings\nGenerate the migration:\n\npnpm --filter @cronicorn/adapter-drizzle drizzle-kit generate\n\nThis will create a new SQL migration file in packages/adapter-drizzle/migrations/. Verify it contains only CREATE INDEX statements.\n\nRun the migration to verify it applies cleanly:\n\npnpm db:migrate\n\nConventions:\n\nCommit as perf(db): add missing indexes for user and tenant queries\nRun pnpm build:packages after schema changes\nThe migration tool is drizzle-kit — check packages/adapter-drizzle/package.json for the exact script name",
+  "title": "Add missing database indexes for performance",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770419940678-5qjf5ct1c",
+  "descriptionHistory": [
+    {
+      "description": "TASK 4: Add Missing Database Indexes\nPriority: CRITICAL | Type: Performance | Estimated scope: 1 migration file\n\nContext:\nThe schema at packages/adapter-drizzle/src/schema.ts is missing indexes on frequently-queried columns. Current indexes exist on jobEndpoints.jobId, jobEndpoints.nextRunAt, and several on runs. But these high-traffic columns have no index:\n\njobs.userId — every job listing and authorization check filters by this\njobEndpoints.tenantId — used in endpoint authorization checks (endpoint.tenantId !== userId)\nuser.stripeCustomerId — looked up on every Stripe webhook\njobEndpoints.archivedAt — filtered in every endpoint listing (exclude archived)\nWhat to implement:\n\nAdd indexes to packages/adapter-drizzle/src/schema.ts:\n\nOn jobs table: add userIdIdx: index(\"jobs_user_id_idx\").on(table.userId) in the table's index callback\nOn jobEndpoints table: add tenantIdIdx: index(\"job_endpoints_tenant_id_idx\").on(table.tenantId) (the table already has an index callback at line 104-107, add to it)\nOn user table: add stripeCustomerIdIdx: index(\"user_stripe_customer_id_idx\").on(table.stripeCustomerId) — add an index callback to the table definition\nOn jobEndpoints table: add composite tenantIdArchivedIdx: index(\"job_endpoints_tenant_archived_idx\").on(table.tenantId, table.archivedAt) for filtered endpoint listings\nGenerate the migration:\n\npnpm --filter @cronicorn/adapter-drizzle drizzle-kit generate\n\nThis will create a new SQL migration file in packages/adapter-drizzle/migrations/. Verify it contains only CREATE INDEX statements.\n\nRun the migration to verify it applies cleanly:\n\npnpm db:migrate\n\nConventions:\n\nCommit as perf(db): add missing indexes for user and tenant queries\nRun pnpm build:packages after schema changes\nThe migration tool is drizzle-kit — check packages/adapter-drizzle/package.json for the exact script name",
+      "timestamp": "2026-02-06T23:19:00.910Z",
+      "source": "initial"
+    }
+  ]
+}

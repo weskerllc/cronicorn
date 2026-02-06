@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 10: Fix N+1 Query in getSiblingLatestResponses\nPriority: HIGH | Type: Performance | Estimated scope: 1 file + 1 test file\n\nContext:\nIn packages/adapter-drizzle/src/runs-repo.ts:755-807, the getSiblingLatestResponses() method first queries all endpoints for a job, then loops and runs a separate query for each endpoint to get its latest run. With 10 endpoints per job, that's 11 queries instead of 1. The comment at line 766 even says \"window function approach\" but uses a loop anyway.\n\nWhat to implement:\n\nReplace the N+1 loop in packages/adapter-drizzle/src/runs-repo.ts:755-807 with a single query using DISTINCT ON (PostgreSQL-specific) or a window function:\n\nSELECT DISTINCT ON (je.id) \n  je.id as endpoint_id, je.name as endpoint_name,\n  r.response_body, r.started_at as timestamp, r.status\nFROM job_endpoints je\nLEFT JOIN runs r ON r.endpoint_id = je.id\nWHERE je.job_id = $1 AND je.id != $2\nORDER BY je.id, r.started_at DESC\n\nIn Drizzle ORM, use sql template for DISTINCT ON since Drizzle doesn't have native support:\n\nconst results = await this.tx.execute(sql`\n  SELECT DISTINCT ON (${jobEndpoints.id}) ...\n`);\n\nEnsure the return type remains Array<{ endpointId, endpointName, responseBody, timestamp, status }>.\n\nAdd/update integration tests for this method in the runs-repo test file to verify it returns the correct latest run per endpoint.\n\nKey files:\n\npackages/adapter-drizzle/src/runs-repo.ts:755-807 — the method to fix\npackages/adapter-drizzle/src/schema.ts:60-107 — the table definitions for jobEndpoints and joins\nConventions:\n\nCommit as perf(adapter-drizzle): replace N+1 query with DISTINCT ON in getSiblingLatestResponses",
+  "title": "Fix N+1 query in getSiblingLatestResponses",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770420024281-eoqzaihw1",
+  "descriptionHistory": [
+    {
+      "description": "TASK 10: Fix N+1 Query in getSiblingLatestResponses\nPriority: HIGH | Type: Performance | Estimated scope: 1 file + 1 test file\n\nContext:\nIn packages/adapter-drizzle/src/runs-repo.ts:755-807, the getSiblingLatestResponses() method first queries all endpoints for a job, then loops and runs a separate query for each endpoint to get its latest run. With 10 endpoints per job, that's 11 queries instead of 1. The comment at line 766 even says \"window function approach\" but uses a loop anyway.\n\nWhat to implement:\n\nReplace the N+1 loop in packages/adapter-drizzle/src/runs-repo.ts:755-807 with a single query using DISTINCT ON (PostgreSQL-specific) or a window function:\n\nSELECT DISTINCT ON (je.id) \n  je.id as endpoint_id, je.name as endpoint_name,\n  r.response_body, r.started_at as timestamp, r.status\nFROM job_endpoints je\nLEFT JOIN runs r ON r.endpoint_id = je.id\nWHERE je.job_id = $1 AND je.id != $2\nORDER BY je.id, r.started_at DESC\n\nIn Drizzle ORM, use sql template for DISTINCT ON since Drizzle doesn't have native support:\n\nconst results = await this.tx.execute(sql`\n  SELECT DISTINCT ON (${jobEndpoints.id}) ...\n`);\n\nEnsure the return type remains Array<{ endpointId, endpointName, responseBody, timestamp, status }>.\n\nAdd/update integration tests for this method in the runs-repo test file to verify it returns the correct latest run per endpoint.\n\nKey files:\n\npackages/adapter-drizzle/src/runs-repo.ts:755-807 — the method to fix\npackages/adapter-drizzle/src/schema.ts:60-107 — the table definitions for jobEndpoints and joins\nConventions:\n\nCommit as perf(adapter-drizzle): replace N+1 query with DISTINCT ON in getSiblingLatestResponses",
+      "timestamp": "2026-02-06T23:20:24.612Z",
+      "source": "initial"
+    }
+  ]
+}
