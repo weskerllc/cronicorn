@@ -7,82 +7,83 @@ Quick reference for the most important messaging elements. Perfect for creating 
 ## 🎯 Core Messaging
 
 ### Elevator Pitch (30 seconds)
-"Cronicorn is an AI-powered job scheduler that automatically adapts to your system's reality. Instead of checking everything at the same pace regardless of what's happening, it tightens monitoring during incidents, activates investigation tools, attempts recovery, and only alerts when human intervention is truly needed. Teams reduce alert fatigue by 80% and resolve issues 10x faster."
+"Cronicorn is a hosted scheduling service that replaces traditional cron with adaptive HTTP job scheduling. You add endpoints, describe what matters in plain English — like 'tighten to 30 seconds when error_rate_pct exceeds 5%' — and the AI reads your response bodies and adjusts frequency automatically. No scheduling code, no rule engines. Descriptions and min/max constraints give you full control."
 
 ### One-Liner
-"Intelligent job scheduling that adapts to your reality."
+"HTTP jobs that understand their own responses — controlled by descriptions, not code."
 
 ### Tagline Options
-1. "Never Miss the Perfect Moment to Run Your Code" ⭐ (Primary)
-2. "Your Jobs Deserve a Smarter Scheduler"
-3. "Stop Fighting Your Scheduler"
+1. "HTTP Jobs That Understand Their Own Responses" (Primary — matches brand.ts)
+2. "Scheduled HTTP calls that adapt in real time" (Matches README)
+3. "Describe what matters. AI reads responses and adapts."
 
 ---
 
-## 💎 Value Propositions (Pick 3)
+## Value Propositions (Pick 3)
 
-1. **Reduce Alert Fatigue 80%**
-   - Smart escalation, not notification spam
-   - Context-aware alerts only when needed
-   
-2. **10x Faster Issue Resolution**
-   - Detect problems earlier with adaptive intervals
-   - Auto-recovery before human intervention
-   
-3. **Zero Schedule Maintenance**
-   - Set baselines once
-   - AI handles all adjustments automatically
+1. **Response-Aware Scheduling**
+   - AI reads endpoint response bodies and adapts frequency
+   - No parsing code, no rule engines — descriptions drive behavior
+
+2. **Natural Language Control**
+   - Write descriptions like "tighten when error_rate_pct > 5%"
+   - AI interprets intent against real response data
+
+3. **Safety by Design**
+   - Min/max constraints the AI cannot exceed
+   - TTL-based hints auto-expire back to baseline
+   - Graceful degradation when AI is unavailable
 
 ---
 
-## 🎤 Headline Bank
+## Headline Bank
 
 ### For Landing Page
-- "Never Miss the Perfect Moment to Run Your Code"
-- "Intelligent Job Scheduling That Adapts to Your Reality"
-- "Stop Getting Paged at 3 AM for Issues That Fix Themselves"
-- "Your Systems Don't Run in a Vacuum—Your Scheduler Shouldn't Either"
+- "HTTP Jobs That Understand Their Own Responses"
+- "Describe What Matters. AI Reads Responses and Adapts."
+- "Stop Hand-Tuning Cron Schedules — Let Response Data Drive Frequency"
+- "Scheduled HTTP Calls That Adapt in Real Time"
 
 ### For Social Media
-- "The scheduler that thinks"
-- "Adaptive automation for modern operations"
-- "Monitoring that tightens when it matters"
-- "Alert smarter, not harder"
+- "The scheduler that reads your responses"
+- "Descriptions, not code rules"
+- "Adaptive intervals from real response data"
+- "Cron with response body awareness"
 
 ### For Blog Posts
-- "Cron Jobs Are Dead: The AI Way to Schedule Everything"
-- "How to Reduce Alert Fatigue by 80%"
-- "Self-Healing Systems Aren't Magic—Here's How They Work"
-- "The Future of DevOps: From Reactive to Adaptive"
+- "From Blind Cron to Response-Aware Scheduling"
+- "Natural Language Descriptions as a Scheduling Control Plane"
+- "Why Your Scheduler Should Read Response Bodies"
+- "Adaptive Scheduling: Tighten During Surges, Return to Baseline"
 
 ---
 
 ## 📝 Feature Descriptions (Ready to Use)
 
 ### Adaptive Intervals
-**Short:** Automatically adjust monitoring frequency based on system health.
+**Short:** AI reads response bodies and adjusts execution frequency in real time.
 
-**Long:** Stop treating every moment the same. Cronicorn adjusts monitoring frequency based on system health—tight checks when it matters, relaxed intervals when things are calm. Set min/max boundaries and AI respects them.
+**Long:** The AI Planner reads your endpoint's JSON responses and interprets field values against your natural language description. When conditions match ("error_rate_pct > 5%"), it tightens frequency. When conditions normalize, it returns to baseline. Min/max constraints enforce hard limits.
 
-### Workflow Orchestration
-**Short:** Coordinate multi-tier responses: health → investigation → recovery → alert.
+### Sibling Coordination
+**Short:** Endpoints within a job see each other's responses and coordinate.
 
-**Long:** Unlike simple schedulers, Cronicorn orchestrates intelligent workflows. Health checks detect issues, investigation tools activate automatically, recovery attempts run before escalation, and alerts only fire when human intervention is truly needed.
+**Long:** Endpoints grouped in the same job have sibling visibility — the AI reads all their responses. A health-check failure can trigger a recovery endpoint. A data-sync backlog can adjust a downstream processor's frequency. All driven by descriptions, no wiring code.
 
-### Auto-Recovery
-**Short:** Attempt fixes before waking the team at 3 AM.
+### Response Body Awareness
+**Short:** No parsing code — AI reads your JSON responses automatically.
 
-**Long:** Build self-healing systems that try common fixes automatically. Cache warming, pod restarts, connection resets—all attempted before paging oncall. Faster resolution, fewer interruptions.
+**Long:** The AI reads up to 500 characters of your endpoint's response body. Field names like `error_rate_pct`, `status`, `queue_depth` are interpreted against thresholds in your description. You design the response body, the AI reads it. No parsers, no rules engine.
 
 ### Transparent AI
 **Short:** Every decision explained. No black boxes.
 
-**Long:** Every AI adjustment includes a clear reason: "Traffic surge detected—tightening monitoring to 30 seconds." You always know why the scheduler made a decision, not just what it did.
+**Long:** Every AI adjustment includes a clear reason: "error_rate_pct is 8.5, exceeding threshold of 5% — tightening to 30 seconds." You see what fields the AI read, what it decided, and why. All hints have TTL and auto-expire.
 
-### Zero Config Scheduling
-**Short:** Set it once. Let AI handle the rest.
+### Description-Driven Control
+**Short:** Write what matters in plain English. No code rules, no config files.
 
-**Long:** Define baseline schedules and guardrails once. Cronicorn learns from execution patterns and handles adjustments automatically. No complex rules to maintain, no manual schedule tweaking.
+**Long:** Your endpoint description is the rules engine: "Tighten when error_rate_pct > 5%. Return to baseline when healthy." The AI interprets this against real response data. Combined with min/max constraints and response body design, you have three levers of full control — no scheduling code required.
 
 ---
 
@@ -226,10 +227,10 @@ Respect rate limits with adaptive slowdown. Pause on validation failures. Adjust
 A: Anything triggered by HTTP: health checks, webhooks, data pipelines, notifications, batch processing, automation.
 
 **Q: How does AI make decisions?**
-A: Analyzes success rates, response times, and failure patterns. Applies proven strategies: tighten during degradation, pause during failures, activate diagnostics when needed.
+A: Reads your endpoint's response body fields and interprets them against your natural language description. For example, if you write "tighten when error_rate_pct > 5%" and the response contains `error_rate_pct: 8.5`, the AI tightens frequency. Min/max constraints enforce hard limits.
 
-**Q: Can I disable AI?**
-A: Yes. Use as traditional scheduler, enable AI for specific endpoints only, or set strict bounds AI respects.
+**Q: Can I control AI behavior?**
+A: Yes. Three levers: your description (rules), min/max constraints (guardrails), and your response body design (data). The AI cannot exceed your constraints, and all hints auto-expire via TTL.
 
 **Q: What if AI makes a bad decision?**
 A: AI hints have TTL and expire. You set min/max intervals AI cannot violate. Manual overrides always take priority.
@@ -239,14 +240,16 @@ A: Distributed architecture, idempotent execution, graceful degradation, transac
 
 ---
 
-## 🔢 Key Statistics to Use
+## Key Differentiators to Use
 
-- **80% reduction** in alert fatigue
-- **10x faster** issue resolution
-- **40% lower** operational costs
-- **3 AM pages** eliminated
-- **Zero schedule maintenance** needed
-- **Real-time adaptation** to conditions
+- **Response body awareness** — AI reads endpoint JSON and interprets field values
+- **Natural language descriptions** — no code rules, no DSL, no config files
+- **Three levers of control** — description, min/max constraints, response body design
+- **TTL-based hints** — AI adjustments auto-expire back to baseline
+- **Sibling coordination** — endpoints in the same job see each other's responses
+- **Graceful degradation** — baseline continues if AI is unavailable
+
+> **Note:** Specific statistics (e.g., "80% reduction in alert fatigue") should only be used when backed by real customer data or benchmarks. Do not use unsubstantiated metrics in public-facing copy.
 
 ---
 
@@ -394,19 +397,19 @@ Cronicorn: Intelligent job scheduling that learns, adjusts, and explains every d
 
 ---
 
-## 📊 Comparison One-Liners
+## Comparison One-Liners
 
 **vs. Cron:**
-"Adapts in real-time, not static"
+"Reads response data and adapts — not blind execution"
 
 **vs. Other Schedulers:**
-"Multi-tier orchestration with auto-recovery, not just alerts"
+"Descriptions, not code rules. Response-aware, not status-code-only."
 
 **vs. Black-Box AI:**
-"Every decision explained with reasoning"
+"Every decision explained — field values, thresholds, reasoning. TTL-based hints that auto-expire."
 
 **vs. Manual Management:**
-"Set baselines once, AI handles adjustments"
+"Write a description and set constraints. AI handles frequency from response data."
 
 ---
 
