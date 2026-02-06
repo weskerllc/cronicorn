@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 16: Add CSRF Protection\nPriority: MEDIUM | Type: Security | Estimated scope: 1-2 files\n\nContext:\nThere is no CSRF token validation on any state-changing endpoint. The app relies on SameSite=lax cookies and CORS origin validation. For 100 users this is acceptable as baseline protection, but explicit CSRF tokens are recommended. Hono has a built-in CSRF middleware.\n\nWhat to implement:\n\nIn apps/api/src/app.ts, add Hono's CSRF middleware:\n\nimport { csrf } from \"hono/csrf\";\n\napp.use(\"*\", csrf({\n  origin: config.WEB_URL,\n}));\n\nAdd this AFTER the CORS middleware (line 73) but BEFORE route handlers.\n\nVerify that:\n\nThe CSRF middleware doesn't break webhook endpoints (/webhooks/stripe receives POST from Stripe, not from the browser). You may need to exclude webhook routes.\nAPI key authenticated requests still work (they don't use cookies/CSRF)\nBetter Auth routes still work (/auth/*)\nTest manually or add a test that:\n\nPOST to a protected endpoint without the origin header → 403\nPOST to a protected endpoint with the correct origin → passes\nKey consideration: Hono's csrf() middleware validates the Origin header matches the allowed origin. This works because browsers always send Origin on cross-origin requests. Requests from the same origin (or non-browser clients like curl) may not send Origin — verify this doesn't break API key access.\n\nConventions:\n\nCommit as feat(api): add CSRF protection middleware\nTest that /webhooks/stripe is excluded from CSRF checks",
+  "title": "Implement CSRF protection with Hono middleware",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770420105637-cxvij2njl",
+  "descriptionHistory": [
+    {
+      "description": "TASK 16: Add CSRF Protection\nPriority: MEDIUM | Type: Security | Estimated scope: 1-2 files\n\nContext:\nThere is no CSRF token validation on any state-changing endpoint. The app relies on SameSite=lax cookies and CORS origin validation. For 100 users this is acceptable as baseline protection, but explicit CSRF tokens are recommended. Hono has a built-in CSRF middleware.\n\nWhat to implement:\n\nIn apps/api/src/app.ts, add Hono's CSRF middleware:\n\nimport { csrf } from \"hono/csrf\";\n\napp.use(\"*\", csrf({\n  origin: config.WEB_URL,\n}));\n\nAdd this AFTER the CORS middleware (line 73) but BEFORE route handlers.\n\nVerify that:\n\nThe CSRF middleware doesn't break webhook endpoints (/webhooks/stripe receives POST from Stripe, not from the browser). You may need to exclude webhook routes.\nAPI key authenticated requests still work (they don't use cookies/CSRF)\nBetter Auth routes still work (/auth/*)\nTest manually or add a test that:\n\nPOST to a protected endpoint without the origin header → 403\nPOST to a protected endpoint with the correct origin → passes\nKey consideration: Hono's csrf() middleware validates the Origin header matches the allowed origin. This works because browsers always send Origin on cross-origin requests. Requests from the same origin (or non-browser clients like curl) may not send Origin — verify this doesn't break API key access.\n\nConventions:\n\nCommit as feat(api): add CSRF protection middleware\nTest that /webhooks/stripe is excluded from CSRF checks",
+      "timestamp": "2026-02-06T23:21:45.913Z",
+      "source": "initial"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 14: Add Graceful Shutdown Timeout\nPriority: MEDIUM | Type: Resilience | Estimated scope: 2 files\n\nContext:\nThe scheduler at apps/scheduler/src/index.ts:152-155 waits indefinitely for the current tick to complete during shutdown: if (currentTick) { await currentTick; }. If a tick hangs (e.g., an endpoint takes 5 minutes to respond), the process never exits and the orchestrator (Docker, Kubernetes) has to SIGKILL it.\n\nWhat to implement:\n\nIn apps/scheduler/src/index.ts, add a shutdown timeout in the shutdown() function (line 147):\n\nconst SHUTDOWN_TIMEOUT_MS = 30000; // 30 seconds\n\nif (currentTick) {\n  logger.info(\"Waiting for current tick to complete\");\n  const timeout = new Promise<void>((resolve) => \n    setTimeout(() => {\n      logger.warn(\"Shutdown timeout reached, forcing exit\");\n      resolve();\n    }, SHUTDOWN_TIMEOUT_MS)\n  );\n  await Promise.race([currentTick, timeout]);\n}\n\nAdd SHUTDOWN_TIMEOUT_MS to the scheduler's configSchema (line 23-34) with default 30000.\n\nApply the same pattern to apps/api/src/index.ts shutdown handler (line 42-63) — add a timeout around db.$client.end().\n\nApply to apps/ai-planner/src/index.ts if it has a similar shutdown handler.\n\nConventions:\n\nCommit as feat(workers): add configurable shutdown timeout",
+  "title": "Add configurable shutdown timeout for graceful process termination",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770420086514-66s7tzcuy",
+  "descriptionHistory": [
+    {
+      "description": "TASK 14: Add Graceful Shutdown Timeout\nPriority: MEDIUM | Type: Resilience | Estimated scope: 2 files\n\nContext:\nThe scheduler at apps/scheduler/src/index.ts:152-155 waits indefinitely for the current tick to complete during shutdown: if (currentTick) { await currentTick; }. If a tick hangs (e.g., an endpoint takes 5 minutes to respond), the process never exits and the orchestrator (Docker, Kubernetes) has to SIGKILL it.\n\nWhat to implement:\n\nIn apps/scheduler/src/index.ts, add a shutdown timeout in the shutdown() function (line 147):\n\nconst SHUTDOWN_TIMEOUT_MS = 30000; // 30 seconds\n\nif (currentTick) {\n  logger.info(\"Waiting for current tick to complete\");\n  const timeout = new Promise<void>((resolve) => \n    setTimeout(() => {\n      logger.warn(\"Shutdown timeout reached, forcing exit\");\n      resolve();\n    }, SHUTDOWN_TIMEOUT_MS)\n  );\n  await Promise.race([currentTick, timeout]);\n}\n\nAdd SHUTDOWN_TIMEOUT_MS to the scheduler's configSchema (line 23-34) with default 30000.\n\nApply the same pattern to apps/api/src/index.ts shutdown handler (line 42-63) — add a timeout around db.$client.end().\n\nApply to apps/ai-planner/src/index.ts if it has a similar shutdown handler.\n\nConventions:\n\nCommit as feat(workers): add configurable shutdown timeout",
+      "timestamp": "2026-02-06T23:21:26.861Z",
+      "source": "initial"
+    }
+  ]
+}

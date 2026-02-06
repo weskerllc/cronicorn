@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 11: Add Default Limit Guard to listRuns Query\nPriority: HIGH | Type: Safety | Estimated scope: 1 file\n\nContext:\nIn packages/adapter-drizzle/src/runs-repo.ts:152-154, if no limit is provided to listRuns(), the query returns ALL matching rows with no cap. Over time with millions of runs, this will exhaust memory.\n\nWhat to implement:\n\nIn packages/adapter-drizzle/src/runs-repo.ts, add a default limit:\n\nconst DEFAULT_LIMIT = 100;\nconst MAX_LIMIT = 1000;\n\nconst effectiveLimit = Math.min(filters.limit ?? DEFAULT_LIMIT, MAX_LIMIT);\n\nApply effectiveLimit at line 152-153 instead of conditionally applying limit.\n\nEnsure the existing total count query (line 156-164) still returns the unfiltered count so pagination UIs work correctly.\n\nCheck if the API contract schemas in packages/api-contracts/src/ define limit with a max value. If not, add .max(1000) to the limit field in the relevant Zod schema.\n\nVerify existing tests still pass — some may rely on getting all results without a limit.\n\nConventions:\n\nCommit as fix(adapter-drizzle): add default and max limit to listRuns query",
+  "title": "Add default limit guard to listRuns query",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770420033076-xq7yser6j",
+  "descriptionHistory": [
+    {
+      "description": "TASK 11: Add Default Limit Guard to listRuns Query\nPriority: HIGH | Type: Safety | Estimated scope: 1 file\n\nContext:\nIn packages/adapter-drizzle/src/runs-repo.ts:152-154, if no limit is provided to listRuns(), the query returns ALL matching rows with no cap. Over time with millions of runs, this will exhaust memory.\n\nWhat to implement:\n\nIn packages/adapter-drizzle/src/runs-repo.ts, add a default limit:\n\nconst DEFAULT_LIMIT = 100;\nconst MAX_LIMIT = 1000;\n\nconst effectiveLimit = Math.min(filters.limit ?? DEFAULT_LIMIT, MAX_LIMIT);\n\nApply effectiveLimit at line 152-153 instead of conditionally applying limit.\n\nEnsure the existing total count query (line 156-164) still returns the unfiltered count so pagination UIs work correctly.\n\nCheck if the API contract schemas in packages/api-contracts/src/ define limit with a max value. If not, add .max(1000) to the limit field in the relevant Zod schema.\n\nVerify existing tests still pass — some may rely on getting all results without a limit.\n\nConventions:\n\nCommit as fix(adapter-drizzle): add default and max limit to listRuns query",
+      "timestamp": "2026-02-06T23:20:33.410Z",
+      "source": "initial"
+    }
+  ]
+}

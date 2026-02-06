@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 6: Add Basic Observability (Error Tracking + Health Check + Request Logging)\nPriority: CRITICAL | Type: Infrastructure | Estimated scope: 4-5 files\n\nContext:\nCurrently: the health endpoint at apps/api/src/app.ts:167-169 returns { status: \"ok\" } without checking database connectivity. HTTP request logging is only enabled when LOG_LEVEL === \"debug\" (line 58-60). There is no error tracking service (Sentry or equivalent). There are no request correlation IDs. You'll be flying blind with 100 users.\n\nWhat to implement:\n\nFix health check in apps/api/src/app.ts:167-169:\n\nReplace the static response with an actual database ping: SELECT 1\nReturn { status: \"ok\", db: \"connected\", timestamp } on success\nReturn 503 Service Unavailable with { status: \"degraded\", db: \"disconnected\" } on failure\nAdd a timeout (2 seconds) so the health check doesn't hang\nEnable request logging in production in apps/api/src/app.ts:58-60:\n\nRemove the if (config.LOG_LEVEL === \"debug\") guard around honoLogger()\nAlways log requests. Use the Pino logger instead of Hono's default logger so it respects the configured log level and outputs JSON in production.\nAt minimum, log: method, path, status code, duration, userId (if authenticated)\nAdd request correlation IDs:\n\nCreate middleware in apps/api/src/lib/request-id.ts that generates a UUID for each request\nSet it on the Hono context and include it in all log messages\nReturn it in the X-Request-Id response header\nAdd uncaught exception handlers to all 3 apps:\n\napps/api/src/index.ts — add process.on(\"uncaughtException\", ...) and process.on(\"unhandledRejection\", ...) that log the error and exit with code 1\napps/scheduler/src/index.ts — same (the scheduler already has good error handling in the tick loop, but uncaughtException is still missing)\napps/ai-planner/src/index.ts — same\nDocument Sentry as future work in docs/_RUNNING_TECH_DEBT.md — note that error tracking should be added before scaling beyond 100 users.\n\nConventions:\n\nUse the existing Pino logger (apps/api/src/lib/logger.ts) — never console.log\nCommit as feat(api): add health check, request logging, and correlation IDs\nFollow kebab-case file naming",
+  "title": "Implement observability with health checks and request logging",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770419983848-rh7axdz53",
+  "descriptionHistory": [
+    {
+      "description": "TASK 6: Add Basic Observability (Error Tracking + Health Check + Request Logging)\nPriority: CRITICAL | Type: Infrastructure | Estimated scope: 4-5 files\n\nContext:\nCurrently: the health endpoint at apps/api/src/app.ts:167-169 returns { status: \"ok\" } without checking database connectivity. HTTP request logging is only enabled when LOG_LEVEL === \"debug\" (line 58-60). There is no error tracking service (Sentry or equivalent). There are no request correlation IDs. You'll be flying blind with 100 users.\n\nWhat to implement:\n\nFix health check in apps/api/src/app.ts:167-169:\n\nReplace the static response with an actual database ping: SELECT 1\nReturn { status: \"ok\", db: \"connected\", timestamp } on success\nReturn 503 Service Unavailable with { status: \"degraded\", db: \"disconnected\" } on failure\nAdd a timeout (2 seconds) so the health check doesn't hang\nEnable request logging in production in apps/api/src/app.ts:58-60:\n\nRemove the if (config.LOG_LEVEL === \"debug\") guard around honoLogger()\nAlways log requests. Use the Pino logger instead of Hono's default logger so it respects the configured log level and outputs JSON in production.\nAt minimum, log: method, path, status code, duration, userId (if authenticated)\nAdd request correlation IDs:\n\nCreate middleware in apps/api/src/lib/request-id.ts that generates a UUID for each request\nSet it on the Hono context and include it in all log messages\nReturn it in the X-Request-Id response header\nAdd uncaught exception handlers to all 3 apps:\n\napps/api/src/index.ts — add process.on(\"uncaughtException\", ...) and process.on(\"unhandledRejection\", ...) that log the error and exit with code 1\napps/scheduler/src/index.ts — same (the scheduler already has good error handling in the tick loop, but uncaughtException is still missing)\napps/ai-planner/src/index.ts — same\nDocument Sentry as future work in docs/_RUNNING_TECH_DEBT.md — note that error tracking should be added before scaling beyond 100 users.\n\nConventions:\n\nUse the existing Pino logger (apps/api/src/lib/logger.ts) — never console.log\nCommit as feat(api): add health check, request logging, and correlation IDs\nFollow kebab-case file naming",
+      "timestamp": "2026-02-06T23:19:44.126Z",
+      "source": "initial"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 5: Add Per-User Rate Limiting to API\nPriority: CRITICAL | Type: Security | Estimated scope: 2-3 files\n\nContext:\nAPI key endpoints have 100 req/min rate limiting (via Better Auth plugin at apps/api/src/auth/config.ts:115-118), but all session-authenticated endpoints have zero rate limiting. A single authenticated user can spam job creation, list runs indefinitely, or exhaust database connections. There's also no brute-force protection on login.\n\nWhat to implement:\n\nAdd a rate limiting middleware to apps/api/src/app.ts. Hono doesn't have a built-in rate limiter, so use an in-memory approach (acceptable for single-instance deployment at 100 users):\n\nCreate apps/api/src/lib/rate-limiter.ts — a simple sliding-window rate limiter keyed by userId\nDefault: 60 requests per minute per user for mutation endpoints (POST/PATCH/DELETE)\nDefault: 120 requests per minute per user for read endpoints (GET)\nReturn 429 Too Many Requests with Retry-After header when exceeded\nApply the middleware in apps/api/src/app.ts after auth middleware but before route handlers:\n\nApply to /jobs/*, /endpoints/*, /runs/*, /subscriptions/*, /dashboard/*, /devices/*\nDo NOT apply to /health, /auth/*, or /webhooks/*\nAdd configuration to apps/api/src/lib/config.ts:\n\nRATE_LIMIT_MUTATION_RPM — default 60\nRATE_LIMIT_READ_RPM — default 120\nAdd basic tests verifying the rate limiter returns 429 after exceeding the limit.\n\nNote: For 100 users, in-memory rate limiting is fine. Document in docs/_RUNNING_TECH_DEBT.md that this needs to move to Redis for multi-instance deployment.\n\nConventions:\n\nCommit as feat(api): add per-user rate limiting middleware\nNo external dependencies — use a simple Map-based implementation\nFile naming: kebab-case\nAdd tech debt entry about Redis migration",
+  "title": "Implement per-user rate limiting on authenticated API endpoints",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770419963889-rhxa18yll",
+  "descriptionHistory": [
+    {
+      "description": "TASK 5: Add Per-User Rate Limiting to API\nPriority: CRITICAL | Type: Security | Estimated scope: 2-3 files\n\nContext:\nAPI key endpoints have 100 req/min rate limiting (via Better Auth plugin at apps/api/src/auth/config.ts:115-118), but all session-authenticated endpoints have zero rate limiting. A single authenticated user can spam job creation, list runs indefinitely, or exhaust database connections. There's also no brute-force protection on login.\n\nWhat to implement:\n\nAdd a rate limiting middleware to apps/api/src/app.ts. Hono doesn't have a built-in rate limiter, so use an in-memory approach (acceptable for single-instance deployment at 100 users):\n\nCreate apps/api/src/lib/rate-limiter.ts — a simple sliding-window rate limiter keyed by userId\nDefault: 60 requests per minute per user for mutation endpoints (POST/PATCH/DELETE)\nDefault: 120 requests per minute per user for read endpoints (GET)\nReturn 429 Too Many Requests with Retry-After header when exceeded\nApply the middleware in apps/api/src/app.ts after auth middleware but before route handlers:\n\nApply to /jobs/*, /endpoints/*, /runs/*, /subscriptions/*, /dashboard/*, /devices/*\nDo NOT apply to /health, /auth/*, or /webhooks/*\nAdd configuration to apps/api/src/lib/config.ts:\n\nRATE_LIMIT_MUTATION_RPM — default 60\nRATE_LIMIT_READ_RPM — default 120\nAdd basic tests verifying the rate limiter returns 429 after exceeding the limit.\n\nNote: For 100 users, in-memory rate limiting is fine. Document in docs/_RUNNING_TECH_DEBT.md that this needs to move to Redis for multi-instance deployment.\n\nConventions:\n\nCommit as feat(api): add per-user rate limiting middleware\nNo external dependencies — use a simple Map-based implementation\nFile naming: kebab-case\nAdd tech debt entry about Redis migration",
+      "timestamp": "2026-02-06T23:19:24.200Z",
+      "source": "initial"
+    }
+  ]
+}

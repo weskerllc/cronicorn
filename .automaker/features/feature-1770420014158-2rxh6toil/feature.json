@@ -1,0 +1,27 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 9: Add Payment Recovery for Past-Due Status\nPriority: HIGH | Type: Bug fix | Estimated scope: 1 file + 1 test file\n\nContext:\nWhen invoice.payment_failed webhook arrives, packages/services/src/subscriptions/manager.ts:366-379 sets subscriptionStatus: \"past_due\". But when payment later succeeds (invoice.payment_succeeded at line 327-360), the handler only updates lastPaymentIntentId and lastInvoiceId — it does NOT restore subscriptionStatus back to \"active\". Users can get stuck in past_due forever.\n\nWhat to implement:\n\nIn packages/services/src/subscriptions/manager.ts, modify handlePaymentSucceeded() (lines 327-360):\n\nAfter line 349, check if user.subscriptionStatus === \"past_due\"\nIf yes, update subscriptionStatus to \"active\" in the same DB call\nLog the recovery: \"Subscription recovered from past_due to active\"\nAdd tests in packages/services/src/subscriptions/__tests__/manager.test.ts:\n\nTest: User has subscriptionStatus: \"past_due\" → invoice.payment_succeeded arrives → status becomes \"active\"\nTest: User has subscriptionStatus: \"active\" → invoice.payment_succeeded arrives → status stays \"active\" (no unnecessary changes)\nTest: Verify lastPaymentIntentId and lastInvoiceId are still updated alongside the recovery\nKey files:\n\npackages/services/src/subscriptions/manager.ts:327-360 — the handler to modify\npackages/services/src/subscriptions/__tests__/manager.test.ts:253-448 — existing webhook tests to follow\nConventions:\n\nCommit as fix(subscriptions): recover subscription status after past-due payment succeeds",
+  "title": "Fix subscription recovery from past-due status",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "backlog",
+  "id": "feature-1770420014158-2rxh6toil",
+  "descriptionHistory": [
+    {
+      "description": "TASK 9: Add Payment Recovery for Past-Due Status\nPriority: HIGH | Type: Bug fix | Estimated scope: 1 file + 1 test file\n\nContext:\nWhen invoice.payment_failed webhook arrives, packages/services/src/subscriptions/manager.ts:366-379 sets subscriptionStatus: \"past_due\". But when payment later succeeds (invoice.payment_succeeded at line 327-360), the handler only updates lastPaymentIntentId and lastInvoiceId — it does NOT restore subscriptionStatus back to \"active\". Users can get stuck in past_due forever.\n\nWhat to implement:\n\nIn packages/services/src/subscriptions/manager.ts, modify handlePaymentSucceeded() (lines 327-360):\n\nAfter line 349, check if user.subscriptionStatus === \"past_due\"\nIf yes, update subscriptionStatus to \"active\" in the same DB call\nLog the recovery: \"Subscription recovered from past_due to active\"\nAdd tests in packages/services/src/subscriptions/__tests__/manager.test.ts:\n\nTest: User has subscriptionStatus: \"past_due\" → invoice.payment_succeeded arrives → status becomes \"active\"\nTest: User has subscriptionStatus: \"active\" → invoice.payment_succeeded arrives → status stays \"active\" (no unnecessary changes)\nTest: Verify lastPaymentIntentId and lastInvoiceId are still updated alongside the recovery\nKey files:\n\npackages/services/src/subscriptions/manager.ts:327-360 — the handler to modify\npackages/services/src/subscriptions/__tests__/manager.test.ts:253-448 — existing webhook tests to follow\nConventions:\n\nCommit as fix(subscriptions): recover subscription status after past-due payment succeeds",
+      "timestamp": "2026-02-06T23:20:14.475Z",
+      "source": "initial"
+    }
+  ]
+}
