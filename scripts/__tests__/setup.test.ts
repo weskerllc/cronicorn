@@ -179,7 +179,8 @@ exit 0
         const secret2 = env2.match(/BETTER_AUTH_SECRET=(.+)/)![1];
 
         expect(secret1).not.toBe(secret2);
-      } finally {
+      }
+      finally {
         execSync(`rm -rf "${dir1}" "${dir2}"`);
       }
     });
