@@ -22,6 +22,8 @@ import { z } from "zod";
  */
 const configSchema = z.object({
   DATABASE_URL: z.string().url().default(DEV_DATABASE.URL),
+  // Database connection pool configuration
+  DB_POOL_MAX: z.coerce.number().int().positive().default(5),
   BATCH_SIZE: z.coerce.number().int().positive().default(10),
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
   CLAIM_HORIZON_MS: z.coerce.number().int().positive().default(10000),
@@ -43,7 +45,10 @@ async function main() {
   const config: Config = configSchema.parse(process.env);
 
   // Setup database connection
-  const pool = new Pool({ connectionString: config.DATABASE_URL });
+  const pool = new Pool({
+    connectionString: config.DATABASE_URL,
+    max: config.DB_POOL_MAX,
+  });
   const db = drizzle(pool, { schema });
 
   // Instantiate all adapters
