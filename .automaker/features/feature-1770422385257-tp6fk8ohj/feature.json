@@ -1,0 +1,29 @@
+{
+  "category": "Uncategorized",
+  "description": "TASK 1: Add SSRF Protection to HTTP Dispatcher\nPriority: CRITICAL | Type: Security fix | Estimated scope: 2 files + 1 test file\n\nContext:\nThe HTTP dispatcher at packages/adapter-http/src/http-dispatcher.ts:51 calls fetch(ep.url, ...) with user-supplied URLs and performs zero validation on the destination. Users create endpoints via the API with any URL (validated only as z.string().url() in packages/api-contracts/src/jobs/schemas.ts:134). The scheduler then executes those URLs. This is a textbook SSRF vulnerability — a user can point an endpoint at http://169.254.169.254/latest/meta-data/ (AWS metadata), http://localhost:5432 (the database), or any internal service.\n\nWhat to implement:\n\nCreate a new file packages/adapter-http/src/url-validator.ts that exports a function assertUrlAllowed(url: string): void which throws if the URL targets:\n\nLocalhost: 127.0.0.0/8, ::1, localhost\nPrivate ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16\nLink-local: 169.254.0.0/16 (AWS/GCP/Azure metadata), fe80::/10\nIPv6 unique local: fc00::/7\nNon-HTTP schemes (must be http: or https:)\nThe function must resolve DNS hostnames before checking (a hostname like metadata.internal could resolve to 169.254.169.254). Use dns.promises.lookup() from Node.js to resolve the hostname and validate the resolved IP.\nCall assertUrlAllowed(ep.url) in packages/adapter-http/src/http-dispatcher.ts before the fetch() call at line 51. If it throws, return an ExecutionResult with status \"failed\" and the error message, rather than crashing the scheduler.\n\nAdd unit tests in packages/adapter-http/src/__tests__/url-validator.test.ts covering:\n\nBlocked: http://127.0.0.1/path, http://localhost:8080, http://169.254.169.254/latest/, http://10.0.0.1, http://192.168.1.1, http://[::1]/path, ftp://example.com\nAllowed: https://example.com, https://api.stripe.com/v1/charges, http://203.0.113.50:8080\nConventions:\n\nFile naming: kebab-case (url-validator.ts)\nNo console.log — use the logger port if logging is needed\nNo any types\nUse .js extensions in imports\nThe adapter package is at packages/adapter-http/, tests go in src/__tests__/\nRun pnpm test and pnpm lint after changes",
+  "title": "Add SSRF protection to HTTP dispatcher",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "in_progress",
+  "id": "feature-1770422385257-tp6fk8ohj",
+  "descriptionHistory": [
+    {
+      "description": "TASK 1: Add SSRF Protection to HTTP Dispatcher\nPriority: CRITICAL | Type: Security fix | Estimated scope: 2 files + 1 test file\n\nContext:\nThe HTTP dispatcher at packages/adapter-http/src/http-dispatcher.ts:51 calls fetch(ep.url, ...) with user-supplied URLs and performs zero validation on the destination. Users create endpoints via the API with any URL (validated only as z.string().url() in packages/api-contracts/src/jobs/schemas.ts:134). The scheduler then executes those URLs. This is a textbook SSRF vulnerability — a user can point an endpoint at http://169.254.169.254/latest/meta-data/ (AWS metadata), http://localhost:5432 (the database), or any internal service.\n\nWhat to implement:\n\nCreate a new file packages/adapter-http/src/url-validator.ts that exports a function assertUrlAllowed(url: string): void which throws if the URL targets:\n\nLocalhost: 127.0.0.0/8, ::1, localhost\nPrivate ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16\nLink-local: 169.254.0.0/16 (AWS/GCP/Azure metadata), fe80::/10\nIPv6 unique local: fc00::/7\nNon-HTTP schemes (must be http: or https:)\nThe function must resolve DNS hostnames before checking (a hostname like metadata.internal could resolve to 169.254.169.254). Use dns.promises.lookup() from Node.js to resolve the hostname and validate the resolved IP.\nCall assertUrlAllowed(ep.url) in packages/adapter-http/src/http-dispatcher.ts before the fetch() call at line 51. If it throws, return an ExecutionResult with status \"failed\" and the error message, rather than crashing the scheduler.\n\nAdd unit tests in packages/adapter-http/src/__tests__/url-validator.test.ts covering:\n\nBlocked: http://127.0.0.1/path, http://localhost:8080, http://169.254.169.254/latest/, http://10.0.0.1, http://192.168.1.1, http://[::1]/path, ftp://example.com\nAllowed: https://example.com, https://api.stripe.com/v1/charges, http://203.0.113.50:8080\nConventions:\n\nFile naming: kebab-case (url-validator.ts)\nNo console.log — use the logger port if logging is needed\nNo any types\nUse .js extensions in imports\nThe adapter package is at packages/adapter-http/, tests go in src/__tests__/\nRun pnpm test and pnpm lint after changes",
+      "timestamp": "2026-02-06T23:59:45.556Z",
+      "source": "initial"
+    }
+  ],
+  "startedAt": "2026-02-07T00:00:19.163Z",
+  "updatedAt": "2026-02-07T00:00:19.373Z"
+}
