@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "backlog",
+  "status": "waiting_approval",
   "id": "feature-0770422413839-1p7h8dsip",
   "descriptionHistory": [
     {
@@ -23,5 +23,70 @@
       "timestamp": "2026-02-07T00:00:02.098Z",
       "source": "initial"
     }
-  ]
+  ],
+  "branchName": "proddd",
+  "startedAt": "2026-02-07T00:47:33.597Z",
+  "updatedAt": "2026-02-07T00:57:36.557Z",
+  "planSpec": {
+    "status": "approved",
+    "version": 1,
+    "reviewedByUser": false,
+    "content": "🔧 Tool: Read\nInput: {\n  \"file_path\": \"/packages/services/src/subscriptions/manager.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/packages/services/src/subscriptions/__tests__/manager.test.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/subscriptions/**/*.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/manager.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/subscriptions/manager.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/subscriptions/__tests__/manager.test.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/subscriptions/errors.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/subscriptions/types.ts\"\n}\n# Specification: Fix Refund Double-Charge Bug\n\n## 1. Problem\n\nUsers can receive a double refund when the `cancelSubscriptionNow()` call fails after the refund has already been issued. The current implementation issues the refund first (irreversible in Stripe), then attempts cancellation. If cancellation fails, the catch block resets `refundStatus` back to \"eligible\", allowing users to request another refund.\n\n## 2. Solution\n\nReorder the `requestRefund()` method to cancel the subscription first (reversible), then issue the refund (irreversible). Update error handling to track which operations succeeded and set appropriate statuses that prevent re-initiation while enabling manual intervention.\n\n## 3. Acceptance Criteria\n\n- **GIVEN** a user requests a refund, **WHEN** `cancelSubscriptionNow` throws an error, **THEN** no refund is issued and `refundStatus` remains \"requested\" (safe to retry)\n- **GIVEN** a user requests a refund, **WHEN** cancellation succeeds but `issueRefund` throws, **THEN** `refundStatus` is set to \"cancel_completed_refund_failed\" for manual intervention\n- **GIVEN** a user requests a refund, **WHEN** both operations succeed but final DB update fails, **THEN** `refundStatus` is set to \"issued\" to prevent double-refund\n- **GIVEN** a user whose `refundStatus` is \"cancel_completed_refund_failed\", **WHEN** they attempt to request another refund, **THEN** the request is rejected\n- **GIVEN** the happy path, **WHEN** all operations succeed, **THEN** existing behavior is preserved\n\n## 4. Files to Modify\n\n| File | Purpose | Action |\n|------|---------|--------|\n| packages/services/src/subscriptions/manager.ts | Reorder operations and fix catch block logic | modify |\n| packages/services/src/subscriptions/__tests__/manager.test.ts | Add failure scenario tests | modify |\n\n## 5. Implementation Tasks\n\n```tasks\n- [ ] T001: Reorder requestRefund() to cancel subscription before issuing refund | File: packages/services/src/subscriptions/manager.ts\n- [ ] T002: Add local boolean tracking for refund-issued state in requestRefund() | File: packages/services/src/subscriptions/manager.ts\n- [ ] T003: Update catch block to differentiate failure scenarios and set appropriate status | File: packages/services/src/subscriptions/manager.ts\n- [ ] T004: Add validation to reject refunds when status is \"cancel_completed_refund_failed\" | File: packages/services/src/subscriptions/manager.ts\n- [ ] T005: Add test for cancelSubscriptionNow failure - refund NOT issued, status stays \"requested\" | File: packages/services/src/subscriptions/__tests__/manager.test.ts\n- [ ] T006: Add test for issueRefund failure after cancel succeeds - status set to partial completion | File: packages/services/src/subscriptions/__tests__/manager.test.ts\n- [ ] T007: Verify existing successful refund flow test still passes | File: packages/services/src/subscriptions/__tests__/manager.test.ts\n- [ ] T008: Run pnpm test to verify all tests pass | File: N/A\n```\n\n## 6. Verification\n\n1. Run `pnpm test` - all tests should pass including new failure scenario tests\n2. Verify that when `cancelSubscriptionNow` fails:\n   - `issueRefund` is never called\n   - `refundStatus` remains \"requested\"\n3. Verify that when `issueRefund` fails after cancel succeeds:\n   - `refundStatus` is set to \"cancel_completed_refund_failed\"\n   - Users cannot request another refund with this status\n4. Verify existing happy path test still passes",
+    "generatedAt": "2026-02-07T00:48:25.646Z",
+    "tasks": [
+      {
+        "id": "T001",
+        "description": "Reorder requestRefund() to cancel subscription before issuing refund",
+        "filePath": "packages/services/src/subscriptions/manager.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T002",
+        "description": "Add local boolean tracking for refund-issued state in requestRefund()",
+        "filePath": "packages/services/src/subscriptions/manager.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T003",
+        "description": "Update catch block to differentiate failure scenarios and set appropriate status",
+        "filePath": "packages/services/src/subscriptions/manager.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T004",
+        "description": "Add validation to reject refunds when status is \"cancel_completed_refund_failed\"",
+        "filePath": "packages/services/src/subscriptions/manager.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T005",
+        "description": "Add test for cancelSubscriptionNow failure - refund NOT issued, status stays \"requested\"",
+        "filePath": "packages/services/src/subscriptions/__tests__/manager.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T006",
+        "description": "Add test for issueRefund failure after cancel succeeds - status set to partial completion",
+        "filePath": "packages/services/src/subscriptions/__tests__/manager.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T007",
+        "description": "Verify existing successful refund flow test still passes",
+        "filePath": "packages/services/src/subscriptions/__tests__/manager.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T008",
+        "description": "Run pnpm test to verify all tests pass",
+        "filePath": "N/A",
+        "status": "pending"
+      }
+    ],
+    "tasksTotal": 8,
+    "tasksCompleted": 8,
+    "approvedAt": "2026-02-07T00:48:25.649Z",
+    "currentTaskId": "T008"
+  },
+  "justFinishedAt": "2026-02-07T00:57:36.557Z"
 }

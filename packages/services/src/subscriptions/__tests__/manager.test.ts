@@ -607,5 +607,141 @@ describe("subscriptionsManager", () => {
         manager.requestRefund({ userId: "user_123" }),
       ).rejects.toThrow(RefundNotEligibleError);
     });
+
+    it("should NOT issue refund and keep status as 'requested' when cancelSubscriptionNow fails", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days after activation
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "eligible",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+      vi.mocked(mockPaymentProvider.cancelSubscriptionNow).mockRejectedValue(
+        new Error("Stripe API error: subscription cancellation failed"),
+      );
+
+      // Request refund should throw the cancel error
+      await expect(
+        manager.requestRefund({ userId: "user_123", reason: "Not satisfied" }),
+      ).rejects.toThrow("Stripe API error: subscription cancellation failed");
+
+      // Verify cancelSubscriptionNow was called
+      expect(mockPaymentProvider.cancelSubscriptionNow).toHaveBeenCalledWith("sub_123");
+
+      // Verify issueRefund was NEVER called (critical - prevents double refund)
+      expect(mockPaymentProvider.issueRefund).not.toHaveBeenCalled();
+
+      // Verify database was updated only once (to set status to "requested")
+      // Status remains "requested" because cancel failed before refund was attempted
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledTimes(1);
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
+        refundStatus: "requested",
+      });
+    });
+
+    it("should set status to 'cancel_completed_refund_failed' when issueRefund fails after cancel succeeds", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days after activation
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "eligible",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+      // Cancel succeeds
+      vi.mocked(mockPaymentProvider.cancelSubscriptionNow).mockResolvedValue();
+      // Refund fails
+      vi.mocked(mockPaymentProvider.issueRefund).mockRejectedValue(
+        new Error("Stripe API error: refund failed"),
+      );
+
+      // Request refund should throw the refund error
+      await expect(
+        manager.requestRefund({ userId: "user_123", reason: "Not satisfied" }),
+      ).rejects.toThrow("Stripe API error: refund failed");
+
+      // Verify cancelSubscriptionNow was called and succeeded
+      expect(mockPaymentProvider.cancelSubscriptionNow).toHaveBeenCalledWith("sub_123");
+
+      // Verify issueRefund was called (cancel succeeded, so we attempted the refund)
+      expect(mockPaymentProvider.issueRefund).toHaveBeenCalledWith({
+        paymentIntentId: "pi_test_456",
+        reason: "requested_by_customer",
+        metadata: {
+          userId: "user_123",
+          userReason: "Not satisfied",
+        },
+      });
+
+      // Verify database was updated twice:
+      // 1. First to set status to "requested" (optimistic lock)
+      // 2. Second to set status to "cancel_completed_refund_failed" (partial completion)
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledTimes(2);
+
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(1, "user_123", {
+        refundStatus: "requested",
+      });
+
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(2, "user_123", {
+        refundStatus: "cancel_completed_refund_failed",
+      });
+    });
+
+    it("should reject refund request when status is 'cancel_completed_refund_failed'", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days after activation
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "cancel_completed_refund_failed", // Previous attempt left in partial state
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+
+      // Attempting to request refund again should be rejected
+      await expect(
+        manager.requestRefund({ userId: "user_123", reason: "Trying again" }),
+      ).rejects.toThrow(RefundNotEligibleError);
+
+      // Verify no payment provider operations were attempted
+      expect(mockPaymentProvider.cancelSubscriptionNow).not.toHaveBeenCalled();
+      expect(mockPaymentProvider.issueRefund).not.toHaveBeenCalled();
+
+      // Verify database was not updated
+      expect(mockJobsRepo.updateUserSubscription).not.toHaveBeenCalled();
+    });
   });
 });
