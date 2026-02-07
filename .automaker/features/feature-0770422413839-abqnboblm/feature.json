@@ -15,13 +15,16 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "backlog",
-  "id": "feature-1770422413839-tbqnboblm",
+  "status": "in_progress",
+  "id": "feature-0770422413839-abqnboblm",
   "descriptionHistory": [
     {
       "description": "TASK 3: Make Database Connection Pool Configurable and Increase Default\nPriority: CRITICAL | Type: Enhancement | Estimated scope: 3 files\n\nContext:\nThe API server's DB pool is hardcoded to max: 10 at apps/api/src/lib/db.ts:12. With 100 concurrent users, this will cause connection exhaustion. The scheduler at apps/scheduler/src/index.ts:47 creates a pool with no max set (defaults to 10 in pg). The AI planner likely has the same issue.\n\nWhat to implement:\n\nIn apps/api/src/lib/config.ts, add a new config field:\n\nDB_POOL_MAX — z.coerce.number().int().positive().default(30) — default 30 for API\nDB_POOL_IDLE_TIMEOUT_MS — z.coerce.number().int().positive().default(20000)\nDB_POOL_CONNECTION_TIMEOUT_MS — z.coerce.number().int().positive().default(10000)\nIn apps/api/src/lib/db.ts, use the config values instead of hardcoded numbers:\n\nconst pool = new Pool({\n  connectionString: config.DATABASE_URL,\n  max: config.DB_POOL_MAX,\n  idleTimeoutMillis: config.DB_POOL_IDLE_TIMEOUT_MS,\n  connectionTimeoutMillis: config.DB_POOL_CONNECTION_TIMEOUT_MS,\n});\n\nThe function signature needs to accept these config values (currently it takes config: Env).\n\nIn apps/scheduler/src/index.ts:47, add pool configuration:\n\nAdd DB_POOL_MAX to the scheduler's configSchema (line 23-34) with default 5 (scheduler needs fewer connections)\nPass { connectionString: config.DATABASE_URL, max: config.DB_POOL_MAX } to the Pool constructor\nCheck apps/ai-planner/src/index.ts for the same issue and apply the same fix with default 5.\n\nAdd the new env vars to .env.example with comments.\n\nConventions:\n\nDon't use process.env directly — inject via config schema (existing pattern)\nCommit as feat(db): make connection pool size configurable\nRun pnpm build after changes to verify types",
       "timestamp": "2026-02-07T00:00:14.130Z",
       "source": "initial"
     }
-  ]
+  ],
+  "branchName": "proddd",
+  "startedAt": "2026-02-07T00:35:21.473Z",
+  "updatedAt": "2026-02-07T00:35:21.688Z"
 }
