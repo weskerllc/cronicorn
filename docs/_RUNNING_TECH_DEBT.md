@@ -365,7 +365,7 @@ The following infrastructure gaps were identified during assessment. These items
 
 - [ ] **ARM64 container images** — Currently only `linux/amd64` is built. Add multi-arch builds (Docker buildx) for Apple Silicon and AWS Graviton.
 
-- [ ] **Install script** — No `curl | bash` or similar one-line install experience. Users must manually download `docker-compose.yml` and create `.env`. Consider a bootstrap script that handles both.
+- [x] **Install script** — ~~No `curl | bash` or similar one-line install experience.~~ Implemented `scripts/setup.sh` with prereq checks, secret generation, and `--dry-run` support. Tested via `scripts/__tests__/setup.test.ts`.
 
 - [ ] **Redis for multi-instance rate limiting** — In-memory rate limiting prevents horizontal scaling. See "Rate Limiter: Redis Migration" section above.
 
