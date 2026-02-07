@@ -19,7 +19,7 @@ import { expect, test } from "./fixtures.js";
 // eslint-disable-next-line ts/no-explicit-any
 const getJson = async (res: Response): Promise<any> => await res.json();
 
-describe("RateLimiter", () => {
+describe("rateLimiter", () => {
   describe("check()", () => {
     test("allows requests under the limit", async () => {
       const limiter = createRateLimiter(5);
@@ -236,7 +236,7 @@ describe("RateLimiter", () => {
 describe("createRateLimitMiddleware", () => {
   describe("rate limit enforcement", () => {
     test("returns 429 when mutation limit is exceeded", async () => {
-      let currentTime = 0;
+      const currentTime = 0;
       const { rateLimitMiddleware } = createRateLimitMiddleware({
         mutationLimit: 3,
         readLimit: 10,
@@ -269,7 +269,7 @@ describe("createRateLimitMiddleware", () => {
     });
 
     test("returns 429 when read limit is exceeded", async () => {
-      let currentTime = 0;
+      const currentTime = 0;
       const { rateLimitMiddleware } = createRateLimitMiddleware({
         mutationLimit: 10,
         readLimit: 3,
@@ -457,7 +457,7 @@ describe("createRateLimitMiddleware", () => {
     });
   });
 
-  describe("HTTP method classification", () => {
+  describe("hTTP method classification", () => {
     test("classifies POST as mutation", async () => {
       const { rateLimitMiddleware, mutationLimiter } = createRateLimitMiddleware({
         mutationLimit: 10,

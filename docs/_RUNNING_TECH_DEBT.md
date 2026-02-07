@@ -119,3 +119,119 @@ Migrate to Redis when:
 - DashboardManager now requires `startDate`/`endDate` inputs, but time-series generation still anchors to `clock.now()` instead of the provided `endDate`. If callers ever ask for historical windows (not ending "now"), returned series will be misaligned with the requested range.
 - Action: Confirm consumer contract (should `endDate` always be `now`?). If not, update manager to anchor buckets to `endDate` and add tests for non-now ranges.
 
+---
+
+## Sentry Integration for Error Tracking
+
+**Status**: Planned tech debt
+**Related**: Task 6 - Observability (request logging, health checks, exception handlers)
+
+### Current State
+
+Basic observability is now in place:
+- ✅ Request ID middleware generates UUIDs and adds `X-Request-Id` header
+- ✅ Structured request logging via Pino (method, path, status, duration, requestId, userId)
+- ✅ Health endpoint pings database with 2s timeout
+- ✅ Uncaught exception/rejection handlers in all 3 apps (api, scheduler, ai-planner)
+
+However, errors are only logged locally. There's no centralized error tracking or alerting.
+
+### Why Sentry
+
+Sentry provides:
+- **Centralized error aggregation**: All errors from all apps in one dashboard
+- **Stack trace deobfuscation**: Source maps for readable production stack traces
+- **Error grouping**: Automatically deduplicate similar errors
+- **Alerting**: Slack/email notifications for new or regression errors
+- **Release tracking**: Correlate errors with deployments
+- **Performance monitoring**: Optional tracing for slow requests
+- **User context**: Associate errors with user IDs for debugging
+
+### Implementation Plan
+
+1. **Install Sentry SDK**:
+   ```bash
+   pnpm add @sentry/node @sentry/profiling-node --filter @cronicorn/api
+   pnpm add @sentry/node --filter @cronicorn/scheduler
+   pnpm add @sentry/node --filter @cronicorn/ai-planner
+   ```
+
+2. **Initialize early in each app** (before other imports):
+   ```typescript
+   import * as Sentry from "@sentry/node";
+
+   Sentry.init({
+     dsn: process.env.SENTRY_DSN,
+     environment: process.env.NODE_ENV,
+     release: process.env.APP_VERSION,
+     tracesSampleRate: 0.1, // 10% of requests for performance monitoring
+   });
+   ```
+
+3. **Enhance existing exception handlers**:
+   ```typescript
+   process.on("uncaughtException", (error) => {
+     logger.fatal({ err: error }, "Uncaught exception");
+     Sentry.captureException(error);
+     Sentry.close(2000).then(() => process.exit(1));
+   });
+   ```
+
+4. **Add Hono middleware for API**:
+   ```typescript
+   import { setupHonoErrorHandler } from "@sentry/node";
+
+   // After other middleware
+   setupHonoErrorHandler(app);
+   ```
+
+5. **Attach user context in auth middleware**:
+   ```typescript
+   Sentry.setUser({ id: userId, email: userEmail });
+   ```
+
+6. **Add request ID to Sentry scope**:
+   ```typescript
+   Sentry.setTag("request_id", requestId);
+   ```
+
+### Required Changes
+
+| File | Change |
+|------|--------|
+| `apps/api/package.json` | Add `@sentry/node` dependency |
+| `apps/scheduler/package.json` | Add `@sentry/node` dependency |
+| `apps/ai-planner/package.json` | Add `@sentry/node` dependency |
+| `apps/api/src/index.ts` | Initialize Sentry, enhance exception handlers |
+| `apps/api/src/app.ts` | Add Sentry error handler middleware |
+| `apps/api/src/middleware/auth.ts` | Set Sentry user context |
+| `apps/api/src/lib/request-id.ts` | Set Sentry request_id tag |
+| `apps/scheduler/src/index.ts` | Initialize Sentry, enhance exception handlers |
+| `apps/ai-planner/src/index.ts` | Initialize Sentry, enhance exception handlers |
+| `.env.example` | Add `SENTRY_DSN` placeholder |
+
+### Configuration
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `SENTRY_DSN` | Sentry project DSN from dashboard | Yes |
+| `SENTRY_ENVIRONMENT` | Environment name (production, staging) | Optional (defaults to NODE_ENV) |
+| `SENTRY_TRACES_SAMPLE_RATE` | Performance monitoring sample rate (0-1) | Optional (default: 0.1) |
+
+### Acceptance Criteria
+
+- [ ] Sentry SDK initialized in all 3 apps (api, scheduler, ai-planner)
+- [ ] Uncaught exceptions are captured and sent to Sentry before process exit
+- [ ] API errors include request ID and user ID in Sentry context
+- [ ] Source maps uploaded to Sentry for readable stack traces
+- [ ] Slack alert configured for new production errors
+- [ ] Test error endpoint (`/api/debug/sentry`) available in non-production for verification
+
+### When to Prioritize
+
+Implement Sentry when:
+- Preparing for production launch
+- Team size grows and centralized error visibility is needed
+- On-call rotation is established and alerting is required
+- Debugging production issues becomes time-consuming without aggregated errors
+

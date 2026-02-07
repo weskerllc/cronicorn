@@ -1,8 +1,8 @@
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
 import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
+import { sql } from "drizzle-orm";
 import { cors } from "hono/cors";
-import { logger as honoLogger } from "hono/logger";
 
 import type { Auth } from "./auth/config.js";
 import type { Env } from "./lib/config.js";
@@ -16,6 +16,8 @@ import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.j
 import { errorHandler } from "./lib/error-handler.js";
 import { logger } from "./lib/logger.js";
 import configureOpenAPI from "./lib/openapi.js";
+import { requestIdMiddleware } from "./lib/request-id.js";
+import { requestLoggerMiddleware } from "./lib/request-logger.js";
 import { createRateLimitMiddleware, startRateLimitCleanup } from "./lib/rate-limiter.js";
 import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
@@ -56,9 +58,13 @@ export async function createApp(
   // eslint-disable-next-line ts/consistent-type-assertions
   const app = createRouter().basePath("/api") as AppOpenAPI;
 
-  if (config.LOG_LEVEL === "debug") {
-    app.use("*", honoLogger());
-  }
+  // Request ID middleware - generates UUID for each request and adds X-Request-Id header
+  // Must run before request-logger so requestId is available for logging
+  app.use("*", requestIdMiddleware);
+
+  // Request logging middleware - logs method, path, status, duration, requestId, userId
+  // Always enabled for production observability (replaces conditional honoLogger)
+  app.use("*", requestLoggerMiddleware);
 
   // Configure CORS globally to allow direct requests from web app (no proxy)
   app.use(
@@ -190,8 +196,26 @@ export async function createApp(
   app.use("/devices/*", rateLimitMiddleware);
 
   // Health check endpoint (no auth required)
-  app.get("/health", (c) => {
-    return c.json({ status: "ok", timestamp: new Date().toISOString() });
+  // Pings database with 2s timeout to verify connectivity
+  app.get("/health", async (c) => {
+    const timestamp = new Date().toISOString();
+    const DB_PING_TIMEOUT_MS = 2000;
+
+    try {
+      // Race between database ping and timeout
+      const pingPromise = db.execute(sql`SELECT 1`);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Database ping timeout")), DB_PING_TIMEOUT_MS),
+      );
+
+      await Promise.race([pingPromise, timeoutPromise]);
+
+      return c.json({ status: "ok", db: "connected", timestamp }, 200);
+    }
+    catch {
+      // Database unreachable or timeout exceeded
+      return c.json({ status: "degraded", db: "disconnected", timestamp }, 503);
+    }
   });
 
   // Mount auth config endpoint FIRST (public - specific route takes precedence)
