@@ -12,7 +12,8 @@
 #   bash scripts/setup.sh
 #
 # Options:
-#   --dry-run    Validate prerequisites and show what would be done (no writes)
+#   --dry-run      Validate prerequisites and show what would be done (no writes)
+#   --skip-pull    Skip pulling container images (useful for CI or air-gapped setups)
 #
 # =============================================================================
 
@@ -25,10 +26,12 @@ OVERRIDE_URL="https://raw.githubusercontent.com/weskerllc/cronicorn/main/docker-
 MIN_DOCKER_VERSION="24"
 MIN_COMPOSE_VERSION="2"
 DRY_RUN=false
+SKIP_PULL=false
 
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=true ;;
+    --skip-pull) SKIP_PULL=true ;;
   esac
 done
 
@@ -161,6 +164,8 @@ echo ""
 
 if [ "$DRY_RUN" = true ]; then
   info "Would run: docker compose pull"
+elif [ "$SKIP_PULL" = true ]; then
+  info "Skipping image pull (--skip-pull)"
 else
   info "Pulling container images (this may take a few minutes)..."
   docker compose pull

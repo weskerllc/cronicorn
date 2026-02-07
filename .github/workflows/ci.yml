@@ -125,7 +125,7 @@ jobs:
           mkdir /tmp/cronicorn-test && cd /tmp/cronicorn-test
           cp $GITHUB_WORKSPACE/docker-compose.yml .
           cp $GITHUB_WORKSPACE/docker-compose.override.yml.example .
-          bash $GITHUB_WORKSPACE/scripts/setup.sh
+          bash $GITHUB_WORKSPACE/scripts/setup.sh --skip-pull
           # Verify .env was created with a real secret
           grep -q "BETTER_AUTH_SECRET=" .env
           SECRET=$(grep "BETTER_AUTH_SECRET=" .env | cut -d= -f2)
@@ -139,7 +139,7 @@ jobs:
         run: |
           cd /tmp/cronicorn-test
           BEFORE=$(cat .env)
-          bash $GITHUB_WORKSPACE/scripts/setup.sh
+          bash $GITHUB_WORKSPACE/scripts/setup.sh --skip-pull
           AFTER=$(cat .env)
           if [ "$BEFORE" != "$AFTER" ]; then
             echo ".env was modified on re-run — script is not idempotent"
