@@ -364,48 +364,7 @@ npx -y @cronicorn/mcp-server login
 
 ## Self-Hosting Issues
 
-### Database Connection Errors
-
-**Check PostgreSQL is running:**
-```bash
-docker ps | grep postgres
-# Or
-pnpm db
-```
-
-**Check connection string:**
-
-Verify `DATABASE_URL` environment variable is correct.
-
-**Check migrations:**
-```bash
-pnpm db:migrate
-```
-
-### Workers Not Starting
-
-**Check environment variables:**
-
-Both Scheduler and AI Planner need proper configuration.
-
-**Check logs:**
-```bash
-pnpm dev:scheduler
-pnpm dev:ai-planner
-```
-
-Look for startup errors.
-
-### Docker Issues
-
-**Container not starting:**
-```bash
-docker compose logs
-```
-
-**Port conflicts:**
-
-Check if ports (3333, 5173, 6666) are already in use.
+For detailed self-hosting troubleshooting organized by component (database, migrator, API, web app, scheduler, AI planner, Docker), see the dedicated **[Self-Hosting Troubleshooting](./self-hosting/troubleshooting.md)** guide.
 
 ---
 

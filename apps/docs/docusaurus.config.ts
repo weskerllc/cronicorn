@@ -121,6 +121,7 @@ const config: Config = {
           "/mcp-server", // MCP integration
           "/api-reference", // API reference
           "/use-cases", // Use cases
+          "/self-hosting/**", // Self-hosting guides
           "/troubleshooting", // Troubleshooting
           "/technical/**", // Technical details
         ],
