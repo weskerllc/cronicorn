@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "in_progress",
+  "status": "waiting_approval",
   "id": "feature-1770422385257-tp6fk8ohj",
   "descriptionHistory": [
     {
@@ -25,5 +25,73 @@
     }
   ],
   "startedAt": "2026-02-07T00:00:19.163Z",
-  "updatedAt": "2026-02-07T00:00:19.373Z"
+  "updatedAt": "2026-02-07T00:20:22.799Z",
+  "planSpec": {
+    "status": "approved",
+    "version": 1,
+    "reviewedByUser": false,
+    "content": "🔧 Tool: Read\nInput: {\n  \"file_path\": \"/packages/adapter-http/src/http-dispatcher.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"packages/adapter-http/src/**/*.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/packages/api-contracts/src/jobs/schemas.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-http/src/http-dispatcher.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-http/src/__tests__/http-dispatcher.test.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-http/src/index.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"packages/api-contracts/src/**/*.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/api-contracts/src/jobs/schemas.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-http/src/fake-http-dispatcher.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"packages/domain/src/**/*.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/domain/src/ports/external.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-http/package.json\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"packages/adapter-http/tsconfig*.json\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/domain/src/ports/services.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/domain/src/entities/endpoint.ts\"\n}\n# SSRF Protection for HTTP Dispatcher\n\n## 1. Problem\n\nThe HTTP dispatcher (`packages/adapter-http/src/http-dispatcher.ts`) executes `fetch()` calls with user-supplied URLs without validating the destination. Users can submit any URL through the API (only validated as `z.string().url()`), allowing requests to internal services, cloud metadata endpoints (e.g., `169.254.169.254`), localhost, or private network ranges. This is a critical Server-Side Request Forgery (SSRF) vulnerability.\n\n## 2. Solution\n\nCreate a URL validation module that resolves hostnames via DNS and validates the resulting IP addresses against a blocklist of internal/private ranges. Integrate this validator into the HTTP dispatcher to block SSRF attempts before executing fetch requests.\n\n## 3. Acceptance Criteria\n\n- **GIVEN** a URL targeting localhost (127.0.0.1, ::1, localhost), **WHEN** the dispatcher attempts to execute, **THEN** it returns a failed ExecutionResult with an appropriate error message\n- **GIVEN** a URL targeting private ranges (10.x.x.x, 172.16-31.x.x, 192.168.x.x), **WHEN** the dispatcher attempts to execute, **THEN** it returns a failed ExecutionResult\n- **GIVEN** a URL targeting cloud metadata endpoints (169.254.x.x), **WHEN** the dispatcher attempts to execute, **THEN** it returns a failed ExecutionResult\n- **GIVEN** a URL with non-HTTP scheme (ftp://, file://), **WHEN** the dispatcher attempts to execute, **THEN** it returns a failed ExecutionResult\n- **GIVEN** a URL targeting a public IP (e.g., api.stripe.com), **WHEN** the dispatcher attempts to execute, **THEN** the request proceeds normally\n\n## 4. Files to Modify\n\n| File | Purpose | Action |\n|------|---------|--------|\n| `packages/adapter-http/src/url-validator.ts` | URL validation logic with DNS resolution and IP blocklist checking | create |\n| `packages/adapter-http/src/http-dispatcher.ts` | Add SSRF protection check before fetch() call | modify |\n| `packages/adapter-http/src/index.ts` | Export new URL validator utilities | modify |\n| `packages/adapter-http/src/__tests__/url-validator.test.ts` | Unit tests for URL validator | create |\n\n## 5. Implementation Tasks\n\n```tasks\n- [ ] T001: Create url-validator.ts with assertUrlAllowed function | File: packages/adapter-http/src/url-validator.ts\n- [ ] T002: Implement IP range checking for localhost, private, link-local, and IPv6 ranges | File: packages/adapter-http/src/url-validator.ts\n- [ ] T003: Implement DNS hostname resolution before IP validation | File: packages/adapter-http/src/url-validator.ts\n- [ ] T004: Implement HTTP/HTTPS scheme validation | File: packages/adapter-http/src/url-validator.ts\n- [ ] T005: Integrate assertUrlAllowed into HttpDispatcher before fetch() | File: packages/adapter-http/src/http-dispatcher.ts\n- [ ] T006: Export url-validator utilities from index.ts | File: packages/adapter-http/src/index.ts\n- [ ] T007: Create unit tests for blocked URLs (localhost, private, metadata, IPv6, non-HTTP) | File: packages/adapter-http/src/__tests__/url-validator.test.ts\n- [ ] T008: Create unit tests for allowed URLs (public domains, public IPs) | File: packages/adapter-http/src/__tests__/url-validator.test.ts\n- [ ] T009: Run pnpm test and pnpm lint to verify changes | File: N/A\n```\n\n## 6. Verification\n\n1. Run unit tests: `pnpm test` in `packages/adapter-http`\n2. Run linter: `pnpm lint`\n3. Manual verification of test coverage:\n   - Blocked: `http://127.0.0.1/path`, `http://localhost:8080`, `http://169.254.169.254/latest/`, `http://10.0.0.1`, `http://192.168.1.1`, `http://[::1]/path`, `ftp://example.com`\n   - Allowed: `https://example.com`, `https://api.stripe.com/v1/charges`, `http://203.0.113.50:8080`",
+    "generatedAt": "2026-02-07T00:01:32.321Z",
+    "tasks": [
+      {
+        "id": "T001",
+        "description": "Create url-validator.ts with assertUrlAllowed function",
+        "filePath": "packages/adapter-http/src/url-validator.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T002",
+        "description": "Implement IP range checking for localhost, private, link-local, and IPv6 ranges",
+        "filePath": "packages/adapter-http/src/url-validator.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T003",
+        "description": "Implement DNS hostname resolution before IP validation",
+        "filePath": "packages/adapter-http/src/url-validator.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T004",
+        "description": "Implement HTTP/HTTPS scheme validation",
+        "filePath": "packages/adapter-http/src/url-validator.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T005",
+        "description": "Integrate assertUrlAllowed into HttpDispatcher before fetch()",
+        "filePath": "packages/adapter-http/src/http-dispatcher.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T006",
+        "description": "Export url-validator utilities from index.ts",
+        "filePath": "packages/adapter-http/src/index.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T007",
+        "description": "Create unit tests for blocked URLs (localhost, private, metadata, IPv6, non-HTTP)",
+        "filePath": "packages/adapter-http/src/__tests__/url-validator.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T008",
+        "description": "Create unit tests for allowed URLs (public domains, public IPs)",
+        "filePath": "packages/adapter-http/src/__tests__/url-validator.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T009",
+        "description": "Run pnpm test and pnpm lint to verify changes",
+        "filePath": "N/A",
+        "status": "pending"
+      }
+    ],
+    "tasksTotal": 9,
+    "tasksCompleted": 9,
+    "approvedAt": "2026-02-07T00:01:32.323Z",
+    "currentTaskId": "T009"
+  },
+  "justFinishedAt": "2026-02-07T00:20:22.799Z"
 }
