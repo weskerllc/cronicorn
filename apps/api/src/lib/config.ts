@@ -3,6 +3,10 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1).default(DEV_DATABASE.URL),
+  // Database connection pool configuration
+  DB_POOL_MAX: z.coerce.number().int().positive().default(30),
+  DB_POOL_IDLE_TIMEOUT_MS: z.coerce.number().int().positive().default(20000),
+  DB_POOL_CONNECTION_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
   PORT: z.coerce.number().int().positive().default(DEV_PORTS.API),
   BETTER_AUTH_SECRET: z
     .string()

@@ -33,6 +33,8 @@ function logger(level: "info" | "warn" | "error" | "fatal", message: string, met
  */
 const configSchema = z.object({
   DATABASE_URL: z.string().url().default(DEV_DATABASE.URL),
+  // Database connection pool configuration
+  DB_POOL_MAX: z.coerce.number().int().positive().default(5),
   OPENAI_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default("gpt-4o-mini"), // Cost-effective for MVP
   AI_ANALYSIS_INTERVAL_MS: z.coerce.number().int().positive().default(5 * 60 * 1000), // 5 minutes
@@ -59,7 +61,10 @@ async function main() {
   }
 
   // Setup database connection
-  const pool = new Pool({ connectionString: config.DATABASE_URL });
+  const pool = new Pool({
+    connectionString: config.DATABASE_URL,
+    max: config.DB_POOL_MAX,
+  });
   const db = drizzle(pool, { schema });
 
   // Instantiate adapters

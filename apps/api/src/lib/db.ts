@@ -9,9 +9,9 @@ import type { Env } from "./config";
 export function createDatabase(config: Env) {
   const pool = new Pool({
     connectionString: config.DATABASE_URL,
-    max: 10,
-    idleTimeoutMillis: 20000,
-    connectionTimeoutMillis: 10000,
+    max: config.DB_POOL_MAX,
+    idleTimeoutMillis: config.DB_POOL_IDLE_TIMEOUT_MS,
+    connectionTimeoutMillis: config.DB_POOL_CONNECTION_TIMEOUT_MS,
   });
 
   return drizzle(pool, { schema });
