@@ -16,9 +16,9 @@ import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.j
 import { errorHandler } from "./lib/error-handler.js";
 import { logger } from "./lib/logger.js";
 import configureOpenAPI from "./lib/openapi.js";
+import { createRateLimitMiddleware, startRateLimitCleanup } from "./lib/rate-limiter.js";
 import { requestIdMiddleware } from "./lib/request-id.js";
 import { requestLoggerMiddleware } from "./lib/request-logger.js";
-import { createRateLimitMiddleware, startRateLimitCleanup } from "./lib/rate-limiter.js";
 import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";

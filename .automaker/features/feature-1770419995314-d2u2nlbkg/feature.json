@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "backlog",
+  "status": "waiting_approval",
   "id": "feature-1770419995314-d2u2nlbkg",
   "descriptionHistory": [
     {
@@ -23,5 +23,94 @@
       "timestamp": "2026-02-06T23:19:55.663Z",
       "source": "initial"
     }
-  ]
+  ],
+  "branchName": "proddd",
+  "startedAt": "2026-02-07T01:35:27.536Z",
+  "updatedAt": "2026-02-07T01:57:03.167Z",
+  "planSpec": {
+    "status": "approved",
+    "version": 1,
+    "reviewedByUser": false,
+    "content": "🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/joelgascoigne/code/kiso/apps/api/src/routes/jobs/__tests__/jobs.api.test.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/joelgascoigne/code/kiso/apps/api/src/auth/middleware.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/joelgascoigne/code/kiso/packages/services/src/jobs/manager.ts\",\n  \"limit\": 250\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/jobs.api.test.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/jobs/__tests__/*.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/middleware.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/routes/jobs/__tests__/jobs.api.test.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/auth/middleware.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/jobs/manager.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/jobs/manager.ts\",\n  \"limit\": 300\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/lib/__tests__/test-helpers.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/lib/__tests__/fixtures.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/jobs/manager.ts\",\n  \"offset\": 300,\n  \"limit\": 250\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/routes/runs/**/*.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/jobs/manager.ts\",\n  \"offset\": 540,\n  \"limit\": 200\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"getRun|listRuns|getRunDetail\",\n  \"path\": \"/Users/brandincanfield/Documents/Git/cronicorn\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/routes/jobs/jobs.handlers.ts\"\n}\nNow I have a complete understanding of the codebase. Let me generate the specification.\n\n---\n\n## Specification: Cross-User Authorization Tests\n\n### 1. **Problem**\nThe API lacks tests verifying that users cannot access, modify, or view other users' resources. All existing tests use a single user (`mockUserId = \"test-user-1\"`), leaving the authorization boundary untested at the API layer. Without these tests, authorization regressions could allow data leakage between users.\n\n### 2. **Solution**\nAdd a new test file `jobs.authorization.test.ts` with comprehensive cross-user authorization tests that verify User B receives 404 (not 403/500/200) when attempting to access User A's jobs, endpoints, and runs.\n\n### 3. **Acceptance Criteria**\n- GIVEN User A creates a job, WHEN User B tries to GET that job, THEN User B receives HTTP 404 with no data leakage\n- GIVEN User A creates an endpoint, WHEN User B tries to PATCH/DELETE that endpoint, THEN User B receives HTTP 404\n- GIVEN User A has runs for their endpoint, WHEN User B tries to list or view those runs, THEN User B receives HTTP 404 or empty results\n- GIVEN the test file runs, WHEN `pnpm test` is executed, THEN all authorization tests pass\n- GIVEN each authorization test, WHEN verifying the response, THEN the response body contains no sensitive data from User A\n\n### 4. **Files to Modify**\n| File | Purpose | Action |\n|------|---------|--------|\n| apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts | Cross-user authorization test suite | create |\n\n### 5. **Implementation Tasks**\n```tasks\n- [ ] T001: Create jobs.authorization.test.ts with test scaffolding | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T002: Add test for GET /api/jobs/:id cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T003: Add test for PATCH /api/jobs/:id cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T004: Add test for DELETE /api/jobs/:id cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T005: Add test for POST /api/jobs/:id/archive cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T006: Add test for GET /api/jobs/:id/endpoints cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T007: Add test for POST /api/jobs/:id/endpoints cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T008: Add test for PATCH /api/endpoints/:id cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T009: Add test for DELETE /api/endpoints/:id cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T010: Add test for GET /api/endpoints/:id/runs cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T011: Add test for GET /api/runs/:id cross-user access | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n- [ ] T012: Run pnpm test to verify all tests pass | File: apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts\n```\n\n### 6. **Verification**\n1. Run `pnpm test` from the repository root\n2. Verify the new `jobs.authorization.test.ts` file runs without failures\n3. Verify each test correctly receives 404 status codes for cross-user access attempts\n4. Verify no data from User A is leaked in response bodies to User B\n\n---",
+    "generatedAt": "2026-02-07T01:36:38.820Z",
+    "tasks": [
+      {
+        "id": "T001",
+        "description": "Create jobs.authorization.test.ts with test scaffolding",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T002",
+        "description": "Add test for GET /api/jobs/:id cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T003",
+        "description": "Add test for PATCH /api/jobs/:id cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T004",
+        "description": "Add test for DELETE /api/jobs/:id cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T005",
+        "description": "Add test for POST /api/jobs/:id/archive cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T006",
+        "description": "Add test for GET /api/jobs/:id/endpoints cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T007",
+        "description": "Add test for POST /api/jobs/:id/endpoints cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T008",
+        "description": "Add test for PATCH /api/endpoints/:id cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T009",
+        "description": "Add test for DELETE /api/endpoints/:id cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T010",
+        "description": "Add test for GET /api/endpoints/:id/runs cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T011",
+        "description": "Add test for GET /api/runs/:id cross-user access",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T012",
+        "description": "Run pnpm test to verify all tests pass",
+        "filePath": "apps/api/src/routes/jobs/__tests__/jobs.authorization.test.ts",
+        "status": "pending"
+      }
+    ],
+    "tasksTotal": 12,
+    "tasksCompleted": 12,
+    "approvedAt": "2026-02-07T01:36:38.823Z",
+    "currentTaskId": "T012"
+  },
+  "justFinishedAt": "2026-02-07T01:57:03.167Z"
 }
