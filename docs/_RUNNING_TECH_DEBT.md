@@ -32,12 +32,90 @@
 6. **Limited dashboard regression tests**: Refund helper logic is unit-tested, but the `/dashboard/plan` component still lacks UI-level coverage; add component or Playwright tests once the harness is ready
 
 ### Migration Notes
-- TODO: Add a backfill SQL migration that marks all existing Pro users as `refund_status='expired'`
+- ✅ ~~TODO: Add a backfill SQL migration that marks all existing Pro users as `refund_status='expired'`~~ — **Done**: `0022_backfill_refund_status.sql`
 - This migration must run before enabling refunds in production to prevent retroactive refund claims for users subscribed before feature launch
 - New Pro subscriptions already get `refund_status='eligible'` on first payment via application logic
 
 ### Pricing Checkout Gap (Early Adopter Annual)
 - Addressed: billingPeriod now flows UI → API → Stripe with `STRIPE_PRICE_PRO_ANNUAL`. Remaining action: set live annual price ID in prod secrets.
+
+## AI Planner
+
+**Status**: Active development
+**Related**: AI analysis and adaptive scheduling
+
+### Untracked TODOs
+
+- [ ] **Use real logger instead of stub** — `apps/ai-planner/src/index.ts:84`
+  The AI client is initialized with an inline logger stub that wraps console.log. Replace with proper Pino logger instance for consistency with other apps.
+
+- [ ] **Support per-call model selection** — `packages/adapter-ai/src/client.ts:95`
+  The `planWithTools` interface accepts a `_modelName` parameter but it's currently ignored. The client uses the pre-configured model from config instead. Consider implementing per-call model selection to support different models for different analysis types.
+
+---
+
+## Adapter Drizzle
+
+**Status**: Active development
+**Related**: Database layer and query optimization
+
+### Untracked TODOs
+
+- [ ] **Optimize count query with window functions** — `packages/adapter-drizzle/src/runs-repo.ts:163`
+  The `listRuns` method currently executes two separate queries: one to fetch paginated results and another to get the total count. This could be optimized into a single query using SQL window functions (e.g., `COUNT(*) OVER()`) to return both the data rows and total count in one round-trip to the database.
+
+---
+
+## Subscriptions
+
+**Status**: Active development
+**Related**: Subscription status and refund eligibility
+
+### Untracked TODOs
+
+- [ ] **Add subscription status to getUserById return type** — `packages/services/src/subscriptions/manager.ts:97`
+  The `getStatus` method returns `status: null` because `subscriptionStatus` exists on the user table but is not included in the `getUserById` port return type. Extend the port interface to include this field so actual subscription status can be returned.
+
+- [ ] **Add subscription endsAt to getUserById return type** — `packages/services/src/subscriptions/manager.ts:98`
+  The `getStatus` method returns `endsAt: null` because `endsAt` exists on the user table but is not included in the `getUserById` port return type. Extend the port interface to include this field so subscription end date can be returned.
+
+---
+
+## Web App
+
+**Status**: Active development
+**Related**: Frontend API client and data display
+
+### Untracked TODOs
+
+- [ ] **Clarify or remove zod error formatter** — `apps/web/src/lib/api-client/format-api-error.ts:2`
+  The `formatApiError` utility formats zod validation errors from the API, but has a TODO questioning whether it's needed. Evaluate usage and either integrate properly or remove if unused.
+
+- [ ] **Refactor API key types to use contracts package** — `apps/web/src/lib/api-client/queries/api-keys.queries.ts:21`
+  The `CreateApiKeyInput` type is defined inline in the queries file. Refactor to import from the shared `api-contracts` package for type consistency across frontend and backend.
+
+- [ ] **Implement backend searching for runs** — `apps/web/src/routes/_authed/endpoints.$id.runs.tsx:171`
+  The runs table has commented-out search functionality (`searchKey`, `searchPlaceholder`). Implement backend search endpoint and enable client-side search UI to allow filtering runs by run ID.
+
+---
+
+## MCP Server
+
+**Status**: Active development
+**Related**: AI assistant integration via Model Context Protocol
+
+### Untracked TODOs
+
+- [ ] **Implement MCP resources for documentation** — `apps/mcp-server/src/resources/README.md`
+  The MCP server needs to expose Cronicorn documentation as MCP resources. Implementation includes:
+  - Declare `resources` capability during server initialization
+  - Implement `resources/list` and `resources/read` handlers
+  - Load and parse markdown files from `docs-v2/` with frontmatter metadata
+  - Cache parsed resources in memory for fast access
+  - Add `gray-matter` dependency for frontmatter parsing
+  - Test integration with MCP inspector
+
+---
 
 ## Rate Limiter: Redis Migration for Multi-Instance Deployment
 
@@ -234,4 +312,45 @@ Implement Sentry when:
 - Team size grows and centralized error visibility is needed
 - On-call rotation is established and alerting is required
 - Debugging production issues becomes time-consuming without aggregated errors
+
+---
+
+## Infrastructure Assessment Findings
+
+**Status**: Identified during infrastructure assessment
+**Related**: Production readiness and operational requirements
+
+### Overview
+
+The following infrastructure gaps were identified during assessment. These items are critical for production readiness, data protection, and system integration capabilities.
+
+### Checklist
+
+- [ ] **Redis for Rate Limiting** — See "Rate Limiter: Redis Migration for Multi-Instance Deployment" section above
+  Current in-memory rate limiting doesn't work across multiple instances. Migrate to Redis for shared state when horizontally scaling.
+
+- [ ] **Sentry Error Tracking** — See "Sentry Integration for Error Tracking" section above
+  No centralized error aggregation or alerting. Implement Sentry SDK across all apps (api, scheduler, ai-planner) for production visibility.
+
+- [ ] **Database Backups**
+  No automated backup strategy documented. Implement:
+  - Automated daily backups with point-in-time recovery
+  - Backup retention policy (e.g., 30 days daily, 12 months weekly)
+  - Backup verification and restoration testing
+  - Off-site backup storage for disaster recovery
+
+- [ ] **Data Encryption**
+  Review and document encryption strategy:
+  - Encryption at rest for database and file storage
+  - Encryption in transit (TLS) verification for all connections
+  - API key and secret storage encryption
+  - Key rotation policy and procedures
+
+- [ ] **Webhooks System**
+  No webhook delivery system for external integrations. Implement:
+  - Webhook endpoint registration and management
+  - Event types for run completions, failures, and status changes
+  - Delivery retry logic with exponential backoff
+  - Webhook signature verification for security
+  - Delivery status tracking and debugging UI
 

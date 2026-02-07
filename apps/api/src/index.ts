@@ -50,8 +50,32 @@ async function main() {
       signal,
     }));
 
-    // Close database pool
-    await db.$client.end();
+    // Close database pool with timeout
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      message: "Waiting for database connection to close",
+    }));
+
+    const timeoutPromise = new Promise<"timeout">((resolve) => {
+      setTimeout(() => resolve("timeout"), config.SHUTDOWN_TIMEOUT_MS);
+    });
+
+    const result = await Promise.race([
+      db.$client.end().then(() => "completed" as const),
+      timeoutPromise,
+    ]);
+
+    if (result === "timeout") {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "warn",
+        message: "Shutdown timeout reached, forcing exit",
+        timeoutMs: config.SHUTDOWN_TIMEOUT_MS,
+      }));
+    }
 
     // eslint-disable-next-line no-console
     console.log(JSON.stringify({

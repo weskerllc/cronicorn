@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "backlog",
+  "status": "waiting_approval",
   "id": "feature-1770420076250-ltrzkw4pj",
   "descriptionHistory": [
     {
@@ -23,5 +23,52 @@
       "timestamp": "2026-02-06T23:21:16.593Z",
       "source": "initial"
     }
-  ]
+  ],
+  "branchName": "proddd",
+  "startedAt": "2026-02-07T05:32:18.738Z",
+  "updatedAt": "2026-02-07T05:44:45.807Z",
+  "planSpec": {
+    "status": "approved",
+    "version": 1,
+    "reviewedByUser": false,
+    "content": "🔧 Tool: Read\nInput: {\n  \"file_path\": \"/apps/api/src/lib/error-handler.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/apps/api/src/lib/error-utils.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/apps/api/src/routes/dashboard/dashboard.handlers.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/apps/api/src/routes/devices/devices.handlers.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/apps/api/src/app.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/api/src/**/*.ts\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"pwd && ls -la\",\n  \"description\": \"Check current directory\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"find /Users/brandincanfield/Documents/Git/cronicorn/apps -type f -name \\\"*.ts\\\" | head -50\",\n  \"description\": \"Find TypeScript files in apps\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"find /Users/brandincanfield/Documents/Git/cronicorn/apps -type d -name \\\"api\\\" | head -5\",\n  \"description\": \"Find api directories\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/lib/error-handler.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/lib/error-utils.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/routes/dashboard/dashboard.handlers.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/routes/devices/devices.handlers.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/app.ts\"\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"already exists|AlreadyExists|conflict\",\n  \"path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src\"\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"throw new Error\",\n  \"path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/domain\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/lib/create-devices-service.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/domain/src/ports/services.ts\"\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"handleErrorResponse|getSafeErrorMessage\",\n  \"path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/routes/jobs/jobs.handlers.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/routes/subscriptions/subscriptions.handlers.ts\"\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"DrizzleError|DatabaseError\",\n  \"path\": \"/Users/brandincanfield/Documents/Git/cronicorn\"\n}\n## Specification: Add Try-Catch Error Handling to Unprotected Route Handlers\n\n---\n\n### 1. Problem\n\nSeveral route handlers (`getDashboardStats`, `getDashboardActivity`, `listConnectedDevices`) lack explicit try-catch blocks, relying solely on the global error handler. While the global handler works, it needs enhancement to properly distinguish error types (ZodError, not found, conflicts) and return appropriate HTTP status codes instead of generic 500s.\n\n---\n\n### 2. Solution\n\nEnhance the global error handler to detect and map additional error types (409 for conflicts, improve \"not found\" detection), then add explicit try-catch blocks to the unprotected handlers (`listConnectedDevices`, `getDashboardStats`, `getDashboardActivity`) using the existing `handleErrorResponse` utility for consistent error handling.\n\n---\n\n### 3. Acceptance Criteria\n\n- **GIVEN** a validation error occurs in any route handler, **WHEN** the error reaches the global handler, **THEN** a 400 status with validation details is returned.\n- **GIVEN** a \"not found\" domain error occurs, **WHEN** the error reaches a handler or global handler, **THEN** a 404 status with \"Resource not found\" message is returned.\n- **GIVEN** a conflict/duplicate error occurs (e.g., \"already exists\"), **WHEN** the error reaches the error handler, **THEN** a 409 status with appropriate message is returned.\n- **GIVEN** an unexpected database or system error occurs, **WHEN** the error bubbles up, **THEN** a 500 status with safe generic message is returned (no stack traces or sensitive info).\n- **GIVEN** the dashboard or devices handlers are called, **WHEN** any error occurs during processing, **THEN** the error is caught locally and processed through `handleErrorResponse`.\n\n---\n\n### 4. Files to Modify\n\n| File | Purpose | Action |\n|------|---------|--------|\n| apps/api/src/lib/error-handler.ts | Global error handler - add 409 conflict detection | modify |\n| apps/api/src/lib/error-utils.ts | Add conflict detection pattern to handleErrorResponse | modify |\n| apps/api/src/routes/dashboard/dashboard.handlers.ts | Add try-catch to getDashboardStats and getDashboardActivity | modify |\n| apps/api/src/routes/devices/devices.handlers.ts | Add try-catch to listConnectedDevices handler | modify |\n\n---\n\n### 5. Implementation Tasks\n\n```tasks\n- [ ] T001: Add conflict/already exists pattern detection to error-handler.ts global handler | File: apps/api/src/lib/error-handler.ts\n- [ ] T002: Add conflict pattern detection to handleErrorResponse utility | File: apps/api/src/lib/error-utils.ts\n- [ ] T003: Add try-catch with handleErrorResponse to getDashboardStats handler | File: apps/api/src/routes/dashboard/dashboard.handlers.ts\n- [ ] T004: Add try-catch with handleErrorResponse to getDashboardActivity handler | File: apps/api/src/routes/dashboard/dashboard.handlers.ts\n- [ ] T005: Add try-catch with handleErrorResponse to listConnectedDevices handler | File: apps/api/src/routes/devices/devices.handlers.ts\n```\n\n---\n\n### 6. Verification\n\n1. **Manual Testing**: Call each handler endpoint with invalid data and verify appropriate error codes (400, 404, 409, 500)\n2. **Unit Tests**: Existing tests should continue to pass; errors from managers should now return proper status codes\n3. **Code Review**: Verify all handlers now have consistent error handling patterns\n4. **Log Verification**: Confirm errors are logged server-side with full context while clients receive safe messages\n\n---",
+    "generatedAt": "2026-02-07T05:33:51.299Z",
+    "tasks": [
+      {
+        "id": "T001",
+        "description": "Add conflict/already exists pattern detection to error-handler.ts global handler",
+        "filePath": "apps/api/src/lib/error-handler.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T002",
+        "description": "Add conflict pattern detection to handleErrorResponse utility",
+        "filePath": "apps/api/src/lib/error-utils.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T003",
+        "description": "Add try-catch with handleErrorResponse to getDashboardStats handler",
+        "filePath": "apps/api/src/routes/dashboard/dashboard.handlers.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T004",
+        "description": "Add try-catch with handleErrorResponse to getDashboardActivity handler",
+        "filePath": "apps/api/src/routes/dashboard/dashboard.handlers.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T005",
+        "description": "Add try-catch with handleErrorResponse to listConnectedDevices handler",
+        "filePath": "apps/api/src/routes/devices/devices.handlers.ts",
+        "status": "pending"
+      }
+    ],
+    "tasksTotal": 5,
+    "tasksCompleted": 5,
+    "approvedAt": "2026-02-07T05:33:51.317Z",
+    "currentTaskId": "T005"
+  },
+  "justFinishedAt": "2026-02-07T05:44:45.807Z"
 }

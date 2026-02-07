@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "backlog",
+  "status": "waiting_approval",
   "id": "feature-1770420005087-u4ipipewo",
   "descriptionHistory": [
     {
@@ -23,5 +23,76 @@
       "timestamp": "2026-02-06T23:20:05.373Z",
       "source": "initial"
     }
-  ]
+  ],
+  "branchName": "proddd",
+  "startedAt": "2026-02-07T01:57:48.915Z",
+  "updatedAt": "2026-02-07T02:21:39.043Z",
+  "planSpec": {
+    "status": "approved",
+    "version": 1,
+    "reviewedByUser": false,
+    "content": "🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/jstockwin/workplace/llmjobs/apps/api/src/routes/subscriptions/subscriptions.handlers.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/jstockwin/workplace/llmjobs/apps/api/src/routes/subscriptions/subscriptions.routes.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/jstockwin/workplace/llmjobs/apps/api/src/routes/jobs/__tests__/jobs.api.test.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/jstockwin/workplace/llmjobs/packages/services/src/subscriptions/__tests__/manager.test.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/subscriptions/**/*.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/routes/**/*.test.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/api/src/**/*.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/routes/subscriptions/subscriptions.handlers.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/routes/subscriptions/subscriptions.routes.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/routes/jobs/__tests__/jobs.api.test.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/subscriptions/__tests__/manager.test.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/lib/__tests__/fixtures.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/lib/__tests__/test-helpers.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/app.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/api-contracts/src/subscriptions/schemas.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/api/src/lib/create-subscriptions-manager.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/subscriptions/manager.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/domain/src/ports.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/domain/src/**/*.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/domain/src/ports/external.ts\"\n}\nNow I have a complete understanding of the codebase. Let me generate the specification:\n\n---\n\n## Specification: Subscription API Integration Tests\n\n### 1. Problem\nThe subscription endpoints (`/api/subscriptions/*`) have no API-level tests. While the service layer (`SubscriptionsManager`) has unit tests, there are no tests verifying the HTTP request/response cycle, error formatting, or auth middleware integration at the API level. This leaves potential bugs in request validation, response mapping, and authentication undetected.\n\n### 2. Solution\nCreate a comprehensive API integration test file following the established pattern from `jobs.api.test.ts`. The tests will use the transactional fixture pattern for database isolation and mock the payment provider (Stripe) at the app creation level by modifying `createApp` to accept an optional payment provider via dependency injection.\n\n### 3. Acceptance Criteria\n- GIVEN an unauthenticated request, WHEN calling any `/api/subscriptions/*` endpoint, THEN return 401 Unauthorized\n- GIVEN a free-tier user, WHEN calling `GET /api/subscriptions/status`, THEN return tier \"free\" with appropriate status\n- GIVEN a pro-tier user within the 14-day window, WHEN calling `GET /api/subscriptions/status`, THEN return refund eligibility as true\n- GIVEN a valid checkout request with mock Stripe, WHEN calling `POST /api/subscriptions/checkout`, THEN return the checkout URL from the mock\n- GIVEN a non-pro user, WHEN calling `POST /api/subscriptions/refund`, THEN return 400 with clear error message\n\n### 4. Files to Modify\n\n| File | Purpose | Action |\n|------|---------|--------|\n| `apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts` | Main test file for subscription API integration tests | create |\n| `apps/api/src/app.ts` | Add optional payment provider injection for testing | modify |\n\n### 5. Implementation Tasks\n\n```tasks\n- [ ] T001: Modify createApp to accept optional PaymentProvider for DI testing | File: apps/api/src/app.ts\n- [ ] T002: Create test file structure with imports and test config | File: apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts\n- [ ] T003: Create mock PaymentProvider helper for tests | File: apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts\n- [ ] T004: Add GET /api/subscriptions/status tests (free user, pro user, refund eligibility, auth) | File: apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts\n- [ ] T005: Add POST /api/subscriptions/checkout tests (valid request, invalid plan, auth) | File: apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts\n- [ ] T006: Add POST /api/subscriptions/portal tests (valid request, no subscription, auth) | File: apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts\n- [ ] T007: Add POST /api/subscriptions/refund tests (non-pro, expired window, already refunded, no payment intent, success) | File: apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts\n- [ ] T008: Add GET /api/subscriptions/usage tests (free user limits, pro user limits, auth) | File: apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts\n- [ ] T009: Run tests and verify all pass | File: apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts\n```\n\n### 6. Verification\n1. Run `pnpm test apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts` - all tests should pass\n2. Run `pnpm test` from the project root - full test suite should pass\n3. Verify test coverage includes:\n   - All 5 subscription endpoints tested\n   - Authentication middleware tested (401 for unauthenticated requests)\n   - Request validation tested (400 for invalid inputs)\n   - Success paths tested with mocked Stripe responses\n   - Error scenarios tested (refund eligibility, portal access)\n\n---",
+    "generatedAt": "2026-02-07T01:59:00.994Z",
+    "tasks": [
+      {
+        "id": "T001",
+        "description": "Modify createApp to accept optional PaymentProvider for DI testing",
+        "filePath": "apps/api/src/app.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T002",
+        "description": "Create test file structure with imports and test config",
+        "filePath": "apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T003",
+        "description": "Create mock PaymentProvider helper for tests",
+        "filePath": "apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T004",
+        "description": "Add GET /api/subscriptions/status tests (free user, pro user, refund eligibility, auth)",
+        "filePath": "apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T005",
+        "description": "Add POST /api/subscriptions/checkout tests (valid request, invalid plan, auth)",
+        "filePath": "apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T006",
+        "description": "Add POST /api/subscriptions/portal tests (valid request, no subscription, auth)",
+        "filePath": "apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T007",
+        "description": "Add POST /api/subscriptions/refund tests (non-pro, expired window, already refunded, no payment intent, success)",
+        "filePath": "apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T008",
+        "description": "Add GET /api/subscriptions/usage tests (free user limits, pro user limits, auth)",
+        "filePath": "apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T009",
+        "description": "Run tests and verify all pass",
+        "filePath": "apps/api/src/routes/subscriptions/__tests__/subscriptions.api.test.ts",
+        "status": "pending"
+      }
+    ],
+    "tasksTotal": 9,
+    "tasksCompleted": 9,
+    "approvedAt": "2026-02-07T01:59:00.997Z",
+    "currentTaskId": "T009"
+  },
+  "justFinishedAt": "2026-02-07T02:21:39.043Z"
 }

@@ -34,6 +34,8 @@ const envSchema = z.object({
   // Rate limiting configuration (requests per minute)
   RATE_LIMIT_MUTATION_RPM: z.coerce.number().int().positive().default(60),
   RATE_LIMIT_READ_RPM: z.coerce.number().int().positive().default(120),
+  // Graceful shutdown timeout in milliseconds
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
 }).refine(
   (data) => {
     // At least one auth method must be configured

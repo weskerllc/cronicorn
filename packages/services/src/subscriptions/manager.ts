@@ -368,7 +368,15 @@ export class SubscriptionsManager {
       return;
     }
 
-    this.deps.logger.info({ userId: user.id }, "Payment succeeded");
+    // Check if recovering from past_due status
+    const isRecovering = user.subscriptionStatus === "past_due";
+
+    if (isRecovering) {
+      this.deps.logger.info({ userId: user.id }, "Subscription recovered from past_due to active");
+    }
+    else {
+      this.deps.logger.info({ userId: user.id }, "Payment succeeded");
+    }
 
     const updatePayload: {
       subscriptionStatus: "active";

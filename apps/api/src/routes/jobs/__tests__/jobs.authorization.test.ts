@@ -126,7 +126,7 @@ describe("jobs authorization - cross-user access prevention", () => {
 
   // ==================== Job Routes ====================
 
-  describe("GET /api/jobs/:id", () => {
+  describe("gET /api/jobs/:id", () => {
     test("returns 404 when User B tries to access User A's job", async ({ tx }) => {
       const { appUserB, job } = await setupCrossUserScenario(tx);
 
@@ -148,7 +148,7 @@ describe("jobs authorization - cross-user access prevention", () => {
     });
   });
 
-  describe("PATCH /api/jobs/:id", () => {
+  describe("pATCH /api/jobs/:id", () => {
     test("returns 404 when User B tries to update User A's job", async ({ tx }) => {
       const { appUserA, appUserB, job } = await setupCrossUserScenario(tx);
 
@@ -190,7 +190,7 @@ describe("jobs authorization - cross-user access prevention", () => {
     });
   });
 
-  describe("DELETE /api/jobs/:id", () => {
+  describe("dELETE /api/jobs/:id", () => {
     test("returns 404 when User B tries to delete User A's job", async ({ tx }) => {
       const { appUserA, appUserB, job } = await setupCrossUserScenario(tx);
 
@@ -224,7 +224,7 @@ describe("jobs authorization - cross-user access prevention", () => {
     });
   });
 
-  describe("POST /api/jobs/:id/pause", () => {
+  describe("pOST /api/jobs/:id/pause", () => {
     test("returns 404 when User B tries to pause User A's job", async ({ tx }) => {
       const { appUserA, appUserB, job } = await setupCrossUserScenario(tx);
 
@@ -263,7 +263,7 @@ describe("jobs authorization - cross-user access prevention", () => {
 
   // ==================== Endpoint Routes (via Job) ====================
 
-  describe("GET /api/jobs/:id/endpoints", () => {
+  describe("gET /api/jobs/:id/endpoints", () => {
     test("returns 404 when User B tries to list User A's job endpoints", async ({ tx }) => {
       const { appUserA, appUserB, job, endpoint } = await setupCrossUserEndpointScenario(tx);
 
@@ -295,7 +295,7 @@ describe("jobs authorization - cross-user access prevention", () => {
     });
   });
 
-  describe("POST /api/jobs/:id/endpoints", () => {
+  describe("pOST /api/jobs/:id/endpoints", () => {
     test("returns 404 when User B tries to add endpoint to User A's job", async ({ tx }) => {
       const { appUserA, appUserB, job } = await setupCrossUserScenario(tx);
 
@@ -350,7 +350,7 @@ describe("jobs authorization - cross-user access prevention", () => {
 
   // ==================== Endpoint Routes (via Job) ====================
 
-  describe("PATCH /api/jobs/:jobId/endpoints/:id", () => {
+  describe("pATCH /api/jobs/:jobId/endpoints/:id", () => {
     test("returns 404 when User B tries to update User A's endpoint", async ({ tx }) => {
       const { appUserA, appUserB, job, endpoint } = await setupCrossUserEndpointScenario(tx);
 
@@ -396,7 +396,7 @@ describe("jobs authorization - cross-user access prevention", () => {
     });
   });
 
-  describe("DELETE /api/jobs/:jobId/endpoints/:id", () => {
+  describe("dELETE /api/jobs/:jobId/endpoints/:id", () => {
     test("returns 404 when User B tries to delete User A's endpoint", async ({ tx }) => {
       const { appUserA, appUserB, job, endpoint } = await setupCrossUserEndpointScenario(tx);
 
@@ -435,7 +435,7 @@ describe("jobs authorization - cross-user access prevention", () => {
 
   // ==================== Run Routes ====================
 
-  describe("GET /api/endpoints/:id/runs", () => {
+  describe("gET /api/endpoints/:id/runs", () => {
     test("returns empty results when User B tries to list User A's endpoint runs", async ({ tx }) => {
       const { appUserA, appUserB, endpoint } = await setupCrossUserEndpointScenario(tx);
 
@@ -478,7 +478,7 @@ describe("jobs authorization - cross-user access prevention", () => {
     });
   });
 
-  describe("GET /api/runs/:id", () => {
+  describe("gET /api/runs/:id", () => {
     test("returns 404 when User B tries to access User A's run details", async ({ tx }) => {
       const { appUserA, appUserB, endpoint } = await setupCrossUserEndpointScenario(tx);
 

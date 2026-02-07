@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "backlog",
+  "status": "waiting_approval",
   "id": "feature-1770419921633-1f66a0h6w",
   "descriptionHistory": [
     {
@@ -25,8 +25,8 @@
     }
   ],
   "branchName": "main",
-  "startedAt": "2026-02-06T23:48:08.338Z",
-  "updatedAt": "2026-02-06T23:50:42.717Z",
+  "startedAt": "2026-02-07T06:12:00.738Z",
+  "updatedAt": "2026-02-07T06:12:46.308Z",
   "planSpec": {
     "status": "approved",
     "version": 1,
@@ -117,5 +117,6 @@
     "tasksCompleted": 2,
     "approvedAt": "2026-02-06T23:49:20.940Z",
     "currentTaskId": "T003"
-  }
+  },
+  "justFinishedAt": "2026-02-07T06:12:46.308Z"
 }
