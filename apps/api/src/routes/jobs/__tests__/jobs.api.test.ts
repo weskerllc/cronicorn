@@ -181,7 +181,7 @@ describe("jobs API", () => {
         headers: { "Content-Type": "application/json" },
       });
       const created = await getJson(createRes);
-      await app.request(`/api/jobs/${created.id}`, { method: "DELETE" });
+      await app.request(`/api/jobs/${created.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" } });
 
       // Create active job
       await app.request("/api/jobs", {
@@ -250,6 +250,7 @@ describe("jobs API", () => {
 
       const res = await app.request(`/api/jobs/${created.id}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
       });
 
       expect(res.status).toBe(200);
@@ -488,6 +489,7 @@ describe("jobs API", () => {
 
       const res = await app.request(`/api/jobs/${job.id}/endpoints/${endpoint.id}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
       });
 
       expect(res.status).toBe(204);
@@ -687,6 +689,7 @@ describe("jobs API", () => {
 
       const res = await app.request(`/api/endpoints/${endpoint.id}/hints`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
       });
 
       expect(res.status).toBe(204);
@@ -722,6 +725,7 @@ describe("jobs API", () => {
 
       const res = await app.request(`/api/endpoints/${endpoint.id}/reset-failures`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
       });
 
       expect(res.status).toBe(204);

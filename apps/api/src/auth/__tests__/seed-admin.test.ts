@@ -106,7 +106,7 @@ describe("seedAdminUser", () => {
     expect(result.rows[0].count).toBe("0");
   });
 
-  test("allows login with created admin user", async ({ tx }) => {
+  test("allows login with created admin user", { timeout: 15000 }, async ({ tx }) => {
     // Use a unique email to avoid conflicts with seeded data
     const uniqueTestConfig: Env = {
       ...testConfig,

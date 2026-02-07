@@ -204,6 +204,7 @@ describe("jobs authorization - cross-user access prevention", () => {
       // User B attempts to delete User A's job
       const res = await appUserB.request(`/api/jobs/${job.id}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
       });
 
       // Should receive 404 (not 403 to avoid leaking existence of resource)
@@ -240,6 +241,7 @@ describe("jobs authorization - cross-user access prevention", () => {
       // User B attempts to pause User A's job
       const res = await appUserB.request(`/api/jobs/${job.id}/pause`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
       });
 
       // Should receive 404 (not 403 to avoid leaking existence of resource)
@@ -412,6 +414,7 @@ describe("jobs authorization - cross-user access prevention", () => {
       // User B attempts to delete User A's endpoint
       const res = await appUserB.request(`/api/jobs/${job.id}/endpoints/${endpoint.id}`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
       });
 
       // Should receive 404 (not 403 to avoid leaking existence of resource)
