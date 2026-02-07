@@ -29,6 +29,7 @@ const configSchema = z.object({
   CLAIM_HORIZON_MS: z.coerce.number().int().positive().default(10000),
   CLEANUP_INTERVAL_MS: z.coerce.number().int().positive().default(300000), // 5 minutes
   ZOMBIE_RUN_THRESHOLD_MS: z.coerce.number().int().positive().default(3600000), // 1 hour
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000), // 30 seconds
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default(DEV_ENV.LOG_LEVEL),
   // eslint-disable-next-line node/no-process-env
   NODE_ENV: z.enum(["development", "production", "test"]).default(process.env.NODE_ENV === "production" ? "production" : DEV_ENV.NODE_ENV),
@@ -161,7 +162,22 @@ async function main() {
 
     if (currentTick) {
       logger.info("Waiting for current tick to complete");
-      await currentTick;
+
+      const timeoutPromise = new Promise<"timeout">((resolve) => {
+        setTimeout(() => resolve("timeout"), config.SHUTDOWN_TIMEOUT_MS);
+      });
+
+      const result = await Promise.race([
+        currentTick.then(() => "completed" as const),
+        timeoutPromise,
+      ]);
+
+      if (result === "timeout") {
+        logger.warn(
+          { timeoutMs: config.SHUTDOWN_TIMEOUT_MS },
+          "Shutdown timeout reached, forcing exit",
+        );
+      }
     }
 
     await pool.end();

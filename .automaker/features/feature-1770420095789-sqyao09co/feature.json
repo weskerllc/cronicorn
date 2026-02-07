@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "backlog",
+  "status": "waiting_approval",
   "id": "feature-1770420095789-sqyao09co",
   "descriptionHistory": [
     {
@@ -23,5 +23,58 @@
       "timestamp": "2026-02-06T23:21:36.076Z",
       "source": "initial"
     }
-  ]
+  ],
+  "branchName": "proddd",
+  "startedAt": "2026-02-07T05:56:27.899Z",
+  "updatedAt": "2026-02-07T06:02:00.288Z",
+  "planSpec": {
+    "status": "approved",
+    "version": 1,
+    "reviewedByUser": false,
+    "content": "🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/jshawl/dev/helloworld-express/docs/_RUNNING_TECH_DEBT.md\"\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"TODO\",\n  \"path\": \"/Users/jshawl/dev/helloworld-express\",\n  \"output_mode\": \"content\",\n  \"-n\": true\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/_RUNNING_TECH_DEBT.md\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/docs/**/*.md\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/docs/_RUNNING_TECH_DEBT.md\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-ai/src/client.ts\",\n  \"limit\": 120\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/services/src/subscriptions/manager.ts\",\n  \"limit\": 120\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-drizzle/src/runs-repo.ts\",\n  \"limit\": 180\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/ai-planner/src/index.ts\",\n  \"limit\": 100\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/mcp-server/src/resources/README.md\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/web/src/lib/api-client/format-api-error.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/web/src/lib/api-client/queries/api-keys.queries.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/apps/web/src/routes/_authed/endpoints.$id.runs.tsx\",\n  \"offset\": 160,\n  \"limit\": 30\n}\n# Specification: Log All Untracked TODOs to Tech Debt Document\n\n## 1. Problem\n\nThe project has 8 TODO comments in the codebase that are not tracked in `docs/_RUNNING_TECH_DEBT.md`. Additionally, several infrastructure issues identified during assessment (rate limiting, Sentry, backups, encryption, webhooks) need to be documented. This violates the project's mandatory rule that all TODOs must be logged for future reference.\n\n## 2. Solution\n\nAdd new sections to `docs/_RUNNING_TECH_DEBT.md` documenting all untracked TODOs grouped by area, plus infrastructure tech debt items from the assessment.\n\n## 3. Acceptance Criteria\n\n- GIVEN the existing tech debt document, WHEN I add the new entries, THEN all 8 untracked TODOs are documented with file references and line numbers\n- GIVEN the assessment findings, WHEN I add infrastructure tech debt, THEN all 5 infrastructure items are documented (Redis rate limiting, Sentry, backups, encryption, webhooks)\n- GIVEN the existing document format, WHEN I add entries, THEN they follow the checkbox format (`- [ ]`) with file references\n- GIVEN the tech debt document, WHEN organized, THEN entries are grouped by area (AI Planner, Adapter Drizzle, Subscriptions, Web App, MCP Server, Infrastructure)\n\n## 4. Files to Modify\n\n| File | Purpose | Action |\n|------|---------|--------|\n| `docs/_RUNNING_TECH_DEBT.md` | Central tech debt tracking document | modify |\n\n## 5. Implementation Tasks\n\n```tasks\n- [ ] T001: Add AI Planner section with logger stub and model selection TODOs | File: docs/_RUNNING_TECH_DEBT.md\n- [ ] T002: Add Adapter Drizzle section with count query optimization TODO | File: docs/_RUNNING_TECH_DEBT.md\n- [ ] T003: Add Subscriptions section with return type fields TODO | File: docs/_RUNNING_TECH_DEBT.md\n- [ ] T004: Add Web App section with error formatting, api-keys refactor, and backend search TODOs | File: docs/_RUNNING_TECH_DEBT.md\n- [ ] T005: Add MCP Server section with resource implementation TODO | File: docs/_RUNNING_TECH_DEBT.md\n- [ ] T006: Add Infrastructure Assessment Findings section with Redis, Sentry, backups, encryption, and webhooks items | File: docs/_RUNNING_TECH_DEBT.md\n```\n\n## 6. Verification\n\n- Read `docs/_RUNNING_TECH_DEBT.md` and confirm all 8 TODOs are documented\n- Verify 5 infrastructure assessment items are documented\n- Confirm entries follow existing checkbox format with file references\n- Ensure entries are properly grouped by area\n\n---",
+    "generatedAt": "2026-02-07T05:57:21.697Z",
+    "tasks": [
+      {
+        "id": "T001",
+        "description": "Add AI Planner section with logger stub and model selection TODOs",
+        "filePath": "docs/_RUNNING_TECH_DEBT.md",
+        "status": "pending"
+      },
+      {
+        "id": "T002",
+        "description": "Add Adapter Drizzle section with count query optimization TODO",
+        "filePath": "docs/_RUNNING_TECH_DEBT.md",
+        "status": "pending"
+      },
+      {
+        "id": "T003",
+        "description": "Add Subscriptions section with return type fields TODO",
+        "filePath": "docs/_RUNNING_TECH_DEBT.md",
+        "status": "pending"
+      },
+      {
+        "id": "T004",
+        "description": "Add Web App section with error formatting, api-keys refactor, and backend search TODOs",
+        "filePath": "docs/_RUNNING_TECH_DEBT.md",
+        "status": "pending"
+      },
+      {
+        "id": "T005",
+        "description": "Add MCP Server section with resource implementation TODO",
+        "filePath": "docs/_RUNNING_TECH_DEBT.md",
+        "status": "pending"
+      },
+      {
+        "id": "T006",
+        "description": "Add Infrastructure Assessment Findings section with Redis, Sentry, backups, encryption, and webhooks items",
+        "filePath": "docs/_RUNNING_TECH_DEBT.md",
+        "status": "pending"
+      }
+    ],
+    "tasksTotal": 6,
+    "tasksCompleted": 6,
+    "approvedAt": "2026-02-07T05:57:21.699Z",
+    "currentTaskId": "T006"
+  },
+  "justFinishedAt": "2026-02-07T06:02:00.288Z"
 }

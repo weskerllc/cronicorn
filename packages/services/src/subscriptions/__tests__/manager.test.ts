@@ -54,10 +54,12 @@ describe("subscriptionsManager", () => {
     id: string;
     email: string;
     refundStatus: string | null;
+    subscriptionStatus: string | null;
   }>) => ({
     id: "user_123",
     email: "test@example.com",
     refundStatus: null,
+    subscriptionStatus: null,
     ...overrides,
   });
 
@@ -405,6 +407,137 @@ describe("subscriptionsManager", () => {
           lastPaymentIntentId: "pi_456",
           lastInvoiceId: "in_456",
         });
+      });
+
+      it("should recover past_due user to active on payment success", async () => {
+        const mockUser = createMockUser({
+          id: "user_123",
+          email: "test@example.com",
+          tier: "pro",
+        });
+
+        // User is in past_due status (previous payment failed)
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(
+          createMockWebhookUser({
+            id: mockUser.id,
+            email: mockUser.email,
+            subscriptionStatus: "past_due",
+          }),
+        );
+
+        const event = {
+          type: "invoice.payment_succeeded",
+          data: {
+            customer: "cus_123",
+            payment_intent: "pi_recovery_789",
+            id: "in_recovery_789",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        // Verify subscriptionStatus is set to active (recovery from past_due)
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
+          subscriptionStatus: "active",
+          lastPaymentIntentId: "pi_recovery_789",
+          lastInvoiceId: "in_recovery_789",
+        });
+
+        // Verify recovery log message was recorded
+        expect(logger.logs).toContainEqual(
+          expect.objectContaining({
+            level: "info",
+            msg: "Subscription recovered from past_due to active",
+          }),
+        );
+      });
+
+      it("should keep active user active on payment success (idempotent)", async () => {
+        const mockUser = createMockUser({
+          id: "user_123",
+          email: "test@example.com",
+          tier: "pro",
+        });
+
+        // User is already active (normal renewal payment)
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(
+          createMockWebhookUser({
+            id: mockUser.id,
+            email: mockUser.email,
+            subscriptionStatus: "active",
+          }),
+        );
+
+        const event = {
+          type: "invoice.payment_succeeded",
+          data: {
+            customer: "cus_123",
+            payment_intent: "pi_renewal_456",
+            id: "in_renewal_456",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        // Verify subscriptionStatus is still set to active (idempotent behavior)
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
+          subscriptionStatus: "active",
+          lastPaymentIntentId: "pi_renewal_456",
+          lastInvoiceId: "in_renewal_456",
+        });
+
+        // Verify NO recovery log message was recorded (user was already active)
+        expect(logger.logs).not.toContainEqual(
+          expect.objectContaining({
+            msg: "Subscription recovered from past_due to active",
+          }),
+        );
+      });
+
+      it("should update lastPaymentIntentId and lastInvoiceId atomically with recovery", async () => {
+        const mockUser = createMockUser({
+          id: "user_123",
+          email: "test@example.com",
+          tier: "pro",
+        });
+
+        // User is in past_due status (previous payment failed)
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(
+          createMockWebhookUser({
+            id: mockUser.id,
+            email: mockUser.email,
+            subscriptionStatus: "past_due",
+          }),
+        );
+
+        const event = {
+          type: "invoice.payment_succeeded",
+          data: {
+            customer: "cus_123",
+            payment_intent: "pi_new_payment_123",
+            id: "in_new_invoice_456",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        // Verify exactly one database update is made (atomic operation)
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledTimes(1);
+
+        // Verify ALL fields are updated in the same call (subscriptionStatus, lastPaymentIntentId, lastInvoiceId)
+        const updateCall = vi.mocked(mockJobsRepo.updateUserSubscription).mock.calls[0];
+        expect(updateCall[0]).toBe("user_123");
+        expect(updateCall[1]).toEqual({
+          subscriptionStatus: "active",
+          lastPaymentIntentId: "pi_new_payment_123",
+          lastInvoiceId: "in_new_invoice_456",
+        });
+
+        // Verify the lastPaymentIntentId matches the payment_intent from the event
+        expect(updateCall[1].lastPaymentIntentId).toBe("pi_new_payment_123");
+
+        // Verify the lastInvoiceId matches the invoice id from the event
+        expect(updateCall[1].lastInvoiceId).toBe("in_new_invoice_456");
       });
     });
 

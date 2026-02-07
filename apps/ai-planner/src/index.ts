@@ -41,6 +41,7 @@ const configSchema = z.object({
   AI_LOOKBACK_MINUTES: z.coerce.number().int().positive().default(5), // Analyze endpoints with runs in last 5 min
   AI_MAX_TOKENS: z.coerce.number().int().positive().default(500), // Keep responses concise
   AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000), // 30 seconds
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -231,7 +232,21 @@ async function main() {
 
     if (currentAnalysis) {
       logger("info", "Waiting for current analysis to complete");
-      await currentAnalysis;
+
+      const timeoutPromise = new Promise<"timeout">((resolve) => {
+        setTimeout(() => resolve("timeout"), config.SHUTDOWN_TIMEOUT_MS);
+      });
+
+      const result = await Promise.race([
+        currentAnalysis.then(() => "completed" as const),
+        timeoutPromise,
+      ]);
+
+      if (result === "timeout") {
+        logger("warn", "Shutdown timeout reached, forcing exit", {
+          timeoutMs: config.SHUTDOWN_TIMEOUT_MS,
+        });
+      }
     }
 
     await pool.end();

@@ -1,8 +1,11 @@
+import type { PaymentProvider } from "@cronicorn/domain";
+
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
 import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { sql } from "drizzle-orm";
 import { cors } from "hono/cors";
+import { csrf } from "hono/csrf";
 
 import type { Auth } from "./auth/config.js";
 import type { Env } from "./lib/config.js";
@@ -31,7 +34,10 @@ export async function createApp(
   db: Database,
   config: Env,
   authInstance?: Auth, // Optional auth for testing
-  options?: { useTransactions?: boolean }, // Explicit control for tests
+  options?: {
+    useTransactions?: boolean; // Explicit control for tests
+    paymentProvider?: PaymentProvider; // Optional payment provider for DI testing
+  },
 ) {
   // Initialize Better Auth (pass Drizzle instance, not raw pool)
   // Use provided auth instance for testing, or create new one for production
@@ -46,8 +52,8 @@ export async function createApp(
   // In production, db is a pool, so we default to creating transactions per request
   const shouldCreateTransactions = options?.useTransactions ?? true;
 
-  // Initialize Stripe payment provider
-  const stripeProvider = new StripePaymentProvider({
+  // Initialize payment provider - use injected provider for testing or create Stripe provider
+  const paymentProvider: PaymentProvider = options?.paymentProvider ?? new StripePaymentProvider({
     secretKey: config.STRIPE_SECRET_KEY,
     proPriceId: config.STRIPE_PRICE_PRO,
     proAnnualPriceId: config.STRIPE_PRICE_PRO_ANNUAL,
@@ -79,6 +85,23 @@ export async function createApp(
     }),
   );
 
+  // CSRF protection middleware - validates Origin header on state-changing requests
+  // Allows requests from WEB_URL origin and same-origin requests
+  // Excludes webhook routes from validation (they receive cross-site POST from Stripe)
+  app.use(
+    "*",
+    csrf({
+      origin: (origin, c) => {
+        // Skip CSRF validation for webhook routes (external services like Stripe)
+        if (c.req.path.startsWith("/api/webhooks/")) {
+          return true;
+        }
+        // Validate origin for all other routes
+        return origin === config.WEB_URL;
+      },
+    }),
+  );
+
   // Global error handler
   app.onError(errorHandler);
 
@@ -89,7 +112,7 @@ export async function createApp(
     c.set("cron", cron);
     c.set("auth", auth);
     c.set("config", config);
-    c.set("paymentProvider", stripeProvider);
+    c.set("paymentProvider", paymentProvider);
     c.set("webhookSecret", config.STRIPE_WEBHOOK_SECRET);
 
     // Provide transaction wrapper that auto-creates JobsManager
@@ -126,7 +149,7 @@ export async function createApp(
     // Note: This creates a new instance per request with proper transaction handling
     const subscriptionsManager = createSubscriptionsManager(
       db,
-      stripeProvider,
+      paymentProvider,
       config.BASE_URL,
     );
     c.set("subscriptionsManager", subscriptionsManager);

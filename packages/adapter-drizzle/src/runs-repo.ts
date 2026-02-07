@@ -5,6 +5,12 @@ import { and, avg, count, desc, eq, gte, inArray, isNull, lte, ne, not, or, sql,
 
 import { jobEndpoints, jobs, runs } from "./schema.js";
 
+/** Default limit for listRuns queries when no limit is provided */
+const DEFAULT_LIMIT = 100;
+
+/** Maximum allowed limit for listRuns queries to prevent memory exhaustion */
+const MAX_LIMIT = 1000;
+
 /**
  * PostgreSQL implementation of RunsRepo using Drizzle ORM.
  * Tracks execution history with status and timing.
@@ -148,10 +154,11 @@ export class DrizzleRunsRepo implements RunsRepo {
     // Add ordering
     const withOrder = withWhere.orderBy(desc(runs.startedAt));
 
-    // Add limit and execute
-    const rows = filters.limit
-      ? await withOrder.limit(filters.limit).offset(filters.offset ?? 0)
-      : await withOrder.offset(filters.offset ?? 0);
+    // Compute effective limit: use provided limit (capped at MAX_LIMIT), or DEFAULT_LIMIT
+    const effectiveLimit = Math.min(filters.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+
+    // Add limit and execute - always apply effectiveLimit to prevent unbounded queries
+    const rows = await withOrder.limit(effectiveLimit).offset(filters.offset ?? 0);
 
     // Get total count (TODO: optimize with single query using window functions)
     // CRITICAL: Always join with jobEndpoints and jobs to filter by userId
@@ -762,48 +769,40 @@ export class DrizzleRunsRepo implements RunsRepo {
       timestamp: Date;
       status: string;
     }>> {
-    // This requires a lateral join to get latest run per endpoint.
-    // We'll use a window function approach instead (simpler with Drizzle).
+    // Use DISTINCT ON to get the latest run per endpoint in a single query.
+    // This replaces the N+1 pattern (one query per endpoint) with a single query.
+    // DISTINCT ON requires ordering by the DISTINCT ON column first, then by started_at DESC.
+    // Drizzle doesn't have native DISTINCT ON support, so we use sql template.
+    const result = await this.tx.execute(sql`
+      SELECT DISTINCT ON (${jobEndpoints.id})
+        ${jobEndpoints.id} AS "endpointId",
+        ${jobEndpoints.name} AS "endpointName",
+        ${runs.responseBody} AS "responseBody",
+        ${runs.startedAt} AS "timestamp",
+        ${runs.status} AS "status"
+      FROM ${runs}
+      INNER JOIN ${jobEndpoints} ON ${runs.endpointId} = ${jobEndpoints.id}
+      WHERE ${jobEndpoints.jobId} = ${jobId}
+        AND ${jobEndpoints.id} != ${excludeEndpointId}
+      ORDER BY ${jobEndpoints.id}, ${runs.startedAt} DESC
+    `);
 
-    // First get all endpoints for the job (excluding current)
-    const endpoints = await this.tx
-      .select({
-        id: jobEndpoints.id,
-        name: jobEndpoints.name,
-      })
-      .from(jobEndpoints)
-      .where(and(
-        eq(jobEndpoints.jobId, jobId),
-        sql`${jobEndpoints.id} != ${excludeEndpointId}`,
-      ));
+    // eslint-disable-next-line ts/consistent-type-assertions -- Raw SQL requires type assertion for result rows
+    const rows = result.rows as Array<{
+      endpointId: string;
+      endpointName: string;
+      responseBody: JsonValue | null;
+      timestamp: Date;
+      status: string;
+    }>;
 
-    // For each endpoint, get latest run
-    const results = [];
-    for (const endpoint of endpoints) {
-      const latestRun = await this.tx
-        .select({
-          responseBody: runs.responseBody,
-          timestamp: runs.startedAt,
-          status: runs.status,
-        })
-        .from(runs)
-        .where(eq(runs.endpointId, endpoint.id))
-        .orderBy(desc(runs.startedAt))
-        .limit(1);
-
-      if (latestRun.length > 0) {
-        const run = latestRun[0];
-        results.push({
-          endpointId: endpoint.id,
-          endpointName: endpoint.name,
-          responseBody: run.responseBody ?? null,
-          timestamp: run.timestamp,
-          status: run.status,
-        });
-      }
-    }
-
-    return results;
+    return rows.map(row => ({
+      endpointId: row.endpointId,
+      endpointName: row.endpointName,
+      responseBody: row.responseBody ?? null,
+      timestamp: new Date(row.timestamp),
+      status: row.status,
+    }));
   }
 
   // ============================================================================

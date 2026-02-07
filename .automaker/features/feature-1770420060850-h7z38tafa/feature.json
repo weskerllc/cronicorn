@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "backlog",
+  "status": "waiting_approval",
   "id": "feature-1770420060850-h7z38tafa",
   "descriptionHistory": [
     {
@@ -23,5 +23,52 @@
       "timestamp": "2026-02-06T23:21:01.161Z",
       "source": "initial"
     }
-  ]
+  ],
+  "branchName": "proddd",
+  "startedAt": "2026-02-07T03:13:48.846Z",
+  "updatedAt": "2026-02-07T03:30:57.121Z",
+  "planSpec": {
+    "status": "approved",
+    "version": 1,
+    "reviewedByUser": false,
+    "content": "🔧 Tool: Glob\nInput: {\n  \"pattern\": \"packages/adapter-drizzle/migrations/*.sql\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/docs/_RUNNING_TECH_DEBT.md\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/packages/adapter-drizzle/migrations/0018_yielding_spencer_smythe.sql\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/migrations/*.sql\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/_RUNNING_TECH_DEBT.md\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/adapter-drizzle/**\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"find . -type f -name \\\"*.sql\\\" 2>/dev/null | head -20\",\n  \"description\": \"Find SQL migration files\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"find . -name \\\"*TECH_DEBT*\\\" -o -name \\\"*tech_debt*\\\" 2>/dev/null | head -10\",\n  \"description\": \"Find tech debt docs\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"ls -la\",\n  \"description\": \"List current directory\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/repos/rw-website/docs/_RUNNING_TECH_DEBT.md\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/repos/rw-website/packages/adapter-drizzle/migrations/0018_yielding_spencer_smythe.sql\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/repos/rw-website/packages/adapter-drizzle/migrations/0021_special_argent.sql\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"ls -la packages/adapter-drizzle/migrations/*.sql | sort | tail -5\",\n  \"description\": \"List latest migration files\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"pwd\",\n  \"description\": \"Get current working directory\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/docs/_RUNNING_TECH_DEBT.md\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-drizzle/migrations/0018_yielding_spencer_smythe.sql\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-drizzle/migrations/0021_special_argent.sql\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"ls -la packages/adapter-drizzle/migrations/*.sql 2>/dev/null | wc -l && ls packages/adapter-drizzle/migrations/*.sql 2>/dev/null | sort -V | tail -3\",\n  \"description\": \"Count and show latest migrations\"\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"refund_status\",\n  \"path\": \"packages/adapter-drizzle\",\n  \"output_mode\": \"content\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"cat packages/adapter-drizzle/package.json\",\n  \"description\": \"Check drizzle package.json for db commands\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-drizzle/migrations/0020_sweet_night_nurse.sql\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-drizzle/migrations/0019_vengeful_elektra.sql\"\n}\n\n🔧 Tool: Bash\nInput: {\n  \"command\": \"cat package.json | grep -E \\\"db:|migrate\\\"\",\n  \"description\": \"Find db migrate script in root package.json\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-drizzle/migrations/meta/_journal.json\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/Users/brandincanfield/Documents/Git/cronicorn/packages/adapter-drizzle/src/schema.ts\"\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"tier.*=|=.*tier\",\n  \"path\": \"packages/adapter-drizzle\",\n  \"output_mode\": \"content\"\n}\n# Specification: Backfill Migration for Existing Pro Users' Refund Status\n\n## 1. Problem\nExisting Pro users have `refund_status = NULL` in the database because migration `0018_yielding_spencer_smythe.sql` added the column but didn't populate it for existing records. While the current eligibility check (`refundStatus === \"eligible\"`) accidentally works because NULL ≠ \"eligible\", this is fragile and unclear. The tech debt doc explicitly calls this out at lines 35-37.\n\n## 2. Solution\nCreate a new SQL migration (0022) that backfills `refund_status = 'expired'` for all existing Pro users with NULL status, ensuring data integrity and making the implicit behavior explicit. Update the tech debt doc to mark this TODO as complete.\n\n## 3. Acceptance Criteria\n- GIVEN existing Pro users with `refund_status IS NULL`, WHEN the migration runs, THEN their `refund_status` is set to `'expired'`\n- GIVEN free users with non-NULL `refund_status` (excluding 'issued'), WHEN the migration runs, THEN their `refund_status` is set to `'expired'` for data cleanliness\n- GIVEN the tech debt document with TODO at lines 35-37, WHEN the migration is created, THEN the TODO is marked as complete\n- GIVEN the migration file, WHEN `pnpm db:migrate` is run, THEN the migration applies cleanly without errors\n\n## 4. Files to Modify\n\n| File | Purpose | Action |\n|------|---------|--------|\n| `packages/adapter-drizzle/migrations/0022_backfill_refund_status.sql` | Backfill refund_status for existing users | create |\n| `packages/adapter-drizzle/migrations/meta/_journal.json` | Register the new migration in Drizzle journal | modify |\n| `packages/adapter-drizzle/migrations/meta/0022_snapshot.json` | Schema snapshot for new migration | create |\n| `docs/_RUNNING_TECH_DEBT.md` | Mark TODO as complete | modify |\n\n## 5. Implementation Tasks\n\n```tasks\n- [ ] T001: Create SQL migration file with UPDATE statements for backfilling refund_status | File: packages/adapter-drizzle/migrations/0022_backfill_refund_status.sql\n- [ ] T002: Add migration entry to Drizzle journal | File: packages/adapter-drizzle/migrations/meta/_journal.json\n- [ ] T003: Create schema snapshot for migration (copy from 0021) | File: packages/adapter-drizzle/migrations/meta/0022_snapshot.json\n- [ ] T004: Update tech debt doc to mark backfill TODO as complete | File: docs/_RUNNING_TECH_DEBT.md\n- [ ] T005: Run db:migrate to verify migration applies cleanly | File: N/A\n```\n\n## 6. Verification\n1. Run `pnpm db:migrate` and confirm no errors\n2. Query database to verify: `SELECT tier, refund_status, COUNT(*) FROM \"user\" GROUP BY tier, refund_status`\n3. Confirm all Pro users with previously NULL refund_status now have 'expired'\n4. Confirm tech debt doc shows the TODO as completed\n\n---",
+    "generatedAt": "2026-02-07T03:20:23.143Z",
+    "tasks": [
+      {
+        "id": "T001",
+        "description": "Create SQL migration file with UPDATE statements for backfilling refund_status",
+        "filePath": "packages/adapter-drizzle/migrations/0022_backfill_refund_status.sql",
+        "status": "pending"
+      },
+      {
+        "id": "T002",
+        "description": "Add migration entry to Drizzle journal",
+        "filePath": "packages/adapter-drizzle/migrations/meta/_journal.json",
+        "status": "pending"
+      },
+      {
+        "id": "T003",
+        "description": "Create schema snapshot for migration (copy from 0021)",
+        "filePath": "packages/adapter-drizzle/migrations/meta/0022_snapshot.json",
+        "status": "pending"
+      },
+      {
+        "id": "T004",
+        "description": "Update tech debt doc to mark backfill TODO as complete",
+        "filePath": "docs/_RUNNING_TECH_DEBT.md",
+        "status": "pending"
+      },
+      {
+        "id": "T005",
+        "description": "Run db:migrate to verify migration applies cleanly",
+        "filePath": "N/A",
+        "status": "pending"
+      }
+    ],
+    "tasksTotal": 5,
+    "tasksCompleted": 5,
+    "approvedAt": "2026-02-07T03:20:23.158Z",
+    "currentTaskId": "T005"
+  },
+  "justFinishedAt": "2026-02-07T03:30:57.121Z"
 }

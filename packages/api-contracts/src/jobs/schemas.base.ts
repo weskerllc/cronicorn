@@ -161,7 +161,7 @@ export const PauseResumeRequestBaseSchema = z.object({
 export const ListRunsQueryBaseSchema = z.object({
   endpointId: z.string().optional().describe("Filter by endpoint ID"),
   status: z.enum(["success", "failed"]).optional().describe("Filter by run status"),
-  limit: z.coerce.number().int().positive().optional().describe("Maximum number of runs to return"),
+  limit: z.coerce.number().int().positive().max(1000).optional().describe("Maximum number of runs to return"),
   offset: z.coerce.number().int().nonnegative().optional().describe("Number of runs to skip"),
 });
 
