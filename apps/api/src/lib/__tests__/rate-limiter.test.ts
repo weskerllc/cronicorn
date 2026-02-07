@@ -243,7 +243,7 @@ describe("createRateLimitMiddleware", () => {
         now: () => currentTime,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
 
       // Simulate auth middleware setting userId
       app.use("/*", async (c, next) => {
@@ -276,7 +276,7 @@ describe("createRateLimitMiddleware", () => {
         now: () => currentTime,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
 
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
@@ -302,7 +302,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 5, // Higher for reads
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
 
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
@@ -335,7 +335,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 120,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
 
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
@@ -358,7 +358,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 1,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
 
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
@@ -384,7 +384,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 5,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
 
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
@@ -411,7 +411,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 1,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
 
       // NO userId set in context
       app.use("/*", rateLimitMiddleware);
@@ -464,7 +464,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 10,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
         return next();
@@ -483,7 +483,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 10,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
         return next();
@@ -502,7 +502,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 10,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
         return next();
@@ -521,7 +521,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 10,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
         return next();
@@ -540,7 +540,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 10,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
         return next();
@@ -559,7 +559,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 10,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
         return next();
@@ -578,7 +578,7 @@ describe("createRateLimitMiddleware", () => {
         readLimit: 10,
       });
 
-      const app = new Hono();
+      const app = new Hono<{ Variables: { userId: string } }>();
       app.use("/*", async (c, next) => {
         c.set("userId", "test-user");
         return next();

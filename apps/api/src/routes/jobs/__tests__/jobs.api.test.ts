@@ -49,6 +49,7 @@ const testConfig: Env = {
   BASE_URL: "http://localhost:5173",
   RATE_LIMIT_MUTATION_RPM: 60,
   RATE_LIMIT_READ_RPM: 120,
+  SHUTDOWN_TIMEOUT_MS: 30000,
 };
 
 describe("jobs API", () => {

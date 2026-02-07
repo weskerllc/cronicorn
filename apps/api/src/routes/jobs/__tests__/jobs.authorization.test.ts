@@ -53,6 +53,7 @@ const testConfig: Env = {
   BASE_URL: "http://localhost:5173",
   RATE_LIMIT_MUTATION_RPM: 60,
   RATE_LIMIT_READ_RPM: 120,
+  SHUTDOWN_TIMEOUT_MS: 30000,
 };
 
 /**
@@ -441,7 +442,8 @@ describe("jobs authorization - cross-user access prevention", () => {
 
       // Create a run for User A's endpoint directly in the database
       const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      await tx.insert(schema.runs).values({
+      // eslint-disable-next-line ts/no-explicit-any, ts/consistent-type-assertions
+      await tx.insert(schema.runs as any).values({
         id: runId,
         endpointId: endpoint.id,
         status: "success",
@@ -484,7 +486,8 @@ describe("jobs authorization - cross-user access prevention", () => {
 
       // Create a run directly in the database for User A's endpoint
       const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      await tx.insert(schema.runs).values({
+      // eslint-disable-next-line ts/no-explicit-any, ts/consistent-type-assertions
+      await tx.insert(schema.runs as any).values({
         id: runId,
         endpointId: endpoint.id,
         status: "success",
