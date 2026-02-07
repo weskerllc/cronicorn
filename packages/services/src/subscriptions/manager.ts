@@ -137,6 +137,10 @@ export class SubscriptionsManager {
       throw new RefundConcurrencyError("Refund is already being processed for this subscription");
     }
 
+    if (user.refundStatus === "cancel_completed_refund_failed") {
+      throw new RefundNotEligibleError("Refund requires manual intervention - subscription was canceled but refund failed");
+    }
+
     const now = new Date();
     if (!user.refundWindowExpiresAt || user.refundWindowExpiresAt <= now) {
       throw new RefundExpiredError("Refund window has expired (must be within 14 days of first payment)");
@@ -158,8 +162,19 @@ export class SubscriptionsManager {
       throw new RefundConcurrencyError("Unable to process refund - another request may be in progress");
     }
 
+    // Track operation state for error handling
+    let cancelCompleted = false;
+    let refundIssued = false;
+
     try {
-      // 4. Issue refund via payment provider
+      // 4. Cancel subscription first (reversible operation)
+      if (user.stripeSubscriptionId) {
+        this.deps.logger.info({ userId, subscriptionId: user.stripeSubscriptionId }, "Canceling subscription");
+        await this.deps.paymentProvider.cancelSubscriptionNow(user.stripeSubscriptionId);
+      }
+      cancelCompleted = true;
+
+      // 5. Issue refund via payment provider (irreversible operation)
       this.deps.logger.info({ userId, paymentIntentId: user.lastPaymentIntentId }, "Issuing refund");
 
       const refundResult = await this.deps.paymentProvider.issueRefund({
@@ -171,11 +186,8 @@ export class SubscriptionsManager {
         },
       });
 
-      // 5. Cancel subscription immediately to prevent future billing
-      if (user.stripeSubscriptionId) {
-        this.deps.logger.info({ userId, subscriptionId: user.stripeSubscriptionId }, "Canceling subscription");
-        await this.deps.paymentProvider.cancelSubscriptionNow(user.stripeSubscriptionId);
-      }
+      // Mark refund as issued - this is irreversible, used for error handling
+      refundIssued = true;
 
       // 6. Update database: downgrade to free, record refund
       await this.deps.jobsRepo.updateUserSubscription(userId, {
@@ -198,10 +210,28 @@ export class SubscriptionsManager {
       return refundResult;
     }
     catch (error) {
-      // Rollback: Reset status back to "eligible" if refund processing failed
-      await this.deps.jobsRepo.updateUserSubscription(userId, {
-        refundStatus: "eligible",
-      });
+      // Differentiate failure scenarios based on which operations completed
+      if (refundIssued) {
+        // Refund was issued (irreversible) but final DB update failed
+        // Set status to "issued" to prevent double-refund attempts
+        this.deps.logger.error({ userId, error }, "Final DB update failed after refund issued - setting status to issued");
+        await this.deps.jobsRepo.updateUserSubscription(userId, {
+          refundStatus: "issued",
+        });
+      }
+      else if (cancelCompleted) {
+        // Cancel succeeded but refund failed - partial completion state
+        // Requires manual intervention, cannot safely retry automatically
+        this.deps.logger.error({ userId, error }, "Refund failed after cancel completed - requires manual intervention");
+        await this.deps.jobsRepo.updateUserSubscription(userId, {
+          refundStatus: "cancel_completed_refund_failed",
+        });
+      }
+      // else: Cancel failed before refund was attempted
+      // Status remains "requested" - safe to retry after investigating the issue
+      else {
+        this.deps.logger.error({ userId, error }, "Cancel failed - status remains requested for retry");
+      }
       throw error;
     }
   }
