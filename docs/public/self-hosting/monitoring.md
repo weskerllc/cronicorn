@@ -37,7 +37,7 @@ Each service has a Docker healthcheck configured:
 | **scheduler** | `pgrep -f 'node'` | Process liveness |
 | **ai-planner** | `pgrep -f 'node'` | Process liveness |
 
-All healthchecks use: `interval: 30s`, `timeout: 5s`, `retries: 3`, `start_period: 30s`.
+Healthcheck timing: `interval: 30s`, `timeout: 5s`, `retries: 3`, `start_period: 30s` for most services. The database uses a faster cycle: `interval: 10s`, `retries: 5` (no start period).
 
 ### Checking Status
 
@@ -162,7 +162,7 @@ The API returns rate limit information in response headers:
 |--------|-------------|
 | `X-RateLimit-Limit` | Maximum requests per window |
 | `X-RateLimit-Remaining` | Requests remaining in current window |
-| `X-RateLimit-Reset` | Unix timestamp when the window resets |
+| `X-RateLimit-Reset` | Seconds until the rate limit window resets |
 
 Monitor these to detect clients approaching rate limits.
 

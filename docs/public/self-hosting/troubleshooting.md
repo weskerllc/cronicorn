@@ -114,9 +114,12 @@ openssl rand -base64 32
 
 If the API refuses to start with a message about dev defaults:
 
-The `validateNotDevDefaultInProduction()` check prevents running with insecure defaults when `NODE_ENV=production`. Set proper values for:
+The `validateNotDevDefaultInProduction()` check prevents running with insecure defaults when `NODE_ENV=production`. It validates:
 - `BETTER_AUTH_SECRET` — must not be the dev default
-- Database credentials — should not be `user`/`password` in production
+- `ADMIN_USER_PASSWORD` — must not be `devpassword` (if admin auth is configured)
+- `STRIPE_SECRET_KEY` — must not be the dev dummy key
+
+You should also change default database credentials (`POSTGRES_USER`/`POSTGRES_PASSWORD`) for production, though these are not enforced by the startup check.
 
 ### CORS errors
 
@@ -176,13 +179,13 @@ docker compose logs scheduler
 - Scheduler is running: `docker compose ps scheduler`
 - Jobs are not paused in the UI
 - Endpoints have a valid `nextRunAt` time
-- No stuck locks (locks expire after 30 seconds)
+- No stuck locks (locks expire based on each endpoint's `maxExecutionTimeMs`, minimum 60 seconds)
 
 ### Zombie runs
 
 **Symptoms:** Runs show as "running" indefinitely.
 
-Runs have a `timeoutMs` value. If the scheduler crashes mid-execution, the run may appear stuck. Locks expire after 30 seconds, and the next scheduler cycle will pick up due work.
+Runs have a `timeoutMs` value. If the scheduler crashes mid-execution, the run may appear stuck. Locks expire based on each endpoint's `maxExecutionTimeMs` (minimum 60 seconds), and the next scheduler cycle will pick up due work after the lock expires.
 
 If runs remain stuck after several minutes:
 
