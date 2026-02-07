@@ -39,6 +39,80 @@
 ### Pricing Checkout Gap (Early Adopter Annual)
 - Addressed: billingPeriod now flows UI → API → Stripe with `STRIPE_PRICE_PRO_ANNUAL`. Remaining action: set live annual price ID in prod secrets.
 
+## Rate Limiter: Redis Migration for Multi-Instance Deployment
+
+**Status**: Planned tech debt
+**File**: `apps/api/src/lib/rate-limiter.ts`
+**Related**: Per-user API rate limiting implementation
+
+### Current Implementation
+
+The rate limiter uses an in-memory `Map`-based sliding window algorithm:
+- Keyed by `userId` for per-user rate limiting
+- Separate limits for mutations (60 rpm default) and reads (120 rpm default)
+- Periodic cleanup to prevent memory leaks from inactive users
+- Suitable for **single-instance deployments only**
+
+### Problem with Horizontal Scaling
+
+When running multiple API instances (load-balanced), each instance maintains its own rate limit state:
+- User hitting instance A won't share rate limit state with instance B
+- Effective rate limit becomes `configured_limit × number_of_instances`
+- Defeats the purpose of rate limiting for abuse prevention
+
+### Migration Path to Redis
+
+1. **Replace `Map` with Redis**:
+   - Use Redis INCR with EXPIRE for atomic increment-with-expiry
+   - Or use Redis Lua scripts for sliding window calculation
+   - Key format: `ratelimit:{userId}:{limiterType}:{windowId}`
+
+2. **Implementation options**:
+   - **Simple fixed window**: `INCR` + `EXPIRE` (less accurate, simpler)
+   - **Sliding window log**: `ZADD` + `ZRANGEBYSCORE` (more accurate, higher Redis load)
+   - **Sliding window counter**: Two keys per user (current + previous window counts)
+
+3. **Recommended approach** (sliding window counter):
+   ```
+   KEY: ratelimit:{userId}:{type}:{window}
+   Commands:
+   - INCR to increment current window
+   - GET previous window count
+   - Calculate effective count in application
+   - Use EXPIRE to auto-cleanup old windows
+   ```
+
+4. **Configuration changes**:
+   - Add `REDIS_URL` environment variable (may already exist)
+   - Add `RATE_LIMIT_STORAGE` env var: `memory` | `redis` (default: `memory`)
+   - Feature flag for gradual rollout
+
+### Required Changes
+
+| File | Change |
+|------|--------|
+| `apps/api/src/lib/rate-limiter.ts` | Add `RedisRateLimiter` class implementing same interface |
+| `apps/api/src/lib/config.ts` | Add `RATE_LIMIT_STORAGE` config option |
+| `apps/api/src/app.ts` | Conditionally create Redis or Map-based limiter |
+| `apps/api/package.json` | Add Redis client dependency (ioredis or similar) |
+
+### Acceptance Criteria for Migration
+
+- [ ] Rate limit state is shared across all API instances
+- [ ] Fallback to in-memory limiter if Redis is unavailable (graceful degradation)
+- [ ] No increase in p99 latency beyond 5ms for rate limit checks
+- [ ] Existing rate limit tests pass with Redis storage
+- [ ] Add integration tests with Redis testcontainers
+
+### When to Prioritize
+
+Migrate to Redis when:
+- Deploying to multiple API instances (horizontal scaling)
+- Experiencing rate limit bypass due to load balancing
+- Adding Redis for other features (caching, sessions, queues)
+
+---
+
 ## Dashboard time range alignment
 **Status**: Identified
 

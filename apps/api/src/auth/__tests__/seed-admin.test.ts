@@ -36,6 +36,8 @@ const testConfig: Env = {
   STRIPE_PRICE_PRO_ANNUAL: "price_test_pro_annual",
   STRIPE_PRICE_ENTERPRISE: "price_test_enterprise",
   BASE_URL: "http://localhost:5173",
+  RATE_LIMIT_MUTATION_RPM: 60,
+  RATE_LIMIT_READ_RPM: 120,
 };
 
 describe("seedAdminUser", () => {

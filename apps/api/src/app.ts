@@ -16,6 +16,7 @@ import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.j
 import { errorHandler } from "./lib/error-handler.js";
 import { logger } from "./lib/logger.js";
 import configureOpenAPI from "./lib/openapi.js";
+import { createRateLimitMiddleware, startRateLimitCleanup } from "./lib/rate-limiter.js";
 import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";
@@ -127,41 +128,66 @@ export async function createApp(
     await next();
   });
 
-  // Protect all /jobs and /endpoints routes with auth
+  // Create rate limiters for protected routes
+  // NOTE: Rate limiting is applied AFTER auth middleware since it requires userId
+  const { mutationLimiter, readLimiter, rateLimitMiddleware } = createRateLimitMiddleware({
+    mutationLimit: config.RATE_LIMIT_MUTATION_RPM,
+    readLimit: config.RATE_LIMIT_READ_RPM,
+  });
+
+  // Start periodic cleanup of stale rate limit entries to prevent memory leaks
+  startRateLimitCleanup([mutationLimiter, readLimiter]);
+
+  // Protected routes that require auth AND rate limiting:
+  // /jobs/*, /endpoints/*, /runs/*, /sessions/*, /subscriptions/*, /dashboard/*, /devices/*
+  //
+  // Routes excluded from rate limiting:
+  // /health - public health check
+  // /auth/* - handled by Better Auth (has its own rate limiting)
+  // /webhooks/* - external service callbacks (e.g., Stripe)
+
+  // Protect all /jobs and /endpoints routes with auth + rate limiting
   app.use("/jobs/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/jobs/*", rateLimitMiddleware);
 
   app.use("/endpoints/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/endpoints/*", rateLimitMiddleware);
 
   app.use("/runs/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/runs/*", rateLimitMiddleware);
 
   app.use("/sessions/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/sessions/*", rateLimitMiddleware);
 
   app.use("/subscriptions/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/subscriptions/*", rateLimitMiddleware);
 
   app.use("/dashboard/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/dashboard/*", rateLimitMiddleware);
 
   app.use("/devices/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/devices/*", rateLimitMiddleware);
 
   // Health check endpoint (no auth required)
   app.get("/health", (c) => {
