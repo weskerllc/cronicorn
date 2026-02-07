@@ -57,30 +57,49 @@ The migrator must complete successfully before the API, scheduler, and AI planne
 
 ## Quick Start
 
-### 1. Download the compose file
+### Option A: Setup Script (recommended)
+
+The setup script checks prerequisites, downloads the compose file, generates a secure `.env`, and pulls images:
 
 ```bash
-curl -O https://raw.githubusercontent.com/weskerllc/cronicorn/main/docker-compose.yml
+bash <(curl -fsSL https://raw.githubusercontent.com/weskerllc/cronicorn/main/scripts/setup.sh)
 ```
 
-### 2. Create your environment file
-
-Create a `.env` file in the same directory:
-
-```bash
-# Generate a secure auth secret (REQUIRED)
-BETTER_AUTH_SECRET=$(openssl rand -base64 32)
-```
-
-For a full list of configuration options, see [Configuration](./configuration.md).
-
-### 3. Start all services
+Then start Cronicorn:
 
 ```bash
 docker compose up -d
 ```
 
-### 4. Verify health
+The script is safe to re-run — it never overwrites existing files. Use `--dry-run` to preview what it would do without writing anything.
+
+### Option B: Manual Setup
+
+If you prefer to set things up yourself:
+
+**1. Download the compose file**
+
+```bash
+curl -O https://raw.githubusercontent.com/weskerllc/cronicorn/main/docker-compose.yml
+```
+
+**2. Create your environment file**
+
+```bash
+# Generate a secure auth secret (REQUIRED)
+echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)" > .env
+```
+
+For a full list of configuration options, see [Configuration](./configuration.md).
+
+**3. Start all services**
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+### Verify Health
 
 ```bash
 docker compose ps
@@ -88,13 +107,11 @@ docker compose ps
 
 All services should show `healthy` or `running`. The migrator will show `exited (0)` — this is expected.
 
-Check the API health endpoint:
-
 ```bash
 curl http://localhost:3333/api/health
 ```
 
-### 5. Access the app
+### Access the App
 
 | Service | URL |
 |---------|-----|
@@ -102,7 +119,7 @@ curl http://localhost:3333/api/health
 | Web app | Not exposed by default — see [Exposing Services](#exposing-services) |
 | Docs | Not exposed by default — see [Exposing Services](#exposing-services) |
 
-### 6. Log in
+### Log In
 
 Default credentials:
 
