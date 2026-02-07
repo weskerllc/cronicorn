@@ -53,6 +53,7 @@ const testConfig: Env = {
   BASE_URL: "http://localhost:5173",
   RATE_LIMIT_MUTATION_RPM: 60,
   RATE_LIMIT_READ_RPM: 120,
+  SHUTDOWN_TIMEOUT_MS: 30000,
 };
 
 /**
@@ -96,6 +97,7 @@ describe("subscriptions API", () => {
   describe("get /api/subscriptions/status", () => {
     test("returns 401 for unauthenticated request", async ({ tx }) => {
       // Create an app with no auth session (null session returns 401)
+      // eslint-disable-next-line ts/consistent-type-assertions -- passing null to simulate unauthenticated request
       const mockAuth = createMockAuth(null as unknown as ReturnType<typeof createMockSession>);
       const mockPaymentProvider = createMockPaymentProvider();
       const { app } = await createApp(tx, testConfig, mockAuth, {
@@ -303,6 +305,7 @@ describe("subscriptions API", () => {
 
   describe("post /api/subscriptions/checkout", () => {
     test("returns 401 for unauthenticated request", async ({ tx }) => {
+      // eslint-disable-next-line ts/consistent-type-assertions -- passing null to simulate unauthenticated request
       const mockAuth = createMockAuth(null as unknown as ReturnType<typeof createMockSession>);
       const mockPaymentProvider = createMockPaymentProvider();
       const { app } = await createApp(tx, testConfig, mockAuth, {
@@ -488,6 +491,7 @@ describe("subscriptions API", () => {
 
   describe("post /api/subscriptions/portal", () => {
     test("returns 401 for unauthenticated request", async ({ tx }) => {
+      // eslint-disable-next-line ts/consistent-type-assertions -- passing null to simulate unauthenticated request
       const mockAuth = createMockAuth(null as unknown as ReturnType<typeof createMockSession>);
       const mockPaymentProvider = createMockPaymentProvider();
       const { app } = await createApp(tx, testConfig, mockAuth, {
@@ -606,6 +610,7 @@ describe("subscriptions API", () => {
 
   describe("post /api/subscriptions/refund", () => {
     test("returns 401 for unauthenticated request", async ({ tx }) => {
+      // eslint-disable-next-line ts/consistent-type-assertions -- passing null to simulate unauthenticated request
       const mockAuth = createMockAuth(null as unknown as ReturnType<typeof createMockSession>);
       const mockPaymentProvider = createMockPaymentProvider();
       const { app } = await createApp(tx, testConfig, mockAuth, {
@@ -883,6 +888,7 @@ describe("subscriptions API", () => {
 
   describe("get /api/subscriptions/usage", () => {
     test("returns 401 for unauthenticated request", async ({ tx }) => {
+      // eslint-disable-next-line ts/consistent-type-assertions -- passing null to simulate unauthenticated request
       const mockAuth = createMockAuth(null as unknown as ReturnType<typeof createMockSession>);
       const mockPaymentProvider = createMockPaymentProvider();
       const { app } = await createApp(tx, testConfig, mockAuth, {
