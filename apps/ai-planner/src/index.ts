@@ -242,6 +242,24 @@ async function main() {
   // Register shutdown handlers
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
+
+  // Uncaught exception handler - log and exit
+  process.on("uncaughtException", (error: Error) => {
+    logger("fatal", "Uncaught exception", {
+      error: error.message,
+      stack: error.stack,
+    });
+    process.exit(1);
+  });
+
+  // Unhandled promise rejection handler - log and exit
+  process.on("unhandledRejection", (reason: unknown) => {
+    logger("fatal", "Unhandled rejection", {
+      error: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    });
+    process.exit(1);
+  });
 }
 
 // Top-level error handler for startup failures

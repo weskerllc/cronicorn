@@ -27,6 +27,8 @@ export type AppBindings = {
     // Set by requireAuth middleware
     session?: AuthContext["session"];
     userId?: string;
+    // Set by request-id middleware
+    requestId: string;
   };
   Bindings: {
     AUTH_SECRET: string;

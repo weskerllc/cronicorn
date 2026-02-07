@@ -6,6 +6,7 @@ import { createApp } from "./app.js";
 import { seedAdminUser } from "./auth/seed-admin.js";
 import { loadConfig } from "./lib/config.js";
 import { createDatabase } from "./lib/db.js";
+import { logger } from "./lib/logger.js";
 /**
  * API Composition Root
  *
@@ -64,6 +65,26 @@ async function main() {
 
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
+
+  // Uncaught exception handler - log and exit
+  process.on("uncaughtException", (error: Error) => {
+    logger.fatal({
+      msg: "Uncaught exception",
+      error: error.message,
+      stack: error.stack,
+    });
+    process.exit(1);
+  });
+
+  // Unhandled promise rejection handler - log and exit
+  process.on("unhandledRejection", (reason: unknown) => {
+    logger.fatal({
+      msg: "Unhandled rejection",
+      error: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    });
+    process.exit(1);
+  });
 
   // console.log(JSON.stringify({
   //   timestamp: new Date().toISOString(),
