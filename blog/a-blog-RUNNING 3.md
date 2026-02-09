@@ -1,38 +1,14 @@
 # How I Stopped Letting AI Wreck My Projects
 
-This is my first — and maybe last — blog post.
+AI can generate code faster than you can understand it. That’s the problem.
 
-I've avoided writing one for years. Not because I don't have opinions, but because I never felt like an expert. There's always someone smarter, deeper, already writing about the same thing. Usually better than I could.
+I’ve spent the last couple of years building real systems with it — not demos, not experiments. And more than once, I let the code outrun my ability to reason about it. Nothing was obviously broken. Things just became harder to change, harder to trust, harder to explain.
 
-That's still true.
+By the time I noticed, starting over felt cheaper than fixing what I had.
 
-I'm not an AI expert. I'm not the cleanest developer either.
+I’m not an AI expert. I’m a senior engineer with about eight years of experience and enough failed projects to recognize that pattern when it shows up.
 
-I am a senior software engineer with a little over eight years of experience. Enough scars to know when something's going wrong. Not enough ego to pretend I've got it all figured out.
-
-So why write this?
-
-Because AI has been my main side obsession for the last two or three years. I've watched it go from a clumsy helper to something that can generate a scary amount of code. And I've spent hundreds — probably thousands — of hours building with it. Not demos. Real projects. Things that were supposed to hold up.
-
-A lot of those projects went badly.
-
-I over‑prompted. I let the code grow faster than my understanding. At some point, I wasn't really driving anymore. The system still worked, technically. But it was fragile. Hard to change. Exhausting to think about.
-
-Time disappeared. Hours at first. Then days. Starting over felt easier than fixing what I had.
-
-That kind of failure sticks with you.
-
-Not just because of the wasted time, but because you start wondering whether you're actually improving — or just moving faster in the wrong direction.
-
-After enough of that, patterns started to show up. Not theories. Not frameworks. Just rules that kept repeating themselves. Ways of working where AI stayed useful without quietly taking control.
-
-None of this came from research. It came from building things the wrong way until the shape of "less wrong" became obvious.
-
-That's what this post is.
-
-If it helps you avoid even a small part of what I ran into, it's worth writing.
-
-Let's get into it.
+After repeating that mistake enough times, a few hard rules emerged. Not theory. Just constraints that kept me in control while still letting AI be useful. I ended up using them end-to-end in an app I rely on every day — [the code is public](https://github.com/weskerllc/cronicorn).
 
 ---
 
