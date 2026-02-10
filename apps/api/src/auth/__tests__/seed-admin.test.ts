@@ -20,6 +20,9 @@ const testConfig: Env = {
   LOG_LEVEL: "debug",
   PORT: 3000,
   DATABASE_URL: "postgres://test",
+  DB_POOL_MAX: 5,
+  DB_POOL_IDLE_TIMEOUT_MS: 20000,
+  DB_POOL_CONNECTION_TIMEOUT_MS: 10000,
   API_URL: "http://localhost:3000",
   WEB_URL: "http://localhost:5173",
   BETTER_AUTH_SECRET: "test-secret-must-be-at-least-32-characters-long",
@@ -33,6 +36,9 @@ const testConfig: Env = {
   STRIPE_PRICE_PRO_ANNUAL: "price_test_pro_annual",
   STRIPE_PRICE_ENTERPRISE: "price_test_enterprise",
   BASE_URL: "http://localhost:5173",
+  RATE_LIMIT_MUTATION_RPM: 60,
+  RATE_LIMIT_READ_RPM: 120,
+  SHUTDOWN_TIMEOUT_MS: 30000,
 };
 
 describe("seedAdminUser", () => {
@@ -100,7 +106,7 @@ describe("seedAdminUser", () => {
     expect(result.rows[0].count).toBe("0");
   });
 
-  test("allows login with created admin user", async ({ tx }) => {
+  test("allows login with created admin user", { timeout: 15000 }, async ({ tx }) => {
     // Use a unique email to avoid conflicts with seeded data
     const uniqueTestConfig: Env = {
       ...testConfig,

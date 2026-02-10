@@ -6,6 +6,7 @@ import { createApp } from "./app.js";
 import { seedAdminUser } from "./auth/seed-admin.js";
 import { loadConfig } from "./lib/config.js";
 import { createDatabase } from "./lib/db.js";
+import { logger } from "./lib/logger.js";
 /**
  * API Composition Root
  *
@@ -49,8 +50,32 @@ async function main() {
       signal,
     }));
 
-    // Close database pool
-    await db.$client.end();
+    // Close database pool with timeout
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      message: "Waiting for database connection to close",
+    }));
+
+    const timeoutPromise = new Promise<"timeout">((resolve) => {
+      setTimeout(() => resolve("timeout"), config.SHUTDOWN_TIMEOUT_MS);
+    });
+
+    const result = await Promise.race([
+      db.$client.end().then(() => "completed" as const),
+      timeoutPromise,
+    ]);
+
+    if (result === "timeout") {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "warn",
+        message: "Shutdown timeout reached, forcing exit",
+        timeoutMs: config.SHUTDOWN_TIMEOUT_MS,
+      }));
+    }
 
     // eslint-disable-next-line no-console
     console.log(JSON.stringify({
@@ -64,6 +89,26 @@ async function main() {
 
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
+
+  // Uncaught exception handler - log and exit
+  process.on("uncaughtException", (error: Error) => {
+    logger.fatal({
+      msg: "Uncaught exception",
+      error: error.message,
+      stack: error.stack,
+    });
+    process.exit(1);
+  });
+
+  // Unhandled promise rejection handler - log and exit
+  process.on("unhandledRejection", (reason: unknown) => {
+    logger.fatal({
+      msg: "Unhandled rejection",
+      error: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    });
+    process.exit(1);
+  });
 
   // console.log(JSON.stringify({
   //   timestamp: new Date().toISOString(),

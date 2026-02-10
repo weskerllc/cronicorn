@@ -37,6 +37,18 @@ const SAFE_ERROR_PATTERNS = [
   /below minimum/i, // "Below minimum interval"
   /exceeds maximum/i, // "Exceeds maximum interval"
   /must be in the future/i, // Time validation errors
+  // Conflict-related error patterns
+  /already exists/i, // "User already exists", "Resource already exists"
+  /duplicate/i, // "Duplicate entry", "Duplicate key"
+  /conflict/i, // "Conflict detected"
+  /unique constraint/i, // "Unique constraint violation"
+  // Refund-related error patterns
+  /only pro tier is eligible/i, // "Only Pro tier is eligible for refunds"
+  /refund already issued/i, // "Refund already issued for this subscription"
+  /refund.*already being processed/i, // "Refund is already being processed"
+  /refund window has expired/i, // "Refund window has expired"
+  /no payment intent found/i, // "No payment intent found for refund"
+  /refund requires manual intervention/i, // "Refund requires manual intervention..."
 ] as const;
 
 /**
@@ -135,9 +147,21 @@ export function handleErrorResponse(
     throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: errorMessage });
   }
 
+  // Conflict/already exists errors → 409
+  if (
+    errorMessage.toLowerCase().includes("already exists")
+    || errorMessage.toLowerCase().includes("duplicate")
+    || errorMessage.toLowerCase().includes("conflict")
+    || errorMessage.toLowerCase().includes("unique constraint")
+  ) {
+    throw new HTTPException(HttpStatusCodes.CONFLICT, { message: "Resource already exists" });
+  }
+
   // Default case - return appropriate status based on options or 500
   if (options?.defaultStatus === HttpStatusCodes.BAD_REQUEST) {
-    throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: defaultMessage });
+    // For 400 errors, check if the error message is safe to return
+    const safeMessage = isSafeErrorMessage(errorMessage) ? errorMessage : defaultMessage;
+    throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: safeMessage });
   }
 
   throw new HTTPException(HttpStatusCodes.INTERNAL_SERVER_ERROR, { message: defaultMessage });

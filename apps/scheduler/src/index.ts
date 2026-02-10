@@ -22,11 +22,14 @@ import { z } from "zod";
  */
 const configSchema = z.object({
   DATABASE_URL: z.string().url().default(DEV_DATABASE.URL),
+  // Database connection pool configuration
+  DB_POOL_MAX: z.coerce.number().int().positive().default(5),
   BATCH_SIZE: z.coerce.number().int().positive().default(10),
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
   CLAIM_HORIZON_MS: z.coerce.number().int().positive().default(10000),
   CLEANUP_INTERVAL_MS: z.coerce.number().int().positive().default(300000), // 5 minutes
   ZOMBIE_RUN_THRESHOLD_MS: z.coerce.number().int().positive().default(3600000), // 1 hour
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000), // 30 seconds
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default(DEV_ENV.LOG_LEVEL),
   // eslint-disable-next-line node/no-process-env
   NODE_ENV: z.enum(["development", "production", "test"]).default(process.env.NODE_ENV === "production" ? "production" : DEV_ENV.NODE_ENV),
@@ -43,7 +46,10 @@ async function main() {
   const config: Config = configSchema.parse(process.env);
 
   // Setup database connection
-  const pool = new Pool({ connectionString: config.DATABASE_URL });
+  const pool = new Pool({
+    connectionString: config.DATABASE_URL,
+    max: config.DB_POOL_MAX,
+  });
   const db = drizzle(pool, { schema });
 
   // Instantiate all adapters
@@ -156,7 +162,22 @@ async function main() {
 
     if (currentTick) {
       logger.info("Waiting for current tick to complete");
-      await currentTick;
+
+      const timeoutPromise = new Promise<"timeout">((resolve) => {
+        setTimeout(() => resolve("timeout"), config.SHUTDOWN_TIMEOUT_MS);
+      });
+
+      const result = await Promise.race([
+        currentTick.then(() => "completed" as const),
+        timeoutPromise,
+      ]);
+
+      if (result === "timeout") {
+        logger.warn(
+          { timeoutMs: config.SHUTDOWN_TIMEOUT_MS },
+          "Shutdown timeout reached, forcing exit",
+        );
+      }
     }
 
     await pool.end();
@@ -167,6 +188,26 @@ async function main() {
   // Register shutdown handlers
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
+
+  // Uncaught exception handler - log and exit
+  process.on("uncaughtException", (error: Error) => {
+    logger.error({
+      msg: "Uncaught exception",
+      error: error.message,
+      stack: error.stack,
+    }, "Uncaught exception");
+    process.exit(1);
+  });
+
+  // Unhandled promise rejection handler - log and exit
+  process.on("unhandledRejection", (reason: unknown) => {
+    logger.error({
+      msg: "Unhandled rejection",
+      error: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    }, "Unhandled rejection");
+    process.exit(1);
+  });
 }
 
 // Top-level error handler for startup failures

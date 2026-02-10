@@ -1,6 +1,5 @@
 {
-  // Disable the default formatter, use eslint instead
-  "prettier.enable": false,
+  // Disable format-on-save (ESLint handles formatting via codeActionsOnSave)
   "editor.formatOnSave": false,
 
   // Auto fix
@@ -8,11 +7,63 @@
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "never"
   },
+
+  // ──────────────────────────────────────────────
+  // RAM Optimization: TypeScript
+  // ──────────────────────────────────────────────
+
+  // Cap tsserver memory (default is unbounded and can eat 4GB+ in monorepos)
+  "typescript.tsserver.maxTsServerMemory": 3072,
+
+  // Disable auto-imports scanning of every package.json in node_modules
+  "typescript.preferences.includePackageJsonAutoImports": "off",
+
+  // Disable unused variable inlay hints (reduces type-checking work)
+  "typescript.implementationsCodeLens.enabled": false,
+  "typescript.referencesCodeLens.enabled": false,
+  "javascript.referencesCodeLens.enabled": false,
+
+  // ──────────────────────────────────────────────
+  // RAM Optimization: File Watcher Exclusions
+  // ──────────────────────────────────────────────
+
+  // Exclude heavy/generated dirs from file system watcher (massive RAM savings)
   "files.watcherExclude": {
-    "**/routetree.gen.ts": true
+    "**/node_modules/**": true,
+    "**/.pnpm/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.tanstack/**": true,
+    "**/routeTree.gen.ts": true,
+    "**/coverage/**": true,
+    "**/.tsbuildinfo": true,
+    "**/.eslintcache": true
   },
 
-  // Silent the stylistic rules in you IDE, but still auto fix them
+  // ──────────────────────────────────────────────
+  // RAM Optimization: Search Exclusions
+  // ──────────────────────────────────────────────
+
+  "search.exclude": {
+    "docs/internal/archive": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/coverage": true,
+    "**/.tanstack": true,
+    "**/pnpm-lock.yaml": true,
+    ".adr": true
+  },
+
+  // Exclude generated/heavy files from the explorer and tab tracking
+  "files.exclude": {
+    "**/.tsbuildinfo": true
+  },
+
+  // ──────────────────────────────────────────────
+  // RAM Optimization: ESLint
+  // ──────────────────────────────────────────────
+
+  // Silent the stylistic rules in your IDE, but still auto fix them
   "eslint.rules.customizations": [
     { "rule": "style/*", "severity": "off", "fixable": true },
     { "rule": "format/*", "severity": "off", "fixable": true },
@@ -25,29 +76,37 @@
     { "rule": "*quotes", "severity": "off", "fixable": true },
     { "rule": "*semi", "severity": "off", "fixable": true }
   ],
-  // Enable eslint for all supported languages
+
+  // Only validate file types you actually use (removed vue, html, astro, xml, gql, graphql, less, pcss, postcss)
   "eslint.validate": [
     "javascript",
     "javascriptreact",
     "typescript",
     "typescriptreact",
-    "vue",
-    "html",
     "markdown",
     "json",
     "jsonc",
     "yaml",
     "toml",
-    "xml",
-    "gql",
-    "graphql",
-    "astro",
     "css",
-    "less",
-    "scss",
-    "pcss",
-    "postcss"
+    "scss"
   ],
+
+  // ──────────────────────────────────────────────
+  // Formatter: ESLint is the default (prevents Prettier from running if installed)
+  // ──────────────────────────────────────────────
+
+  "[typescript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "[typescriptreact]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "[javascript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "[javascriptreact]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "[json]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "[jsonc]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+
+  // ──────────────────────────────────────────────
+  // Other settings
+  // ──────────────────────────────────────────────
+
   "typescript.preferences.importModuleSpecifier": "project-relative",
   "javascript.preferences.importModuleSpecifier": "project-relative",
   // give yourself a wider column and a ruler to aim for
@@ -55,10 +114,5 @@
   "editor.rulers": [
     160
   ],
-  "editor.wordWrapColumn": 160,
-  "search.exclude": {
-    "docs/internal/archive": true,
-    "**/dist": true,
-    "**/build": true
-  }
+  "editor.wordWrapColumn": 160
 }

@@ -390,6 +390,7 @@ export class InMemoryJobsRepo implements JobsRepo {
     id: string;
     email: string;
     refundStatus: string | null;
+    subscriptionStatus: string | null;
   } | null> {
     // In-memory fixture: not implemented
     return null;

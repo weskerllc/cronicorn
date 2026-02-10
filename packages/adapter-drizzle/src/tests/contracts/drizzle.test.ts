@@ -680,6 +680,109 @@ describe("drizzle Repos (PostgreSQL)", () => {
       expect(siblings.length).toBe(0);
     });
 
+    test("should return only the latest run per endpoint when multiple runs exist", async ({ tx }) => {
+      const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
+
+      const user = await createTestUser(tx, { id: "user1" });
+
+      const job = await jobsRepo.createJob({
+        userId: user.id,
+        name: "Multi-Run Job",
+        status: "active",
+      });
+
+      // Create 3 endpoints in same job
+      await jobsRepo.addEndpoint({
+        id: "ep1",
+        tenantId: "user1",
+        jobId: job.id,
+        name: "Current Endpoint",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
+
+      await jobsRepo.addEndpoint({
+        id: "ep2",
+        tenantId: "user1",
+        jobId: job.id,
+        name: "Sibling With Multiple Runs",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
+
+      await jobsRepo.addEndpoint({
+        id: "ep3",
+        tenantId: "user1",
+        jobId: job.id,
+        name: "Another Sibling",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
+
+      const repo = new DrizzleRunsRepo(tx);
+
+      // Create multiple runs for ep2 - we want only the latest one returned
+      // Run 1: oldest
+      const ep2Run1 = await repo.create({ endpointId: "ep2", status: "running", attempt: 1 });
+      await repo.finish(ep2Run1, {
+        status: "success",
+        durationMs: 100,
+        responseBody: { version: 1, message: "first run" },
+        statusCode: 200,
+      });
+      // Manually set started_at to be older
+      await tx.execute(`UPDATE runs SET started_at = NOW() - INTERVAL '2 hours' WHERE id = '${ep2Run1}'`);
+
+      // Run 2: middle
+      const ep2Run2 = await repo.create({ endpointId: "ep2", status: "running", attempt: 1 });
+      await repo.finish(ep2Run2, {
+        status: "failed",
+        durationMs: 50,
+        responseBody: { version: 2, message: "second run" },
+        statusCode: 500,
+      });
+      // Manually set started_at to be middle
+      await tx.execute(`UPDATE runs SET started_at = NOW() - INTERVAL '1 hour' WHERE id = '${ep2Run2}'`);
+
+      // Run 3: latest (most recent)
+      const ep2Run3 = await repo.create({ endpointId: "ep2", status: "running", attempt: 1 });
+      await repo.finish(ep2Run3, {
+        status: "success",
+        durationMs: 120,
+        responseBody: { version: 3, message: "latest run" },
+        statusCode: 200,
+      });
+      // This one keeps the current timestamp (most recent)
+
+      // Create single run for ep3
+      const ep3Run = await repo.create({ endpointId: "ep3", status: "running", attempt: 1 });
+      await repo.finish(ep3Run, {
+        status: "success",
+        durationMs: 80,
+        responseBody: { source: "ep3" },
+        statusCode: 200,
+      });
+
+      // Get siblings from perspective of ep1
+      const siblings = await repo.getSiblingLatestResponses(job.id, "ep1");
+
+      // Should have exactly 2 siblings (ep2 and ep3)
+      expect(siblings.length).toBe(2);
+
+      // Verify ep2 returns ONLY the latest run (version 3)
+      const ep2Data = siblings.find(s => s.endpointId === "ep2");
+      expect(ep2Data).toBeDefined();
+      expect(ep2Data?.endpointName).toBe("Sibling With Multiple Runs");
+      expect(ep2Data?.responseBody).toEqual({ version: 3, message: "latest run" });
+      expect(ep2Data?.status).toBe("success");
+
+      // Verify ep3 returns its single run
+      const ep3Data = siblings.find(s => s.endpointId === "ep3");
+      expect(ep3Data).toBeDefined();
+      expect(ep3Data?.endpointName).toBe("Another Sibling");
+      expect(ep3Data?.responseBody).toEqual({ source: "ep3" });
+    });
+
     test("should clean up zombie runs older than threshold", async ({ tx }) => {
       const jobsRepo = new DrizzleJobsRepo(tx, () => new Date());
       const repo = new DrizzleRunsRepo(tx);

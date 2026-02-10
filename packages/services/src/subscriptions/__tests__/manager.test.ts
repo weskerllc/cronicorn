@@ -54,10 +54,12 @@ describe("subscriptionsManager", () => {
     id: string;
     email: string;
     refundStatus: string | null;
+    subscriptionStatus: string | null;
   }>) => ({
     id: "user_123",
     email: "test@example.com",
     refundStatus: null,
+    subscriptionStatus: null,
     ...overrides,
   });
 
@@ -406,6 +408,137 @@ describe("subscriptionsManager", () => {
           lastInvoiceId: "in_456",
         });
       });
+
+      it("should recover past_due user to active on payment success", async () => {
+        const mockUser = createMockUser({
+          id: "user_123",
+          email: "test@example.com",
+          tier: "pro",
+        });
+
+        // User is in past_due status (previous payment failed)
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(
+          createMockWebhookUser({
+            id: mockUser.id,
+            email: mockUser.email,
+            subscriptionStatus: "past_due",
+          }),
+        );
+
+        const event = {
+          type: "invoice.payment_succeeded",
+          data: {
+            customer: "cus_123",
+            payment_intent: "pi_recovery_789",
+            id: "in_recovery_789",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        // Verify subscriptionStatus is set to active (recovery from past_due)
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
+          subscriptionStatus: "active",
+          lastPaymentIntentId: "pi_recovery_789",
+          lastInvoiceId: "in_recovery_789",
+        });
+
+        // Verify recovery log message was recorded
+        expect(logger.logs).toContainEqual(
+          expect.objectContaining({
+            level: "info",
+            msg: "Subscription recovered from past_due to active",
+          }),
+        );
+      });
+
+      it("should keep active user active on payment success (idempotent)", async () => {
+        const mockUser = createMockUser({
+          id: "user_123",
+          email: "test@example.com",
+          tier: "pro",
+        });
+
+        // User is already active (normal renewal payment)
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(
+          createMockWebhookUser({
+            id: mockUser.id,
+            email: mockUser.email,
+            subscriptionStatus: "active",
+          }),
+        );
+
+        const event = {
+          type: "invoice.payment_succeeded",
+          data: {
+            customer: "cus_123",
+            payment_intent: "pi_renewal_456",
+            id: "in_renewal_456",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        // Verify subscriptionStatus is still set to active (idempotent behavior)
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
+          subscriptionStatus: "active",
+          lastPaymentIntentId: "pi_renewal_456",
+          lastInvoiceId: "in_renewal_456",
+        });
+
+        // Verify NO recovery log message was recorded (user was already active)
+        expect(logger.logs).not.toContainEqual(
+          expect.objectContaining({
+            msg: "Subscription recovered from past_due to active",
+          }),
+        );
+      });
+
+      it("should update lastPaymentIntentId and lastInvoiceId atomically with recovery", async () => {
+        const mockUser = createMockUser({
+          id: "user_123",
+          email: "test@example.com",
+          tier: "pro",
+        });
+
+        // User is in past_due status (previous payment failed)
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(
+          createMockWebhookUser({
+            id: mockUser.id,
+            email: mockUser.email,
+            subscriptionStatus: "past_due",
+          }),
+        );
+
+        const event = {
+          type: "invoice.payment_succeeded",
+          data: {
+            customer: "cus_123",
+            payment_intent: "pi_new_payment_123",
+            id: "in_new_invoice_456",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        // Verify exactly one database update is made (atomic operation)
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledTimes(1);
+
+        // Verify ALL fields are updated in the same call (subscriptionStatus, lastPaymentIntentId, lastInvoiceId)
+        const updateCall = vi.mocked(mockJobsRepo.updateUserSubscription).mock.calls[0];
+        expect(updateCall[0]).toBe("user_123");
+        expect(updateCall[1]).toEqual({
+          subscriptionStatus: "active",
+          lastPaymentIntentId: "pi_new_payment_123",
+          lastInvoiceId: "in_new_invoice_456",
+        });
+
+        // Verify the lastPaymentIntentId matches the payment_intent from the event
+        expect(updateCall[1].lastPaymentIntentId).toBe("pi_new_payment_123");
+
+        // Verify the lastInvoiceId matches the invoice id from the event
+        expect(updateCall[1].lastInvoiceId).toBe("in_new_invoice_456");
+      });
     });
 
     describe("invoice.payment_failed", () => {
@@ -606,6 +739,142 @@ describe("subscriptionsManager", () => {
       await expect(
         manager.requestRefund({ userId: "user_123" }),
       ).rejects.toThrow(RefundNotEligibleError);
+    });
+
+    it("should NOT issue refund and keep status as 'requested' when cancelSubscriptionNow fails", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days after activation
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "eligible",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+      vi.mocked(mockPaymentProvider.cancelSubscriptionNow).mockRejectedValue(
+        new Error("Stripe API error: subscription cancellation failed"),
+      );
+
+      // Request refund should throw the cancel error
+      await expect(
+        manager.requestRefund({ userId: "user_123", reason: "Not satisfied" }),
+      ).rejects.toThrow("Stripe API error: subscription cancellation failed");
+
+      // Verify cancelSubscriptionNow was called
+      expect(mockPaymentProvider.cancelSubscriptionNow).toHaveBeenCalledWith("sub_123");
+
+      // Verify issueRefund was NEVER called (critical - prevents double refund)
+      expect(mockPaymentProvider.issueRefund).not.toHaveBeenCalled();
+
+      // Verify database was updated only once (to set status to "requested")
+      // Status remains "requested" because cancel failed before refund was attempted
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledTimes(1);
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
+        refundStatus: "requested",
+      });
+    });
+
+    it("should set status to 'cancel_completed_refund_failed' when issueRefund fails after cancel succeeds", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days after activation
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "eligible",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+      // Cancel succeeds
+      vi.mocked(mockPaymentProvider.cancelSubscriptionNow).mockResolvedValue();
+      // Refund fails
+      vi.mocked(mockPaymentProvider.issueRefund).mockRejectedValue(
+        new Error("Stripe API error: refund failed"),
+      );
+
+      // Request refund should throw the refund error
+      await expect(
+        manager.requestRefund({ userId: "user_123", reason: "Not satisfied" }),
+      ).rejects.toThrow("Stripe API error: refund failed");
+
+      // Verify cancelSubscriptionNow was called and succeeded
+      expect(mockPaymentProvider.cancelSubscriptionNow).toHaveBeenCalledWith("sub_123");
+
+      // Verify issueRefund was called (cancel succeeded, so we attempted the refund)
+      expect(mockPaymentProvider.issueRefund).toHaveBeenCalledWith({
+        paymentIntentId: "pi_test_456",
+        reason: "requested_by_customer",
+        metadata: {
+          userId: "user_123",
+          userReason: "Not satisfied",
+        },
+      });
+
+      // Verify database was updated twice:
+      // 1. First to set status to "requested" (optimistic lock)
+      // 2. Second to set status to "cancel_completed_refund_failed" (partial completion)
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledTimes(2);
+
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(1, "user_123", {
+        refundStatus: "requested",
+      });
+
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(2, "user_123", {
+        refundStatus: "cancel_completed_refund_failed",
+      });
+    });
+
+    it("should reject refund request when status is 'cancel_completed_refund_failed'", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days after activation
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "cancel_completed_refund_failed", // Previous attempt left in partial state
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+
+      // Attempting to request refund again should be rejected
+      await expect(
+        manager.requestRefund({ userId: "user_123", reason: "Trying again" }),
+      ).rejects.toThrow(RefundNotEligibleError);
+
+      // Verify no payment provider operations were attempted
+      expect(mockPaymentProvider.cancelSubscriptionNow).not.toHaveBeenCalled();
+      expect(mockPaymentProvider.issueRefund).not.toHaveBeenCalled();
+
+      // Verify database was not updated
+      expect(mockJobsRepo.updateUserSubscription).not.toHaveBeenCalled();
     });
   });
 });

@@ -34,7 +34,9 @@ export const user = pgTable("user", {
   refundStatus: text("refund_status"), // 'eligible' | 'requested' | 'issued' | 'expired'
   refundIssuedAt: timestamp("refund_issued_at", { mode: "date", withTimezone: true }), // When refund was issued
   refundReason: text("refund_reason"), // User-provided or system reason
-});
+}, table => ({
+  stripeCustomerIdIdx: index("user_stripe_customer_id_idx").on(table.stripeCustomerId),
+}));
 
 /**
  * Jobs table (Phase 3).
@@ -49,7 +51,9 @@ export const jobs = pgTable("jobs", {
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull(),
   archivedAt: timestamp("archived_at", { mode: "date", withTimezone: true }),
-});
+}, table => ({
+  userIdIdx: index("jobs_user_id_idx").on(table.userId),
+}));
 
 /**
  * Job endpoints table.
@@ -104,6 +108,8 @@ export const jobEndpoints = pgTable("job_endpoints", {
 }, table => ({
   jobIdIdx: index("job_endpoints_job_id_idx").on(table.jobId),
   nextRunAtIdx: index("job_endpoints_next_run_at_idx").on(table.nextRunAt),
+  tenantIdIdx: index("job_endpoints_tenant_id_idx").on(table.tenantId),
+  tenantIdArchivedIdx: index("job_endpoints_tenant_id_archived_idx").on(table.tenantId, table.archivedAt),
 }));
 
 /**

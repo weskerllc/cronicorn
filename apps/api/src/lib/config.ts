@@ -3,6 +3,10 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1).default(DEV_DATABASE.URL),
+  // Database connection pool configuration
+  DB_POOL_MAX: z.coerce.number().int().positive().default(30),
+  DB_POOL_IDLE_TIMEOUT_MS: z.coerce.number().int().positive().default(20000),
+  DB_POOL_CONNECTION_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
   PORT: z.coerce.number().int().positive().default(DEV_PORTS.API),
   BETTER_AUTH_SECRET: z
     .string()
@@ -27,6 +31,11 @@ const envSchema = z.object({
   STRIPE_PRICE_PRO_ANNUAL: z.string().min(1).default(DEV_STRIPE.PRICE_PRO_ANNUAL),
   STRIPE_PRICE_ENTERPRISE: z.string().min(1).default(DEV_STRIPE.PRICE_ENTERPRISE),
   BASE_URL: z.string().url("BASE_URL must be a valid URL").default(DEV_URLS.WEB),
+  // Rate limiting configuration (requests per minute)
+  RATE_LIMIT_MUTATION_RPM: z.coerce.number().int().positive().default(60),
+  RATE_LIMIT_READ_RPM: z.coerce.number().int().positive().default(120),
+  // Graceful shutdown timeout in milliseconds
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
 }).refine(
   (data) => {
     // At least one auth method must be configured

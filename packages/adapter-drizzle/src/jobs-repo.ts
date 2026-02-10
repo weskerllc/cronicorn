@@ -807,12 +807,14 @@ export class DrizzleJobsRepo implements JobsRepo {
     id: string;
     email: string;
     refundStatus: string | null;
+    subscriptionStatus: string | null;
   } | null> {
     const result = await this.tx
       .select({
         id: user.id,
         email: user.email,
         refundStatus: user.refundStatus,
+        subscriptionStatus: user.subscriptionStatus,
       })
       .from(user)
       .where(eq(user.stripeCustomerId, customerId))
@@ -826,6 +828,7 @@ export class DrizzleJobsRepo implements JobsRepo {
       id: result[0].id,
       email: result[0].email,
       refundStatus: result[0].refundStatus ?? null,
+      subscriptionStatus: result[0].subscriptionStatus ?? null,
     };
   }
 
