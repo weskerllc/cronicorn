@@ -1,3 +1,10 @@
+## [1.22.1](https://github.com/weskerllc/cronicorn/compare/v1.22.0...v1.22.1) (2026-02-10)
+
+
+### Bug Fixes
+
+* Codecov and mcp publish ([#124](https://github.com/weskerllc/cronicorn/issues/124)) ([4aaaa26](https://github.com/weskerllc/cronicorn/commit/4aaaa2609c7c5ee9c66e5154936aab77f74aeafb))
+
 # [1.22.0](https://github.com/weskerllc/cronicorn/compare/v1.21.0...v1.22.0) (2026-02-10)
 
 
