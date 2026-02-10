@@ -2,12 +2,12 @@
 
 # <img src="packages/content/assets/logo.svg" alt="Cronicorn" height="40" align="center"> Cronicorn
 
-**Scheduled HTTP calls that adapt in real time**
+**HTTP jobs that understand their own responses**
 
 <p align="center">
-Add endpoints, describe what matters in plain English, and the AI adapts —
+Add endpoints, describe what matters in plain English, and the AI reads response bodies to adapt —
 <br/>
-adjusting frequency, coordinating between endpoints, and recovering from failures based on real response data
+adjusting frequency, coordinating siblings, and recovering from failures automatically
 </p>
 
 <p align="center">
