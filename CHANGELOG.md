@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/weskerllc/cronicorn/compare/v1.21.0...v1.22.0) (2026-02-10)
+
+
+### Features
+
+* Improve docs for self hosting and mcp server ([#120](https://github.com/weskerllc/cronicorn/issues/120)) ([62ea9ff](https://github.com/weskerllc/cronicorn/commit/62ea9fffdf60e514fdbe864d62569a7150e92e54))
+
 # [1.21.0](https://github.com/weskerllc/cronicorn/compare/v1.20.1...v1.21.0) (2026-02-10)
 
 
