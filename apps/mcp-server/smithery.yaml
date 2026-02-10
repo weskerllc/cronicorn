@@ -1,0 +1,22 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      cronicornApiUrl:
+        type: string
+        description: API base URL for Cronicorn
+        default: "https://cronicorn.com/api"
+      cronicornWebUrl:
+        type: string
+        description: Web UI URL for Cronicorn (used for OAuth device flow)
+        default: "https://cronicorn.com"
+  commandFunction: |-
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@cronicorn/mcp-server"],
+      env: {
+        CRONICORN_API_URL: config.cronicornApiUrl ?? "https://cronicorn.com/api",
+        CRONICORN_WEB_URL: config.cronicornWebUrl ?? "https://cronicorn.com"
+      }
+    })
