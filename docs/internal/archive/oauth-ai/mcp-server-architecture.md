@@ -100,7 +100,7 @@ async function main() {
   // Ensure user is authenticated
   const tokens = await ensureAuthenticated();
   const client = new CronicornClient({
-    baseUrl: process.env.CRONICORN_API_URL || "https://api.cronicorn.com",
+    baseUrl: process.env.CRONICORN_API_URL || "https://cronicorn.com",
     accessToken: tokens.access_token,
   });
 
@@ -228,7 +228,7 @@ export async function ensureAuthenticated() {
 }
 
 async function deviceFlow() {
-  const baseUrl = process.env.CRONICORN_API_URL || "https://api.cronicorn.com";
+  const baseUrl = process.env.CRONICORN_API_URL || "https://cronicorn.com";
 
   // Step 1: Request device code
   const codeRes = await fetch(`${baseUrl}/api/auth/device/code`, {
@@ -343,7 +343,7 @@ async function pollForToken(
 }
 
 async function refreshToken(refreshToken: string) {
-  const baseUrl = process.env.CRONICORN_API_URL || "https://api.cronicorn.com";
+  const baseUrl = process.env.CRONICORN_API_URL || "https://cronicorn.com";
 
   const res = await fetch(`${baseUrl}/api/auth/token/refresh`, {
     method: "POST",
@@ -1033,8 +1033,8 @@ CRONICORN_API_URL=http://localhost:3333 node dist/index.js
 **File:** `apps/mcp-server/.env.example`
 
 ```bash
-# Cronicorn API URL (default: https://api.cronicorn.com)
-CRONICORN_API_URL=https://api.cronicorn.com
+# Cronicorn API URL (default: https://cronicorn.com)
+CRONICORN_API_URL=https://cronicorn.com
 
 # Optional: Override client ID (default: cronicorn-mcp)
 # CRONICORN_CLIENT_ID=custom-client-id

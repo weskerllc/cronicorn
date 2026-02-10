@@ -43,7 +43,7 @@ Factory function that creates an `ApiClient` implementation using native `fetch`
 
 ```typescript
 const apiClient = createHttpApiClient({
-    baseUrl: "https://api.cronicorn.com",
+    baseUrl: "https://cronicorn.com",
     accessToken: credentials.access_token
 });
 

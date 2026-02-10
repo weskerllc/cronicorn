@@ -166,14 +166,14 @@ These examples show exactly how to configure endpoints for common scenarios. Eac
 
 ```bash
 # Create the job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "API Health Monitoring" }'
 # Returns: { "id": "job_abc123", ... }
 
 # Add the health-check endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -217,14 +217,14 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 
 ```bash
 # Create the job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "Data Sync Pipeline" }'
 # Returns: { "id": "job_abc123", ... }
 
 # Add the sync status endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -267,14 +267,14 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 
 ```bash
 # Create the job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "Service Recovery Automation" }'
 # Returns: { "id": "job_abc123", ... }
 
 # Add health-check endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -289,7 +289,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 # Returns: { "id": "ep_health123", ... }
 
 # Add recovery endpoint (same job = sibling of health-check)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -344,14 +344,14 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 
 ```bash
 # Create the job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "System Load Monitor" }'
 # Returns: { "id": "job_abc123", ... }
 
 # Add the inverse-scaling endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -394,14 +394,14 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 
 ```bash
 # Create the job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "Volatile System Monitor" }'
 # Returns: { "id": "job_abc123", ... }
 
 # Add the endpoint with tight min/max ratio for stability
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

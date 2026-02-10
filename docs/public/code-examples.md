@@ -29,7 +29,7 @@ All examples use the Cronicorn HTTP API. Authenticate with an API key (`x-api-ke
 
 ```javascript
 const API_KEY = 'YOUR_API_KEY';
-const BASE_URL = 'https://api.cronicorn.com';
+const BASE_URL = 'https://cronicorn.com';
 
 async function createHealthMonitoringJob() {
   // Step 1: Create the job
@@ -193,7 +193,7 @@ async function getAIDecisions(endpointId, limit = 5) {
 import requests
 
 API_KEY = "YOUR_API_KEY"
-BASE_URL = "https://api.cronicorn.com"
+BASE_URL = "https://cronicorn.com"
 HEADERS = {
     "x-api-key": API_KEY,
     "Content-Type": "application/json"
@@ -243,7 +243,7 @@ print("Cronicorn is now polling every 5 minutes with AI adaptation enabled.")
 import requests
 
 API_KEY = "YOUR_API_KEY"
-BASE_URL = "https://api.cronicorn.com"
+BASE_URL = "https://cronicorn.com"
 ENDPOINT_ID = "ep_xyz789"
 HEADERS = {"x-api-key": API_KEY, "Content-Type": "application/json"}
 
@@ -391,7 +391,7 @@ A complete example showing how to configure an endpoint that polls **less freque
 
 ```javascript
 const API_KEY = 'YOUR_API_KEY';
-const BASE_URL = 'https://api.cronicorn.com';
+const BASE_URL = 'https://cronicorn.com';
 const headers = { 'x-api-key': API_KEY, 'Content-Type': 'application/json' };
 
 async function createInverseScalingJob() {
