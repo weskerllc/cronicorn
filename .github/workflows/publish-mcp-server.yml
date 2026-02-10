@@ -167,4 +167,4 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Registries" >> $GITHUB_STEP_SUMMARY
           echo "- [npm](https://www.npmjs.com/package/@cronicorn/mcp-server/v/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [MCP Registry](https://registry.modelcontextprotocol.io/servers/io.github.weskerllc/cronicorn-mcp-server)" >> $GITHUB_STEP_SUMMARY
+          echo "- [MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.weskerllc%2Fcronicorn-mcp-server)" >> $GITHUB_STEP_SUMMARY

@@ -37,7 +37,7 @@
     "start:web": "dotenv -e .env -- pnpm --filter @cronicorn/web run start",
     "🚀 ---------- QUALITY ----------": "",
     "test": "vitest run",
-    "test:coverage": "dotenv -e .env vitest run --coverage",
+    "test:coverage": "dotenv -e .env -- vitest run --coverage",
     "test:e2e": "pnpm --filter @cronicorn/e2e test",
     "lint": "eslint .",
     "lint:fix": "eslint . --max-warnings 0 --fix",
