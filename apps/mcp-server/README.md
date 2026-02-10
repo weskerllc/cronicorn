@@ -2,7 +2,20 @@
 
 [![npm version](https://badge.fury.io/js/@cronicorn%2Fmcp-server.svg)](https://www.npmjs.com/package/@cronicorn/mcp-server)
 
-MCP server for managing cron jobs through AI assistants (Claude, Copilot, Cursor, etc.).
+Manage cron jobs by talking to your AI assistant.
+
+```
+You: "Check my API health every 5 minutes"
+AI: ✅ Created job with health check running every 5 minutes.
+
+You: "Help me migrate my app's scheduling to Cronicorn"
+AI: I found 3 cron jobs in your codebase. Here's how to move each one...
+
+You: "Give me 5 profitable SaaS ideas built on Cronicorn"
+AI: Based on Cronicorn's adaptive scheduling and AI capabilities...
+```
+
+Works with Claude, GitHub Copilot, Cursor, Cline, Continue, and any MCP-compatible assistant.
 
 ## Setup
 
@@ -125,14 +138,11 @@ Tokens are valid for 30 days. Re-authentication is automatic when expired.
 | `getEndpointHealth` | Get health summary |
 | `getDashboardStats` | Get account-wide stats |
 
-## Prompts
+## Documentation Resources
 
-Interactive guides available via slash commands:
+The server bundles comprehensive docs as MCP resources — concepts, recipes, API reference, troubleshooting, and self-hosting guides. AI assistants read these automatically to answer questions about Cronicorn.
 
-| Prompt | Description |
-|--------|-------------|
-| `/setup-first-job` | Step-by-step guide for creating your first job |
-| `/troubleshoot-failures` | Debug failing endpoints |
+For conversational examples and detailed tool call walkthroughs, see the [full docs](https://docs.cronicorn.com/mcp-server).
 
 ## Updating
 
