@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@cronicorn/ui-library/components/card";
-import { Activity, Code, Eye, Shield } from "lucide-react";
+import { Eye, MessageSquare, Network, Shield } from "lucide-react";
 
 interface FeatureCard {
     icon: React.ReactNode;
@@ -9,24 +9,24 @@ interface FeatureCard {
 
 const features: Array<FeatureCard> = [
     {
-        icon: <Activity className="size-6" />,
-        title: "Adapts to Your System",
-        description: "AI tunes job frequency automatically based on real system behavior and metrics.",
+        icon: <Eye className="size-6" />,
+        title: "Reads Response Bodies",
+        description: "AI interprets your endpoint's JSON fields — status, error rates, queue depth — and adapts scheduling automatically.",
+    },
+    {
+        icon: <MessageSquare className="size-6" />,
+        title: "Plain English Descriptions",
+        description: "Write \"poll faster when error_rate > 5%\" and the AI acts on it. No rules engine, no config files, no code.",
+    },
+    {
+        icon: <Network className="size-6" />,
+        title: "Sibling Coordination",
+        description: "Endpoints in the same job see each other's responses. A failing health check triggers a recovery endpoint automatically.",
     },
     {
         icon: <Shield className="size-6" />,
-        title: "Automation with Boundaries",
-        description: "You set the limits. AI stays within them—pause anytime, with safe auto-expiring hints.",
-    },
-    {
-        icon: <Eye className="size-6" />,
-        title: "Transparent Decisions",
-        description: "See why every job ran—or didn’t—with full history and AI reasoning trails.",
-    },
-    {
-        icon: <Code className="size-6" />,
-        title: "Driven by Your Data",
-        description: "AI schedules jobs using the metrics your services return—no guesswork.",
+        title: "Guardrails Built In",
+        description: "Min/max intervals, TTL-expiring hints, and automatic baseline fallback. AI adapts within your constraints.",
     },
 ];
 export function FeatureCardsSection() {
@@ -34,10 +34,10 @@ export function FeatureCardsSection() {
         <section className="w-full py-16 md:py-20 lg:py-24" aria-labelledby="features-heading">
             <div className="text-center mb-12 md:mb-16">
                 <h2 id="features-heading" className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                    How Intelligent Scheduling Works
+                    How endpoints adapt
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                    AI learns from your system's behavior and adjusts automatically within your safety limits.
+                    Set a baseline schedule, describe what matters, and the AI reads every response to decide what happens next.
                 </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
