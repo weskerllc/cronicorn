@@ -149,27 +149,6 @@ jobs:
         working-directory: apps/mcp-server
         run: ./mcp-publisher publish
 
-      - name: Check Smithery key
-        id: smithery
-        run: |
-          if [ -n "$SMITHERY_API_KEY" ]; then
-            echo "has_key=true" >> $GITHUB_OUTPUT
-          fi
-        env:
-          SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}
-
-      - name: Publish to Smithery
-        if: steps.smithery.outputs.has_key == 'true'
-        working-directory: apps/mcp-server
-        run: |
-          npx -y @smithery/cli@latest deploy \
-            --name @cronicorn/mcp-server \
-            --key "$SMITHERY_API_KEY" \
-            --transport stdio
-          echo "✅ Published to Smithery!"
-        env:
-          SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}
-
       - name: Summary
         run: |
           if [ "${{ github.event_name }}" = "release" ]; then
