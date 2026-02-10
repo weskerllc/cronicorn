@@ -1,18 +1,14 @@
-name: Publish MCP Server to npm
+name: Publish MCP Server
 
 on:
   release:
     types: [published]
   workflow_dispatch:
     inputs:
-      version_bump:
-        description: Version bump type
+      version:
+        description: "Version to publish (e.g., 1.2.3)"
         required: true
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
+        type: string
       npm_tag:
         description: "npm dist-tag (e.g., latest, beta)"
         required: false
@@ -23,21 +19,12 @@ permissions:
   contents: write
   id-token: write
   packages: write
-
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -70,26 +57,21 @@ jobs:
       - name: Build api-contracts (dependency)
         run: pnpm --filter @cronicorn/api-contracts build
 
-      - name: Determine version
+      - name: Set version
         id: version
         working-directory: apps/mcp-server
         run: |
           if [ "${{ github.event_name }}" = "release" ]; then
-            # Extract version from release tag (e.g., v1.2.3 -> 1.2.3 or mcp-server-v1.2.3 -> 1.2.3)
             RELEASE_TAG="${{ github.event.release.tag_name }}"
-            NEW_VERSION=$(echo "$RELEASE_TAG" | sed -E 's/^(mcp-server-)?v//')
-            echo "📦 Using version from release tag: $NEW_VERSION"
-
-            # Update package.json to match release version
-            npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
+            VERSION=$(echo "$RELEASE_TAG" | sed -E 's/^(mcp-server-)?v//')
           else
-            # Manual workflow_dispatch: bump version
-            npm version ${{ inputs.version_bump }} --no-git-tag-version
-            NEW_VERSION=$(node -p "require('./package.json').version")
-            echo "📦 Bumped version to: $NEW_VERSION"
+            VERSION="${{ inputs.version }}"
+            VERSION="${VERSION#v}"
           fi
 
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Publishing version: $VERSION"
 
       - name: Build MCP server bundle
         run: pnpm --filter @cronicorn/mcp-server build
@@ -99,7 +81,6 @@ jobs:
         run: |
           echo "🔍 Verifying bundle contents..."
 
-          # Check that bundle file exists
           if [ ! -f dist/index.js ]; then
             echo "❌ Bundle file dist/index.js not found"
             exit 1
@@ -130,9 +111,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          # Determine npm tag based on trigger
           if [ "${{ github.event_name }}" = "release" ]; then
-            # Check if release is a prerelease
             if [ "${{ github.event.release.prerelease }}" = "true" ]; then
               NPM_TAG="beta"
             else
@@ -142,64 +121,54 @@ jobs:
             NPM_TAG="${{ inputs.npm_tag }}"
           fi
 
-          echo "📤 Publishing @cronicorn/mcp-server@${{ steps.version.outputs.new_version }} to npm with tag: $NPM_TAG"
+          echo "📤 Publishing @cronicorn/mcp-server@${{ steps.version.outputs.version }} with tag: $NPM_TAG"
           npm publish --access public --tag "$NPM_TAG" --provenance
-          echo "✅ Published successfully!"
+          echo "✅ Published to npm!"
 
-      - name: Commit version bump
-        if: github.event_name == 'workflow_dispatch'
+      - name: Update server.json version
+        working-directory: apps/mcp-server
         run: |
-          git add apps/mcp-server/package.json
-          git commit -m "chore(mcp-server): release v${{ steps.version.outputs.new_version }} [skip ci]"
-          git tag "mcp-server-v${{ steps.version.outputs.new_version }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          echo $(jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json) > server.json
+          echo "✅ Updated server.json to version $VERSION"
 
-      - name: Push changes
-        if: github.event_name == 'workflow_dispatch'
+      - name: Validate server.json
+        working-directory: apps/mcp-server
+        run: npx mcp-registry-validator validate server.json
+
+      - name: Install MCP Publisher
+        working-directory: apps/mcp-server
         run: |
-          git push origin main
-          git push origin "mcp-server-v${{ steps.version.outputs.new_version }}"
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.4.0/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
 
-      - name: Create GitHub Release
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const version = '${{ steps.version.outputs.new_version }}';
-            const tag = `mcp-server-v${version}`;
+      - name: Login to MCP Registry
+        working-directory: apps/mcp-server
+        run: ./mcp-publisher login github-oidc
 
-            const release = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: tag,
-              name: `MCP Server v${version}`,
-              body: `## MCP Server v${version}
+      - name: Publish to MCP Registry
+        working-directory: apps/mcp-server
+        run: ./mcp-publisher publish
 
-            Published to npm: https://www.npmjs.com/package/@cronicorn/mcp-server/v/${version}
+      - name: Check Smithery key
+        id: smithery
+        run: |
+          if [ -n "$SMITHERY_API_KEY" ]; then
+            echo "has_key=true" >> $GITHUB_OUTPUT
+          fi
+        env:
+          SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}
 
-            ### Installation
-
-            \`\`\`bash
-            npm install -g @cronicorn/mcp-server@${version}
-            # or
-            pnpm add -g @cronicorn/mcp-server@${version}
-            \`\`\`
-
-            ### Usage
-
-            See [README](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server/README.md) for configuration and usage instructions.
-
-            ---
-
-            **npm package:** [@cronicorn/mcp-server](https://www.npmjs.com/package/@cronicorn/mcp-server)
-            **npm tag:** \`${inputs.npm_tag || 'latest'}\`
-            **Bundle size:** ~470KB
-            **Node version:** >=20.0.0`,
-              draft: false,
-              prerelease: inputs.npm_tag !== 'latest'
-            });
-
-            console.log(`✅ Created GitHub release: ${release.data.html_url}`);
+      - name: Publish to Smithery
+        if: steps.smithery.outputs.has_key == 'true'
+        working-directory: apps/mcp-server
+        run: |
+          npx -y @smithery/cli@latest deploy \
+            --name @cronicorn/mcp-server \
+            --key "$SMITHERY_API_KEY" \
+            --transport stdio
+          echo "✅ Published to Smithery!"
+        env:
+          SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}
 
       - name: Summary
         run: |
@@ -208,17 +177,16 @@ jobs:
             TRIGGER="GitHub Release: ${{ github.event.release.tag_name }}"
           else
             NPM_TAG="${{ inputs.npm_tag }}"
-            TRIGGER="Manual workflow_dispatch"
+            TRIGGER="Manual: v${{ steps.version.outputs.version }}"
           fi
 
           echo "## 🎉 MCP Server Published!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Trigger:** $TRIGGER" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** \`${{ steps.version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**npm tag:** \`$NPM_TAG\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Package:** [@cronicorn/mcp-server](https://www.npmjs.com/package/@cronicorn/mcp-server/v/${{ steps.version.outputs.new_version }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Installation" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "npm install -g @cronicorn/mcp-server@${{ steps.version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "### Registries" >> $GITHUB_STEP_SUMMARY
+          echo "- [npm](https://www.npmjs.com/package/@cronicorn/mcp-server/v/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [MCP Registry](https://registry.modelcontextprotocol.io/servers/io.github.weskerllc/cronicorn-mcp-server)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Smithery](https://smithery.ai/server/@cronicorn/mcp-server)" >> $GITHUB_STEP_SUMMARY
