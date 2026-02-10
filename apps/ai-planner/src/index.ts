@@ -33,12 +33,15 @@ function logger(level: "info" | "warn" | "error" | "fatal", message: string, met
  */
 const configSchema = z.object({
   DATABASE_URL: z.string().url().default(DEV_DATABASE.URL),
+  // Database connection pool configuration
+  DB_POOL_MAX: z.coerce.number().int().positive().default(5),
   OPENAI_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default("gpt-4o-mini"), // Cost-effective for MVP
   AI_ANALYSIS_INTERVAL_MS: z.coerce.number().int().positive().default(5 * 60 * 1000), // 5 minutes
   AI_LOOKBACK_MINUTES: z.coerce.number().int().positive().default(5), // Analyze endpoints with runs in last 5 min
   AI_MAX_TOKENS: z.coerce.number().int().positive().default(500), // Keep responses concise
   AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000), // 30 seconds
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -59,7 +62,10 @@ async function main() {
   }
 
   // Setup database connection
-  const pool = new Pool({ connectionString: config.DATABASE_URL });
+  const pool = new Pool({
+    connectionString: config.DATABASE_URL,
+    max: config.DB_POOL_MAX,
+  });
   const db = drizzle(pool, { schema });
 
   // Instantiate adapters
@@ -226,7 +232,21 @@ async function main() {
 
     if (currentAnalysis) {
       logger("info", "Waiting for current analysis to complete");
-      await currentAnalysis;
+
+      const timeoutPromise = new Promise<"timeout">((resolve) => {
+        setTimeout(() => resolve("timeout"), config.SHUTDOWN_TIMEOUT_MS);
+      });
+
+      const result = await Promise.race([
+        currentAnalysis.then(() => "completed" as const),
+        timeoutPromise,
+      ]);
+
+      if (result === "timeout") {
+        logger("warn", "Shutdown timeout reached, forcing exit", {
+          timeoutMs: config.SHUTDOWN_TIMEOUT_MS,
+        });
+      }
     }
 
     await pool.end();
@@ -237,6 +257,24 @@ async function main() {
   // Register shutdown handlers
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
+
+  // Uncaught exception handler - log and exit
+  process.on("uncaughtException", (error: Error) => {
+    logger("fatal", "Uncaught exception", {
+      error: error.message,
+      stack: error.stack,
+    });
+    process.exit(1);
+  });
+
+  // Unhandled promise rejection handler - log and exit
+  process.on("unhandledRejection", (reason: unknown) => {
+    logger("fatal", "Unhandled rejection", {
+      error: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    });
+    process.exit(1);
+  });
 }
 
 // Top-level error handler for startup failures

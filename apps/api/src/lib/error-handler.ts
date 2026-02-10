@@ -32,9 +32,37 @@ export function errorHandler(err: Error, c: Context) {
     );
   }
 
-  // Domain-specific errors (extend as needed)
-  // For now, keeping it simple - domain errors should be wrapped in HTTPException
-  // or caught and translated in route handlers
+  // Domain-specific errors - detect common patterns from error messages
+
+  // Conflict/already exists errors → 409
+  const message = err.message?.toLowerCase() ?? "";
+  if (
+    message.includes("already exists")
+    || message.includes("duplicate")
+    || message.includes("conflict")
+    || message.includes("unique constraint")
+  ) {
+    logger.warn({ err, path: c.req.path, method: c.req.method }, "Conflict error");
+    return c.json(
+      {
+        error: "Resource already exists",
+        status: 409,
+      },
+      409,
+    );
+  }
+
+  // Not found errors → 404
+  if (message.includes("not found")) {
+    logger.warn({ err, path: c.req.path, method: c.req.method }, "Not found error");
+    return c.json(
+      {
+        error: "Resource not found",
+        status: 404,
+      },
+      404,
+    );
+  }
 
   // Fallback: log and return generic 500
   // SECURITY: Only log detailed error server-side, return generic message to client

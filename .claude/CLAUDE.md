@@ -130,6 +130,46 @@ const jobs = new DrizzleJobsRepo(db);
 const scheduler = new Scheduler({ clock, jobs });
 ```
 
+---
+
+## AI Contribution Guardrails (Read Carefully)
+
+These rules exist to keep AI-generated changes understandable, reversible, and aligned with existing decisions.
+
+### Before Writing Any Code
+- Read relevant ADRs. Do not violate them.
+- Search the codebase for existing implementations before creating new ones.
+- Clarify where the change belongs (domain, port, adapter, service, or composition root).
+- If the placement is unclear, stop and ask.
+
+### Scope Control
+- Do not add features that were not explicitly requested.
+- Do not “complete” related work unless asked.
+- If you notice future improvements, log them in `docs/_RUNNING_TECH_DEBT.md` instead of implementing them.
+
+### Architecture Discipline
+- Never introduce infrastructure concerns into the domain.
+- Never bypass ports to “simplify” access.
+- Adapters may depend on ports and infrastructure.
+- Domain may depend only on other domain code and ports.
+
+### Change Strategy
+- Prefer small, incremental changes.
+- Avoid refactors unless explicitly requested.
+- If a refactor is necessary, explain why before proceeding.
+
+### Testing Expectations
+- Domain changes require domain tests.
+- Adapter changes must satisfy existing contract tests.
+- Do not weaken or delete tests to make changes pass.
+
+### Output Expectations
+- Favor boring, readable code over cleverness.
+- Match existing naming and file structure.
+- If unsure, stop and ask rather than guessing.
+
+---
+
 ## Need Help?
 
 - Architecture? See `docs/public/technical/system-architecture.md`

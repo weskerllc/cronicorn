@@ -5,6 +5,7 @@ import type * as routes from "./devices.routes.js";
 
 import { getAuthContext } from "../../auth/middleware.js";
 import { createDevicesService } from "../../lib/create-devices-service.js";
+import { handleErrorResponse } from "../../lib/error-utils.js";
 
 export const listConnectedDevices: AppRouteHandler<typeof routes.listConnectedDevices> = async (c) => {
   const { userId } = getAuthContext(c);
@@ -12,22 +13,32 @@ export const listConnectedDevices: AppRouteHandler<typeof routes.listConnectedDe
 
   // Use transaction to query Better Auth tables
   return db.transaction(async (tx) => {
-    const service = createDevicesService(tx);
-    const devices = await service.listConnectedDevices(userId);
+    try {
+      const service = createDevicesService(tx);
+      const devices = await service.listConnectedDevices(userId);
 
-    return c.json(
-      {
-        devices: devices.map(device => ({
-          id: device.id,
-          token: device.token,
-          userAgent: device.userAgent,
-          ipAddress: device.ipAddress,
-          createdAt: new Date(device.createdAt).toISOString(),
-          expiresAt: new Date(device.expiresAt).toISOString(),
-        })),
-      },
-      HTTPStatusCodes.OK,
-    );
+      return c.json(
+        {
+          devices: devices.map(device => ({
+            id: device.id,
+            token: device.token,
+            userAgent: device.userAgent,
+            ipAddress: device.ipAddress,
+            createdAt: new Date(device.createdAt).toISOString(),
+            expiresAt: new Date(device.expiresAt).toISOString(),
+          })),
+        },
+        HTTPStatusCodes.OK,
+      );
+    }
+    catch (error) {
+      return handleErrorResponse(c, error, {
+        operation: "listConnectedDevices",
+        userId,
+      }, {
+        defaultMessage: "Failed to fetch connected devices",
+      });
+    }
   });
 };
 

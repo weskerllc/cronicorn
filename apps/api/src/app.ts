@@ -1,8 +1,11 @@
+import type { PaymentProvider } from "@cronicorn/domain";
+
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
 import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
+import { sql } from "drizzle-orm";
 import { cors } from "hono/cors";
-import { logger as honoLogger } from "hono/logger";
+import { csrf } from "hono/csrf";
 
 import type { Auth } from "./auth/config.js";
 import type { Env } from "./lib/config.js";
@@ -16,6 +19,9 @@ import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.j
 import { errorHandler } from "./lib/error-handler.js";
 import { logger } from "./lib/logger.js";
 import configureOpenAPI from "./lib/openapi.js";
+import { createRateLimitMiddleware, startRateLimitCleanup } from "./lib/rate-limiter.js";
+import { requestIdMiddleware } from "./lib/request-id.js";
+import { requestLoggerMiddleware } from "./lib/request-logger.js";
 import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";
@@ -28,7 +34,10 @@ export async function createApp(
   db: Database,
   config: Env,
   authInstance?: Auth, // Optional auth for testing
-  options?: { useTransactions?: boolean }, // Explicit control for tests
+  options?: {
+    useTransactions?: boolean; // Explicit control for tests
+    paymentProvider?: PaymentProvider; // Optional payment provider for DI testing
+  },
 ) {
   // Initialize Better Auth (pass Drizzle instance, not raw pool)
   // Use provided auth instance for testing, or create new one for production
@@ -43,8 +52,8 @@ export async function createApp(
   // In production, db is a pool, so we default to creating transactions per request
   const shouldCreateTransactions = options?.useTransactions ?? true;
 
-  // Initialize Stripe payment provider
-  const stripeProvider = new StripePaymentProvider({
+  // Initialize payment provider - use injected provider for testing or create Stripe provider
+  const paymentProvider: PaymentProvider = options?.paymentProvider ?? new StripePaymentProvider({
     secretKey: config.STRIPE_SECRET_KEY,
     proPriceId: config.STRIPE_PRICE_PRO,
     proAnnualPriceId: config.STRIPE_PRICE_PRO_ANNUAL,
@@ -55,9 +64,13 @@ export async function createApp(
   // eslint-disable-next-line ts/consistent-type-assertions
   const app = createRouter().basePath("/api") as AppOpenAPI;
 
-  if (config.LOG_LEVEL === "debug") {
-    app.use("*", honoLogger());
-  }
+  // Request ID middleware - generates UUID for each request and adds X-Request-Id header
+  // Must run before request-logger so requestId is available for logging
+  app.use("*", requestIdMiddleware);
+
+  // Request logging middleware - logs method, path, status, duration, requestId, userId
+  // Always enabled for production observability (replaces conditional honoLogger)
+  app.use("*", requestLoggerMiddleware);
 
   // Configure CORS globally to allow direct requests from web app (no proxy)
   app.use(
@@ -72,6 +85,23 @@ export async function createApp(
     }),
   );
 
+  // CSRF protection middleware - validates Origin header on state-changing requests
+  // Allows requests from WEB_URL origin and same-origin requests
+  // Excludes webhook routes from validation (they receive cross-site POST from Stripe)
+  app.use(
+    "*",
+    csrf({
+      origin: (origin, c) => {
+        // Skip CSRF validation for webhook routes (external services like Stripe)
+        if (c.req.path.startsWith("/api/webhooks/")) {
+          return true;
+        }
+        // Validate origin for all other routes
+        return origin === config.WEB_URL;
+      },
+    }),
+  );
+
   // Global error handler
   app.onError(errorHandler);
 
@@ -82,7 +112,7 @@ export async function createApp(
     c.set("cron", cron);
     c.set("auth", auth);
     c.set("config", config);
-    c.set("paymentProvider", stripeProvider);
+    c.set("paymentProvider", paymentProvider);
     c.set("webhookSecret", config.STRIPE_WEBHOOK_SECRET);
 
     // Provide transaction wrapper that auto-creates JobsManager
@@ -119,7 +149,7 @@ export async function createApp(
     // Note: This creates a new instance per request with proper transaction handling
     const subscriptionsManager = createSubscriptionsManager(
       db,
-      stripeProvider,
+      paymentProvider,
       config.BASE_URL,
     );
     c.set("subscriptionsManager", subscriptionsManager);
@@ -127,45 +157,88 @@ export async function createApp(
     await next();
   });
 
-  // Protect all /jobs and /endpoints routes with auth
+  // Create rate limiters for protected routes
+  // NOTE: Rate limiting is applied AFTER auth middleware since it requires userId
+  const { mutationLimiter, readLimiter, rateLimitMiddleware } = createRateLimitMiddleware({
+    mutationLimit: config.RATE_LIMIT_MUTATION_RPM,
+    readLimit: config.RATE_LIMIT_READ_RPM,
+  });
+
+  // Start periodic cleanup of stale rate limit entries to prevent memory leaks
+  startRateLimitCleanup([mutationLimiter, readLimiter]);
+
+  // Protected routes that require auth AND rate limiting:
+  // /jobs/*, /endpoints/*, /runs/*, /sessions/*, /subscriptions/*, /dashboard/*, /devices/*
+  //
+  // Routes excluded from rate limiting:
+  // /health - public health check
+  // /auth/* - handled by Better Auth (has its own rate limiting)
+  // /webhooks/* - external service callbacks (e.g., Stripe)
+
+  // Protect all /jobs and /endpoints routes with auth + rate limiting
   app.use("/jobs/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/jobs/*", rateLimitMiddleware);
 
   app.use("/endpoints/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/endpoints/*", rateLimitMiddleware);
 
   app.use("/runs/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/runs/*", rateLimitMiddleware);
 
   app.use("/sessions/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/sessions/*", rateLimitMiddleware);
 
   app.use("/subscriptions/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/subscriptions/*", rateLimitMiddleware);
 
   app.use("/dashboard/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/dashboard/*", rateLimitMiddleware);
 
   app.use("/devices/*", async (c, next) => {
     const auth = c.get("auth");
     return requireAuth(auth, config)(c, next);
   });
+  app.use("/devices/*", rateLimitMiddleware);
 
   // Health check endpoint (no auth required)
-  app.get("/health", (c) => {
-    return c.json({ status: "ok", timestamp: new Date().toISOString() });
+  // Pings database with 2s timeout to verify connectivity
+  app.get("/health", async (c) => {
+    const timestamp = new Date().toISOString();
+    const DB_PING_TIMEOUT_MS = 2000;
+
+    try {
+      // Race between database ping and timeout
+      const pingPromise = db.execute(sql`SELECT 1`);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Database ping timeout")), DB_PING_TIMEOUT_MS),
+      );
+
+      await Promise.race([pingPromise, timeoutPromise]);
+
+      return c.json({ status: "ok", db: "connected", timestamp }, 200);
+    }
+    catch {
+      // Database unreachable or timeout exceeded
+      return c.json({ status: "degraded", db: "disconnected", timestamp }, 503);
+    }
   });
 
   // Mount auth config endpoint FIRST (public - specific route takes precedence)

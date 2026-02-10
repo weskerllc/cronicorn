@@ -1,5 +1,7 @@
 import type { Dispatcher, ExecutionResult, JobEndpoint, JsonValue } from "@cronicorn/domain";
 
+import { assertUrlAllowed, UrlNotAllowedError } from "./url-validator.js";
+
 /**
  * Production HTTP dispatcher using Node.js native fetch API.
  *
@@ -21,6 +23,21 @@ export class HttpDispatcher implements Dispatcher {
         durationMs: 0,
         errorMessage: "No URL configured for endpoint",
       };
+    }
+
+    // SSRF protection: validate URL before making request
+    try {
+      await assertUrlAllowed(ep.url);
+    }
+    catch (error) {
+      if (error instanceof UrlNotAllowedError) {
+        return {
+          status: "failed",
+          durationMs: 0,
+          errorMessage: error.message,
+        };
+      }
+      throw error;
     }
 
     // Clamp timeout to minimum 1000ms (1 second)
