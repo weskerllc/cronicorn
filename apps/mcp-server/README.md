@@ -1,6 +1,8 @@
 # Cronicorn MCP Server
 
 [![npm version](https://badge.fury.io/js/@cronicorn%2Fmcp-server.svg)](https://www.npmjs.com/package/@cronicorn/mcp-server)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-blue)](https://registry.modelcontextprotocol.io/servers/io.github.weskerllc/cronicorn-mcp-server)
+[![Smithery](https://img.shields.io/badge/Smithery-listed-green)](https://smithery.ai/server/@cronicorn/mcp-server)
 
 Manage cron jobs by talking to your AI assistant.
 

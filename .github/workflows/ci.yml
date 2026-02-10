@@ -75,8 +75,15 @@ jobs:
       - name: Seed database for E2E tests
         run: pnpm run db:seed
 
-      - name: Run unit and integration tests
-        run: pnpm test
+      - name: Run unit and integration tests with coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium

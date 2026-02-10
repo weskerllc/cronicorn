@@ -48,6 +48,20 @@ pnpm test:e2e          # E2E tests (separate command)
 - [ ] E2E tests pass (if applicable)
 - [ ] ADR created (if architectural decision)
 
+## Coverage
+
+**Locally**, `pnpm test` runs tests without coverage overhead. To generate a coverage report:
+
+```bash
+pnpm test:coverage     # Runs tests with v8 coverage → ./coverage/
+```
+
+This produces `lcov`, `html`, and `text` reports in the `./coverage/` directory.
+
+**In CI**, the `quality` job runs `pnpm test:coverage` and uploads the lcov report to [Codecov](https://codecov.io/gh/weskerllc/cronicorn). Codecov comments on PRs with a diff coverage summary. No coverage thresholds are enforced — reporting is informational only.
+
+Configuration lives in `codecov.yml` at the repo root.
+
 ## Related
 
 - **[Quick Start](./quick-start.md)** - Dev environment setup
