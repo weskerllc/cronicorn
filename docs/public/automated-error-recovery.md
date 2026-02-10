@@ -77,7 +77,7 @@ Create a single job with TWO endpoints — placing them in the same job gives th
 
 ```bash
 # Create the job (container for both endpoints)
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -87,7 +87,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 # Returns: { "id": "job_abc123", ... }
 
 # Add the health-check endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -102,7 +102,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 # Returns: { "id": "ep_health123", ... }
 
 # Add the recovery endpoint (same job = sibling of health-check)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -164,7 +164,7 @@ The same setup using `fetch()`:
 
 ```javascript
 const API_KEY = 'YOUR_API_KEY';
-const BASE_URL = 'https://api.cronicorn.com';
+const BASE_URL = 'https://cronicorn.com';
 
 // Create the job
 const jobResponse = await fetch(`${BASE_URL}/api/jobs`, {
@@ -314,7 +314,7 @@ See what the AI decided and why:
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=5"
+  "https://cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=5"
 ```
 
 Look for:
@@ -327,7 +327,7 @@ Look for:
 Force an immediate recovery attempt:
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_recovery456/hints/oneshot \
+curl -X POST https://cronicorn.com/api/endpoints/ep_recovery456/hints/oneshot \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -342,7 +342,7 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_recovery456/hints/onesho
 If exponential backoff has kicked in:
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures \
+curl -X POST https://cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -352,7 +352,7 @@ View success/failure rates over the last 24 hours:
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/health?sinceHours=24"
+  "https://cronicorn.com/api/endpoints/ENDPOINT_ID/health?sinceHours=24"
 ```
 
 Response:

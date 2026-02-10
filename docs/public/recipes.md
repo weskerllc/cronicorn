@@ -85,7 +85,7 @@ Create the job and add the endpoint using the HTTP API (the same fields work in 
 
 ```bash
 # Create the job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -95,7 +95,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 # Returns: { "id": "job_abc123", "name": "Production API Monitoring", ... }
 
 # Add the health-check endpoint to the job
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -177,7 +177,7 @@ You can also programmatically trigger surge monitoring from an external system u
 
 ```bash
 # Tighten monitoring to every 30 seconds for 1 hour
-curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/hints/interval \
+curl -X POST https://cronicorn.com/api/endpoints/ENDPOINT_ID/hints/interval \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -187,7 +187,7 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/hints/interval 
   }'
 
 # Return to baseline by clearing hints
-curl -X DELETE https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/hints \
+curl -X DELETE https://cronicorn.com/api/endpoints/ENDPOINT_ID/hints \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -240,7 +240,7 @@ Check what the AI decided and why using the analysis sessions API:
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=5"
+  "https://cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=5"
 ```
 
 Look for:
@@ -289,7 +289,7 @@ Create a single job with TWO endpoints — placing them in the same job gives th
 
 ```bash
 # Create the job (container for both endpoints)
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -299,7 +299,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 # Returns: { "id": "job_abc123", ... }
 
 # Add the health-check endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -314,7 +314,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 # Returns: { "id": "ep_health123", ... }
 
 # Add the recovery endpoint (same job = sibling of health-check)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -415,7 +415,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 If exponential backoff has kicked in and you want to reset programmatically:
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures \
+curl -X POST https://cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -431,7 +431,7 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures 
 
 ```bash
 # Create the job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -441,7 +441,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 # Returns: { "id": "job_abc123", ... }
 
 # Add the sync status endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -551,7 +551,7 @@ Check what the AI decided and why:
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=5"
+  "https://cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=5"
 ```
 
 Look for `reasoning` to see the AI's interpretation of `records_pending` values and `toolsCalled` to see which scheduling tools were invoked.
@@ -566,7 +566,7 @@ You can also use an external script to adjust sync frequency based on external m
 PENDING=$(curl -s https://api.example.com/sync/status | jq '.records_pending')
 
 if (( PENDING > 5000 )); then
-  curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/hints/interval \
+  curl -X POST https://cronicorn.com/api/endpoints/ENDPOINT_ID/hints/interval \
     -H "x-api-key: YOUR_API_KEY" \
     -H "Content-Type: application/json" \
     -d '{
@@ -575,7 +575,7 @@ if (( PENDING > 5000 )); then
       "reason": "Large backlog detected ('"$PENDING"' records pending)"
     }'
 elif (( PENDING < 100 )); then
-  curl -X DELETE https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/hints \
+  curl -X DELETE https://cronicorn.com/api/endpoints/ENDPOINT_ID/hints \
     -H "x-api-key: YOUR_API_KEY"
 fi
 ```
@@ -604,7 +604,7 @@ Your job is to: (a) return useful fields in your response body, and (b) tell the
 
 ```bash
 # Create the job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -616,7 +616,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 # Add the endpoint with field-parsing description
 # The description tells the AI exactly which fields to read and what thresholds to use.
 # The AI parses the response body automatically — no parsing code to write.
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -732,7 +732,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 
 ```bash
 # Create the job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -743,7 +743,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 
 # Add the endpoint with anti-oscillation configuration.
 # Key: tight min/max ratio (30s-120s = 4x range) + stability-focused description.
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -858,14 +858,14 @@ If you observe oscillation in an existing setup, you can investigate using the H
 ```bash
 # Check if constraints are set
 curl -H "x-api-key: YOUR_API_KEY" \
-  https://api.cronicorn.com/api/jobs/JOB_ID/endpoints/ENDPOINT_ID
+  https://cronicorn.com/api/jobs/JOB_ID/endpoints/ENDPOINT_ID
 
 # Review AI analysis sessions to see reasoning
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=10"
+  "https://cronicorn.com/api/endpoints/ENDPOINT_ID/analysis-sessions?limit=10"
 
 # Tighten constraints if range is too wide
-curl -X PATCH https://api.cronicorn.com/api/jobs/JOB_ID/endpoints/ENDPOINT_ID \
+curl -X PATCH https://cronicorn.com/api/jobs/JOB_ID/endpoints/ENDPOINT_ID \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -889,7 +889,7 @@ Create ONE job with THREE endpoints. Placing them in the same job enables **sibl
 
 ```bash
 # Create the job (container for the entire pipeline)
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -899,7 +899,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 # Returns: { "id": "job_abc123", ... }
 
 # Add Extract endpoint (upstream — runs on cron schedule)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -913,7 +913,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 # Returns: { "id": "ep_extract123", ... }
 
 # Add Transform endpoint (midstream — polls and waits for extract signal)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -928,7 +928,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 # Returns: { "id": "ep_transform456", ... }
 
 # Add Load endpoint (downstream — polls and waits for transform signal)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -955,11 +955,11 @@ If any stage fails:
 
 ```bash
 # Reset the failed endpoint's backoff
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_extract123/reset-failures \
+curl -X POST https://cronicorn.com/api/endpoints/ep_extract123/reset-failures \
   -H "x-api-key: YOUR_API_KEY"
 
 # Or manually trigger a one-shot retry
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_extract123/hints/oneshot \
+curl -X POST https://cronicorn.com/api/endpoints/ep_extract123/hints/oneshot \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

@@ -304,7 +304,7 @@ Create an account—no credit card required for early access.
 
 **2. Define Your First Job**
 ```bash
-curl -X POST https://api.cronicorn.com/v1/jobs \
+curl -X POST https://cronicorn.com/v1/jobs \
   -H "x-api-key: YOUR_KEY" \
   -d '{"name": "Health Monitor", ...}'
 ```

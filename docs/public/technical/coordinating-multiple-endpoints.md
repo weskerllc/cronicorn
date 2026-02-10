@@ -81,14 +81,14 @@ Endpoints coordinate by:
 
 ```bash
 # Create the flash sale management job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "Flash Sale Management", "description": "Coordinates monitoring during flash sales with priority-based pausing" }'
 # Returns: { "id": "job_abc123", ... }
 
 # Add traffic monitor endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -102,7 +102,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
   }'
 
 # Add order processor endpoint (CRITICAL priority — never paused)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -116,7 +116,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
   }'
 
 # Add inventory sync endpoint (NORMAL priority)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -129,7 +129,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
   }'
 
 # Add analytics updater endpoint (LOW priority — paused during surges)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -207,7 +207,7 @@ Create ONE job with THREE endpoints. Endpoints in the same job are **siblings** 
 
 ```bash
 # Create the pipeline job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -217,7 +217,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 # Returns: { "id": "job_abc123", ... }
 
 # Add Extract endpoint (runs daily at 2 AM via cron)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -230,7 +230,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
   }'
 
 # Add Transform endpoint (polls every 1 min, waits for extract signal)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -244,7 +244,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
   }'
 
 # Add Load endpoint (polls every 1 min, waits for transform signal)
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -269,11 +269,11 @@ If any stage fails (HTTP 4xx/5xx or timeout):
 
 ```bash
 # Reset backoff on the failed endpoint
-curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures \
+curl -X POST https://cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures \
   -H "x-api-key: YOUR_API_KEY"
 
 # Or trigger an immediate one-shot retry
-curl -X POST https://api.cronicorn.com/api/endpoints/ENDPOINT_ID/hints/oneshot \
+curl -X POST https://cronicorn.com/api/endpoints/ENDPOINT_ID/hints/oneshot \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "nextRunAt": "2026-02-03T02:30:00Z", "ttlMinutes": 30, "reason": "Manual retry" }'
@@ -508,14 +508,14 @@ Since these endpoints are in **different jobs**, they can't use `get_sibling_lat
 
 ```bash
 # Create Job 1: Upstream Service
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "Upstream Service", "description": "Monitors upstream API health" }'
 # Returns: { "id": "job_upstream", ... }
 
 # Add upstream health check endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_upstream/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_upstream/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -528,14 +528,14 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_upstream/endpoints \
   }'
 
 # Create Job 2: Downstream Consumers (separate job)
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "Downstream Consumers", "description": "Processes data from upstream, embeds upstream health in responses for cross-job coordination" }'
 # Returns: { "id": "job_downstream", ... }
 
 # Add data processor endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_downstream/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_downstream/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -549,7 +549,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_downstream/endpoints \
   }'
 
 # Add analytics pipeline endpoint
-curl -X POST https://api.cronicorn.com/api/jobs/job_downstream/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_downstream/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -649,13 +649,13 @@ This is by design: the [conflict resolution architecture](#how-conflict-resoluti
 **Job 1: "Data Ingestion"** — Pulls data from external sources
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "Data Ingestion", "description": "Ingests data from external APIs" }'
 
 # Endpoint: fetch-orders (runs every 5 minutes)
-curl -X POST https://api.cronicorn.com/api/jobs/JOB1_ID/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/JOB1_ID/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -671,13 +671,13 @@ curl -X POST https://api.cronicorn.com/api/jobs/JOB1_ID/endpoints \
 **Job 2: "Order Processing"** — Processes ingested orders (separate team, separate job)
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ "name": "Order Processing", "description": "Processes ingested orders, checks ingestion status" }'
 
 # Endpoint: process-orders (checks ingestion status via its own response body)
-curl -X POST https://api.cronicorn.com/api/jobs/JOB2_ID/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/JOB2_ID/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -690,7 +690,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/JOB2_ID/endpoints \
   }'
 
 # Endpoint: generate-reports (depends on processed orders)
-curl -X POST https://api.cronicorn.com/api/jobs/JOB2_ID/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/JOB2_ID/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -757,7 +757,7 @@ The AI reads `ingestion_status: "stale"` from the process-orders response, match
 ```bash
 # Check AI analysis sessions for the downstream endpoint
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/PROCESS_ORDERS_EP_ID/analysis-sessions?limit=5"
+  "https://cronicorn.com/api/endpoints/PROCESS_ORDERS_EP_ID/analysis-sessions?limit=5"
 ```
 
 Look for `reasoning` entries that mention `ingestion_status` — this confirms the AI is reading the embedded upstream status from the response body and acting on it.

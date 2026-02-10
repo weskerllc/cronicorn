@@ -33,7 +33,7 @@ npx -y @cronicorn/mcp-server
       "command": "npx",
       "args": ["-y", "@cronicorn/mcp-server"],
       "env": {
-        "CRONICORN_API_URL": "https://api.cronicorn.com"
+        "CRONICORN_API_URL": "https://cronicorn.com"
       }
     }
   }
@@ -146,7 +146,7 @@ Example:
 
 Method: OAuth 2.0 Device Flow (RFC 8628)
 Authorization URL: https://cronicorn.com/device/approve
-Token Endpoint: https://api.cronicorn.com/api/auth/device/token
+Token Endpoint: https://cronicorn.com/api/auth/device/token
 Scopes: jobs:read jobs:write jobs:delete
 
 The MCP server handles authentication automatically:
@@ -160,10 +160,10 @@ Users can revoke access anytime in Cronicorn Settings → Connected Devices.
 
 ## API Information
 
-Base URL: https://api.cronicorn.com
+Base URL: https://cronicorn.com
 API Version: v1
 Documentation: https://cronicorn.com/docs/api
-OpenAPI Spec: https://api.cronicorn.com/openapi.json
+OpenAPI Spec: https://cronicorn.com/openapi.json
 
 Alternative authentication (for programmatic access):
 API Keys available at https://cronicorn.com/settings/api-keys
@@ -435,7 +435,7 @@ Run: npx -y @cronicorn/mcp-server
   "tools": [
     {
       "name": "create_job",
-      "schema_url": "https://api.cronicorn.com/mcp/tools/create_job.json"
+      "schema_url": "https://cronicorn.com/mcp/tools/create_job.json"
     }
   ]
 }

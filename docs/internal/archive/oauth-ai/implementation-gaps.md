@@ -563,7 +563,7 @@ services:
 
 4. **Do we want to support self-hosted instances in MVP?**
    - If yes, `CRONICORN_API_URL` env var is critical
-   - If no, can hardcode `https://api.cronicorn.com`
+   - If no, can hardcode `https://cronicorn.com`
 
 5. **Should device approvals show in Settings → Connected Devices?**
    - Need to build device management UI?

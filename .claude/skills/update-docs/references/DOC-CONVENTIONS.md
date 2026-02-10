@@ -175,7 +175,7 @@ Always specify the language:
 
 ```markdown
 ```bash
-curl -H "x-api-key: cron_abc123..." https://api.cronicorn.com/api/jobs
+curl -H "x-api-key: cron_abc123..." https://cronicorn.com/api/jobs
 ```​
 
 ```typescript
@@ -209,7 +209,7 @@ Show commands the user would actually run:
 ```markdown
 ```bash
 # Create a job via API
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: cron_abc123..." \
   -H "Content-Type: application/json" \
   -d '{"name": "Health Check"}'
