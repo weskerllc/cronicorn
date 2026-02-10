@@ -1,7 +1,7 @@
 {
   "$schema": "https://context7.com/schema/context7.json",
   "projectTitle": "Cronicorn",
-  "description": "Hosted scheduling service replacing traditional cron with adaptive, AI-powered HTTP job scheduling — no code or SDK required",
+  "description": "Hosted HTTP job scheduler — AI reads response bodies and adapts frequency based on natural language descriptions — no code or SDK required",
   "branch": "main",
   "folders": [
     "docs/public/**"

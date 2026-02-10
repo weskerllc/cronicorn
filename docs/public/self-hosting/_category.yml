@@ -1,0 +1,8 @@
+position: 6
+label: Self-Hosting
+collapsible: true
+collapsed: false
+link:
+  type: generated-index
+  title: Self-Hosting Documentation
+  description: Deploy and operate Cronicorn on your own infrastructure.

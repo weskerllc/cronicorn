@@ -162,7 +162,7 @@ import { createAuthClient } from "better-auth/client";
 import { deviceAuthorizationClient } from "better-auth/client/plugins";
 
 const authClient = createAuthClient({
-  baseURL: "https://api.cronicorn.com",
+  baseURL: "https://cronicorn.com",
   plugins: [deviceAuthorizationClient()],
 });
 
@@ -574,7 +574,7 @@ import { deviceAuthorizationClient } from "better-auth/client/plugins";
 import open from "open";
 
 const authClient = createAuthClient({
-  baseURL: "https://api.cronicorn.com",
+  baseURL: "https://cronicorn.com",
   plugins: [deviceAuthorizationClient()],
 });
 

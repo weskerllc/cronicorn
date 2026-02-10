@@ -234,7 +234,7 @@ interface ConnectAIAgentModalProps {
       "command": "npx",
       "args": ["-y", "@cronicorn/mcp-server"],
       "env": {
-        "CRONICORN_API_URL": "https://api.cronicorn.com"
+        "CRONICORN_API_URL": "https://cronicorn.com"
       }
     }
   }

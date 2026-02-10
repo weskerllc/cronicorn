@@ -43,7 +43,7 @@ You should:
 [detailed pattern with tier coordination]
 
 ## API Reference
-Base URL: https://api.cronicorn.com/api
+Base URL: https://cronicorn.com/api
 
 ### Create Job
 POST /jobs
