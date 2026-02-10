@@ -1,3 +1,10 @@
+## [1.22.3](https://github.com/weskerllc/cronicorn/compare/v1.22.2...v1.22.3) (2026-02-10)
+
+
+### Bug Fixes
+
+* smithery ci ([#125](https://github.com/weskerllc/cronicorn/issues/125)) ([81f9332](https://github.com/weskerllc/cronicorn/commit/81f9332590f232e9f2d7a2b40b4306893a72c0bb))
+
 ## [1.22.2](https://github.com/weskerllc/cronicorn/compare/v1.22.1...v1.22.2) (2026-02-10)
 
 
