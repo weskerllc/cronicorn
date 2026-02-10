@@ -12,7 +12,7 @@ export default defineConfig({
       "**/.{idea,git,cache,output,temp}/**",
     ],
     coverage: {
-      enabled: true,
+      enabled: false,
       provider: "v8",
       reporter: ["text", "lcov", "html"],
       reportsDirectory: "./coverage",

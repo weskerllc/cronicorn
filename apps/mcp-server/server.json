@@ -1,0 +1,33 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.weskerllc/cronicorn-mcp-server",
+  "title": "Cronicorn",
+  "version": "0.1.0",
+  "description": "MCP server for Cronicorn — manage adaptive cron jobs via AI assistants. Create, schedule, monitor, and optimize HTTP endpoints with natural language.",
+  "repository": {
+    "url": "https://github.com/weskerllc/cronicorn",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@cronicorn/mcp-server",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CRONICORN_API_URL",
+          "description": "API base URL for Cronicorn",
+          "isRequired": false
+        },
+        {
+          "name": "CRONICORN_WEB_URL",
+          "description": "Web UI URL for Cronicorn (used for OAuth device flow)",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}

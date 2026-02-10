@@ -25,7 +25,8 @@ async function main() {
   const server = new McpServer(
     {
       name: "cronicorn",
-      version: "0.1.0",
+      // eslint-disable-next-line node/no-process-env
+      version: process.env.PKG_VERSION ?? "0.0.0",
     },
     {
       instructions: [

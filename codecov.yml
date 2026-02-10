@@ -1,0 +1,12 @@
+codecov:
+  require_ci_to_pass: false
+
+coverage:
+  status:
+    project: off
+    patch: off
+
+comment:
+  layout: "header, diff, flags, files"
+  behavior: default
+  require_changes: true

@@ -1,6 +1,7 @@
 {
   "name": "@cronicorn/mcp-server",
   "version": "0.1.0",
+  "mcpName": "io.github.weskerllc/cronicorn-mcp-server",
   "type": "module",
   "description": "MCP server for Cronicorn - enables AI agents to manage cron jobs via Model Context Protocol",
   "author": "Cronicorn",
