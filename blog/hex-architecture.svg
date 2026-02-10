@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" font-family="'SF Mono', 'Fira Code', 'Consolas', monospace">
+  <defs>
+    <style>
+      .layer-label { font-size: 13px; font-weight: 600; letter-spacing: 0.5px; }
+      .layer-detail { font-size: 10.5px; fill: #6b7280; }
+      .port-label { font-size: 9.5px; fill: #475569; font-weight: 500; }
+      .arrow { stroke: #94a3b8; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+      .arrow-in { stroke: #94a3b8; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead-in); }
+    </style>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowhead-in" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+      <path d="M8,0 L0,3 L8,6" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="520" fill="#fafafa" rx="8"/>
+
+  <!-- Outer hexagon — Infrastructure -->
+  <polygon points="400,30 680,170 680,350 400,490 120,350 120,170"
+           fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="400" y="22" text-anchor="middle" class="layer-label" fill="#94a3b8">INFRASTRUCTURE</text>
+
+  <!-- Middle hexagon — Adapters -->
+  <polygon points="400,75 620,190 620,330 400,445 180,330 180,190"
+           fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="400" y="460" text-anchor="middle" class="layer-label" fill="#64748b">ADAPTERS</text>
+
+  <!-- Inner hexagon — Application -->
+  <polygon points="400,130 555,215 555,305 400,390 245,305 245,215"
+           fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+
+  <!-- Core hexagon — Domain -->
+  <polygon points="400,180 498,240 498,300 400,360 302,300 302,240"
+           fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+
+  <!-- Domain text -->
+  <text x="400" y="262" text-anchor="middle" fill="#f8fafc" font-size="15" font-weight="700" letter-spacing="1">DOMAIN</text>
+  <text x="400" y="282" text-anchor="middle" fill="#94a3b8" font-size="10">types · rules · pure functions</text>
+
+  <!-- Application label -->
+  <text x="400" y="405" text-anchor="middle" class="layer-label" fill="#475569">APPLICATION</text>
+  <text x="400" y="420" text-anchor="middle" class="layer-detail">use cases · orchestration</text>
+
+  <!-- Port labels on the boundary between application and adapters -->
+  <!-- Left ports -->
+  <text x="195" y="258" text-anchor="start" class="port-label" transform="rotate(-60, 195, 258)">PORT</text>
+  <text x="195" y="280" text-anchor="start" class="port-label" transform="rotate(-60, 195, 280)">interface</text>
+
+  <!-- Right ports -->
+  <text x="580" y="258" text-anchor="end" class="port-label" transform="rotate(60, 580, 258)">PORT</text>
+  <text x="580" y="280" text-anchor="end" class="port-label" transform="rotate(60, 580, 280)">interface</text>
+
+  <!-- Adapter labels around the outside -->
+  <!-- Left side adapters (driving) -->
+  <rect x="28" y="195" width="100" height="36" rx="4" fill="white" stroke="#94a3b8" stroke-width="1"/>
+  <text x="78" y="211" text-anchor="middle" font-size="10" fill="#334155" font-weight="600">Express</text>
+  <text x="78" y="224" text-anchor="middle" font-size="9" fill="#94a3b8">REST API</text>
+
+  <rect x="28" y="265" width="100" height="36" rx="4" fill="white" stroke="#94a3b8" stroke-width="1"/>
+  <text x="78" y="281" text-anchor="middle" font-size="10" fill="#334155" font-weight="600">CLI</text>
+  <text x="78" y="294" text-anchor="middle" font-size="9" fill="#94a3b8">commands</text>
+
+  <!-- Right side adapters (driven) -->
+  <rect x="672" y="195" width="100" height="36" rx="4" fill="white" stroke="#94a3b8" stroke-width="1"/>
+  <text x="722" y="211" text-anchor="middle" font-size="10" fill="#334155" font-weight="600">Postgres</text>
+  <text x="722" y="224" text-anchor="middle" font-size="9" fill="#94a3b8">persistence</text>
+
+  <rect x="672" y="265" width="100" height="36" rx="4" fill="white" stroke="#94a3b8" stroke-width="1"/>
+  <text x="722" y="281" text-anchor="middle" font-size="10" fill="#334155" font-weight="600">In-Memory</text>
+  <text x="722" y="294" text-anchor="middle" font-size="9" fill="#94a3b8">Map&lt;string, T&gt;</text>
+
+  <!-- Arrows: driving (left → center) -->
+  <path d="M128,213 L175,213" class="arrow"/>
+  <path d="M128,283 L175,270" class="arrow"/>
+
+  <!-- Arrows: driven (center → right) -->
+  <path d="M625,213 L672,213" class="arrow"/>
+  <path d="M625,283 L672,283" class="arrow"/>
+
+  <!-- Side labels -->
+  <text x="78" y="175" text-anchor="middle" font-size="10" fill="#64748b" font-weight="600" letter-spacing="0.5">DRIVING</text>
+  <text x="722" y="175" text-anchor="middle" font-size="10" fill="#64748b" font-weight="600" letter-spacing="0.5">DRIVEN</text>
+
+  <!-- Bottom note -->
+  <text x="400" y="505" text-anchor="middle" font-size="10" fill="#94a3b8" font-style="italic">Dependencies point inward. The domain never knows about the outside world.</text>
+</svg>

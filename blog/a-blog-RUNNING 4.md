@@ -6,13 +6,20 @@ AI can generate code faster than you can understand it. That's the problem.
 
 I usually realize things have gone wrong late at night. Tests are green. The house is quiet. I'm rereading the same function for the third time, and I can't explain why it exists without scrolling. That's when I know the code got ahead of me — not because it's bad, but because I let something else drive for too long.
 
-I've spent the last couple of years building real systems with AI — not demos, not experiments. And more than once, I let the code outrun my ability to reason about it. Nothing was obviously broken. Things just became harder to change, harder to trust, harder to explain.
-
 By the time I noticed, starting over felt cheaper than fixing what I had.
 
 I'm not an AI expert. I'm a senior engineer with about eight years of experience and enough failed projects to recognize that pattern when it shows up.
 
 After repeating that mistake enough times, a few hard rules emerged. Not theory. Just constraints that kept me in control while still letting AI be useful. I ended up using them end-to-end in an app I rely on every day — [the code is public](https://github.com/weskerllc/cronicorn).
+
+**The rules:**
+
+1. Enforce clean architecture — hard boundaries AI can't blur
+2. Model the domain first — use AI to think, not build
+3. Build outward — ports, in-memory adapters, then real infrastructure last
+4. Write decisions down — ADRs keep you and AI aligned over time
+5. Test the domain, lint everything — AI can pass tests and still write unmaintainable code
+6. Control the feedback loop — describe behavior first, tighten tests, never let existing tests break
 
 ---
 
@@ -20,23 +27,37 @@ After repeating that mistake enough times, a few hard rules emerged. Not theory.
 
 If you don't enforce clear, hard boundaries early, AI will quietly wreck your project for you.
 
-The problem isn't that the code is bad. It's that it grows faster than your ability to understand it. AI can generate far more code than you can reason about, and that flips the usual bottleneck. Typing stops being the issue. Comprehension becomes the problem.
+AI can generate far more code than you can reason about, and that flips the usual bottleneck.
+
+> Typing stops being the issue. Comprehension becomes the problem.
 
 When there aren't hard boundaries, everything starts bleeding into everything else. Logic drifts. Responsibilities blur. Small changes get risky. Eventually, the project becomes something you don't want to touch.
-
-After enough of that, I stopped optimizing for speed or elegance. I started optimizing for one thing: clear, enforced boundaries.
 
 The structure that's held up best for me is hexagonal architecture. Not because it's trendy or elegant, but because it makes it hard to mix concerns — even when code is being generated faster than you can read it.
 
 I used to think it was overkill. Too many files. Too much ceremony. What changed wasn't team size. It was output. When AI enters the picture, "less code" stops being the main goal. Understanding does. And strict boundaries turn out to be the cheapest way to buy that back.
 
+INSERT IMAGE HERE
+
+Everything that follows builds on this.
+
 ---
 
 ## Rule #2: Model the Domain First — With AI's Help
 
-This is one of the few prompts I actually reuse. At this stage, I'm not asking AI to build anything. I'm using it to help me think clearly — and name things correctly.
+At this stage, I'm not asking AI to build anything. I'm using it to help me think clearly — and name things correctly. This is one of the few prompts I actually reuse:
 
-I tell it: here's the system I'm building. Ignore frameworks, databases, and infrastructure. Help me identify the core concepts, the data they need, the rules that must never be broken, and what goes in and out. Respond using plain TypeScript interfaces and pure functions. No side effects.
+```
+I'm building a system that does X.
+Ignore frameworks, databases, and infrastructure.
+Help me identify:
+- The core concepts in the system
+- The data those concepts need
+- The rules that must never be broken
+- What goes in and what comes out
+Respond using plain TypeScript interfaces and pure functions.
+No side effects.
+```
 
 The goal isn't completeness. It's clarity. If you get the names wrong here, everything downstream gets harder. If you get them mostly right, the rest of the system tends to fall into place.
 
@@ -52,13 +73,13 @@ These needs become ports — contracts where the domain says "I need this to exi
 
 Then you write the dumbest possible adapter: in-memory. A `Map<string, T>`. This is boring on purpose. It lets you run the system immediately, keeps feedback loops short, and gives AI something safe to refactor without touching real data. It proves the architecture works before you've committed to anything expensive.
 
-The application layer sits between domain and adapters. It doesn't contain business rules — it just strings steps together. Load something. Check it exists. Apply a rule. Save the result. This code knows *when* things happen, not *why* they're allowed.
+The application layer sits between domain and adapters. It doesn't contain business rules — it just strings steps together. Load something. Check it exists. Apply a rule. Save the result.
 
-Wire it up in one place — `main.ts` — the only file allowed to know about concrete implementations. Try to break it before you add a real database. If something feels unclear now, adding Postgres won't fix it. It will just bury the problem.
+> This code knows *when* things happen, not *why* they're allowed.
 
-Once you're confident, swap in a real adapter. Nothing else should change. If it does, something broke upstream.
+Wire it all up in `main.ts` — the only file allowed to know about concrete implementations. Try to break it before you add a real database. If something feels unclear now, adding Postgres won't fix it — it will just bury the problem. Once you're confident, swap in a real adapter. Nothing else should change.
 
-(For the full working example of this pattern — domain, ports, adapters, application layer — [see the repo](https://github.com/weskerllc/cronicorn).)
+(For the full working example — domain, ports, adapters, application layer — [see the repo](https://github.com/weskerllc/cronicorn).)
 
 ---
 
@@ -66,9 +87,27 @@ Once you're confident, swap in a real adapter. Nothing else should change. If it
 
 If you don't write decisions down, you'll argue with your past self later. Or worse — with an AI that has no idea why something exists.
 
-I keep a `.adr/` folder at the root of every repo. Any meaningful architectural decision gets a short markdown file answering four questions: what decision was made, why it was made, what alternatives were considered, and what tradeoffs were accepted.
+I keep a `.adr/` folder at the root of every repo. Any meaningful architectural decision gets a short markdown file:
 
-ADRs become guardrails. When AI suggests a change that contradicts a past decision, you can point at the file. When you're tempted to cut a corner at midnight, the ADR reminds you why you didn't cut it last time.
+```markdown
+# ADR-003: Use in-memory adapter for first pass
+
+## Decision
+All new features start with an in-memory adapter before
+adding a real database implementation.
+
+## Why
+Keeps feedback loops short. Proves the domain logic works
+before committing to infrastructure. Easier for AI to
+refactor safely.
+
+## Tradeoffs
+Delays real persistence work. Requires a swap step later.
+Worth it — we've caught three domain modeling mistakes
+this way that would have been buried in SQL.
+```
+
+When AI suggests a change that contradicts a past decision, you can point at the file. When you're tempted to cut a corner at midnight, the ADR reminds you why you didn't cut it last time.
 
 ---
 
@@ -92,8 +131,6 @@ The first round is usually wrong in small ways. Off-by-one in the logic. Tests t
 
 Two rules after that: tests must pass, and existing tests never break. If AI can't meet both, I roll back and re-prompt. No exceptions.
 
-Define an MVP. Everything else gets written down and ignored. Keep one source of truth. Everything else points to it.
-
 ---
 
 ## The Part I Don't Love Admitting
@@ -102,13 +139,4 @@ Letting AI run feels good. Watching files appear, functions fill in, edge cases 
 
 I still mess this up. I still catch myself reading code that technically makes sense but doesn't feel owned yet. The difference now is that I notice sooner. When something feels slippery, I stop. I cut it back to the domain. It's annoying. It's slower. It's also cheaper than losing two days to a system I don't trust.
 
----
-
-**TL;DR — The Rules:**
-
-1. **Enforce clean architecture** — hexagonal or similar, with hard boundaries AI can't blur
-2. **Model the domain first** — use AI to think, not build, in the early stages
-3. **Build outward** — ports, in-memory adapters, then real infrastructure last
-4. **Write decisions down** — ADRs keep you and AI aligned over time
-5. **Test the domain, lint everything** — AI can pass tests and still write unmaintainable code
-6. **Control the feedback loop** — describe behavior first, tighten tests, never let existing tests break
+The AI didn't wreck the project. I did, by not staying in the driver's seat.
