@@ -687,7 +687,7 @@ import path from "path";
 import os from "os";
 
 const authClient = createAuthClient({
-  baseURL: process.env.CRONICORN_API_URL || "https://api.cronicorn.com",
+  baseURL: process.env.CRONICORN_API_URL || "https://cronicorn.com",
   plugins: [deviceAuthorizationClient()],
 });
 
@@ -966,7 +966,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     // Call Cronicorn API
-    const apiUrl = process.env.CRONICORN_API_URL || "https://api.cronicorn.com";
+    const apiUrl = process.env.CRONICORN_API_URL || "https://cronicorn.com";
     let endpoint = "";
     let method = "GET";
     let body: any = null;
@@ -1079,7 +1079,7 @@ Cronicorn supports OAuth 2.0 Device Authorization Flow for frictionless AI agent
 
 1. **Request device code:**
    ```bash
-   curl -X POST https://api.cronicorn.com/api/auth/device/code \
+   curl -X POST https://cronicorn.com/api/auth/device/code \
      -H "Content-Type: application/json" \
      -d '{
        "client_id": "your-client-id",
@@ -1095,7 +1095,7 @@ Cronicorn supports OAuth 2.0 Device Authorization Flow for frictionless AI agent
 
 3. **Poll for access token:**
    ```bash
-   curl -X POST https://api.cronicorn.com/api/auth/token \
+   curl -X POST https://cronicorn.com/api/auth/token \
      -H "Content-Type: application/json" \
      -d '{
        "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
@@ -1106,7 +1106,7 @@ Cronicorn supports OAuth 2.0 Device Authorization Flow for frictionless AI agent
 
 4. **Use access token:**
    ```bash
-   curl https://api.cronicorn.com/api/v1/jobs \
+   curl https://cronicorn.com/api/v1/jobs \
      -H "Authorization: Bearer <access_token>"
    ```
 
@@ -1256,7 +1256,7 @@ Ensure these are set in production:
 
 ```bash
 BETTER_AUTH_SECRET=<secure-random-secret>
-BETTER_AUTH_URL=https://api.cronicorn.com
+BETTER_AUTH_URL=https://cronicorn.com
 WEB_URL=https://cronicorn.com
 GITHUB_CLIENT_ID=<github-oauth-client-id>
 GITHUB_CLIENT_SECRET=<github-oauth-client-secret>

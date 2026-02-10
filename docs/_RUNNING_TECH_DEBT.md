@@ -354,3 +354,20 @@ The following infrastructure gaps were identified during assessment. These items
   - Webhook signature verification for security
   - Delivery status tracking and debugging UI
 
+---
+
+## Self-Hosting Gaps
+
+**Status**: Identified during self-hosting docs restructure (ADR-0069)
+**Related**: `docs/public/self-hosting/known-limitations.md`
+
+### Checklist
+
+- [ ] **ARM64 container images** — Currently only `linux/amd64` is built. Add multi-arch builds (Docker buildx) for Apple Silicon and AWS Graviton.
+
+- [x] **Install script** — ~~No `curl | bash` or similar one-line install experience.~~ Implemented `scripts/setup.sh` with prereq checks, secret generation, and `--dry-run` support. Tested via `scripts/__tests__/setup.test.ts`.
+
+- [ ] **Redis for multi-instance rate limiting** — In-memory rate limiting prevents horizontal scaling. See "Rate Limiter: Redis Migration" section above.
+
+- [ ] **Web image VITE_API_URL rebuild requirement** — `VITE_*` vars are baked at build time. Users who need the API on a different domain than the web app must rebuild the web image. Consider runtime env injection (e.g., `window.__ENV__` pattern) to avoid this.
+

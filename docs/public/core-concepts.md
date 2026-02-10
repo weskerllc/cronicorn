@@ -93,7 +93,7 @@ This is the canonical configuration format. All fields shown in examples through
 
 ```bash
 # Step 1: Create a job
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -103,7 +103,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 # Returns: { "id": "job_abc123", "name": "Production API Monitoring", ... }
 
 # Step 2: Add an endpoint to the job
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -122,11 +122,11 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 
 # Step 3: Check endpoint health and run history
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ep_xyz789/runs?limit=5"
+  "https://cronicorn.com/api/endpoints/ep_xyz789/runs?limit=5"
 # Returns recent runs with status, duration, and response bodies
 
 # Step 4: Manually override scheduling during an incident
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
+curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -143,7 +143,7 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
 #!/bin/bash
 # create-monitoring-job.sh — Creates a health monitoring job in Cronicorn
 API_KEY="YOUR_API_KEY"
-BASE_URL="https://api.cronicorn.com"
+BASE_URL="https://cronicorn.com"
 
 # Create the job
 JOB_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/jobs" \
@@ -556,7 +556,7 @@ The most common Cronicorn pattern: a job maintains a **baseline schedule** but *
 
 ```bash
 # Create a job that tightens during surges and returns to baseline when conditions normalize
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

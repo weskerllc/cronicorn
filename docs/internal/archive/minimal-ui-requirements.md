@@ -660,7 +660,7 @@ Future: Replace with toast notification library
 **Environment variables needed:**
 ```bash
 # API endpoint
-VITE_API_URL=http://localhost:3333  # or https://api.cronicorn.com
+VITE_API_URL=http://localhost:3333  # or https://cronicorn.com
 
 # Better Auth (OAuth)
 BETTER_AUTH_URL=http://localhost:5173  # or https://app.cronicorn.com

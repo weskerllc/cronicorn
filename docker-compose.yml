@@ -43,6 +43,12 @@ services:
         condition: service_healthy
       migrator:
         condition: service_completed_successfully
+    healthcheck:
+      test: [CMD-SHELL, "wget -qO- http://localhost:3333/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-db:5432/${POSTGRES_DB:-db}
       PORT: ${PORT:-3333}
@@ -72,6 +78,12 @@ services:
         condition: service_healthy
       migrator:
         condition: service_completed_successfully
+    healthcheck:
+      test: [CMD-SHELL, "pgrep -f 'node' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-db:5432/${POSTGRES_DB:-db}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -89,6 +101,12 @@ services:
         condition: service_healthy
       migrator:
         condition: service_completed_successfully
+    healthcheck:
+      test: [CMD-SHELL, "pgrep -f 'node' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@cronicorn-db:5432/${POSTGRES_DB:-db}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -109,13 +127,19 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, "wget -qO- http://localhost:5173/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     environment:
       PORT: "5173"
       NODE_ENV: ${NODE_ENV:-production}
       # Server-side API URL (internal Docker network)
       API_URL: http://cronicorn-api:3333
-      # Client-side API URL (external, from .env)
-      VITE_API_URL: ${API_URL:-http://localhost:3333}
+      # Client-side API URL (external, from .env — used by SSR; client bundle uses build-time value)
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3333}
 
   docs:
     image: ${IMAGE_REGISTRY:-ghcr.io/weskerllc/cronicorn}/docs:${IMAGE_TAG:-latest}

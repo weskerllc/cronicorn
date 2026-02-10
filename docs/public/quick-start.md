@@ -17,7 +17,7 @@ mcp:
 
 Create your first scheduled job and start monitoring executions.
 
-> **Note**: This guide is for using Cronicorn as a hosted service. If you're self-hosting, see the [Self Hosting Documentation](./self-hosting.md).
+> **Note**: This guide is for using Cronicorn as a hosted service. If you're self-hosting, see the [Self-Hosting Documentation](./self-hosting/index.md).
 
 ## 1. Sign Up
 
@@ -141,7 +141,7 @@ For programmatic access, create API keys:
 4. Use in your requests:
 
 ```bash
-curl -X GET https://api.cronicorn.com/api/jobs \
+curl -X GET https://cronicorn.com/api/jobs \
   -H "x-api-key: cron_abc123..."
 ```
 

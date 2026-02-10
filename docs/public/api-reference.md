@@ -16,7 +16,7 @@ mcp:
 
 # API Reference
 
-**TL;DR:** Access Cronicorn programmatically using API keys (`x-api-key` header) or bearer tokens (OAuth device flow). Base URL is your API host (e.g., `https://api.cronicorn.com` or `http://localhost:3333`).
+**TL;DR:** Access Cronicorn programmatically using API keys (`x-api-key` header) or bearer tokens (OAuth device flow). Base URL is your API host (e.g., `https://cronicorn.com` or `http://localhost:3333`).
 
 ## API Documentation Formats
 
@@ -37,7 +37,7 @@ Generate API keys in the web UI at `/settings/api-keys`.
 
 ```bash
 curl -H "x-api-key: cron_abc123..." \
-  https://api.cronicorn.com/api/jobs
+  https://cronicorn.com/api/jobs
 ```
 
 ### Bearer Tokens (OAuth Device Flow)
@@ -46,7 +46,7 @@ For CLI tools and AI agents:
 
 ```bash
 # 1. Request device code
-curl -X POST https://api.cronicorn.com/api/auth/device/code
+curl -X POST https://cronicorn.com/api/auth/device/code
 
 # Response:
 {
@@ -59,7 +59,7 @@ curl -X POST https://api.cronicorn.com/api/auth/device/code
 # 2. User authorizes in browser
 
 # 3. Poll for token
-curl -X POST https://api.cronicorn.com/api/auth/device/token \
+curl -X POST https://cronicorn.com/api/auth/device/token \
   -H "Content-Type: application/json" \
   -d '{"device_code": "DEVICE_CODE"}'
 
@@ -72,7 +72,7 @@ curl -X POST https://api.cronicorn.com/api/auth/device/token \
 
 # 4. Use in requests
 curl -H "Authorization: Bearer eyJ..." \
-  https://api.cronicorn.com/api/jobs
+  https://cronicorn.com/api/jobs
 ```
 
 ---
@@ -82,7 +82,7 @@ curl -H "Authorization: Bearer eyJ..." \
 ### Create Job
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/jobs \
+curl -X POST https://cronicorn.com/api/jobs \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -106,7 +106,7 @@ curl -X POST https://api.cronicorn.com/api/jobs \
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/jobs?status=active"
+  "https://cronicorn.com/api/jobs?status=active"
 ```
 
 **Query Parameters:**
@@ -116,13 +116,13 @@ curl -H "x-api-key: YOUR_API_KEY" \
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  https://api.cronicorn.com/api/jobs/job_abc123
+  https://cronicorn.com/api/jobs/job_abc123
 ```
 
 ### Update Job
 
 ```bash
-curl -X PATCH https://api.cronicorn.com/api/jobs/job_abc123 \
+curl -X PATCH https://cronicorn.com/api/jobs/job_abc123 \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -134,21 +134,21 @@ curl -X PATCH https://api.cronicorn.com/api/jobs/job_abc123 \
 ### Archive Job
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/archive \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/archive \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
 ### Pause Job
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/pause \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/pause \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
 ### Resume Job
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/resume \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/resume \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -159,7 +159,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/resume \
 ### Add Endpoint
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -195,20 +195,20 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints \
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  https://api.cronicorn.com/api/jobs/job_abc123/endpoints
+  https://cronicorn.com/api/jobs/job_abc123/endpoints
 ```
 
 ### Get Endpoint
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  https://api.cronicorn.com/api/jobs/job_abc123/endpoints/ep_xyz789
+  https://cronicorn.com/api/jobs/job_abc123/endpoints/ep_xyz789
 ```
 
 ### Update Endpoint
 
 ```bash
-curl -X PATCH https://api.cronicorn.com/api/jobs/job_abc123/endpoints/ep_xyz789 \
+curl -X PATCH https://cronicorn.com/api/jobs/job_abc123/endpoints/ep_xyz789 \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -220,7 +220,7 @@ curl -X PATCH https://api.cronicorn.com/api/jobs/job_abc123/endpoints/ep_xyz789 
 ### Archive Endpoint
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints/ep_xyz789/archive \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/endpoints/ep_xyz789/archive \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -228,7 +228,7 @@ curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/endpoints/ep_xyz789/a
 
 ```bash
 # Pause until specific time
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/pause \
+curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/pause \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -237,7 +237,7 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/pause \
   }'
 
 # Resume immediately
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/pause \
+curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/pause \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -255,7 +255,7 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/pause \
 Temporarily adjust execution frequency:
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
+curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -270,7 +270,7 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
 Trigger a specific one-time execution:
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/oneshot \
+curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/hints/oneshot \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -285,7 +285,7 @@ curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/oneshot \
 Reset to baseline schedule:
 
 ```bash
-curl -X DELETE https://api.cronicorn.com/api/endpoints/ep_xyz789/hints \
+curl -X DELETE https://cronicorn.com/api/endpoints/ep_xyz789/hints \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -294,7 +294,7 @@ curl -X DELETE https://api.cronicorn.com/api/endpoints/ep_xyz789/hints \
 Clear failure count (resets exponential backoff):
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/reset-failures \
+curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/reset-failures \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -333,7 +333,7 @@ The AI Planner can override exponential backoff by proposing a tighter interval 
 
 ```bash
 # Override backoff: monitor failing endpoint every 30 seconds
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
+curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -349,7 +349,7 @@ The AI interval hint overrides the baseline (including backoff). When the hint e
 
 ```javascript
 // Create a job with status-code-aware scheduling
-const response = await fetch('https://api.cronicorn.com/api/jobs/job_abc123/endpoints', {
+const response = await fetch('https://cronicorn.com/api/jobs/job_abc123/endpoints', {
   method: 'POST',
   headers: {
     'x-api-key': 'YOUR_API_KEY',
@@ -374,7 +374,7 @@ For more language examples (TypeScript, Python, MCP), see [Code Examples](./code
 If exponential backoff has kicked in and you want to immediately return to baseline without waiting for a successful response:
 
 ```bash
-curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/reset-failures \
+curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/reset-failures \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
@@ -395,7 +395,7 @@ You can query run history to see status codes and response bodies:
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ep_xyz789/runs?limit=10"
+  "https://cronicorn.com/api/endpoints/ep_xyz789/runs?limit=10"
 ```
 
 ---
@@ -406,7 +406,7 @@ curl -H "x-api-key: YOUR_API_KEY" \
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ep_xyz789/runs?limit=20&status=failed"
+  "https://cronicorn.com/api/endpoints/ep_xyz789/runs?limit=20&status=failed"
 ```
 
 **Query Parameters:**
@@ -418,7 +418,7 @@ curl -H "x-api-key: YOUR_API_KEY" \
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  https://api.cronicorn.com/api/runs/run_abc123
+  https://cronicorn.com/api/runs/run_abc123
 ```
 
 **Response:**
@@ -444,7 +444,7 @@ curl -H "x-api-key: YOUR_API_KEY" \
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ep_xyz789/health?sinceHours=24"
+  "https://cronicorn.com/api/endpoints/ep_xyz789/health?sinceHours=24"
 ```
 
 **Response:**
@@ -465,7 +465,7 @@ curl -H "x-api-key: YOUR_API_KEY" \
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/dashboard?startDate=2026-02-01&endDate=2026-02-03"
+  "https://cronicorn.com/api/dashboard?startDate=2026-02-01&endDate=2026-02-03"
 ```
 
 ---
@@ -480,7 +480,7 @@ Get AI analysis history for an endpoint to understand why scheduling decisions w
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.cronicorn.com/api/endpoints/ep_xyz789/analysis-sessions?limit=10"
+  "https://cronicorn.com/api/endpoints/ep_xyz789/analysis-sessions?limit=10"
 ```
 
 **Query Parameters:**
@@ -512,7 +512,7 @@ curl -H "x-api-key: YOUR_API_KEY" \
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  https://api.cronicorn.com/api/analysis-sessions/session_abc123
+  https://cronicorn.com/api/analysis-sessions/session_abc123
 ```
 
 **Response:**
@@ -553,7 +553,7 @@ CPU_LOAD=$(curl -s https://your-monitoring.com/api/cpu-load | jq '.value')
 
 if (( $(echo "$CPU_LOAD > 80" | bc -l) )); then
   # High load detected: tighten monitoring to every 30 seconds
-  curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
+  curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
     -H "x-api-key: YOUR_API_KEY" \
     -H "Content-Type: application/json" \
     -d '{
@@ -563,7 +563,7 @@ if (( $(echo "$CPU_LOAD > 80" | bc -l) )); then
     }'
 elif (( $(echo "$CPU_LOAD < 20" | bc -l) )); then
   # Low load: relax monitoring to every 10 minutes
-  curl -X POST https://api.cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
+  curl -X POST https://cronicorn.com/api/endpoints/ep_xyz789/hints/interval \
     -H "x-api-key: YOUR_API_KEY" \
     -H "Content-Type: application/json" \
     -d '{
@@ -573,7 +573,7 @@ elif (( $(echo "$CPU_LOAD < 20" | bc -l) )); then
     }'
 else
   # Normal load: clear any active hints to return to baseline
-  curl -X DELETE https://api.cronicorn.com/api/endpoints/ep_xyz789/hints \
+  curl -X DELETE https://cronicorn.com/api/endpoints/ep_xyz789/hints \
     -H "x-api-key: YOUR_API_KEY"
 fi
 ```
@@ -582,13 +582,13 @@ fi
 
 ```bash
 # Pause all endpoints in a job during scheduled maintenance
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/pause \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/pause \
   -H "x-api-key: YOUR_API_KEY"
 
 # ... perform maintenance ...
 
 # Resume after maintenance
-curl -X POST https://api.cronicorn.com/api/jobs/job_abc123/resume \
+curl -X POST https://cronicorn.com/api/jobs/job_abc123/resume \
   -H "x-api-key: YOUR_API_KEY"
 ```
 

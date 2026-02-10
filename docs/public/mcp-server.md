@@ -28,47 +28,52 @@ AI: ✅ Done! Health check running every 5 minutes.
 
 ## Quick Start
 
-**Claude Code (CLI):**
 ```bash
 claude mcp add cronicorn -- npx -y @cronicorn/mcp-server
 ```
 
-**Other assistants** (Claude Desktop, Copilot, Cursor, etc.):
-```json
-{
-  "mcpServers": {
-    "cronicorn": {
-      "command": "npx",
-      "args": ["-y", "@cronicorn/mcp-server"]
-    }
-  }
-}
-```
-
-See the [full README](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server#setup) for platform-specific config locations.
+For other assistants (Claude Desktop, Copilot, Cursor, Cline), see the [setup guide](https://github.com/weskerllc/cronicorn/tree/main/apps/mcp-server#setup) for platform-specific config.
 
 First use triggers OAuth in your browser. Approve once, stay connected for 30 days.
 
-## What You Can Do
+## Works at Every Stage
 
-**Create jobs:**
+From first idea to production — your AI assistant knows Cronicorn inside and out.
+
+### Before you build
+
+```
+"Give me 5 profitable SaaS app ideas that use Cronicorn as the scheduling backbone"
+```
+```
+"I have a Next.js app with 3 cron jobs in node-cron — help me migrate them to Cronicorn"
+```
+
+### Setting up
+
 ```
 "Check https://api.myapp.com/health every 5 minutes"
 ```
-
-**Debug failures:**
-```
-"My payment-processor job is timing out - fix it"
-```
-
-**Monitor:**
-```
-"Show me my dashboard stats"
-```
-
-**AI-adaptive scheduling:**
 ```
 "Monitor my API. Check more often if slow, relax when healthy."
+```
+
+### Day-to-day operations
+
+```
+"My payment-processor job is timing out — fix it"
+```
+```
+"Show me my dashboard stats for the last 24 hours"
+```
+
+### Growing
+
+```
+"Add a new endpoint to my monitoring job that checks the database connection"
+```
+```
+"My app is getting more traffic — should I tighten my health check intervals?"
 ```
 
 ## 21 Tools Available
@@ -80,12 +85,9 @@ First use triggers OAuth in your browser. Approve once, stay connected for 30 da
 | **AI Scheduling** | `applyIntervalHint`, `scheduleOneShot`, `clearHints`, `resetFailures` |
 | **Monitoring** | `listEndpointRuns`, `getRunDetails`, `getEndpointHealth`, `getDashboardStats` |
 
-## Built-In Guides
+## Built-In Documentation
 
-| Command | Description |
-|---------|-------------|
-| `/setup-first-job` | Interactive setup for your first scheduled job |
-| `/troubleshoot-failures` | Debug failing endpoints with systematic diagnosis |
+The server bundles comprehensive docs as MCP resources. Ask your AI assistant anything — it has access to concepts, recipes, API reference, troubleshooting guides, and self-hosting instructions.
 
 ## Works With
 

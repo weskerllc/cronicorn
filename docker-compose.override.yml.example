@@ -1,0 +1,56 @@
+# docker-compose.override.yml.example
+#
+# Copy this file to docker-compose.override.yml to customize your deployment.
+# Docker Compose automatically merges docker-compose.override.yml with docker-compose.yml.
+#
+# Usage:
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+#   # Edit as needed, then:
+#   docker compose up -d
+
+services:
+  # Expose the web app directly (bypassing reverse proxy for local use)
+  web:
+    ports:
+      - "5173:5173"
+
+  # Expose the docs site directly
+  docs:
+    ports:
+      - "3000:80"
+
+  # Resource limits for constrained environments
+  api:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  scheduler:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  ai-planner:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  # Custom database volume path
+  db:
+    volumes:
+      - /data/cronicorn/postgres:/var/lib/postgresql/data
+
+  # Log driver configuration (send logs to a central collector)
+  # Uncomment and configure for your logging infrastructure:
+  # api:
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"

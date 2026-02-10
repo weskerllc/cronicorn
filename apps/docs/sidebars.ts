@@ -21,7 +21,26 @@ const sidebars: SidebarsConfig = {
     "mcp-server",
     "api-reference",
     "use-cases",
-    "self-hosting",
+    {
+      type: "category",
+      label: "Self-Hosting",
+      link: {
+        type: "generated-index",
+        title: "Self-Hosting Documentation",
+        description:
+          "Deploy and operate Cronicorn on your own infrastructure.",
+      },
+      items: [
+        "self-hosting/self-hosting-index",
+        "self-hosting/self-hosting-configuration",
+        "self-hosting/self-hosting-reverse-proxy",
+        "self-hosting/self-hosting-upgrading",
+        "self-hosting/self-hosting-backup-restore",
+        "self-hosting/self-hosting-monitoring",
+        "self-hosting/self-hosting-troubleshooting",
+        "self-hosting/self-hosting-known-limitations",
+      ],
+    },
     "troubleshooting",
     {
       type: "category",

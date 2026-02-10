@@ -119,7 +119,7 @@ Microsoft's reference implementation uses device flow for MCP authentication wit
 **Use case:** Direct API access, programmatic integration, non-AI tools
 
 ```typescript
-const response = await fetch('https://api.cronicorn.com/api/v1/jobs', {
+const response = await fetch('https://cronicorn.com/api/v1/jobs', {
   headers: {
     'x-api-key': 'cronicorn_key_abc123...'
   }
@@ -144,7 +144,7 @@ const response = await fetch('https://api.cronicorn.com/api/v1/jobs', {
 **Use case:** AI agents, CLI tools, interactive environments
 
 ```typescript
-const response = await fetch('https://api.cronicorn.com/api/v1/jobs', {
+const response = await fetch('https://cronicorn.com/api/v1/jobs', {
   headers: {
     'Authorization': 'Bearer oauth_token_xyz789...'
   }
@@ -216,7 +216,7 @@ const response = await fetch('https://api.cronicorn.com/api/v1/jobs', {
 CRONICORN_API_KEY=cronicorn_key_abc123...
 
 // api/cron/setup.ts
-const response = await fetch('https://api.cronicorn.com/api/v1/jobs', {
+const response = await fetch('https://cronicorn.com/api/v1/jobs', {
   headers: { 'x-api-key': process.env.CRONICORN_API_KEY }
 });
 ```
