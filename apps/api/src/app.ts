@@ -22,6 +22,7 @@ import configureOpenAPI from "./lib/openapi.js";
 import { createRateLimitMiddleware, startRateLimitCleanup } from "./lib/rate-limiter.js";
 import { requestIdMiddleware } from "./lib/request-id.js";
 import { requestLoggerMiddleware } from "./lib/request-logger.js";
+import { securityHeadersMiddleware } from "./lib/security-headers.js";
 import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";
@@ -67,6 +68,10 @@ export async function createApp(
   // Request ID middleware - generates UUID for each request and adds X-Request-Id header
   // Must run before request-logger so requestId is available for logging
   app.use("*", requestIdMiddleware);
+
+  // Security headers middleware - sets X-Content-Type-Options, X-Frame-Options, CSP, etc.
+  // HSTS only enabled in production to avoid issues with local dev HTTP
+  app.use("*", securityHeadersMiddleware({ enableHsts: config.NODE_ENV === "production" }));
 
   // Request logging middleware - logs method, path, status, duration, requestId, userId
   // Always enabled for production observability (replaces conditional honoLogger)

@@ -356,6 +356,19 @@ The following infrastructure gaps were identified during assessment. These items
 
 ---
 
+## Production Readiness: Source Maps & Security Headers (2026-02-10)
+
+**Status**: Implemented
+
+### Implementation Summary
+- Added `build.sourcemap: false` to `apps/web/vite.config.ts` to prevent leaking TypeScript source in production
+- Added HTTP security headers middleware to API (`apps/api/src/lib/security-headers.ts`)
+
+### Remaining Work
+- [ ] **Web app security headers**: The web app (Nitro layer) does not set its own security headers. Currently relying on a reverse proxy (nginx/Cloudflare) to add them. Consider adding Nitro middleware if self-hosted deployments need headers without a proxy.
+
+---
+
 ## Self-Hosting Gaps
 
 **Status**: Identified during self-hosting docs restructure (ADR-0069)
