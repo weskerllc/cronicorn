@@ -1,4 +1,4 @@
-import type { Clock, Cron, Job, JobEndpoint, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
+import type { Clock, Cron, ExecutionResult, Job, JobEndpoint, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { getExecutionLimits } from "@cronicorn/domain";
 import { nanoid } from "nanoid";
@@ -838,6 +838,51 @@ export class JobsManager {
     const since = new Date(now.getTime() - sinceHours * 60 * 60 * 1000);
 
     return this.runsRepo.getHealthSummary(endpointId, since);
+  }
+
+  /**
+   * Record a test run for an endpoint.
+   * Creates a run with source "test" and finishes it immediately.
+   * Intentionally does NOT call jobsRepo.updateAfterRun — no schedule side effects.
+   *
+   * @param endpointId - The endpoint ID
+   * @param result - The execution result from the dispatcher
+   * @returns Test run result with runId and execution details
+   */
+  async recordTestRun(
+    endpointId: string,
+    result: ExecutionResult,
+  ): Promise<{
+      runId: string;
+      status: "success" | "failed";
+      durationMs: number;
+      statusCode?: number;
+      responseBody?: import("@cronicorn/domain").JsonValue;
+      errorMessage?: string;
+    }> {
+    const runId = await this.runsRepo.create({
+      endpointId,
+      status: "running",
+      attempt: 1,
+      source: "test",
+    });
+
+    await this.runsRepo.finish(runId, {
+      status: result.status,
+      durationMs: result.durationMs,
+      statusCode: result.statusCode,
+      responseBody: result.responseBody,
+      err: result.errorMessage,
+    });
+
+    return {
+      runId,
+      status: result.status,
+      durationMs: result.durationMs,
+      statusCode: result.statusCode,
+      responseBody: result.responseBody,
+      errorMessage: result.errorMessage,
+    };
   }
 
   // ==================== Usage & Quota ====================

@@ -267,6 +267,10 @@ export const GetRunDetailsDescription = "Get detailed information about a specif
 export const GetHealthSummarySummary = "Get endpoint health";
 export const GetHealthSummaryDescription = "Get health summary for an endpoint. Returns success/failure counts, average duration, last run info, and current failure streak. Useful for monitoring and alerting.";
 
+export const TestEndpointSummary = "Test endpoint";
+export const TestEndpointDescription = "Execute an endpoint immediately and return the result. Creates a run record (source: 'test') but does NOT affect scheduling state (nextRunAt, lastRunAt, failureCount). Works on paused endpoints. Blocked on archived endpoints.";
+export const TestEndpointResponseSchema = base.TestEndpointResponseBaseSchema;
+
 // ==================== Execution Visibility Schemas ====================
 
 export const ListRunsQuerySchema = base.ListRunsQueryBaseSchema;

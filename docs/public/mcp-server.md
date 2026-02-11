@@ -76,14 +76,14 @@ From first idea to production — your AI assistant knows Cronicorn inside and o
 "My app is getting more traffic — should I tighten my health check intervals?"
 ```
 
-## 21 Tools Available
+## 22 Tools Available
 
 | Category | Tools |
 |----------|-------|
 | **Jobs** | `createJob`, `listJobs`, `getJob`, `updateJob`, `archiveJob`, `pauseJob`, `resumeJob` |
 | **Endpoints** | `addEndpoint`, `listEndpoints`, `getEndpoint`, `updateEndpoint`, `archiveEndpoint`, `pauseResumeEndpoint` |
 | **AI Scheduling** | `applyIntervalHint`, `scheduleOneShot`, `clearHints`, `resetFailures` |
-| **Monitoring** | `listEndpointRuns`, `getRunDetails`, `getEndpointHealth`, `getDashboardStats` |
+| **Monitoring** | `listEndpointRuns`, `getRunDetails`, `getEndpointHealth`, `getDashboardStats`, `testEndpoint` |
 
 ## Built-In Documentation
 

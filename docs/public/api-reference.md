@@ -461,6 +461,37 @@ curl -H "x-api-key: YOUR_API_KEY" \
 }
 ```
 
+### Test Endpoint
+
+Execute an endpoint immediately and return the result. Creates a run record with `source: "test"` but does **not** affect scheduling state (`nextRunAt`, `lastRunAt`, `failureCount`). Works on paused endpoints. Blocked on archived endpoints.
+
+```bash
+curl -X POST -H "x-api-key: YOUR_API_KEY" \
+  https://cronicorn.com/api/endpoints/ep_xyz789/test
+```
+
+**Response:**
+```json
+{
+  "runId": "run_test_abc123",
+  "status": "success",
+  "durationMs": 234,
+  "statusCode": 200,
+  "responseBody": { "healthy": true }
+}
+```
+
+If the endpoint fails:
+```json
+{
+  "runId": "run_test_def456",
+  "status": "failed",
+  "durationMs": 5012,
+  "statusCode": 503,
+  "errorMessage": "HTTP 503 Service Unavailable"
+}
+```
+
 ### Get Dashboard Stats
 
 ```bash

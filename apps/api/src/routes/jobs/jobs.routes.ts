@@ -364,6 +364,21 @@ export const getHealthSummary = createRoute({
   },
 });
 
+export const testEndpoint = createRoute({
+  path: "/endpoints/:id/test",
+  method: "post",
+  tags: ["Execution"],
+  summary: schemas.TestEndpointSummary,
+  description: schemas.TestEndpointDescription,
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(schemas.TestEndpointResponseSchema, "Test result"),
+    ...errorResponses,
+  },
+});
+
 // ==================== AI Analysis Sessions Routes ====================
 
 export const listSessions = createRoute({
@@ -422,6 +437,7 @@ export type ResetFailuresRoute = typeof resetFailures;
 export type ListRunsRoute = typeof listRuns;
 export type GetRunDetailsRoute = typeof getRunDetails;
 export type GetHealthSummaryRoute = typeof getHealthSummary;
+export type TestEndpointRoute = typeof testEndpoint;
 
 export type ListSessionsRoute = typeof listSessions;
 export type GetSessionRoute = typeof getSession;

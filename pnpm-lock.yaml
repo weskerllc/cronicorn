@@ -126,6 +126,9 @@ importers:
       '@cronicorn/adapter-drizzle':
         specifier: workspace:*
         version: link:../../packages/adapter-drizzle
+      '@cronicorn/adapter-http':
+        specifier: workspace:*
+        version: link:../../packages/adapter-http
       '@cronicorn/adapter-stripe':
         specifier: workspace:*
         version: link:../../packages/adapter-stripe
