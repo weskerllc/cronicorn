@@ -1,3 +1,10 @@
+## [1.22.4](https://github.com/weskerllc/cronicorn/compare/v1.22.3...v1.22.4) (2026-02-11)
+
+
+### Bug Fixes
+
+* MCP docs ([#128](https://github.com/weskerllc/cronicorn/issues/128)) ([983cb1a](https://github.com/weskerllc/cronicorn/commit/983cb1af9da7aa36934c4964b17ca7baf0879699))
+
 ## [1.22.3](https://github.com/weskerllc/cronicorn/compare/v1.22.2...v1.22.3) (2026-02-10)
 
 
