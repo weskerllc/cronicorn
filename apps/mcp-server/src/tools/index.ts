@@ -30,6 +30,7 @@ import { registerResumeJob } from "./api/post-job-resume.js";
 import { registerPostJobs } from "./api/post-jobs.js";
 import { registerPostOneShotHint } from "./api/post-oneshot-hint.js";
 import { registerPostResetFailures } from "./api/post-reset-failures.js";
+import { registerPostTestEndpoint } from "./api/post-test-endpoint.js";
 
 export function registerTools(
   server: McpServer,
@@ -70,6 +71,7 @@ export function registerTools(
   registerGetEndpointRuns(server, apiClient);
   registerGetRunDetails(server, apiClient);
   registerGetEndpointHealth(server, apiClient);
+  registerPostTestEndpoint(server, apiClient);
 
   // Dashboard
   registerGetDashboardStats(server, apiClient);

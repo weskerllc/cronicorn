@@ -1,6 +1,7 @@
-import type { PaymentProvider } from "@cronicorn/domain";
+import type { Dispatcher, PaymentProvider } from "@cronicorn/domain";
 
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
+import { HttpDispatcher } from "@cronicorn/adapter-http";
 import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { sql } from "drizzle-orm";
@@ -38,6 +39,7 @@ export async function createApp(
   options?: {
     useTransactions?: boolean; // Explicit control for tests
     paymentProvider?: PaymentProvider; // Optional payment provider for DI testing
+    dispatcher?: Dispatcher; // Optional dispatcher for DI testing
   },
 ) {
   // Initialize Better Auth (pass Drizzle instance, not raw pool)
@@ -47,6 +49,7 @@ export async function createApp(
   // Create stateless singletons (safe to reuse across requests)
   const clock = new SystemClock();
   const cron = new CronParserAdapter();
+  const dispatcher: Dispatcher = options?.dispatcher ?? new HttpDispatcher();
 
   // Determine if we should create new transactions or use the passed db directly
   // In tests, db is already a transaction, so we pass useTransactions: false
@@ -115,6 +118,7 @@ export async function createApp(
     c.set("db", db);
     c.set("clock", clock);
     c.set("cron", cron);
+    c.set("dispatcher", dispatcher);
     c.set("auth", auth);
     c.set("config", config);
     c.set("paymentProvider", paymentProvider);

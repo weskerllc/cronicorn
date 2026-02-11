@@ -213,3 +213,12 @@ export const HealthSummaryResponseBaseSchema = z.object({
   }).nullable().describe("Last run information"),
   failureStreak: z.number().int().describe("Current consecutive failure count"),
 });
+
+export const TestEndpointResponseBaseSchema = z.object({
+  runId: z.string().describe("ID of the test run record"),
+  status: z.enum(["success", "failed"]).describe("Execution result"),
+  durationMs: z.number().describe("Execution duration in milliseconds"),
+  statusCode: z.number().int().optional().describe("HTTP status code"),
+  responseBody: z.any().nullable().optional().describe("Response body (JSON, within size limit)"),
+  errorMessage: z.string().optional().describe("Error message if failed"),
+});
