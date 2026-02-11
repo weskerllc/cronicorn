@@ -84,6 +84,7 @@ jobs:
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
