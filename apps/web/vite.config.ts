@@ -76,7 +76,9 @@ export default defineConfig({
       "@cronicorn/api/client": resolve(__dirname, "../api/src/client.ts"),
     },
   },
-  // TanStack Start handles build config - remove manual config
+  build: {
+    sourcemap: false,
+  },
   server: {
     port: 5173,
     // File watcher optimization
