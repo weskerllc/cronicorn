@@ -20,6 +20,7 @@
     "@cronicorn/adapter-cron": "workspace:*",
     "@cronicorn/adapter-drizzle": "workspace:*",
     "@cronicorn/adapter-http": "workspace:*",
+    "@cronicorn/adapter-pino": "workspace:*",
     "@cronicorn/adapter-stripe": "workspace:*",
     "@cronicorn/adapter-system-clock": "workspace:*",
     "@cronicorn/api-contracts": "workspace:*",

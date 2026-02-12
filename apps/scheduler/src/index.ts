@@ -6,8 +6,8 @@
  */
 
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
-import { DrizzleJobsRepo, DrizzleRunsRepo, schema } from "@cronicorn/adapter-drizzle";
-import { HttpDispatcher } from "@cronicorn/adapter-http";
+import { DrizzleJobsRepo, DrizzleRunsRepo, DrizzleSigningKeyProvider, schema } from "@cronicorn/adapter-drizzle";
+import { HttpDispatcher, SigningDispatcher } from "@cronicorn/adapter-http";
 import { PinoLoggerAdapter } from "@cronicorn/adapter-pino";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { DEV_DATABASE, DEV_ENV } from "@cronicorn/config-defaults";
@@ -55,7 +55,7 @@ async function main() {
   // Instantiate all adapters
   const clock = new SystemClock();
   const cron = new CronParserAdapter();
-  const dispatcher = new HttpDispatcher();
+  const httpDispatcher = new HttpDispatcher();
   const jobsRepo = new DrizzleJobsRepo(db);
   const runsRepo = new DrizzleRunsRepo(db);
 
@@ -76,6 +76,10 @@ async function main() {
       : {}),
   });
   const logger = new PinoLoggerAdapter(pinoLogger);
+
+  // Wrap dispatcher with HMAC signing
+  const signingKeyProvider = new DrizzleSigningKeyProvider(db);
+  const dispatcher = new SigningDispatcher(httpDispatcher, signingKeyProvider, logger, clock);
 
   // Wire up scheduler with dependencies
   const scheduler = new Scheduler({

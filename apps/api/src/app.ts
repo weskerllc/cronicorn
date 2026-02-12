@@ -1,7 +1,9 @@
 import type { Dispatcher, PaymentProvider } from "@cronicorn/domain";
 
 import { CronParserAdapter } from "@cronicorn/adapter-cron";
-import { HttpDispatcher } from "@cronicorn/adapter-http";
+import { DrizzleSigningKeyProvider } from "@cronicorn/adapter-drizzle";
+import { HttpDispatcher, SigningDispatcher } from "@cronicorn/adapter-http";
+import { PinoLoggerAdapter } from "@cronicorn/adapter-pino";
 import { StripePaymentProvider } from "@cronicorn/adapter-stripe";
 import { SystemClock } from "@cronicorn/adapter-system-clock";
 import { sql } from "drizzle-orm";
@@ -28,6 +30,7 @@ import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";
 import jobs from "./routes/jobs/jobs.index.js";
+import signingKeys from "./routes/signing-keys/signing-keys.index.js";
 import subscriptions from "./routes/subscriptions/subscriptions.index.js";
 import webhooks from "./routes/webhooks.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
@@ -49,7 +52,12 @@ export async function createApp(
   // Create stateless singletons (safe to reuse across requests)
   const clock = new SystemClock();
   const cron = new CronParserAdapter();
-  const dispatcher: Dispatcher = options?.dispatcher ?? new HttpDispatcher();
+  const httpDispatcher = new HttpDispatcher();
+  // @ts-expect-error - Drizzle type mismatch between pnpm versions
+  const signingKeyProvider = new DrizzleSigningKeyProvider(db);
+  const signingLogger = new PinoLoggerAdapter(logger);
+  const dispatcher: Dispatcher = options?.dispatcher
+    ?? new SigningDispatcher(httpDispatcher, signingKeyProvider, signingLogger, clock);
 
   // Determine if we should create new transactions or use the passed db directly
   // In tests, db is already a transaction, so we pass useTransactions: false
@@ -227,6 +235,19 @@ export async function createApp(
   });
   app.use("/devices/*", rateLimitMiddleware);
 
+  app.use("/signing-keys/*", async (c, next) => {
+    const auth = c.get("auth");
+    return requireAuth(auth, config)(c, next);
+  });
+  app.use("/signing-keys/*", rateLimitMiddleware);
+
+  // Exact path for GET /signing-keys (no trailing wildcard)
+  app.use("/signing-keys", async (c, next) => {
+    const auth = c.get("auth");
+    return requireAuth(auth, config)(c, next);
+  });
+  app.use("/signing-keys", rateLimitMiddleware);
+
   // Health check endpoint (no auth required)
   // Pings database with 2s timeout to verify connectivity
   app.get("/health", async (c) => {
@@ -265,6 +286,7 @@ export async function createApp(
     dashboard,
     devices,
     jobs,
+    signingKeys,
     subscriptions,
     webhooks,
   ] as const;

@@ -6,4 +6,5 @@ export * from "./external.js";
 export * from "./observability.js";
 export * from "./repos.js";
 export * from "./services.js";
+export * from "./signing.js";
 export * from "./time.js";

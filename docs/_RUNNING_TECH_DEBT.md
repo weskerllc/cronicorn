@@ -1,4 +1,26 @@
 
+## Outbound Request Signing (Implemented 2026-02-10)
+
+**Status**: Core implementation complete
+**ADR**: `.adr/0072-outbound-request-signing.md`
+
+### Implementation Summary
+- HMAC-SHA256 signing of all outbound HTTP requests via `SigningDispatcher` decorator
+- Per-account signing keys stored in `signing_keys` table
+- API routes: GET/POST/rotate signing keys
+- MCP tools: getSigningKey, createSigningKey, rotateSigningKey
+- Auto-provisioning via Better Auth `databaseHooks` and seed-admin
+
+### Remaining Work
+- [ ] No dual-key grace period during rotation (old key immediately invalidated — could cause verification failures for in-flight requests)
+- [ ] No `@cronicorn/verify` npm package (verification is docs-only code snippets)
+- [ ] No signing key audit log (rotations/creations are not tracked beyond DB timestamps)
+- [ ] No per-endpoint key override (all endpoints share the account-level key)
+- [ ] SigningKeyProvider does a DB query per dispatch (add LRU cache when dispatch volume grows)
+- [ ] No API integration tests for signing key routes (unit/integration tests for repo and dispatcher exist)
+
+---
+
 ## 14-Day Money-Back Guarantee (Implemented)
 
 **Status**: ✅ Core implementation complete  

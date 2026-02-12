@@ -10,4 +10,6 @@ export * from "./quota-guard.js";
 export * from "./runs-repo.js";
 export * as schema from "./schema.js";
 export * from "./sessions-repo.js";
+export * from "./signing-key-provider.js";
+export * from "./signing-key-repo.js";
 export * from "./webhook-events-repo.js";

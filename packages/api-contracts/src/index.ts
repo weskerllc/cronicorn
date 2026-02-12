@@ -49,4 +49,5 @@
 export * as dashboard from "./dashboard/index.js";
 export * as jobs from "./jobs/index.js";
 export * as sessions from "./sessions/index.js";
+export * as signingKeys from "./signing-keys/index.js";
 export * as subscriptions from "./subscriptions/index.js";
