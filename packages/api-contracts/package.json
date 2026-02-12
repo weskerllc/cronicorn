@@ -23,6 +23,10 @@
     "./dashboard": {
       "types": "./dist/dashboard/index.d.ts",
       "import": "./dist/dashboard/index.js"
+    },
+    "./signing-keys": {
+      "types": "./dist/signing-keys/index.d.ts",
+      "import": "./dist/signing-keys/index.js"
     }
   },
   "scripts": {

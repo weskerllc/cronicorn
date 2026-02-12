@@ -12,6 +12,10 @@
     "./fixtures": {
       "types": "./dist/fixtures/index.d.ts",
       "default": "./dist/fixtures/index.js"
+    },
+    "./signing": {
+      "types": "./dist/signing/index.d.ts",
+      "default": "./dist/signing/index.js"
     }
   },
   "files": ["dist"],
