@@ -69,7 +69,7 @@ pnpm lint:fix         # Auto-fix and format
 
 ## Key Locations
 
-- **`.adr/`** - 63+ Architecture Decision Records
+- **`.adr/`** - Architecture Decision Records
   - ADR-0002: Hexagonal Architecture Principles
   - ADR-0009: Transaction-per-Test Pattern
 - **`docs/_RUNNING_TECH_DEBT.md`** - Tech debt log (mandatory for all TODOs)

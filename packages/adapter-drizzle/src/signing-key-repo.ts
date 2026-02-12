@@ -5,6 +5,7 @@
  * Keys are stored as raw hex strings (64 chars = 32 bytes).
  */
 
+import type { SigningKeysRepo } from "@cronicorn/domain";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 import { eq } from "drizzle-orm";
@@ -12,7 +13,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 
 import { signingKeys } from "./schema.js";
 
-export class DrizzleSigningKeyRepo {
+export class DrizzleSigningKeyRepo implements SigningKeysRepo {
   // eslint-disable-next-line ts/no-explicit-any
   constructor(private readonly db: NodePgDatabase<any>) {}
 
