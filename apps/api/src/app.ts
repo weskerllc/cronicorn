@@ -18,6 +18,7 @@ import { createAuth } from "./auth/config.js";
 import { requireAuth } from "./auth/middleware.js";
 import { createDashboardManager } from "./lib/create-dashboard-manager.js";
 import { createJobsManager } from "./lib/create-jobs-manager.js";
+import { createSigningKeysRepo } from "./lib/create-signing-keys-repo.js";
 import { createSubscriptionsManager } from "./lib/create-subscriptions-manager.js";
 import { errorHandler } from "./lib/error-handler.js";
 import { logger } from "./lib/logger.js";
@@ -159,6 +160,20 @@ export async function createApp(
       else {
         const manager = createDashboardManager(db, clock);
         return fn(manager);
+      }
+    });
+
+    // Provide transaction wrapper for SigningKeysRepo
+    c.set("withSigningKeysRepo", (fn) => {
+      if (shouldCreateTransactions) {
+        return db.transaction(async (tx) => {
+          const repo = createSigningKeysRepo(tx);
+          return fn(repo);
+        });
+      }
+      else {
+        const repo = createSigningKeysRepo(db);
+        return fn(repo);
       }
     });
 

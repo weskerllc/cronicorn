@@ -95,7 +95,7 @@ const TimeInput: React.FC<TimeInputProps> = ({ value, onChange }) => {
 
             if (e.key === 'ArrowUp') {
                 e.preventDefault()
-                let newTime = { ...time }
+                const newTime = { ...time }
 
                 if (field === 'hours') {
                     newTime.hours = (time.hours + 1) % 24
@@ -114,7 +114,7 @@ const TimeInput: React.FC<TimeInputProps> = ({ value, onChange }) => {
                 onChange(newTime.hours, newTime.minutes)
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault()
-                let newTime = { ...time }
+                const newTime = { ...time }
 
                 if (field === 'hours') {
                     newTime.hours = time.hours === 0 ? 23 : time.hours - 1

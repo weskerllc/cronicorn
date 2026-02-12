@@ -13,6 +13,7 @@ import authConfig from "./routes/auth/auth-config.index.js";
 import dashboard from "./routes/dashboard/dashboard.index.js";
 import devices from "./routes/devices/devices.index.js";
 import jobs from "./routes/jobs/jobs.index.js";
+import signingKeys from "./routes/signing-keys/signing-keys.index.js";
 import subscriptions from "./routes/subscriptions/subscriptions.index.js";
 import { type AppOpenAPI, createRouter } from "./types.js";
 
@@ -22,7 +23,8 @@ function registerClientRoutes(app: AppOpenAPI) {
     .route("/", jobs)
     .route("/", subscriptions)
     .route("/", dashboard)
-    .route("/", devices);
+    .route("/", devices)
+    .route("/", signingKeys);
 }
 
 // stand alone router type used for api client

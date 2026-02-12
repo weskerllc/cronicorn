@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { Brain, Clock, ExternalLink, Zap } from "lucide-react";
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
