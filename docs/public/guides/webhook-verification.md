@@ -1,8 +1,16 @@
 ---
 title: Webhook Verification
 description: How to verify that incoming requests are genuinely from Cronicorn
+tags:
+  - user
+  - security
+  - webhooks
+sidebar_position: 1
 mcp:
   uri: "cronicorn://guides/webhook-verification"
+  mimeType: text/markdown
+  priority: 0.85
+  lastModified: 2026-02-11T00:00:00Z
 ---
 
 # Webhook Verification
