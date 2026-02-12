@@ -1,3 +1,5 @@
+import type { JobEndpoint } from "@cronicorn/domain";
+
 import * as HTTPStatusCodes from "stoker/http-status-codes";
 
 import type { AppRouteHandler } from "../../types.js";
@@ -405,6 +407,50 @@ export const getHealthSummary: AppRouteHandler<routes.GetHealthSummaryRoute> = a
         defaultMessage: "Failed to get health summary",
       });
     }
+  });
+};
+
+/**
+ * Test endpoint handler — three-phase pattern:
+ * 1. Auth check in transaction (fetch endpoint, verify ownership)
+ * 2. Dispatch HTTP request outside transaction (may be long-running)
+ * 3. Record test run in new transaction
+ *
+ * Uses closure capture because withJobsManager requires Response return type.
+ */
+// @ts-expect-error - Multi-phase withJobsManager pattern causes deep type instantiation
+export const testEndpoint: AppRouteHandler<routes.TestEndpointRoute> = async (c) => {
+  const { id } = c.req.valid("param");
+  const { userId } = getAuthContext(c);
+
+  // Phase 1: Auth check + fetch endpoint (in transaction)
+  let endpoint: JobEndpoint | null = null;
+
+  await c.get("withJobsManager")(async (manager) => {
+    endpoint = await manager.getEndpoint(userId, id);
+    return c.body(null, HTTPStatusCodes.NO_CONTENT);
+  });
+
+  if (!endpoint) {
+    return c.json({ message: "Endpoint not found" }, HTTPStatusCodes.NOT_FOUND);
+  }
+
+  // Re-bind after null guard (TS can't track closure mutations)
+  const ep: JobEndpoint = endpoint;
+
+  // Block archived endpoints (allow paused — they're often paused for debugging)
+  if (ep.archivedAt) {
+    return c.json({ message: "Cannot test an archived endpoint" }, HTTPStatusCodes.BAD_REQUEST);
+  }
+
+  // Phase 2: Execute the HTTP request (outside transaction — may be long-running)
+  const dispatcher = c.get("dispatcher");
+  const result = await dispatcher.execute(ep);
+
+  // Phase 3: Record the test run (new transaction)
+  return c.get("withJobsManager")(async (manager) => {
+    const testResult = await manager.recordTestRun(id, result);
+    return c.json(testResult, HTTPStatusCodes.OK);
   });
 };
 

@@ -39,7 +39,7 @@ export function getUsageWarningLevel(
  * Returns null if no warnings present.
  */
 export function getMostCriticalWarning(
-  metrics: UsageMetric[],
+  metrics: Array<UsageMetric>,
 ): UsageWarning | null {
   let mostCritical: UsageWarning | null = null;
 

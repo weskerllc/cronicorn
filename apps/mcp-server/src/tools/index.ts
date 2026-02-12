@@ -17,6 +17,7 @@ import { registerGetEndpointRuns } from "./api/get-endpoint-runs.js";
 import { registerGetEndpoint } from "./api/get-endpoint.js";
 import { registerGetJob } from "./api/get-job.js";
 import { registerGetRunDetails } from "./api/get-run-details.js";
+import { registerGetSigningKey } from "./api/get-signing-key.js";
 import { registerListEndpoints } from "./api/list-endpoints.js";
 import { registerListJobs } from "./api/list-jobs.js";
 import { registerPatchEndpoint } from "./api/patch-endpoint.js";
@@ -30,6 +31,9 @@ import { registerResumeJob } from "./api/post-job-resume.js";
 import { registerPostJobs } from "./api/post-jobs.js";
 import { registerPostOneShotHint } from "./api/post-oneshot-hint.js";
 import { registerPostResetFailures } from "./api/post-reset-failures.js";
+import { registerRotateSigningKey } from "./api/post-rotate-signing-key.js";
+import { registerCreateSigningKey } from "./api/post-signing-key.js";
+import { registerPostTestEndpoint } from "./api/post-test-endpoint.js";
 
 export function registerTools(
   server: McpServer,
@@ -70,7 +74,13 @@ export function registerTools(
   registerGetEndpointRuns(server, apiClient);
   registerGetRunDetails(server, apiClient);
   registerGetEndpointHealth(server, apiClient);
+  registerPostTestEndpoint(server, apiClient);
 
   // Dashboard
   registerGetDashboardStats(server, apiClient);
+
+  // Signing Keys
+  registerGetSigningKey(server, apiClient);
+  registerCreateSigningKey(server, apiClient);
+  registerRotateSigningKey(server, apiClient);
 }

@@ -31,6 +31,7 @@ const router = createRouter()
   .openapi(routes.listRuns, handlers.listRuns)
   .openapi(routes.getRunDetails, handlers.getRunDetails)
   .openapi(routes.getHealthSummary, handlers.getHealthSummary)
+  .openapi(routes.testEndpoint, handlers.testEndpoint)
 
   // ==================== AI Analysis Sessions Routes ====================
   .openapi(routes.listSessions, handlers.listSessions)
