@@ -283,3 +283,22 @@ export const webhookEvents = pgTable("webhook_events", {
 
 export type WebhookEventRow = typeof webhookEvents.$inferSelect;
 export type WebhookEventInsert = typeof webhookEvents.$inferInsert;
+
+/**
+ * Signing Keys table.
+ * Stores HMAC-SHA256 signing keys for outbound request verification.
+ * One key per user account; raw key stored in plaintext (matching oauthTokens.accessToken pattern).
+ */
+export const signingKeys = pgTable("signing_keys", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }).unique(),
+  key: text("key").notNull(), // Raw signing key (hex, 64 chars)
+  keyPrefix: text("key_prefix").notNull(), // Display prefix: "sk_abc12345"
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  rotatedAt: timestamp("rotated_at", { mode: "date", withTimezone: true }),
+}, table => ({
+  userIdIdx: index("signing_keys_user_id_idx").on(table.userId),
+}));
+
+export type SigningKeyRow = typeof signingKeys.$inferSelect;
+export type SigningKeyInsert = typeof signingKeys.$inferInsert;

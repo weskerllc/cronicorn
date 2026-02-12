@@ -1,10 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  getUsageWarningLevel,
-  getMostCriticalWarning,
+  
   formatUsagePercentage,
-  type UsageMetric,
+  getMostCriticalWarning,
+  getUsageWarningLevel
 } from "../usage-helpers";
+import type {UsageMetric} from "../usage-helpers";
 
 describe("getUsageWarningLevel", () => {
   it("returns 'none' for usage below 80%", () => {
@@ -31,7 +32,7 @@ describe("getUsageWarningLevel", () => {
 
 describe("getMostCriticalWarning", () => {
   it("returns null when all metrics are below 80%", () => {
-    const metrics: UsageMetric[] = [
+    const metrics: Array<UsageMetric> = [
       { used: 50, limit: 100, label: "Metric A" },
       { used: 70, limit: 100, label: "Metric B" },
     ];
@@ -40,7 +41,7 @@ describe("getMostCriticalWarning", () => {
   });
 
   it("returns the warning-level metric when only one is at warning", () => {
-    const metrics: UsageMetric[] = [
+    const metrics: Array<UsageMetric> = [
       { used: 50, limit: 100, label: "Metric A" },
       { used: 85, limit: 100, label: "Metric B" },
     ];
@@ -52,7 +53,7 @@ describe("getMostCriticalWarning", () => {
   });
 
   it("returns the critical-level metric when both warning and critical exist", () => {
-    const metrics: UsageMetric[] = [
+    const metrics: Array<UsageMetric> = [
       { used: 85, limit: 100, label: "Metric A" }, // warning
       { used: 98, limit: 100, label: "Metric B" }, // critical
     ];
@@ -64,7 +65,7 @@ describe("getMostCriticalWarning", () => {
   });
 
   it("returns first critical metric when multiple are critical", () => {
-    const metrics: UsageMetric[] = [
+    const metrics: Array<UsageMetric> = [
       { used: 98, limit: 100, label: "Metric A" }, // critical
       { used: 96, limit: 100, label: "Metric B" }, // critical
     ];
@@ -76,7 +77,7 @@ describe("getMostCriticalWarning", () => {
   });
 
   it("handles unlimited metrics (limit = 0)", () => {
-    const metrics: UsageMetric[] = [
+    const metrics: Array<UsageMetric> = [
       { used: 1000, limit: 0, label: "Unlimited" },
       { used: 85, limit: 100, label: "Limited" },
     ];

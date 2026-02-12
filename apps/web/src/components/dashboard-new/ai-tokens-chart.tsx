@@ -10,9 +10,10 @@ import {
 import { DashboardCard } from "./dashboard-card";
 import type { AISessionTimeSeriesPoint } from "@cronicorn/api-contracts/dashboard";
 import type { ChartConfig } from "@cronicorn/ui-library/components/chart";
+import type {DateRange} from "@/hooks/use-chart-range-select";
 import { getSanitizedKey } from "@/lib/endpoint-colors";
 import { formatTooltipDate, getDateRangeEndLabel, getDateRangeStartLabel, parseBackendDateAsLocal } from "@/lib/time-range-labels";
-import { useChartRangeSelect, type DateRange } from "@/hooks/use-chart-range-select";
+import {  useChartRangeSelect } from "@/hooks/use-chart-range-select";
 
 interface AITokensChartProps {
     data: Array<AISessionTimeSeriesPoint>;

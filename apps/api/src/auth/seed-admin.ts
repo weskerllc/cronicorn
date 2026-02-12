@@ -1,4 +1,4 @@
-import { schema } from "@cronicorn/adapter-drizzle";
+import { DrizzleSigningKeyRepo, schema } from "@cronicorn/adapter-drizzle";
 import { sql } from "drizzle-orm";
 
 import type { Env } from "../lib/config.js";
@@ -60,6 +60,23 @@ export async function seedAdminUser(config: Env, db: Database, auth: Auth): Prom
         level: "info",
         message: "Admin user already exists",
       }));
+    }
+
+    // Ensure admin user has a signing key (idempotent)
+    // @ts-expect-error - Drizzle type mismatch between pnpm versions
+    const signingKeyRepo = new DrizzleSigningKeyRepo(db);
+    const adminUserId = String(existingUser.rows[0]?.id ?? "") || undefined;
+    if (adminUserId) {
+      const keyInfo = await signingKeyRepo.getInfo(adminUserId);
+      if (!keyInfo.hasKey) {
+        await signingKeyRepo.create(adminUserId);
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: "info",
+          message: "Admin signing key created",
+        }));
+      }
     }
   }
   catch (error) {

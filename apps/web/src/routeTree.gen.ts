@@ -18,6 +18,7 @@ import { Route as PublicPricingRouteImport } from './routes/_public/pricing'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as PublicFaqRouteImport } from './routes/_public/faq'
 import { Route as AuthedUsageRouteImport } from './routes/_authed/usage'
+import { Route as AuthedSigningKeysRouteImport } from './routes/_authed/signing-keys'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedPlanRouteImport } from './routes/_authed/plan'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
@@ -81,6 +82,11 @@ const PublicFaqRoute = PublicFaqRouteImport.update({
 const AuthedUsageRoute = AuthedUsageRouteImport.update({
   id: '/usage',
   path: '/usage',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSigningKeysRoute = AuthedSigningKeysRouteImport.update({
+  id: '/signing-keys',
+  path: '/signing-keys',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
   '/settings': typeof AuthedSettingsRouteWithChildren
+  '/signing-keys': typeof AuthedSigningKeysRoute
   '/usage': typeof AuthedUsageRoute
   '/faq': typeof PublicFaqRoute
   '/login': typeof PublicLoginRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/plan': typeof AuthedPlanRoute
+  '/signing-keys': typeof AuthedSigningKeysRoute
   '/usage': typeof AuthedUsageRoute
   '/faq': typeof PublicFaqRoute
   '/login': typeof PublicLoginRoute
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/plan': typeof AuthedPlanRoute
   '/_authed/settings': typeof AuthedSettingsRouteWithChildren
+  '/_authed/signing-keys': typeof AuthedSigningKeysRoute
   '/_authed/usage': typeof AuthedUsageRoute
   '/_public/faq': typeof PublicFaqRoute
   '/_public/login': typeof PublicLoginRoute
@@ -289,6 +298,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/plan'
     | '/settings'
+    | '/signing-keys'
     | '/usage'
     | '/faq'
     | '/login'
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/dashboard'
     | '/plan'
+    | '/signing-keys'
     | '/usage'
     | '/faq'
     | '/login'
@@ -348,6 +359,7 @@ export interface FileRouteTypes {
     | '/_authed/dashboard'
     | '/_authed/plan'
     | '/_authed/settings'
+    | '/_authed/signing-keys'
     | '/_authed/usage'
     | '/_public/faq'
     | '/_public/login'
@@ -442,6 +454,13 @@ declare module '@tanstack/react-router' {
       path: '/usage'
       fullPath: '/usage'
       preLoaderRoute: typeof AuthedUsageRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/signing-keys': {
+      id: '/_authed/signing-keys'
+      path: '/signing-keys'
+      fullPath: '/signing-keys'
+      preLoaderRoute: typeof AuthedSigningKeysRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/settings': {
@@ -646,6 +665,7 @@ interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedPlanRoute: typeof AuthedPlanRoute
   AuthedSettingsRoute: typeof AuthedSettingsRouteWithChildren
+  AuthedSigningKeysRoute: typeof AuthedSigningKeysRoute
   AuthedUsageRoute: typeof AuthedUsageRoute
   AuthedAiSessionsIdRoute: typeof AuthedAiSessionsIdRoute
   AuthedDeviceApproveRoute: typeof AuthedDeviceApproveRoute
@@ -662,6 +682,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedPlanRoute: AuthedPlanRoute,
   AuthedSettingsRoute: AuthedSettingsRouteWithChildren,
+  AuthedSigningKeysRoute: AuthedSigningKeysRoute,
   AuthedUsageRoute: AuthedUsageRoute,
   AuthedAiSessionsIdRoute: AuthedAiSessionsIdRoute,
   AuthedDeviceApproveRoute: AuthedDeviceApproveRoute,

@@ -6,7 +6,8 @@ import {
   IconHelp,
   IconHome,
   IconKey,
-  IconSettings
+  IconSettings,
+  IconShieldCheck
 } from "@tabler/icons-react";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
@@ -44,6 +45,11 @@ const data = {
       title: "API Keys",
       url: "/api-keys",
       icon: IconKey,
+    },
+    {
+      title: "Webhook Signing",
+      url: "/signing-keys",
+      icon: IconShieldCheck,
     },
   ],
   navSecondary: [

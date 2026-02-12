@@ -41,6 +41,13 @@ const sidebars: SidebarsConfig = {
         "self-hosting/self-hosting-known-limitations",
       ],
     },
+    {
+      type: "category",
+      label: "Guides",
+      items: [
+        "guides/webhook-verification",
+      ],
+    },
     "troubleshooting",
     {
       type: "category",

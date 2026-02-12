@@ -1,4 +1,4 @@
-import { schema } from "@cronicorn/adapter-drizzle";
+import { DrizzleSigningKeyRepo, schema } from "@cronicorn/adapter-drizzle";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { apiKey, bearer, deviceAuthorization } from "better-auth/plugins";
@@ -104,6 +104,24 @@ export function createAuth(config: Env, db: Database) {
           },
         }
       : undefined,
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            // Auto-generate signing key for new users
+            try {
+              // eslint-disable-next-line ts/ban-ts-comment
+              // @ts-ignore - Drizzle type mismatch between pnpm versions
+              const repo = new DrizzleSigningKeyRepo(db);
+              await repo.create(user.id);
+            }
+            catch {
+              // Non-fatal: user can generate key later via POST /signing-keys
+            }
+          },
+        },
+      },
+    },
     plugins: [
       bearer({
         // Bearer tokens inherit session expiresIn (30 days from session config above)

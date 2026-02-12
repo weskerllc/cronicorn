@@ -11,7 +11,7 @@ mcp:
   uri: file:///docs/api-reference.md
   mimeType: text/markdown
   priority: 0.90
-  lastModified: 2026-02-03T00:00:00Z
+  lastModified: 2026-02-11T00:00:00Z
 ---
 
 # API Reference
@@ -461,12 +461,104 @@ curl -H "x-api-key: YOUR_API_KEY" \
 }
 ```
 
+### Test Endpoint
+
+Execute an endpoint immediately and return the result. Creates a run record with `source: "test"` but does **not** affect scheduling state (`nextRunAt`, `lastRunAt`, `failureCount`). Works on paused endpoints. Blocked on archived endpoints.
+
+```bash
+curl -X POST -H "x-api-key: YOUR_API_KEY" \
+  https://cronicorn.com/api/endpoints/ep_xyz789/test
+```
+
+**Response:**
+```json
+{
+  "runId": "run_test_abc123",
+  "status": "success",
+  "durationMs": 234,
+  "statusCode": 200,
+  "responseBody": { "healthy": true }
+}
+```
+
+If the endpoint fails:
+```json
+{
+  "runId": "run_test_def456",
+  "status": "failed",
+  "durationMs": 5012,
+  "statusCode": 503,
+  "errorMessage": "HTTP 503 Service Unavailable"
+}
+```
+
 ### Get Dashboard Stats
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
   "https://cronicorn.com/api/dashboard?startDate=2026-02-01&endDate=2026-02-03"
 ```
+
+---
+
+## Signing Keys API
+
+Manage your HMAC signing key for [webhook verification](./guides/webhook-verification.md). Each account has one signing key used to sign all outbound requests.
+
+### Get Signing Key Info
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" \
+  https://cronicorn.com/api/signing-keys
+```
+
+**Response:**
+```json
+{
+  "hasKey": true,
+  "keyPrefix": "sk_a1b2c3d4",
+  "createdAt": "2026-02-10T15:30:00.000Z",
+  "rotatedAt": null
+}
+```
+
+### Create Signing Key
+
+Generate a new signing key. Returns the raw key **once** — store it securely.
+
+```bash
+curl -X POST -H "x-api-key: YOUR_API_KEY" \
+  https://cronicorn.com/api/signing-keys
+```
+
+**Response (201):**
+```json
+{
+  "rawKey": "a1b2c3d4e5f6...64_hex_chars",
+  "keyPrefix": "sk_a1b2c3d4"
+}
+```
+
+Returns `409 Conflict` if a key already exists. Use rotate instead.
+
+### Rotate Signing Key
+
+Replace the current signing key. The old key is **immediately invalidated**.
+
+```bash
+curl -X POST -H "x-api-key: YOUR_API_KEY" \
+  https://cronicorn.com/api/signing-keys/rotate
+```
+
+**Response:**
+```json
+{
+  "rawKey": "f6e5d4c3b2a1...64_hex_chars",
+  "keyPrefix": "sk_f6e5d4c3"
+}
+```
+
+Returns `404` if no key exists. Use create first.
 
 ---
 
@@ -666,4 +758,5 @@ Rate limit headers:
 
 - **[Quick Start](./quick-start.md)** - Create your first job via UI
 - **[MCP Server](./mcp-server.md)** - Manage jobs via AI assistant
+- **[Webhook Verification](./guides/webhook-verification.md)** - Verify request signatures in your endpoints
 - **[Technical Reference](./technical/reference.md)** - Schema and field details

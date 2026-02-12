@@ -1,4 +1,26 @@
 
+## Outbound Request Signing (Implemented 2026-02-10)
+
+**Status**: Core implementation complete
+**ADR**: `.adr/0072-outbound-request-signing.md`
+
+### Implementation Summary
+- HMAC-SHA256 signing of all outbound HTTP requests via `SigningDispatcher` decorator
+- Per-account signing keys stored in `signing_keys` table
+- API routes: GET/POST/rotate signing keys
+- MCP tools: getSigningKey, createSigningKey, rotateSigningKey
+- Auto-provisioning via Better Auth `databaseHooks` and seed-admin
+
+### Remaining Work
+- [ ] No dual-key grace period during rotation (old key immediately invalidated — could cause verification failures for in-flight requests)
+- [ ] No `@cronicorn/verify` npm package (verification is docs-only code snippets)
+- [ ] No signing key audit log (rotations/creations are not tracked beyond DB timestamps)
+- [ ] No per-endpoint key override (all endpoints share the account-level key)
+- [ ] SigningKeyProvider does a DB query per dispatch (add LRU cache when dispatch volume grows)
+- [ ] No API integration tests for signing key routes (unit/integration tests for repo and dispatcher exist)
+
+---
+
 ## 14-Day Money-Back Guarantee (Implemented)
 
 **Status**: ✅ Core implementation complete  
@@ -353,6 +375,19 @@ The following infrastructure gaps were identified during assessment. These items
   - Delivery retry logic with exponential backoff
   - Webhook signature verification for security
   - Delivery status tracking and debugging UI
+
+---
+
+## Production Readiness: Source Maps & Security Headers (2026-02-10)
+
+**Status**: Implemented
+
+### Implementation Summary
+- Added `build.sourcemap: false` to `apps/web/vite.config.ts` to prevent leaking TypeScript source in production
+- Added HTTP security headers middleware to API (`apps/api/src/lib/security-headers.ts`)
+
+### Remaining Work
+- [ ] **Web app security headers**: The web app (Nitro layer) does not set its own security headers. Currently relying on a reverse proxy (nginx/Cloudflare) to add them. Consider adding Nitro middleware if self-hosted deployments need headers without a proxy.
 
 ---
 
