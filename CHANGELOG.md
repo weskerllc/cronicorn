@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/weskerllc/cronicorn/compare/v1.22.4...v1.23.0) (2026-02-12)
+
+
+### Features
+
+* add request signing, test endpoint, and security hardening ([#131](https://github.com/weskerllc/cronicorn/issues/131)) ([49851be](https://github.com/weskerllc/cronicorn/commit/49851be5b2fe7e6c18664cbd6997d88b05e338aa))
+
 ## [1.22.4](https://github.com/weskerllc/cronicorn/compare/v1.22.3...v1.22.4) (2026-02-11)
 
 
