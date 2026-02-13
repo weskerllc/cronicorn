@@ -138,6 +138,9 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           tools: cleanTools,
           maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
           ...(config.temperature !== undefined && { temperature: config.temperature }),
+          // Force tool calls when a final tool is required — prevents the model
+          // from ending the loop with a text-only response before calling it.
+          ...(finalToolName && { toolChoice: "required" as const }),
           stopWhen: stopConditions,
         });
 
