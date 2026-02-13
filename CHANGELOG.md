@@ -1,3 +1,10 @@
+## [1.23.4](https://github.com/weskerllc/cronicorn/compare/v1.23.3...v1.23.4) (2026-02-13)
+
+
+### Bug Fixes
+
+* Increase max token limit per ai step ([228aea0](https://github.com/weskerllc/cronicorn/commit/228aea0db1e6003b3e362c5a7da9b024a8d97ab9))
+
 ## [1.23.3](https://github.com/weskerllc/cronicorn/compare/v1.23.2...v1.23.3) (2026-02-13)
 
 
