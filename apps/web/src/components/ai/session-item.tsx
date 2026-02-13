@@ -1,7 +1,13 @@
-import { AlertCircle, Check, ChevronRight } from "lucide-react";
+import { AlertCircle, AlertTriangle, Check, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@cronicorn/ui-library/components/button";
 import { cn } from "@cronicorn/ui-library/lib/utils";
+
+export type AISessionWarning = {
+    code: string;
+    message: string;
+    meta?: Record<string, unknown>;
+};
 
 export type AISession = {
     id: string;
@@ -10,6 +16,7 @@ export type AISession = {
     toolCalls: Array<{ tool: string; args?: unknown; result?: unknown }>;
     tokenUsage: number | null;
     durationMs: number | null;
+    warnings?: AISessionWarning[];
 };
 
 // Type guards and safe accessors
@@ -126,6 +133,15 @@ export function AISessionItem({
                         <span>{formattedDuration}</span>
                     </>
                 )}
+                {Array.isArray(session.warnings) && session.warnings.length > 0 && (
+                    <>
+                        <span className="text-border">•</span>
+                        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                            <AlertTriangle className="h-3 w-3" />
+                            {session.warnings.length} {session.warnings.length === 1 ? "warning" : "warnings"}
+                        </span>
+                    </>
+                )}
             </div>
 
             {session.reasoning && (
@@ -149,6 +165,19 @@ export function AISessionItem({
                             {isReasoningExpanded ? 'Show less' : 'Show more'}
                         </Button>
                     )}
+                </div>
+            )}
+            {Array.isArray(session.warnings) && session.warnings.length > 0 && (
+                <div className="mt-1.5 space-y-1">
+                    {session.warnings.map((warning, idx) => (
+                        <div
+                            key={idx}
+                            className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+                        >
+                            <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                            <span>{warning.message}</span>
+                        </div>
+                    ))}
                 </div>
             )}
             {Array.isArray(session.toolCalls) && session.toolCalls.length > 0 && (

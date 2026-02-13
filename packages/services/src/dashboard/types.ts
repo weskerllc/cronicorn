@@ -97,6 +97,7 @@ export type ActivityEvent = {
   reasoning?: string;
   toolCalls?: Array<{ tool: string; args: unknown; result: unknown }>;
   tokenUsage?: number;
+  warnings?: Array<{ code: string; message: string; meta?: Record<string, unknown> }>;
 };
 
 export type JobActivityTimeline = {

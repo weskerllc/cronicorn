@@ -169,6 +169,13 @@
       "when": 1770783390546,
       "tag": "0023_striped_roxanne_simpson",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1771000171625,
+      "tag": "0024_bored_cammi",
+      "breakpoints": true
     }
   ]
 }

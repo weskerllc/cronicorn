@@ -222,14 +222,12 @@ export function createToolsForEndpoint(
         }
 
         const { value, wasTruncated } = truncateResponseBody(result.responseBody, 500);
-        const preview = summarizeResponseBody(result.responseBody);
 
         return {
           found: true,
           responseBody: value,
           timestamp: result.timestamp.toISOString(),
           status: result.status,
-          responsePreview: preview,
           tokenSavingNote: wasTruncated
             ? "Response body truncated at 500 chars to reduce token usage"
             : undefined,
@@ -270,12 +268,14 @@ export function createToolsForEndpoint(
           if (!isDuplicate)
             lastSignature = signature;
 
-          const preview = summarizeResponseBody(r.responseBody);
           const { value, wasTruncated } = args.includeBodies
             ? truncateResponseBody(r.responseBody, 500)
             : { value: undefined, wasTruncated: false };
           if (wasTruncated)
             anyTruncated = true;
+
+          // Preview only when bodies are omitted — avoids sending duplicate data
+          const preview = args.includeBodies ? undefined : summarizeResponseBody(r.responseBody);
 
           return {
             responseBody: args.includeBodies ? value : undefined,

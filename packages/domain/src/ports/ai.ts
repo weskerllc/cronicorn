@@ -8,6 +8,16 @@ import type { z } from "zod";
 type AnyTools = Record<string, Tool<unknown, unknown>>;
 
 /**
+ * Warning emitted during an AI analysis session.
+ * Surfaces issues like truncated output or missing tool calls to the UI.
+ */
+export type AISessionWarning = {
+  code: "output_truncated" | "missing_final_tool" | "missing_reasoning";
+  message: string;
+  meta?: Record<string, unknown>;
+};
+
+/**
  * Result of an AI analysis session.
  * Captures what the AI did (tools called, reasoning) for observability and debugging.
  */
@@ -22,6 +32,8 @@ export type AISessionResult = {
   reasoning: string;
   /** Token usage (if available from provider) */
   tokenUsage?: number;
+  /** Warnings detected during the session (truncation, missing tools, etc.) */
+  warnings?: AISessionWarning[];
 };
 
 export type AIClient = {

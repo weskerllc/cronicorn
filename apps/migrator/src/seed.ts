@@ -826,6 +826,7 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
     reasoning: string,
     actions: string[] = [],
     extraToolCalls: Array<Record<string, unknown>> = [],
+    warnings?: Array<{ code: string; message: string; meta?: Record<string, unknown> }>,
   ) => {
     const sessionTime = new Date(BLACK_FRIDAY_START.getTime() + minuteOffset * 60_000);
     const responseBody = getAISessionResponseBody(endpointId, minuteOffset);
@@ -845,6 +846,7 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
       tokenUsage: 800 + Math.floor(Math.random() * 500),
       durationMs: 250 + Math.floor(Math.random() * 200),
       nextAnalysisAt: new Date(sessionTime.getTime() + 20 * 60_000),
+      ...(warnings ? { warnings } : {}),
     });
   };
 
@@ -860,13 +862,20 @@ function generateAISessions(): Array<typeof schema.aiAnalysisSessions.$inferInse
   // Hour 2: 09:00-10:00 - Peak building (4 sessions)
   generateBFSession(60, "ep-traffic-monitor", "ALERT: Traffic spiking. Page load degrading.", [], [tc.proposeInterval(25_000, 60, "Critical traffic—max monitoring")]);
   generateBFSession(75, "ep-order-processor-health", "Order queue building. Failure rate rising.");
-  generateBFSession(90, "ep-inventory-sync-check", "Inventory sync lagging. Queue depth critical.");
+  generateBFSession(90, "ep-inventory-sync-check", "Inventory sync lagging. Queue depth critical.", [], [], [
+    { code: "output_truncated", message: "Step 2 output was truncated (finishReason: length). The model was analyzing inventory queue backlog history and hit the output token limit.", meta: { stepIndex: 1, finishReason: "length" } },
+  ]);
   generateBFSession(105, "ep-traffic-monitor", "PEAK TRAFFIC. Page load strained. All systems under load.", [], [tc.proposeInterval(20_000, 60, "Peak load—minimum interval")]);
 
   // Hour 3: 10:00-11:00 - Critical phase (4 sessions)
-  generateBFSession(120, "ep-slow-page-analyzer", "CRITICAL: p95 latency extremely high. Database is bottleneck.", ["propose_interval"], [tc.pauseUntil(null, "Activating recovery endpoints"), tc.proposeNext(5_000, 5, "Trigger cache warmup")]);
+  generateBFSession(120, "ep-slow-page-analyzer", "CRITICAL: p95 latency extremely high. Database is bottleneck.", ["propose_interval"], [tc.pauseUntil(null, "Activating recovery endpoints"), tc.proposeNext(5_000, 5, "Trigger cache warmup")], [
+    { code: "output_truncated", message: "Step 3 output was truncated (finishReason: length). The model was generating an extended root-cause analysis of database connection pool exhaustion and hit the output token limit.", meta: { stepIndex: 2, finishReason: "length" } },
+    { code: "missing_final_tool", message: "The model did not call submit_analysis. Analysis was extracted from the last tool call and raw model output." },
+  ]);
   generateBFSession(135, "ep-order-processor-health", "Order failure rate critical. Queue depth high. Recovery actions triggered.");
-  generateBFSession(150, "ep-inventory-sync-check", "Inventory lag critical. Failed syncs detected. Critical but stable.");
+  generateBFSession(150, "ep-inventory-sync-check", "Inventory lag critical. Failed syncs detected. Critical but stable.", [], [], [
+    { code: "missing_reasoning", message: "The model did not produce any reasoning text. It jumped directly to tool calls without a natural language explanation." },
+  ]);
   generateBFSession(165, "ep-traffic-monitor", "Sustained peak traffic. Systems holding under load.");
 
   // Hour 4: 11:00-12:00 - Sustained load (3 sessions)

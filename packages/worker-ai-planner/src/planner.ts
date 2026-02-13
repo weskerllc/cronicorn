@@ -5,7 +5,7 @@
  * Runs independently from the scheduler worker - communicates via database.
  */
 
-import type { AIClient, Clock, JobsRepo, QuotaGuard, RunsRepo, SessionsRepo } from "@cronicorn/domain";
+import type { AIClient, AISessionWarning, Clock, JobsRepo, QuotaGuard, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { createToolsForEndpoint } from "./tools.js";
 
@@ -298,8 +298,16 @@ export class AIPlanner {
 
     // 9. Extract reasoning from submit_analysis tool call
     const submitAnalysisCall = session.toolCalls.find(tc => tc.tool === "submit_analysis");
+
+    // 9a. Collect warnings from AI client + planner-level checks
+    const warnings: AISessionWarning[] = [...(session.warnings ?? [])];
+
     if (!submitAnalysisCall) {
       logger.warn(`Missing submit_analysis tool call for endpoint ${endpoint.name}`);
+      warnings.push({
+        code: "missing_final_tool",
+        message: "AI did not call submit_analysis — session ended without structured conclusion",
+      });
     }
 
     const analysisResult = submitAnalysisCall?.result;
@@ -319,6 +327,10 @@ export class AIPlanner {
 
     if (!reasoning) {
       logger.warn(`Missing reasoning for endpoint ${endpoint.name}`);
+      warnings.push({
+        code: "missing_reasoning",
+        message: "AI did not provide reasoning in submit_analysis result",
+      });
     }
 
     const safeReasoning = reasoning ?? "No reasoning provided";
@@ -332,6 +344,7 @@ export class AIPlanner {
       durationMs,
       nextAnalysisAt,
       endpointFailureCount: endpoint.failureCount,
+      warnings: warnings.length > 0 ? warnings : undefined,
     });
 
     // Log summary for real-time observability

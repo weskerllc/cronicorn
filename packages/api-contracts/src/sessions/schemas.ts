@@ -43,6 +43,20 @@ export const ToolCallSchema = z.object({
   }),
 });
 
+export const AISessionWarningSchema = z.object({
+  code: z.enum(["output_truncated", "missing_final_tool", "missing_reasoning"]).openapi({
+    description: "Warning code identifying the issue type",
+    example: "output_truncated",
+  }),
+  message: z.string().openapi({
+    description: "Human-readable warning message",
+    example: "Output token limit hit on 1 step(s) — model response was truncated",
+  }),
+  meta: z.record(z.unknown()).optional().openapi({
+    description: "Optional metadata about the warning",
+  }),
+});
+
 export const AISessionSchema = z.object({
   id: z.string().openapi({
     description: "Session ID",
@@ -66,6 +80,9 @@ export const AISessionSchema = z.object({
   durationMs: z.number().int().nullable().openapi({
     description: "Analysis duration in milliseconds (null if not tracked)",
     example: 3420,
+  }),
+  warnings: z.array(AISessionWarningSchema).openapi({
+    description: "Warnings detected during the session (empty array if clean)",
   }),
 });
 
@@ -110,5 +127,8 @@ export const AISessionDetailSchema = z.object({
   durationMs: z.number().int().nullable().openapi({
     description: "Analysis duration in milliseconds (null if not tracked)",
     example: 3420,
+  }),
+  warnings: z.array(AISessionWarningSchema).openapi({
+    description: "Warnings detected during the session (empty array if clean)",
   }),
 });

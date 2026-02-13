@@ -220,6 +220,7 @@ export const aiAnalysisSessions = pgTable("ai_analysis_sessions", {
   durationMs: integer("duration_ms"), // Analysis duration
   nextAnalysisAt: timestamp("next_analysis_at", { mode: "date", withTimezone: true }), // AI-scheduled next analysis time
   endpointFailureCount: integer("endpoint_failure_count"), // Snapshot of failure count at analysis time
+  warnings: jsonb("warnings").$type<Array<{ code: string; message: string; meta?: Record<string, unknown> }>>(), // Session warnings (truncation, missing tools, etc.)
 }, table => ({
   endpointIdIdx: index("ai_sessions_endpoint_id_idx").on(table.endpointId),
   analyzedAtIdx: index("ai_sessions_analyzed_at_idx").on(table.analyzedAt),

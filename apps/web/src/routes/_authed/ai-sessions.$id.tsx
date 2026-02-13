@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Brain, Clock, ExternalLink, Zap } from "lucide-react";
+import { AlertTriangle, Brain, Clock, ExternalLink, Zap } from "lucide-react";
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { CodeDisplay } from "../../components/composed/code-display";
@@ -90,6 +90,25 @@ function AISessionDetailsPage() {
             />
           </InfoGrid>
         </DetailSection>
+
+        {Array.isArray(session.warnings) && session.warnings.length > 0 && (
+          <DetailSection title="Warnings">
+            <div className="space-y-2">
+              {session.warnings.map((warning, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-start gap-2 rounded-md border border-error bg-error/15 px-3 py-2 text-sm text-error"
+                >
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                  <div>
+                    <span className="font-medium">{warning.code}</span>
+                    <p className="text-error">{warning.message}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </DetailSection>
+        )}
 
         <DetailSection title="AI Reasoning">
           {session.reasoning ? (

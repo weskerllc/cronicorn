@@ -948,6 +948,7 @@ describe("dashboardManager", () => {
         ],
         tokenUsage: 500,
         durationMs: 1500,
+        warnings: [],
       },
       {
         sessionId: "session-2",
@@ -958,6 +959,7 @@ describe("dashboardManager", () => {
         toolCalls: [{ tool: "analyze", args: {}, result: {} }],
         tokenUsage: 300,
         durationMs: 800,
+        warnings: [],
       },
     ];
 

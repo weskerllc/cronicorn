@@ -229,6 +229,125 @@ describe("aiPlanner", () => {
       expect(tools).toHaveProperty("pause_until");
     });
 
+    it("passes no warnings for clean session with submit_analysis and reasoning", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "Clean Endpoint",
+        baselineIntervalMs: 60_000,
+        nextRunAt: new Date("2025-10-15T13:00:00Z"),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
+      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({
+        toolCalls: [
+          { tool: "submit_analysis", args: {}, result: { reasoning: "All stable", next_analysis_in_ms: 3600000 } },
+        ],
+        reasoning: "Analysis complete",
+        tokenUsage: 100,
+      });
+
+      await planner.analyzeEndpoint("ep-1");
+
+      const createCall = vi.mocked(mockSessionsRepo.create).mock.calls[0][0];
+      expect(createCall.warnings).toBeUndefined();
+    });
+
+    it("stores missing_final_tool warning when submit_analysis is missing", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "No Submit Endpoint",
+        baselineIntervalMs: 60_000,
+        nextRunAt: new Date("2025-10-15T13:00:00Z"),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
+      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({
+        toolCalls: [
+          { tool: "get_latest_response", args: {}, result: {} },
+        ],
+        reasoning: "Some text",
+        tokenUsage: 100,
+      });
+
+      await planner.analyzeEndpoint("ep-1");
+
+      const createCall = vi.mocked(mockSessionsRepo.create).mock.calls[0][0];
+      expect(createCall.warnings).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: "missing_final_tool" }),
+        ]),
+      );
+    });
+
+    it("stores missing_reasoning warning when reasoning is absent", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "No Reasoning Endpoint",
+        baselineIntervalMs: 60_000,
+        nextRunAt: new Date("2025-10-15T13:00:00Z"),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
+      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({
+        toolCalls: [
+          { tool: "submit_analysis", args: {}, result: { status: "ok" } }, // no reasoning field
+        ],
+        reasoning: "",
+        tokenUsage: 100,
+      });
+
+      await planner.analyzeEndpoint("ep-1");
+
+      const createCall = vi.mocked(mockSessionsRepo.create).mock.calls[0][0];
+      expect(createCall.warnings).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: "missing_reasoning" }),
+        ]),
+      );
+    });
+
+    it("forwards output_truncated warnings from AI client", async () => {
+      const mockEndpoint: JobEndpoint = {
+        id: "ep-1",
+        tenantId: "user-1",
+        name: "Truncated Endpoint",
+        baselineIntervalMs: 60_000,
+        nextRunAt: new Date("2025-10-15T13:00:00Z"),
+        failureCount: 0,
+      };
+
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
+      vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
+      vi.mocked(mockAIClient.planWithTools).mockResolvedValue({
+        toolCalls: [
+          { tool: "submit_analysis", args: {}, result: { reasoning: "Truncated analysis", next_analysis_in_ms: 600000 } },
+        ],
+        reasoning: "Analysis complete",
+        tokenUsage: 4096,
+        warnings: [
+          { code: "output_truncated" as const, message: "Output token limit hit on 1 step(s)", meta: { truncatedSteps: [{ step: 2, finishReason: "length" }] } },
+        ],
+      });
+
+      await planner.analyzeEndpoint("ep-1");
+
+      const createCall = vi.mocked(mockSessionsRepo.create).mock.calls[0][0];
+      expect(createCall.warnings).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: "output_truncated" }),
+        ]),
+      );
+    });
+
     it("skips analysis when quota exceeded", async () => {
       const mockEndpoint: JobEndpoint = {
         id: "ep-1",
