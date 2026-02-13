@@ -143,7 +143,7 @@ describe("aiPlanner", () => {
         expect.objectContaining({
           input: expect.stringContaining("Health Check"),
           tools: expect.any(Object),
-          maxTokens: 1500,
+          maxTokens: 8192,
         }),
       );
     });

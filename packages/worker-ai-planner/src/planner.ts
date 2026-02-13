@@ -292,7 +292,7 @@ export class AIPlanner {
       finalToolName: "submit_analysis",
       input: prompt,
       tools,
-      maxTokens: this.deps.maxTokens ?? 1500,
+      maxTokens: this.deps.maxTokens ?? 8192,
     });
     const durationMs = clock.now().getTime() - startTime;
 

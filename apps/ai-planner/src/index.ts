@@ -39,7 +39,7 @@ const configSchema = z.object({
   AI_MODEL: z.string().default("gpt-4o-mini"), // Cost-effective for MVP
   AI_ANALYSIS_INTERVAL_MS: z.coerce.number().int().positive().default(5 * 60 * 1000), // 5 minutes
   AI_LOOKBACK_MINUTES: z.coerce.number().int().positive().default(5), // Analyze endpoints with runs in last 5 min
-  AI_MAX_TOKENS: z.coerce.number().int().positive().default(1500), // Sufficient for comprehensive analysis with response data queries
+  AI_MAX_TOKENS: z.coerce.number().int().positive().default(8192), // Per-step output limit; must exceed longest tool call JSON. Model max is 16384.
   AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
   SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000), // 30 seconds
 });
