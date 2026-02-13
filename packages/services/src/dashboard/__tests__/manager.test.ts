@@ -913,6 +913,367 @@ describe("dashboardManager", () => {
     });
   });
 
+  // ==================== Daily Bucketing Tests ====================
+
+  describe("daily bucketing", () => {
+    it("should use daily buckets for endpoint time series on 30-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const range = dateRange(30);
+      const dayStr = range.startDate.toISOString().split("T")[0];
+
+      // Mock endpoint time series with daily data
+      vi.mocked(mockRunsRepo.getEndpointTimeSeries).mockResolvedValue([
+        {
+          date: dayStr,
+          endpointId: "ep-1",
+          endpointName: "Endpoint 1",
+          success: 10,
+          failure: 2,
+          totalDurationMs: 5000,
+        },
+      ]);
+
+      const result = await manager.getDashboardStats("user-1", range);
+
+      // 30-day range uses daily granularity
+      // Verify daily format (YYYY-MM-DD) for endpoint time series
+      result.endpointTimeSeries.forEach((point) => {
+        expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      });
+
+      // Should contain the mocked data point
+      const ep1Point = result.endpointTimeSeries.find(
+        p => p.endpointId === "ep-1" && p.date === dayStr,
+      );
+      expect(ep1Point?.success).toBe(10);
+      expect(ep1Point?.failure).toBe(2);
+    });
+
+    it("should use daily buckets for AI session time series on 30-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const range = dateRange(30);
+      const dayStr = range.startDate.toISOString().split("T")[0];
+
+      // Mock AI session time series with daily data
+      vi.mocked(mockSessionsRepo.getAISessionTimeSeries).mockResolvedValue([
+        {
+          date: dayStr,
+          endpointId: "ep-1",
+          endpointName: "Endpoint 1",
+          sessionCount: 5,
+          totalTokens: 2500,
+        },
+      ]);
+
+      const result = await manager.getDashboardStats("user-1", range);
+
+      // Verify daily format (YYYY-MM-DD) for AI session time series
+      result.aiSessionTimeSeries.forEach((point) => {
+        expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      });
+
+      // Should contain the mocked data point
+      const sessionPoint = result.aiSessionTimeSeries.find(
+        p => p.endpointId === "ep-1" && p.date === dayStr,
+      );
+      expect(sessionPoint?.sessionCount).toBe(5);
+      expect(sessionPoint?.totalTokens).toBe(2500);
+    });
+
+    it("should aggregate multiple days into multi-day buckets for endpoint time series", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      // 50-day range triggers 2-day bucket size
+      const range = dateRange(50);
+      const day1 = new Date(range.startDate);
+      day1.setUTCHours(0, 0, 0, 0);
+      const day2 = new Date(day1.getTime() + DAY_MS);
+      const day1Str = day1.toISOString().split("T")[0];
+      const day2Str = day2.toISOString().split("T")[0];
+
+      vi.mocked(mockRunsRepo.getEndpointTimeSeries).mockResolvedValue([
+        {
+          date: day1Str,
+          endpointId: "ep-1",
+          endpointName: "Endpoint 1",
+          success: 3,
+          failure: 1,
+          totalDurationMs: 1000,
+        },
+        {
+          date: day2Str,
+          endpointId: "ep-1",
+          endpointName: "Endpoint 1",
+          success: 4,
+          failure: 2,
+          totalDurationMs: 2000,
+        },
+      ]);
+
+      const result = await manager.getDashboardStats("user-1", range);
+
+      // With 2-day buckets, day1 and day2 should be aggregated into the same bucket
+      const firstBucketPoint = result.endpointTimeSeries.find(
+        p => p.endpointId === "ep-1" && p.date === day1Str,
+      );
+      expect(firstBucketPoint?.success).toBe(7); // 3 + 4
+      expect(firstBucketPoint?.failure).toBe(3); // 1 + 2
+      expect(firstBucketPoint?.totalDurationMs).toBe(3000); // 1000 + 2000
+    });
+
+    it("should aggregate multiple days into multi-day buckets for AI session time series", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      // 50-day range triggers 2-day bucket size
+      const range = dateRange(50);
+      const day1 = new Date(range.startDate);
+      day1.setUTCHours(0, 0, 0, 0);
+      const day2 = new Date(day1.getTime() + DAY_MS);
+      const day1Str = day1.toISOString().split("T")[0];
+      const day2Str = day2.toISOString().split("T")[0];
+
+      vi.mocked(mockSessionsRepo.getAISessionTimeSeries).mockResolvedValue([
+        {
+          date: day1Str,
+          endpointId: "ep-1",
+          endpointName: "Endpoint 1",
+          sessionCount: 3,
+          totalTokens: 1000,
+        },
+        {
+          date: day2Str,
+          endpointId: "ep-1",
+          endpointName: "Endpoint 1",
+          sessionCount: 2,
+          totalTokens: 800,
+        },
+      ]);
+
+      const result = await manager.getDashboardStats("user-1", range);
+
+      // With 2-day buckets, day1 and day2 should be aggregated
+      const firstBucketPoint = result.aiSessionTimeSeries.find(
+        p => p.endpointId === "ep-1" && p.date === day1Str,
+      );
+      expect(firstBucketPoint?.sessionCount).toBe(5); // 3 + 2
+      expect(firstBucketPoint?.totalTokens).toBe(1800); // 1000 + 800
+    });
+  });
+
+  // ==================== Empty Data Edge Cases ====================
+
+  describe("empty data edge cases", () => {
+    it("should return empty endpoint time series when no endpoints exist", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      // No endpoint time series data at all
+      vi.mocked(mockRunsRepo.getEndpointTimeSeries).mockResolvedValue([]);
+
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
+
+      expect(result.endpointTimeSeries).toHaveLength(0);
+      expect(result.endpointTimeSeriesMaxStacked).toBe(0);
+    });
+
+    it("should return empty AI session time series when no endpoints exist", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      // No AI session time series data at all
+      vi.mocked(mockSessionsRepo.getAISessionTimeSeries).mockResolvedValue([]);
+
+      const result = await manager.getDashboardStats("user-1", dateRange(7));
+
+      expect(result.aiSessionTimeSeries).toHaveLength(0);
+      expect(result.aiSessionTimeSeriesMaxStacked).toBe(0);
+    });
+
+    it("should calculate max stacked value across endpoints", async () => {
+      const now = baseDate;
+      const formatHour = (date: Date) => {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:00:00`;
+      };
+
+      const currentHourStart = new Date(now);
+      currentHourStart.setMinutes(0, 0, 0);
+      const currentHour = formatHour(currentHourStart);
+
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      // Two endpoints in the same hour: stacked value = (5+1) + (3+0) = 9
+      vi.mocked(mockRunsRepo.getEndpointTimeSeries).mockResolvedValue([
+        {
+          date: currentHour,
+          endpointId: "ep-1",
+          endpointName: "Endpoint 1",
+          success: 5,
+          failure: 1,
+          totalDurationMs: 1000,
+        },
+        {
+          date: currentHour,
+          endpointId: "ep-2",
+          endpointName: "Endpoint 2",
+          success: 3,
+          failure: 0,
+          totalDurationMs: 500,
+        },
+      ]);
+
+      const result = await manager.getDashboardStats("user-1", dateRange(1));
+
+      // Max stacked value = 9 * 1.1 = 9.9 (with 10% padding)
+      expect(result.endpointTimeSeriesMaxStacked).toBeCloseTo(9.9, 1);
+    });
+  });
+
+  // ==================== getTimeGranularity threshold tests ====================
+
+  describe("getTimeGranularity thresholds", () => {
+    it("should use 2-hour buckets for a 2-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const result = await manager.getDashboardStats("user-1", dateRange(2));
+
+      // 2 days = 48 hours, ideal = 48/24 = 2, so 2-hour buckets
+      // 48/2 = 24 + 1 = 25 buckets
+      expect(result.runTimeSeries).toHaveLength(25);
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "hour",
+        bucketSize: 2,
+      }));
+    });
+
+    it("should use 3-hour buckets for a 3-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      const _result = await manager.getDashboardStats("user-1", dateRange(3));
+
+      // 3 days = 72 hours, ideal = 72/24 = 3, so 3-hour buckets
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "hour",
+        bucketSize: 3,
+      }));
+    });
+
+    it("should use 4-hour buckets for a 4-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      await manager.getDashboardStats("user-1", dateRange(4));
+
+      // 4 days = 96 hours, ideal = 96/24 = 4, so 4-hour buckets
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "hour",
+        bucketSize: 4,
+      }));
+    });
+
+    it("should use 8-hour buckets for a 10-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      await manager.getDashboardStats("user-1", dateRange(10));
+
+      // 10 days = 240 hours, ideal = 240/24 = 10, so 8-hour buckets
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "hour",
+        bucketSize: 8,
+      }));
+    });
+
+    it("should use 12-hour buckets for a 14-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      await manager.getDashboardStats("user-1", dateRange(14));
+
+      // 14 days = 336 hours, ideal = 336/24 = 14, so 12-hour buckets
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "hour",
+        bucketSize: 12,
+      }));
+    });
+
+    it("should use 2-day buckets for a 50-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      await manager.getDashboardStats("user-1", dateRange(50));
+
+      // 50 days, ideal = 50/24 ≈ 2.08, so 2-day buckets
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "day",
+        bucketSize: 2,
+      }));
+    });
+
+    it("should use 3-day buckets for a 90-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      await manager.getDashboardStats("user-1", dateRange(90));
+
+      // 90 days, ideal = 90/24 ≈ 3.75, so 3-day buckets
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "day",
+        bucketSize: 3,
+      }));
+    });
+
+    it("should use 7-day buckets for a 200-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      await manager.getDashboardStats("user-1", dateRange(200));
+
+      // 200 days, ideal = 200/24 ≈ 8.33, so 7-day buckets
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "day",
+        bucketSize: 7,
+      }));
+    });
+
+    it("should use 14-day buckets for a 365-day window", async () => {
+      vi.mocked(mockJobsRepo.listJobs).mockResolvedValue([]);
+      vi.mocked(mockJobsRepo.getEndpointCounts).mockResolvedValue({ total: 0, active: 0, paused: 0 });
+      vi.mocked(mockRunsRepo.listRuns).mockResolvedValue({ runs: [], total: 0 });
+
+      await manager.getDashboardStats("user-1", dateRange(365));
+
+      // 365 days, ideal = 365/24 ≈ 15.2, so 14-day buckets
+      expect(mockRunsRepo.getRunTimeSeries).toHaveBeenCalledWith(expect.objectContaining({
+        granularity: "day",
+        bucketSize: 14,
+      }));
+    });
+  });
+
   describe("getJobActivityTimeline", () => {
     const mockRuns = [
       {
@@ -1007,6 +1368,85 @@ describe("dashboardManager", () => {
       expect(result.events).toHaveLength(2);
       expect(result.events.every(e => e.type === "session")).toBe(true);
       expect(result.total).toBe(2);
+    });
+
+    it("should apply pagination with limit and offset", async () => {
+      vi.mocked(mockRunsRepo.getJobRuns).mockResolvedValue({ runs: mockRuns, total: 2 });
+      vi.mocked(mockSessionsRepo.getJobSessions).mockResolvedValue({ sessions: mockSessions, total: 2 });
+
+      const result = await manager.getJobActivityTimeline("user-1", undefined, {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+        eventType: "all",
+        limit: 2,
+        offset: 1,
+      });
+
+      // 4 events total, offset 1, limit 2 = 2 events returned
+      expect(result.events).toHaveLength(2);
+      expect(result.total).toBe(4);
+    });
+
+    it("should cap limit at 100", async () => {
+      vi.mocked(mockRunsRepo.getJobRuns).mockResolvedValue({ runs: mockRuns, total: 2 });
+      vi.mocked(mockSessionsRepo.getJobSessions).mockResolvedValue({ sessions: mockSessions, total: 2 });
+
+      await manager.getJobActivityTimeline("user-1", undefined, {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+        limit: 500,
+      });
+
+      // fetchLimit should be capped: min(500, 100) + 0 = 100
+      expect(mockRunsRepo.getJobRuns).toHaveBeenCalledWith(expect.objectContaining({
+        limit: 100,
+      }));
+    });
+
+    it("should calculate success rate in timeline summary", async () => {
+      vi.mocked(mockRunsRepo.getJobRuns).mockResolvedValue({ runs: mockRuns, total: 2 });
+      vi.mocked(mockSessionsRepo.getJobSessions).mockResolvedValue({ sessions: [], total: 0 });
+
+      const result = await manager.getJobActivityTimeline("user-1", undefined, {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+        eventType: "runs",
+      });
+
+      // 1 success, 1 failed out of 2 = 50%
+      expect(result.summary.runsCount).toBe(2);
+      expect(result.summary.successRate).toBe(50);
+    });
+
+    it("should return 0 success rate when no runs in page", async () => {
+      vi.mocked(mockRunsRepo.getJobRuns).mockResolvedValue({ runs: [], total: 0 });
+      vi.mocked(mockSessionsRepo.getJobSessions).mockResolvedValue({ sessions: mockSessions, total: 2 });
+
+      const result = await manager.getJobActivityTimeline("user-1", undefined, {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+        eventType: "all",
+      });
+
+      expect(result.summary.runsCount).toBe(0);
+      expect(result.summary.successRate).toBe(0);
+    });
+
+    it("should pass jobId to repo queries when specified", async () => {
+      vi.mocked(mockRunsRepo.getJobRuns).mockResolvedValue({ runs: [], total: 0 });
+      vi.mocked(mockSessionsRepo.getJobSessions).mockResolvedValue({ sessions: [], total: 0 });
+
+      await manager.getJobActivityTimeline("user-1", "job-123", {
+        startDate: new Date("2025-10-19T00:00:00Z"),
+        endDate: new Date("2025-10-20T23:59:59Z"),
+      });
+
+      expect(mockRunsRepo.getJobRuns).toHaveBeenCalledWith(expect.objectContaining({
+        jobId: "job-123",
+      }));
+      expect(mockSessionsRepo.getJobSessions).toHaveBeenCalledWith(expect.objectContaining({
+        jobId: "job-123",
+      }));
     });
 
     it("should default to 'all' when eventType is not specified", async () => {
