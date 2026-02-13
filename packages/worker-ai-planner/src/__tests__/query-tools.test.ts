@@ -144,15 +144,12 @@ describe("query tools", () => {
         clock: mockClock,
       });
 
-      // Mock both the main call and the hasMore check
-      mockRuns.getResponseHistory
-        .mockResolvedValueOnce(mockHistory) // Main call: limit=5 (new default), offset=0
-        .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=5
+      // Returns 2 items (< limit+1=6), so hasMore=false
+      mockRuns.getResponseHistory.mockResolvedValueOnce(mockHistory);
 
       const result = await callTool(tools, "get_response_history", {});
 
-      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 5, 0);
-      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 1, 5);
+      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 6, 0);
       expect(result).toMatchObject({
         count: 2,
         hasMore: false,
@@ -192,35 +189,26 @@ describe("query tools", () => {
         clock: mockClock,
       });
 
-      // Mock empty results - this should only call getResponseHistory once
-      // because when there are no results, hasMore check is skipped
+      // Mock empty results - single call with limit+1
       mockRuns.getResponseHistory.mockResolvedValueOnce([]);
 
       await callTool(tools, "get_response_history", { limit: 5 });
 
       expect(mockRuns.getResponseHistory).toHaveBeenCalledTimes(1);
-      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 5, 0);
+      expect(mockRuns.getResponseHistory).toHaveBeenCalledWith(endpointId, 6, 0);
     });
 
     it("should support efficient pagination with offset", async () => {
       // Reset mocks to ensure clean state
       mockRuns.getResponseHistory.mockReset();
 
-      // Mock responses for first call (newest 2)
-      const firstBatch = Array.from({ length: 2 }, (_, i) => ({
+      // Mock responses for first call (newest 2 + 1 extra to signal hasMore)
+      const firstBatch = Array.from({ length: 3 }, (_, i) => ({
         responseBody: { iteration: i + 1 },
         timestamp: new Date(`2025-01-15T${String(10 + i).padStart(2, "0")}:00:00Z`),
         status: "success",
         durationMs: 100 + i,
       }));
-
-      // Mock hasMore check - returns one result when checking if more exist
-      const hasMoreResult = [{
-        responseBody: { iteration: 3 },
-        timestamp: new Date(`2025-01-15T12:00:00Z`),
-        status: "success",
-        durationMs: 102,
-      }];
 
       const tools = createToolsForEndpoint(endpointId, jobId, {
         // @ts-expect-error Partial mock for testing
@@ -230,10 +218,8 @@ describe("query tools", () => {
         clock: mockClock,
       });
 
-      // Setup mocks for first call and hasMore check
-      mockRuns.getResponseHistory
-        .mockResolvedValueOnce(firstBatch) // First call: limit=2, offset=0
-        .mockResolvedValueOnce(hasMoreResult); // hasMore check: limit=1, offset=2
+      // Return limit+1 (3) items to signal hasMore=true
+      mockRuns.getResponseHistory.mockResolvedValueOnce(firstBatch);
 
       // First call: get 2 newest responses
       const result1 = await callTool(tools, "get_response_history", { limit: 2 });
@@ -252,14 +238,13 @@ describe("query tools", () => {
         ],
       });
 
-      // Verify calls
-      expect(mockRuns.getResponseHistory).toHaveBeenNthCalledWith(1, endpointId, 2, 0);
-      expect(mockRuns.getResponseHistory).toHaveBeenNthCalledWith(2, endpointId, 1, 2);
+      // Verify single call with limit+1
+      expect(mockRuns.getResponseHistory).toHaveBeenNthCalledWith(1, endpointId, 3, 0);
 
       // Reset for second part of test
       mockRuns.getResponseHistory.mockReset();
 
-      // Mock responses for second call (next 3 after offset 2)
+      // Mock responses for second call (next 3 after offset 2, no extra = hasMore=false)
       const secondBatch = Array.from({ length: 3 }, (_, i) => ({
         responseBody: { iteration: i + 3 },
         timestamp: new Date(`2025-01-15T${String(12 + i).padStart(2, "0")}:00:00Z`),
@@ -267,10 +252,8 @@ describe("query tools", () => {
         durationMs: 102 + i,
       }));
 
-      // Setup mocks for second call
-      mockRuns.getResponseHistory
-        .mockResolvedValueOnce(secondBatch) // Second call: limit=3, offset=2
-        .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=5 (no more results)
+      // Return exactly limit items (3 < limit+1=4), so hasMore=false
+      mockRuns.getResponseHistory.mockResolvedValueOnce(secondBatch);
 
       // Second call: skip first 2, get next 3
       const result2 = await callTool(tools, "get_response_history", { limit: 3, offset: 2 });
@@ -290,9 +273,8 @@ describe("query tools", () => {
         ],
       });
 
-      // Verify second set of calls
-      expect(mockRuns.getResponseHistory).toHaveBeenNthCalledWith(1, endpointId, 3, 2);
-      expect(mockRuns.getResponseHistory).toHaveBeenNthCalledWith(2, endpointId, 1, 5);
+      // Verify single call with limit+1
+      expect(mockRuns.getResponseHistory).toHaveBeenNthCalledWith(1, endpointId, 4, 2);
     });
 
     it("should return empty message when no history exists", async () => {
@@ -346,10 +328,8 @@ describe("query tools", () => {
         clock: mockClock,
       });
 
-      // Mock both the main call and the hasMore check
-      mockRuns.getResponseHistory
-        .mockResolvedValueOnce(mockHistory) // Main call: limit=3, offset=0
-        .mockResolvedValueOnce([]); // hasMore check: limit=1, offset=3
+      // Returns 3 items (< limit+1=4), so hasMore=false
+      mockRuns.getResponseHistory.mockResolvedValueOnce(mockHistory);
 
       const result = await callTool(tools, "get_response_history", { limit: 3, includeBodies: true });
 
@@ -384,9 +364,8 @@ describe("query tools", () => {
         },
       ];
 
-      mockRuns.getResponseHistory
-        .mockResolvedValueOnce(shortHistory)
-        .mockResolvedValueOnce([]);
+      // Returns 1 item (< limit+1=2), so hasMore=false
+      mockRuns.getResponseHistory.mockResolvedValueOnce(shortHistory);
 
       const result1 = await callTool(tools, "get_response_history", { limit: 1 });
 
@@ -408,9 +387,8 @@ describe("query tools", () => {
         },
       ];
 
-      mockRuns.getResponseHistory
-        .mockResolvedValueOnce(longHistory)
-        .mockResolvedValueOnce([]);
+      // Returns 1 item (< limit+1=2), so hasMore=false
+      mockRuns.getResponseHistory.mockResolvedValueOnce(longHistory);
 
       const result2 = await callTool(tools, "get_response_history", { limit: 1, includeBodies: true });
 
@@ -429,9 +407,8 @@ describe("query tools", () => {
         },
       ];
 
-      mockRuns.getResponseHistory
-        .mockResolvedValueOnce(mediumHistory)
-        .mockResolvedValueOnce([]);
+      // Returns 1 item (< limit+1=2), so hasMore=false
+      mockRuns.getResponseHistory.mockResolvedValueOnce(mediumHistory);
 
       const result3 = await callTool(tools, "get_response_history", { limit: 1, includeBodies: true });
 

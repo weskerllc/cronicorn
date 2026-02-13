@@ -2,6 +2,7 @@ import type { AIClient, Clock, JobEndpoint, JobsRepo, QuotaGuard, RunsRepo, Sess
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { PlannerLogger } from "../planner.js";
 import { AIPlanner } from "../planner.js";
 
 // Helper to create multi-window health mock
@@ -28,6 +29,7 @@ describe("aiPlanner", () => {
   let mockQuotaGuard: QuotaGuard;
   let mockAIClient: AIClient;
   let fakeClock: Clock;
+  let mockLogger: PlannerLogger;
   let planner: AIPlanner;
 
   beforeEach(() => {
@@ -78,7 +80,7 @@ describe("aiPlanner", () => {
 
     mockSessionsRepo = {
       create: vi.fn(),
-      getRecentSessions: vi.fn(),
+      getRecentSessions: vi.fn().mockResolvedValue([]),
       getTotalTokenUsage: vi.fn(),
     };
 
@@ -95,6 +97,12 @@ describe("aiPlanner", () => {
       }),
     };
 
+    mockLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    };
+
     planner = new AIPlanner({
       aiClient: mockAIClient,
       jobs: mockJobsRepo,
@@ -102,6 +110,7 @@ describe("aiPlanner", () => {
       sessions: mockSessionsRepo,
       quota: mockQuotaGuard,
       clock: fakeClock,
+      logger: mockLogger,
     });
   });
 
@@ -232,8 +241,6 @@ describe("aiPlanner", () => {
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(mockEndpoint);
       vi.mocked(mockQuotaGuard.canProceed).mockResolvedValue(false);
 
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
-
       await planner.analyzeEndpoint("ep-1");
 
       // Verify quota was checked
@@ -243,12 +250,10 @@ describe("aiPlanner", () => {
       expect(mockAIClient.planWithTools).not.toHaveBeenCalled();
       expect(mockSessionsRepo.create).not.toHaveBeenCalled();
 
-      // Verify warning was logged
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
+      // Verify warning was logged via injected logger
+      expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining("Quota exceeded"),
       );
-
-      consoleWarnSpy.mockRestore();
     });
   });
 
@@ -301,22 +306,17 @@ describe("aiPlanner", () => {
       vi.mocked(mockRunsRepo.getHealthSummaryMultiWindow).mockResolvedValue(createMultiWindowHealth());
       vi.mocked(mockAIClient.planWithTools).mockResolvedValue({ toolCalls: [], reasoning: "Analysis complete", tokenUsage: 100 });
 
-      // Mock console.error to verify error logging
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
-
       await planner.analyzeEndpoints(["ep-1", "ep-2"]);
 
-      // Verify error was logged for first endpoint
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Failed to analyze endpoint ep-1:",
-        expect.any(Error),
+      // Verify error was logged via injected logger for first endpoint
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        "Failed to analyze endpoint ep-1",
+        expect.objectContaining({ error: "Database connection lost" }),
       );
 
       // Verify second endpoint was still analyzed
       expect(mockJobsRepo.getEndpoint).toHaveBeenCalledWith("ep-2");
       expect(mockAIClient.planWithTools).toHaveBeenCalledTimes(1);
-
-      consoleErrorSpy.mockRestore();
     });
 
     it("handles empty endpoint array", async () => {

@@ -39,7 +39,7 @@ const configSchema = z.object({
   AI_MODEL: z.string().default("gpt-4o-mini"), // Cost-effective for MVP
   AI_ANALYSIS_INTERVAL_MS: z.coerce.number().int().positive().default(5 * 60 * 1000), // 5 minutes
   AI_LOOKBACK_MINUTES: z.coerce.number().int().positive().default(5), // Analyze endpoints with runs in last 5 min
-  AI_MAX_TOKENS: z.coerce.number().int().positive().default(500), // Keep responses concise
+  AI_MAX_TOKENS: z.coerce.number().int().positive().default(1500), // Sufficient for comprehensive analysis with response data queries
   AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
   SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(30000), // 30 seconds
 });
@@ -99,6 +99,12 @@ async function main() {
     sessions: sessionsRepo,
     quota: quotaGuard,
     clock,
+    logger: {
+      info: (msg: string, meta?: Record<string, unknown>) => logger("info", msg, meta),
+      warn: (msg: string, meta?: Record<string, unknown>) => logger("warn", msg, meta),
+      error: (msg: string, meta?: Record<string, unknown>) => logger("error", msg, meta),
+    },
+    maxTokens: config.AI_MAX_TOKENS,
   });
 
   // State for tick loop and shutdown
