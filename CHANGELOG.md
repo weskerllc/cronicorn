@@ -1,3 +1,10 @@
+## [1.23.2](https://github.com/weskerllc/cronicorn/compare/v1.23.1...v1.23.2) (2026-02-13)
+
+
+### Bug Fixes
+
+* Require agent to call submit analysis ([#136](https://github.com/weskerllc/cronicorn/issues/136)) ([bf13639](https://github.com/weskerllc/cronicorn/commit/bf1363908e0dfa1b6f5cd7e57f7b27951709d882))
+
 ## [1.23.1](https://github.com/weskerllc/cronicorn/compare/v1.23.0...v1.23.1) (2026-02-13)
 
 
