@@ -162,6 +162,7 @@ These rules exist to keep AI-generated changes understandable, reversible, and a
 - Domain changes require domain tests.
 - Adapter changes must satisfy existing contract tests.
 - Do not weaken or delete tests to make changes pass.
+- Even when trying to increase test coverage - think carefully about WHAT functionality is being tested - not just 'was this line covered'
 
 ### Output Expectations
 - Favor boring, readable code over cleverness.
