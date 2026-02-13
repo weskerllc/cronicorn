@@ -3,6 +3,7 @@ import type { AIClient, Clock, JobEndpoint, JobsRepo, QuotaGuard, RunsRepo, Sess
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PlannerLogger } from "../planner.js";
+
 import { AIPlanner } from "../planner.js";
 
 // Helper to create multi-window health mock
