@@ -130,6 +130,38 @@ describe("planNextRun", () => {
     expect(result.nextRunAt.toISOString()).toBe("2025-01-01T00:01:30.000Z");
   });
 
+  describe("past candidate reschedule", () => {
+    it("floors ai oneshot to now when hint is in the past", () => {
+      const ep = makeEndpoint({
+        baselineIntervalMs: 300_000, // 5 minutes
+        aiHintNextRunAt: at("2025-01-01T00:00:00Z"), // in the past
+        aiHintExpiresAt: at("2025-01-01T01:00:00Z"), // still fresh
+        lastRunAt: at("2025-01-01T00:05:00Z"),
+      });
+      // now is after the oneshot hint time, so oneshot is in the past
+      const result = planNextRun(at("2025-01-01T00:05:00Z"), ep, stubCron);
+
+      // Oneshot is in the past and baseline is now+5min=00:10:00
+      // Oneshot (00:00:00) < baseline (00:10:00), so oneshot wins, but it's in the past
+      // Should be floored to now
+      expect(result.nextRunAt.toISOString()).toBe("2025-01-01T00:05:00.000Z");
+      expect(result.source).toBe("ai-oneshot");
+    });
+
+    it("uses baseline when expired oneshot would have been in the past", () => {
+      const ep = makeEndpoint({
+        baselineIntervalMs: 60_000,
+        aiHintNextRunAt: at("2025-01-01T00:00:00Z"), // expired hint
+        aiHintExpiresAt: at("2025-01-01T00:02:00Z"), // already expired
+        lastRunAt: at("2025-01-01T00:05:00Z"),
+      });
+      // hint is expired, so ignored — falls back to baseline
+      const result = planNextRun(at("2025-01-01T00:05:00Z"), ep, stubCron);
+
+      expect(result.source).toBe("baseline-interval");
+    });
+  });
+
   describe("exponential backoff", () => {
     it("no backoff when failureCount is 0", () => {
       const ep = makeEndpoint({
