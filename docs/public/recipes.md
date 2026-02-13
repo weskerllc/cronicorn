@@ -425,7 +425,7 @@ curl -X POST https://cronicorn.com/api/endpoints/ENDPOINT_ID/reset-failures \
 
 **Goal**: Create a data synchronization job that polls more frequently when there is a large data backlog (high `records_pending`), and relaxes to baseline when the data is caught up.
 
-> **No code required.** The AI reads `records_pending` and other fields from your response body and adjusts frequency automatically. You don't write frequency-adjustment logic. See [Code Examples: Data Sync](./code-examples.md#javascripttypescript-data-sync-with-volume-based-frequency) for programmatic setup.
+> **No code required.** The AI reads `records_pending` and other fields from your response body and adjusts frequency automatically. You don't write frequency-adjustment logic. See [Code Examples: Data Sync](./code-examples.md#javascript-data-sync-with-volume-based-frequency) for programmatic setup.
 
 ### Step 1: Create the Job and Endpoint via API
 
