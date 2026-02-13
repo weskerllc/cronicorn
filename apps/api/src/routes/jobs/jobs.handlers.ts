@@ -495,6 +495,7 @@ export const getSession: AppRouteHandler<routes.GetSessionRoute> = async (c) => 
       reasoning: session.reasoning,
       tokenUsage: session.tokenUsage,
       durationMs: session.durationMs,
+      warnings: session.warnings,
     }, HTTPStatusCodes.OK);
   });
 };

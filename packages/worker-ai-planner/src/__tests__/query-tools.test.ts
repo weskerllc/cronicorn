@@ -64,7 +64,6 @@ describe("query tools", () => {
         responseBody: { queueDepth: 42, status: "healthy" },
         timestamp: "2025-01-15T11:30:00.000Z",
         status: "success",
-        responsePreview: "{\"queueDepth\":42,\"status\":\"healthy\"}",
         tokenSavingNote: undefined,
       });
     });
@@ -113,7 +112,6 @@ describe("query tools", () => {
         responseBody: null,
         timestamp: "2025-01-15T11:30:00.000Z",
         status: "failed",
-        responsePreview: null,
         tokenSavingNote: undefined,
       });
     });

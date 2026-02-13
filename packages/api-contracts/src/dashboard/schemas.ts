@@ -298,6 +298,13 @@ export const ActivityEventSchema = z.object({
     description: "Tokens consumed during AI session",
     example: 1250,
   }),
+  warnings: z.array(z.object({
+    code: z.string(),
+    message: z.string(),
+    meta: z.record(z.unknown()).optional(),
+  })).optional().openapi({
+    description: "Warnings from AI session (truncation, missing tools, etc.)",
+  }),
 }).openapi({
   description: "An activity event (run or AI session)",
 });

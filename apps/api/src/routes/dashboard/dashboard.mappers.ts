@@ -40,6 +40,7 @@ export function mapJobActivityTimelineToResponse(timeline: JobActivityTimeline):
       reasoning: event.reasoning,
       toolCalls: event.toolCalls,
       tokenUsage: event.tokenUsage,
+      warnings: event.warnings,
     })),
     total: timeline.total,
     summary: timeline.summary,

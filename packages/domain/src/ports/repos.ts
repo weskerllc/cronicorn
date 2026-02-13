@@ -3,6 +3,7 @@
  */
 
 import type { ExecutionResult, Job, JobEndpoint, JsonValue } from "../entities/index.js";
+import type { AISessionWarning } from "./ai.js";
 
 /**
  * Health summary for an endpoint over a time window.
@@ -492,6 +493,7 @@ export type SessionsRepo = {
     durationMs?: number;
     nextAnalysisAt?: Date; // AI-scheduled next analysis time
     endpointFailureCount?: number; // Snapshot of failure count at analysis time
+    warnings?: AISessionWarning[];
   }) => Promise<string>;
 
   /**
@@ -531,6 +533,7 @@ export type SessionsRepo = {
     reasoning: string;
     tokenUsage: number | null;
     durationMs: number | null;
+    warnings: AISessionWarning[];
   }>>;
 
   /**
@@ -549,6 +552,7 @@ export type SessionsRepo = {
     reasoning: string;
     tokenUsage: number | null;
     durationMs: number | null;
+    warnings: AISessionWarning[];
   } | null>;
 
   /**
@@ -612,6 +616,7 @@ export type SessionsRepo = {
       toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
       tokenUsage: number | null;
       durationMs: number | null;
+      warnings: AISessionWarning[];
     }>;
     total: number;
   }>;

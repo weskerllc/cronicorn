@@ -991,6 +991,7 @@ export class DashboardManager {
       reasoning: session.reasoning,
       toolCalls: session.toolCalls,
       tokenUsage: session.tokenUsage ?? undefined,
+      warnings: session.warnings.length > 0 ? session.warnings : undefined,
     }));
 
     // Merge and sort by timestamp (descending)

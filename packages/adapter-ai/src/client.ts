@@ -1,6 +1,6 @@
 // Vercel AI SDK client implementation
 
-import type { AIClient, Tool } from "@cronicorn/domain";
+import type { AIClient, AISessionWarning, Tool } from "@cronicorn/domain";
 
 import { generateText, hasToolCall, stepCountIs, tool } from "ai";
 import { z } from "zod";
@@ -174,6 +174,31 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           totalTokens: result.totalUsage?.totalTokens,
         });
 
+        // Flag when any step was truncated by the output token limit
+        const truncatedSteps = result.steps
+          .map((step, i) => ({ step: i, finishReason: step.finishReason }))
+          .filter(s => s.finishReason === "length");
+
+        // Build warnings for upstream consumers (planner, UI)
+        const warnings: AISessionWarning[] = [];
+
+        if (truncatedSteps.length > 0) {
+          config.logger?.warn("Output token limit hit — model response was truncated", {
+            truncatedSteps,
+            maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
+            totalTokens: result.totalUsage?.totalTokens,
+          });
+
+          warnings.push({
+            code: "output_truncated",
+            message: `Output token limit hit on ${truncatedSteps.length} step(s) — model response was truncated`,
+            meta: {
+              truncatedSteps,
+              maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
+            },
+          });
+        }
+
         // Diagnostic logging when no tool calls captured — should not happen with prepareStep
         if (capturedToolCalls.length === 0) {
           config.logger?.warn("Zero tool calls captured", {
@@ -197,6 +222,7 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           reasoning: result.text,
           // totalUsage accumulates across all steps; usage is last step only
           tokenUsage: result.totalUsage?.totalTokens,
+          warnings: warnings.length > 0 ? warnings : undefined,
         };
       }
       catch (error) {

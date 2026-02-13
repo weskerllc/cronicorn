@@ -1,0 +1,1 @@
+ALTER TABLE "ai_analysis_sessions" ADD COLUMN "warnings" jsonb;

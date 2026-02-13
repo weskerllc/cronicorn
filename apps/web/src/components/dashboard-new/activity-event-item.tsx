@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertCircle, Brain, Check, ChevronDown, ChevronUp, Clock, Play, Settings2, Zap } from "lucide-react";
+import { AlertCircle, AlertTriangle, Brain, Check, ChevronDown, ChevronUp, Clock, Play, Settings2, Zap } from "lucide-react";
 
 import { Badge } from "@cronicorn/ui-library/components/badge";
 import { Button } from "@cronicorn/ui-library/components/button";
@@ -18,6 +18,7 @@ export type ActivityEvent = {
     // Session-specific fields
     reasoning?: string;
     toolCalls?: Array<{ tool: string; args?: unknown; result?: unknown }>;
+    warnings?: Array<{ code: string; message: string; meta?: Record<string, unknown> }>;
 };
 
 /** Action tools that make scheduling changes */
@@ -116,6 +117,12 @@ export function ActivityEventItem({ event }: { event: ActivityEvent }) {
                                     <Badge className="text-[10px] px-1 py-0 gap-0.5">
                                         <Settings2 className="size-2.5" />
                                         {actionToolCount}
+                                    </Badge>
+                                )}
+                                {Array.isArray(event.warnings) && event.warnings.length > 0 && (
+                                    <Badge variant="outline" className="text-[10px] px-1 py-0 gap-0.5 text-error border-error">
+                                        <AlertTriangle className="size-2.5" />
+                                        {event.warnings.length}
                                     </Badge>
                                 )}
                             </>

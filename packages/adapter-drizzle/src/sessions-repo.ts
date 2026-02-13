@@ -1,4 +1,4 @@
-import type { SessionsRepo } from "@cronicorn/domain";
+import type { AISessionWarning, SessionsRepo } from "@cronicorn/domain";
 import type { NodePgDatabase, NodePgTransaction } from "drizzle-orm/node-postgres";
 
 import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql, sum } from "drizzle-orm";
@@ -28,6 +28,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     durationMs?: number;
     nextAnalysisAt?: Date;
     endpointFailureCount?: number;
+    warnings?: AISessionWarning[];
   }): Promise<string> {
     const id = `session_${Date.now()}_${this.seq++}`;
 
@@ -41,6 +42,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       durationMs: session.durationMs ?? null,
       nextAnalysisAt: session.nextAnalysisAt ?? null,
       endpointFailureCount: session.endpointFailureCount ?? null,
+      warnings: session.warnings ?? null,
     });
 
     return id;
@@ -87,6 +89,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       reasoning: string;
       tokenUsage: number | null;
       durationMs: number | null;
+      warnings: AISessionWarning[];
     }>> {
     const results = await this.tx
       .select({
@@ -96,6 +99,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
         reasoning: aiAnalysisSessions.reasoning,
         tokenUsage: aiAnalysisSessions.tokenUsage,
         durationMs: aiAnalysisSessions.durationMs,
+        warnings: aiAnalysisSessions.warnings,
       })
       .from(aiAnalysisSessions)
       .where(eq(aiAnalysisSessions.endpointId, endpointId))
@@ -110,6 +114,8 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       reasoning: r.reasoning ?? "",
       tokenUsage: r.tokenUsage,
       durationMs: r.durationMs,
+      // eslint-disable-next-line ts/consistent-type-assertions
+      warnings: (r.warnings ?? []) as AISessionWarning[],
     }));
   }
 
@@ -133,6 +139,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
     reasoning: string;
     tokenUsage: number | null;
     durationMs: number | null;
+    warnings: AISessionWarning[];
   } | null> {
     const results = await this.tx
       .select({
@@ -144,6 +151,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
         reasoning: aiAnalysisSessions.reasoning,
         tokenUsage: aiAnalysisSessions.tokenUsage,
         durationMs: aiAnalysisSessions.durationMs,
+        warnings: aiAnalysisSessions.warnings,
       })
       .from(aiAnalysisSessions)
       .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
@@ -164,6 +172,8 @@ export class DrizzleSessionsRepo implements SessionsRepo {
       reasoning: r.reasoning ?? "",
       tokenUsage: r.tokenUsage,
       durationMs: r.durationMs,
+      // eslint-disable-next-line ts/consistent-type-assertions
+      warnings: (r.warnings ?? []) as AISessionWarning[],
     };
   }
 
@@ -294,6 +304,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
         toolCalls: Array<{ tool: string; args: unknown; result: unknown }>;
         tokenUsage: number | null;
         durationMs: number | null;
+        warnings: AISessionWarning[];
       }>;
       total: number;
     }> {
@@ -329,6 +340,7 @@ export class DrizzleSessionsRepo implements SessionsRepo {
         toolCalls: aiAnalysisSessions.toolCalls,
         tokenUsage: aiAnalysisSessions.tokenUsage,
         durationMs: aiAnalysisSessions.durationMs,
+        warnings: aiAnalysisSessions.warnings,
       })
       .from(aiAnalysisSessions)
       .innerJoin(jobEndpoints, eq(aiAnalysisSessions.endpointId, jobEndpoints.id))
@@ -358,6 +370,8 @@ export class DrizzleSessionsRepo implements SessionsRepo {
         toolCalls: row.toolCalls ?? [],
         tokenUsage: row.tokenUsage,
         durationMs: row.durationMs,
+        // eslint-disable-next-line ts/consistent-type-assertions
+        warnings: (row.warnings ?? []) as AISessionWarning[],
       })),
       total,
     };

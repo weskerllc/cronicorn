@@ -1,4 +1,4 @@
-import type { Clock, Cron, ExecutionResult, Job, JobEndpoint, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
+import type { AISessionWarning, Clock, Cron, ExecutionResult, Job, JobEndpoint, JobsRepo, RunsRepo, SessionsRepo } from "@cronicorn/domain";
 
 import { getExecutionLimits } from "@cronicorn/domain";
 import { nanoid } from "nanoid";
@@ -930,6 +930,7 @@ export class JobsManager {
         reasoning: string;
         tokenUsage: number | null;
         durationMs: number | null;
+        warnings: AISessionWarning[];
       }>;
       total: number;
     }> {
@@ -966,6 +967,7 @@ export class JobsManager {
     reasoning: string;
     tokenUsage: number | null;
     durationMs: number | null;
+    warnings: AISessionWarning[];
   } | null> {
     // Get session from repo (includes endpoint info via join)
     const session = await this.sessionsRepo.getSession(sessionId);
