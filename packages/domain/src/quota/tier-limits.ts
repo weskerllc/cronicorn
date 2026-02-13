@@ -7,7 +7,7 @@
 
 export const TIER_LIMITS = {
   free: 100_000, // 100k tokens/month
-  pro: 5_000_000, // 5M tokens/month
+  pro: 15_000_000, // 15M tokens/month
   enterprise: 10_000_000, // 10M tokens/month
 } as const;
 
