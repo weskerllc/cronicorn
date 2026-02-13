@@ -57,6 +57,9 @@ pnpm build            # Full build (all apps + packages)
 pnpm build:packages   # Packages only (TypeScript project references)
 pnpm test             # Unit + integration tests (Vitest)
 pnpm test:e2e         # End-to-end tests (Playwright)
+
+# For coverage
+pnpm test:coverage    # Runs vitest tests with coverage. Coverage will be in the `coverage` directory in root of repo
 ```
 
 ### Code Quality
