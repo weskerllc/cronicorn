@@ -1,3 +1,10 @@
+## [1.23.3](https://github.com/weskerllc/cronicorn/compare/v1.23.2...v1.23.3) (2026-02-13)
+
+
+### Bug Fixes
+
+* Require tool call in ai planner agent ([6f83570](https://github.com/weskerllc/cronicorn/commit/6f835700c69371ce27070e33b52953f6f7c194ca))
+
 ## [1.23.2](https://github.com/weskerllc/cronicorn/compare/v1.23.1...v1.23.2) (2026-02-13)
 
 
