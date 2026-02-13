@@ -19,6 +19,7 @@ import {
 import * as React from "react";
 
 import { Button } from "@cronicorn/ui-library/components/button";
+import { cn } from "@cronicorn/ui-library/lib/utils";
 import { Input } from "@cronicorn/ui-library/components/input";
 import { Label } from "@cronicorn/ui-library/components/label";
 import {
@@ -120,7 +121,7 @@ function DataTablePagination<TData>({
   const canGoNext = table.getCanNextPage();
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2 py-2">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2 py-2 shrink-0">
       {/* Left side: Row info */}
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span>
@@ -351,8 +352,8 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      <div className={containerClassName ?? "overflow-hidden rounded-md border"}>
-        <div className="overflow-y-auto flex-1 min-h-0 relative">
+      <div className={cn("overflow-hidden rounded-md border flex-1 min-h-0 flex flex-col", containerClassName)}>
+        <div className="overflow-auto flex-1 min-h-0 relative">
           <table className="w-full caption-bottom text-sm">
             <TableHeader className={headerClassName ?? "bg-muted sticky top-0 z-10"}>
               {table.getHeaderGroups().map((headerGroup) => (

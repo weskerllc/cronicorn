@@ -146,7 +146,7 @@ export function JobHealthChart({
                     height={Math.max(150, paginatedData.length * 70)}
                     margin={{
                         top: 16,
-                        left: 12,
+                        left: 0,
                         right: 36,
                     }}
                     barCategoryGap="25%"
@@ -157,10 +157,13 @@ export function JobHealthChart({
                         dataKey="jobName"
                         type="category"
                         tickLine={false}
-                        tickMargin={10}
+                        tickMargin={4}
                         axisLine={false}
-                        tickFormatter={(value) => value.slice(0, 5)}
-                        hide
+                        width={80}
+                        tickFormatter={(value: string) =>
+                            value.length > 10 ? `${value.slice(0, 9)}…` : value
+                        }
+                        tick={{ fontSize: 11 }}
                     />
                     <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                     <ChartLegend content={<ChartLegendContent className="pb-2" />} />
@@ -170,6 +173,7 @@ export function JobHealthChart({
                         stackId="a"
                         fill="var(--color-successCount)"
                         radius={[4, 0, 0, 4]}
+                        minPointSize={2}
                         onClick={(barData) => onJobClick?.(barData.jobId)}
                         style={{ cursor: "pointer" }}
                         isAnimationActive={false}
