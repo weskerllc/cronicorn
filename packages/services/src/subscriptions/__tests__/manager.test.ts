@@ -268,9 +268,10 @@ describe("subscriptionsManager", () => {
 
       const result = await manager.getSubscriptionStatus("user_123");
 
-      expect(result.refundEligibility.eligible).toBe(true);
-      expect(result.refundEligibility.expiresAt).toEqual(expiresAt);
-      expect(result.refundEligibility.status).toBe("eligible");
+      expect(result.refundEligibility).toBeDefined();
+      expect(result.refundEligibility!.eligible).toBe(true);
+      expect(result.refundEligibility!.expiresAt).toEqual(expiresAt);
+      expect(result.refundEligibility!.status).toBe("eligible");
     });
 
     it("should show not eligible when refund window expired", async () => {
@@ -290,7 +291,8 @@ describe("subscriptionsManager", () => {
 
       const result = await manager.getSubscriptionStatus("user_123");
 
-      expect(result.refundEligibility.eligible).toBe(false);
+      expect(result.refundEligibility).toBeDefined();
+      expect(result.refundEligibility!.eligible).toBe(false);
     });
 
     it("should throw error if user not found", async () => {

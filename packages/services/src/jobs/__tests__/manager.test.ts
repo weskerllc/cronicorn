@@ -1092,7 +1092,13 @@ describe("jobsManager", () => {
     });
 
     it("updateEndpointConfig rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(
         manager.updateEndpointConfig("user-1", "ep-1", { name: "New" }),
@@ -1100,7 +1106,13 @@ describe("jobsManager", () => {
     });
 
     it("deleteEndpoint rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(manager.deleteEndpoint("user-1", "ep-1")).rejects.toThrow(
         "Endpoint not found or unauthorized",
@@ -1108,7 +1120,13 @@ describe("jobsManager", () => {
     });
 
     it("archiveEndpoint rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(manager.archiveEndpoint("user-1", "ep-1")).rejects.toThrow(
         "Endpoint not found or unauthorized",
@@ -1116,7 +1134,13 @@ describe("jobsManager", () => {
     });
 
     it("applyIntervalHint rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(
         manager.applyIntervalHint("user-1", "ep-1", { intervalMs: 60_000 }),
@@ -1124,7 +1148,13 @@ describe("jobsManager", () => {
     });
 
     it("scheduleOneShotRun rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(
         manager.scheduleOneShotRun("user-1", "ep-1", { nextRunAt: "2025-12-01T00:00:00Z" }),
@@ -1132,7 +1162,13 @@ describe("jobsManager", () => {
     });
 
     it("pauseOrResumeEndpoint rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(
         manager.pauseOrResumeEndpoint("user-1", "ep-1", { pausedUntil: null }),
@@ -1140,7 +1176,13 @@ describe("jobsManager", () => {
     });
 
     it("clearAdaptiveHints rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(manager.clearAdaptiveHints("user-1", "ep-1")).rejects.toThrow(
         "Endpoint not found or unauthorized",
@@ -1148,7 +1190,13 @@ describe("jobsManager", () => {
     });
 
     it("resetFailureCount rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(manager.resetFailureCount("user-1", "ep-1")).rejects.toThrow(
         "Endpoint not found or unauthorized",
@@ -1156,7 +1204,13 @@ describe("jobsManager", () => {
     });
 
     it("summarizeEndpointHealth rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(manager.summarizeEndpointHealth("user-1", "ep-1")).rejects.toThrow(
         "Endpoint not found or unauthorized",
@@ -1193,7 +1247,13 @@ describe("jobsManager", () => {
     });
 
     it("listSessions rejects unauthorized access", async () => {
-      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue(null);
+      vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
+        id: "ep-1",
+        tenantId: "user-2",
+        name: "Not Mine",
+        nextRunAt: new Date(),
+        failureCount: 0,
+      });
 
       await expect(manager.listSessions("user-1", "ep-1")).rejects.toThrow(
         "Endpoint not found or unauthorized",
@@ -1218,6 +1278,7 @@ describe("jobsManager", () => {
         reasoning: "test",
         tokenUsage: 100,
         durationMs: 500,
+        warnings: [],
       });
       vi.mocked(mockJobsRepo.getEndpoint).mockResolvedValue({
         id: "ep-1",
@@ -1389,6 +1450,7 @@ describe("jobsManager", () => {
           reasoning: "Adjusted interval",
           tokenUsage: 500,
           durationMs: 1200,
+          warnings: [],
         },
       ];
 
@@ -1414,6 +1476,7 @@ describe("jobsManager", () => {
         reasoning: "test reasoning",
         tokenUsage: 100,
         durationMs: 500,
+        warnings: [],
       };
       const mockEndpoint: JobEndpoint = {
         id: "ep-1",
