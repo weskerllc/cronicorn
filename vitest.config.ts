@@ -26,6 +26,9 @@ export default defineConfig({
         "**/*.test.{ts,tsx}",
         "**/*.spec.{ts,tsx}",
         "**/index.ts", // Often just re-exports
+        "**/ports/**", // Pure interfaces/types — no runtime logic
+        "**/fixtures/**", // Test infrastructure (factories, in-memory fakes)
+        "**/testing/**", // Shared contract test suites consumed by adapters
       ],
     },
   },
