@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/weskerllc/cronicorn/compare/v1.23.4...v1.24.0) (2026-02-13)
+
+
+### Features
+
+* Ensure warnings / errors on ai analysis sessions get tracked and rendered ([f88cdc5](https://github.com/weskerllc/cronicorn/commit/f88cdc557fcd70f52e44428e8fc15b74b6140775))
+
 ## [1.23.4](https://github.com/weskerllc/cronicorn/compare/v1.23.3...v1.23.4) (2026-02-13)
 
 
