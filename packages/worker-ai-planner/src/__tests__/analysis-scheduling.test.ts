@@ -102,7 +102,7 @@ describe("ai-controlled analysis scheduling", () => {
     mockSessionsRepo = {
       create: vi.fn().mockResolvedValue("session-1"),
       getLastSession: vi.fn(),
-      getRecentSessions: vi.fn(),
+      getRecentSessions: vi.fn().mockResolvedValue([]),
       getTotalSessionCount: vi.fn(),
       getTotalTokenUsage: vi.fn(),
       getAISessionTimeSeries: vi.fn(),
@@ -230,6 +230,7 @@ describe("ai-controlled analysis scheduling", () => {
         sessions: mockSessionsRepo,
         quota: mockQuotaGuard,
         clock: fakeClock,
+        logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       });
 
       await planner.analyzeEndpoint("ep-1");
@@ -281,6 +282,7 @@ describe("ai-controlled analysis scheduling", () => {
         sessions: mockSessionsRepo,
         quota: mockQuotaGuard,
         clock: fakeClock,
+        logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       });
 
       await planner.analyzeEndpoint("ep-1");
@@ -327,6 +329,7 @@ describe("ai-controlled analysis scheduling", () => {
         sessions: mockSessionsRepo,
         quota: mockQuotaGuard,
         clock: fakeClock,
+        logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       });
 
       await planner.analyzeEndpoint("ep-1");
@@ -369,6 +372,7 @@ describe("ai-controlled analysis scheduling", () => {
         sessions: mockSessionsRepo,
         quota: mockQuotaGuard,
         clock: fakeClock,
+        logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       });
 
       await planner.analyzeEndpoint("ep-1");
