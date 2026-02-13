@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/weskerllc/cronicorn/compare/v1.24.1...v1.25.0) (2026-02-13)
+
+
+### Features
+
+* **ai-planner:** enhance analysis prompt for diverse use cases ([#139](https://github.com/weskerllc/cronicorn/issues/139)) ([6205b1a](https://github.com/weskerllc/cronicorn/commit/6205b1a865b713bcfbaeca21c3e6abf22fce1464))
+
 ## [1.24.1](https://github.com/weskerllc/cronicorn/compare/v1.24.0...v1.24.1) (2026-02-13)
 
 
