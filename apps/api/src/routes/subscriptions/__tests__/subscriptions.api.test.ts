@@ -961,7 +961,7 @@ describe("subscriptions API", () => {
       // Pro tier limits: 5M tokens, 100 endpoints, 100k runs
       expect(data).toMatchObject({
         aiCallsUsed: 0,
-        aiCallsLimit: 5_000_000,
+        aiCallsLimit: 15_000_000,
         endpointsUsed: 0,
         endpointsLimit: 100,
         totalRuns: 0,
