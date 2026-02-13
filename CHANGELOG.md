@@ -1,3 +1,11 @@
+## [1.24.1](https://github.com/weskerllc/cronicorn/compare/v1.24.0...v1.24.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* Fix tests ([2fc63b8](https://github.com/weskerllc/cronicorn/commit/2fc63b8117fe8ed48d776af47604155865b1e265))
+* Increase test coverage ([#138](https://github.com/weskerllc/cronicorn/issues/138)) ([f0fa534](https://github.com/weskerllc/cronicorn/commit/f0fa5343cf432d5349fe45206015e333b1957563))
+
 # [1.24.0](https://github.com/weskerllc/cronicorn/compare/v1.23.4...v1.24.0) (2026-02-13)
 
 
