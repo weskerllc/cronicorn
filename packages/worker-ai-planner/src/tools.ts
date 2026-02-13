@@ -245,7 +245,10 @@ export function createToolsForEndpoint(
         includeBodies: z.boolean().default(false).describe("Set true to include truncated response bodies (defaults to metadata only)"),
       }),
       execute: async (args) => {
-        const history = await runs.getResponseHistory(endpointId, args.limit, args.offset);
+        // Fetch one extra to check for more results without a separate query
+        const rawHistory = await runs.getResponseHistory(endpointId, args.limit + 1, args.offset);
+        const hasMore = rawHistory.length > args.limit;
+        const history = hasMore ? rawHistory.slice(0, args.limit) : rawHistory;
 
         if (history.length === 0) {
           return {
@@ -283,10 +286,6 @@ export function createToolsForEndpoint(
             duplicateOfNewer: isDuplicate || undefined,
           };
         });
-
-        // Check if there are more results by requesting one extra with next offset
-        const hasMoreCheck = await runs.getResponseHistory(endpointId, 1, args.offset + args.limit);
-        const hasMore = hasMoreCheck.length > 0;
 
         return {
           count: history.length,

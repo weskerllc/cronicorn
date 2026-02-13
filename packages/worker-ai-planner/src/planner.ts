@@ -9,6 +9,12 @@ import type { AIClient, Clock, JobsRepo, QuotaGuard, RunsRepo, SessionsRepo } fr
 
 import { createToolsForEndpoint } from "./tools.js";
 
+export type PlannerLogger = {
+  info: (message: string, meta?: Record<string, unknown>) => void;
+  warn: (message: string, meta?: Record<string, unknown>) => void;
+  error: (message: string, meta?: Record<string, unknown>) => void;
+};
+
 export type AIPlannerDeps = {
   aiClient: AIClient;
   jobs: JobsRepo;
@@ -16,10 +22,15 @@ export type AIPlannerDeps = {
   sessions: SessionsRepo;
   quota: QuotaGuard;
   clock: Clock;
+  logger: PlannerLogger;
+  maxTokens?: number;
 };
 
+/** Action tool names used for extracting actions from previous sessions */
+const ACTION_TOOL_NAMES = new Set(["propose_interval", "propose_next_time", "pause_until", "clear_hints"]);
+
 /**
- * Build lean analysis prompt for AI (~60 lines, ~800 tokens).
+ * Build lean analysis prompt for AI.
  * Gives essential context without verbose explanations—AI is smart enough to reason.
  */
 function buildAnalysisPrompt(
@@ -48,6 +59,11 @@ function buildAnalysisPrompt(
     hour24: { successCount: number; failureCount: number; successRate: number };
     avgDurationMs: number | null;
     failureStreak: number;
+  },
+  lastSession?: {
+    analyzedAt: Date;
+    reasoning: string;
+    actions: string[];
   },
 ): string {
   // Build pause status string
@@ -79,12 +95,32 @@ function buildAnalysisPrompt(
     ? `${siblingNames.length + 1} endpoints [${[endpoint.name, ...siblingNames].join(", ")}]`
     : "Standalone";
 
+  // Schedule type
+  const isCron = !!endpoint.baselineCron;
+
+  // Last session context (gives AI continuity between sessions)
+  let lastSessionSection = "";
+  if (lastSession) {
+    const agoMs = currentTime.getTime() - lastSession.analyzedAt.getTime();
+    const agoMin = Math.round(agoMs / 60000);
+    const agoLabel = agoMin < 60 ? `${agoMin} min ago` : `${(agoMin / 60).toFixed(1)}h ago`;
+    const actionsLabel = lastSession.actions.length > 0 ? ` (${lastSession.actions.join(", ")})` : " (no action)";
+    lastSessionSection = `\n**Last Analysis:** ${agoLabel} — "${lastSession.reasoning}"${actionsLabel}`;
+  }
+
+  // First analysis note (when no execution data exists)
+  const totalRuns = health.hour24.successCount + health.hour24.failureCount;
+  const firstAnalysisNote = totalRuns === 0
+    ? "\n\n**Note:** No execution data yet. Be conservative — submit analysis with a short `next_analysis_in_ms` to re-check soon."
+    : "";
+
   return `# Adaptive Scheduler AI
 
 You analyze scheduled endpoint executions and suggest timing adjustments when warranted.
 
 ## Your Role
-- Observe endpoint behavior through response data
+- **Follow the endpoint description as your primary rules** — it contains the user's thresholds and conditions for when to act
+- Match response body fields against thresholds/conditions mentioned in the description
 - Suggest scheduling changes only with clear evidence
 - Default to stability—most endpoints need no intervention
 - **Maximum 15 tool calls per session**
@@ -108,17 +144,17 @@ You analyze scheduled endpoint executions and suggest timing adjustments when wa
 
 ## This Endpoint
 
-**Name:** ${endpoint.name}${endpoint.description ? `\n**Purpose:** ${endpoint.description}` : ""}
+**Name:** ${endpoint.name}${endpoint.description ? `\n**Adaptation Rules:** ${endpoint.description}` : ""}
 **Job:** ${jobContext}${jobDescription ? ` — ${jobDescription}` : ""}
 
 **Schedule:**
-- Baseline: ${endpoint.baselineCron || `${endpoint.baselineIntervalMs}ms interval`}
+- Baseline: ${endpoint.baselineCron || `${endpoint.baselineIntervalMs}ms interval`}${isCron ? " (cron)" : " (interval)"}
 - Last Run: ${endpoint.lastRunAt?.toISOString() || "Never"}
 - Next Scheduled: ${endpoint.nextRunAt.toISOString()}
 - Status: ${pauseStatus}
 - Failure Count: ${endpoint.failureCount}${backoffNote}
 
-**Constraints:** Min ${endpoint.minIntervalMs ? `${endpoint.minIntervalMs}ms` : "none"}, Max ${endpoint.maxIntervalMs ? `${endpoint.maxIntervalMs}ms` : "none"}${aiHintsSection}
+**Constraints:** Min ${endpoint.minIntervalMs ? `${endpoint.minIntervalMs}ms` : "none"}, Max ${endpoint.maxIntervalMs ? `${endpoint.maxIntervalMs}ms` : "none"}${aiHintsSection}${lastSessionSection}
 
 **Health:**
 | Window | Success | Runs |
@@ -128,6 +164,7 @@ You analyze scheduled endpoint executions and suggest timing adjustments when wa
 | 24h | ${health.hour24.successRate}% | ${health.hour24.successCount + health.hour24.failureCount} |
 
 Failure streak: ${health.failureStreak}, Avg duration: ${health.avgDurationMs ? `${health.avgDurationMs.toFixed(0)}ms` : "N/A"}
+↳ Compare 1h vs 24h: if short windows are healthy but 24h is low, the endpoint has recovered — prefer \`clear_hints\`.${firstAnalysisNote}
 
 ## How Your Actions Affect Scheduling
 
@@ -137,24 +174,27 @@ Failure streak: ${health.failureStreak}, Avg duration: ${health.avgDurationMs ? 
 3. **AI Hints** — Your interval/one-shot proposals (if not expired)
 4. **Baseline** — User's original schedule (with backoff if failures > 0)
 
-**Your Interval Hint (\`propose_interval\`):** OVERRIDES baseline while active, bypasses backoff. Expires at TTL → reverts to baseline.
+**\`propose_interval\`:** OVERRIDES baseline while active, bypasses backoff. Expires at TTL → reverts to baseline.${isCron ? "\n↳ This endpoint uses cron — an interval hint replaces the cron schedule entirely while active." : ""}
+↳ If failure streak is high, tightening may worsen the problem. Consider \`pause_until\` or let backoff work unless the description explicitly requests aggressive monitoring during failures.
 
-**Your One-Shot Hint (\`propose_next_time\`):** COMPETES with baseline (earliest wins). Good for "run now" or "defer to specific time".
+**\`propose_next_time\`:** COMPETES with baseline (earliest wins). Good for "run now" or "defer to specific time".
 
 **Both Active:** They compete (earliest wins), baseline ignored.
 
 **Backoff (Baseline Only):** \`baselineInterval × 2^min(failureCount, 5)\` — max 32x. Your hints bypass this.
 
+**\`clear_hints\`:** Revert to baseline immediately. Use when the endpoint has recovered (short-window health is healthy) or when conditions in the description have returned to normal.
+
 ## Tools
 
 **Query:**
-- \`get_latest_response\` — Current response preview (ask for full body only when necessary)
-- \`get_response_history\` — Recent responses (default 5, metadata-only; set includeBodies=true for truncated payloads)
-- \`get_sibling_latest_responses\` — Other endpoints in this job (includeResponses=true for raw payloads)
+- \`get_latest_response\` — Current response body (truncated at 500 chars)
+- \`get_response_history\` — Recent responses (default 5, metadata-only; set includeBodies=true for payloads)
+- \`get_sibling_latest_responses\` — Other endpoints in this job (includeResponses=true for payloads)
 
 **Actions:**
 - \`propose_interval\` — Change frequency (intervalMs, ttlMinutes?, reason?)
-- \`propose_next_time\` — One-shot schedule (nextRunInMs OR nextRunAtIso, ttlMinutes?, reason?)
+- \`propose_next_time\` — One-shot schedule (nextRunAtIso, ttlMinutes?, reason?)
 - \`pause_until\` — Pause/resume (untilIso or null, reason?)
 - \`clear_hints\` — Revert to baseline immediately (reason)
 
@@ -197,7 +237,7 @@ export class AIPlanner {
    * @param endpointId - The endpoint to analyze
    */
   async analyzeEndpoint(endpointId: string): Promise<void> {
-    const { aiClient, jobs, runs, sessions, quota, clock } = this.deps;
+    const { aiClient, jobs, runs, sessions, quota, clock, logger } = this.deps;
 
     // 1. Get current endpoint state
     const endpoint = await jobs.getEndpoint(endpointId);
@@ -205,7 +245,7 @@ export class AIPlanner {
     // 2. Check quota before making AI call
     const canProceed = await quota.canProceed(endpoint.tenantId);
     if (!canProceed) {
-      console.warn(`[AI Analysis] Quota exceeded for tenant ${endpoint.tenantId}, skipping analysis for endpoint ${endpoint.name}`);
+      logger.warn(`Quota exceeded for tenant ${endpoint.tenantId}, skipping analysis for endpoint ${endpoint.name}`);
       return;
     }
 
@@ -226,27 +266,39 @@ export class AIPlanner {
         .map(ep => ep.name);
     }
 
-    // 5. Build AI context with all available information
-    const prompt = buildAnalysisPrompt(clock.now(), jobDescription, siblingNames, endpoint, health);
+    // 5. Get last session context for continuity between analyses
+    const recentSessions = await sessions.getRecentSessions(endpointId, 1);
+    const lastSessionContext = recentSessions.length > 0
+      ? {
+          analyzedAt: recentSessions[0].analyzedAt,
+          reasoning: (recentSessions[0].reasoning || "No reasoning recorded").slice(0, 150),
+          actions: recentSessions[0].toolCalls
+            .filter(tc => ACTION_TOOL_NAMES.has(tc.tool))
+            .map(tc => tc.tool),
+        }
+      : undefined;
 
-    // 6. Create endpoint-scoped tools (3 query + 3 action)
+    // 6. Build AI context with all available information
+    const prompt = buildAnalysisPrompt(clock.now(), jobDescription, siblingNames, endpoint, health, lastSessionContext);
+
+    // 7. Create endpoint-scoped tools (3 query + 4 action + 1 terminal)
     // Note: jobId is required for sibling queries. If missing, sibling tool will return empty.
     const tools = createToolsForEndpoint(endpointId, endpoint.jobId || "", { jobs, runs, clock });
 
-    // 7. Invoke AI with tools and capture session result
+    // 8. Invoke AI with tools and capture session result
     const startTime = clock.now().getTime();
     const session = await aiClient.planWithTools({
       finalToolName: "submit_analysis",
       input: prompt,
       tools,
-      maxTokens: 1500, // Increased for comprehensive analysis with response data queries
+      maxTokens: this.deps.maxTokens ?? 1500,
     });
     const durationMs = clock.now().getTime() - startTime;
 
-    // 8. Extract reasoning from submit_analysis tool call
+    // 9. Extract reasoning from submit_analysis tool call
     const submitAnalysisCall = session.toolCalls.find(tc => tc.tool === "submit_analysis");
     if (!submitAnalysisCall) {
-      console.warn(`[AI Analysis] Missing submit_analysis tool call for endpoint ${endpoint.name}`);
+      logger.warn(`Missing submit_analysis tool call for endpoint ${endpoint.name}`);
     }
 
     const analysisResult = submitAnalysisCall?.result;
@@ -265,11 +317,11 @@ export class AIPlanner {
     const nextAnalysisAt = new Date(clock.now().getTime() + effectiveIntervalMs);
 
     if (!reasoning) {
-      console.warn(`[AI Analysis] Missing reasoning for endpoint ${endpoint.name}`);
+      logger.warn(`Missing reasoning for endpoint ${endpoint.name}`);
     }
 
     const safeReasoning = reasoning ?? "No reasoning provided";
-    // 9. Persist session to database for debugging/cost tracking
+    // 10. Persist session to database for debugging/cost tracking
     await sessions.create({
       endpointId,
       analyzedAt: clock.now(),
@@ -283,7 +335,7 @@ export class AIPlanner {
 
     // Log summary for real-time observability
     if (session.toolCalls.length > 0) {
-      console.warn(`[AI Analysis] ${endpoint.name}:`, {
+      logger.info(`Analysis complete: ${endpoint.name}`, {
         toolsCalled: session.toolCalls.map(tc => tc.tool),
         reasoning: safeReasoning.slice(0, 150) + (safeReasoning.length > 150 ? "..." : ""),
         tokens: session.tokenUsage,
@@ -309,7 +361,7 @@ export class AIPlanner {
         return acc;
       }, {});
 
-      console.warn(`[AI Analysis][telemetry] ${endpoint.name}:`, {
+      logger.info(`Telemetry: ${endpoint.name}`, {
         tokenUsage: session.tokenUsage,
         perTool: aggregated,
       });
@@ -330,8 +382,9 @@ export class AIPlanner {
       }
       catch (error) {
         // Log but continue - don't let one failure stop batch
-
-        console.error(`Failed to analyze endpoint ${id}:`, error);
+        this.deps.logger.error(`Failed to analyze endpoint ${id}`, {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
   }

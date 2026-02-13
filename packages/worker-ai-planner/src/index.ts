@@ -5,5 +5,5 @@
  */
 
 export { AIPlanner } from "./planner.js";
-export type { AIPlannerDeps } from "./planner.js";
+export type { AIPlannerDeps, PlannerLogger } from "./planner.js";
 export { createToolsForEndpoint } from "./tools.js";

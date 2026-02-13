@@ -137,6 +137,7 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           prompt: input,
           tools: cleanTools,
           maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
+          ...(config.temperature !== undefined && { temperature: config.temperature }),
           stopWhen: stopConditions,
         });
 
