@@ -117,7 +117,6 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           }
         }
 
-        // Step 3: Call AI with tools and handle responses
         // TypeScript struggles with the complex tool generics, but runtime behavior is correct
         // This single type assertion is safer than scattering 'any' throughout the codebase
         const cleanTools = Object.keys(vercelTools).length > 0
@@ -126,11 +125,12 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           : undefined;
 
         // Build stop conditions:
-        // 1. Safety limit: stop at step 15 to prevent runaway tool loops
+        // 1. Safety limit: stop at STEP_LIMIT to prevent runaway tool loops
         // 2. Final tool: stop when the specified tool is called (e.g., submit_analysis)
+        const STEP_LIMIT = 15;
         const stopConditions = finalToolName
-          ? [stepCountIs(15), hasToolCall(finalToolName)]
-          : stepCountIs(15);
+          ? [stepCountIs(STEP_LIMIT), hasToolCall(finalToolName)]
+          : stepCountIs(STEP_LIMIT);
 
         const result = await generateText({
           model: config.model,
@@ -138,10 +138,18 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           tools: cleanTools,
           maxOutputTokens: maxTokens || config.maxOutputTokens || 4096,
           ...(config.temperature !== undefined && { temperature: config.temperature }),
-          // Force tool calls when a final tool is required — prevents the model
-          // from ending the loop with a text-only response before calling it.
-          ...(finalToolName && { toolChoice: "required" as const }),
           stopWhen: stopConditions,
+          // Use prepareStep to guarantee the final tool is called:
+          // - All steps: toolChoice "required" prevents text-only exits
+          // - Last step: forces the specific final tool so it's always invoked
+          ...(finalToolName && {
+            prepareStep: async ({ stepNumber }: { stepNumber: number }) => {
+              if (stepNumber >= STEP_LIMIT - 1) {
+                return { toolChoice: { type: "tool" as const, toolName: finalToolName } };
+              }
+              return { toolChoice: "required" as const };
+            },
+          }),
         });
 
         // Extract ALL tool calls and results from ALL steps
@@ -157,18 +165,38 @@ export function createVercelAiClient(config: VercelAiClientConfig): AIClient {
           });
         }
 
-        // Emit telemetry if configured
+        // Emit telemetry
         config.logger?.info("AI client execution completed", {
-          textLength: result.text.length,
-          hasUsage: !!result.usage,
+          steps: result.steps.length,
+          finishReason: result.finishReason,
           toolCalls: capturedToolCalls.length,
           tools: capturedToolCalls.map(tc => tc.tool),
+          totalTokens: result.totalUsage?.totalTokens,
         });
+
+        // Diagnostic logging when no tool calls captured — should not happen with prepareStep
+        if (capturedToolCalls.length === 0) {
+          config.logger?.warn("Zero tool calls captured", {
+            steps: result.steps.length,
+            finishReason: result.finishReason,
+            hadFinalTool: !!finalToolName,
+            textLength: result.text.length,
+            textPreview: result.text.slice(0, 200),
+            perStep: result.steps.map((step, i) => ({
+              step: i,
+              finishReason: step.finishReason,
+              toolCalls: step.toolCalls.length,
+              toolResults: step.toolResults.length,
+              textLength: step.text.length,
+            })),
+          });
+        }
 
         return {
           toolCalls: capturedToolCalls,
           reasoning: result.text,
-          tokenUsage: result.usage?.totalTokens,
+          // totalUsage accumulates across all steps; usage is last step only
+          tokenUsage: result.totalUsage?.totalTokens,
         };
       }
       catch (error) {
