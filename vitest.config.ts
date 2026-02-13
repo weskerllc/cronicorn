@@ -26,6 +26,22 @@ export default defineConfig({
         "**/*.test.{ts,tsx}",
         "**/*.spec.{ts,tsx}",
         "**/index.ts", // Often just re-exports
+        "**/ports/**", // Pure interfaces/types — no runtime logic
+        "**/fixtures/**", // Test infrastructure (factories, in-memory fakes)
+        "**/testing/**", // Shared contract test suites consumed by adapters
+        "apps/web/**", // Frontend UI — covered by Playwright E2E, not Vitest
+        "packages/ui-library", // ShadCN components
+        "apps/docs/**", // Static documentation site
+        "apps/e2e/**", // E2E test runner
+        "apps/mcp-server/**", // Thin wrappers around API — no business logic
+        "apps/migrator/**", // Bootstrap/seed scripts — logic in adapter-drizzle
+        "packages/adapter-pino/**", // Trivial logger delegation adapter
+        "packages/adapter-system-clock/**", // Trivial Date/setTimeout wrapper
+        "packages/content/**", // Pure static constants — no executable logic
+        "packages/api-contracts/**", // Zod schemas — tested implicitly via routes
+        "packages/worker-scheduler/src/sim/**", // CLI simulation harness
+        "packages/worker-scheduler/src/adapters/**", // Test fakes for simulation
+        "apps/api/src/routes/webhooks.ts", // Thin composition root — logic tested via services/adapters
       ],
     },
   },

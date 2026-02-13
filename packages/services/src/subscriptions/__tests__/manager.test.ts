@@ -250,6 +250,56 @@ describe("subscriptionsManager", () => {
         },
       });
     });
+
+    it("should show refund eligible when within window", async () => {
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+
+      const mockUser = createMockUser({
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro",
+        stripeCustomerId: "cus_123",
+        refundWindowExpiresAt: expiresAt,
+        refundStatus: "eligible",
+      });
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+
+      const result = await manager.getSubscriptionStatus("user_123");
+
+      expect(result.refundEligibility.eligible).toBe(true);
+      expect(result.refundEligibility.expiresAt).toEqual(expiresAt);
+      expect(result.refundEligibility.status).toBe("eligible");
+    });
+
+    it("should show not eligible when refund window expired", async () => {
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
+
+      const mockUser = createMockUser({
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro",
+        stripeCustomerId: "cus_123",
+        refundWindowExpiresAt: expiresAt,
+        refundStatus: "eligible",
+      });
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+
+      const result = await manager.getSubscriptionStatus("user_123");
+
+      expect(result.refundEligibility.eligible).toBe(false);
+    });
+
+    it("should throw error if user not found", async () => {
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(null);
+
+      await expect(manager.getSubscriptionStatus("unknown")).rejects.toThrow(
+        "User not found: unknown",
+      );
+    });
   });
 
   describe("webhook handling", () => {
@@ -280,6 +330,50 @@ describe("subscriptionsManager", () => {
           lastPaymentIntentId: undefined,
           lastInvoiceId: undefined,
           refundStatus: "eligible",
+        }));
+      });
+
+      it("should capture payment_intent and invoice when present as strings", async () => {
+        const event = {
+          type: "checkout.session.completed",
+          data: {
+            metadata: {
+              userId: "user_123",
+              tier: "pro",
+            },
+            customer: "cus_123",
+            subscription: "sub_123",
+            payment_intent: "pi_checkout_789",
+            invoice: "in_checkout_789",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", expect.objectContaining({
+          lastPaymentIntentId: "pi_checkout_789",
+          lastInvoiceId: "in_checkout_789",
+        }));
+      });
+
+      it("should set enterprise tier refundStatus to expired", async () => {
+        const event = {
+          type: "checkout.session.completed",
+          data: {
+            metadata: {
+              userId: "user_123",
+              tier: "enterprise",
+            },
+            customer: "cus_123",
+            subscription: "sub_123",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", expect.objectContaining({
+          tier: "enterprise",
+          refundStatus: "expired",
         }));
       });
 
@@ -378,6 +472,21 @@ describe("subscriptionsManager", () => {
           subscriptionStatus: "canceled",
           subscriptionEndsAt: null,
         });
+      });
+
+      it("should handle missing user gracefully", async () => {
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(null);
+
+        const event = {
+          type: "customer.subscription.deleted",
+          data: {
+            customer: "cus_unknown",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        expect(mockJobsRepo.updateUserSubscription).not.toHaveBeenCalled();
       });
     });
 
@@ -541,6 +650,47 @@ describe("subscriptionsManager", () => {
       });
     });
 
+    describe("invoice.payment_succeeded - refund idempotency", () => {
+      it("should skip update for refunded user", async () => {
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(
+          createMockWebhookUser({
+            id: "user_123",
+            email: "test@example.com",
+            refundStatus: "issued",
+          }),
+        );
+
+        const event = {
+          type: "invoice.payment_succeeded",
+          data: {
+            customer: "cus_123",
+            payment_intent: "pi_456",
+            id: "in_456",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        expect(mockJobsRepo.updateUserSubscription).not.toHaveBeenCalled();
+      });
+
+      it("should handle missing user gracefully", async () => {
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(null);
+
+        const event = {
+          type: "invoice.payment_succeeded",
+          data: {
+            customer: "cus_unknown",
+            payment_intent: "pi_456",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        expect(mockJobsRepo.updateUserSubscription).not.toHaveBeenCalled();
+      });
+    });
+
     describe("invoice.payment_failed", () => {
       it("should mark subscription as past_due", async () => {
         const mockUser = createMockUser({
@@ -563,6 +713,21 @@ describe("subscriptionsManager", () => {
         expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledWith("user_123", {
           subscriptionStatus: "past_due",
         });
+      });
+
+      it("should handle missing user gracefully", async () => {
+        vi.mocked(mockJobsRepo.getUserByStripeCustomerId).mockResolvedValue(null);
+
+        const event = {
+          type: "invoice.payment_failed",
+          data: {
+            customer: "cus_unknown",
+          },
+        };
+
+        await manager.handleWebhookEvent(event);
+
+        expect(mockJobsRepo.updateUserSubscription).not.toHaveBeenCalled();
       });
     });
 
@@ -840,6 +1005,129 @@ describe("subscriptionsManager", () => {
 
       expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(2, "user_123", {
         refundStatus: "cancel_completed_refund_failed",
+      });
+    });
+
+    it("should reject refund when status is 'requested' (concurrent request)", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "requested",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+
+      await expect(
+        manager.requestRefund({ userId: "user_123" }),
+      ).rejects.toThrow("Refund is already being processed");
+
+      expect(mockPaymentProvider.cancelSubscriptionNow).not.toHaveBeenCalled();
+      expect(mockPaymentProvider.issueRefund).not.toHaveBeenCalled();
+    });
+
+    it("should throw error if user not found", async () => {
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(null);
+
+      await expect(
+        manager.requestRefund({ userId: "unknown", reason: "Test" }),
+      ).rejects.toThrow("User not found: unknown");
+
+      expect(mockPaymentProvider.cancelSubscriptionNow).not.toHaveBeenCalled();
+      expect(mockPaymentProvider.issueRefund).not.toHaveBeenCalled();
+    });
+
+    it("should throw concurrency error when optimistic lock update fails", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "eligible",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+      // Simulate DB constraint failure during optimistic lock
+      vi.mocked(mockJobsRepo.updateUserSubscription).mockRejectedValueOnce(
+        new Error("DB constraint violation"),
+      );
+
+      await expect(
+        manager.requestRefund({ userId: "user_123", reason: "Test" }),
+      ).rejects.toThrow("Unable to process refund - another request may be in progress");
+
+      expect(mockPaymentProvider.cancelSubscriptionNow).not.toHaveBeenCalled();
+      expect(mockPaymentProvider.issueRefund).not.toHaveBeenCalled();
+    });
+
+    it("should set status to 'issued' when final DB update fails after refund succeeds", async () => {
+      const now = new Date();
+      const activatedAt = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+      const expiresAt = new Date(activatedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        tier: "pro" as const,
+        stripeCustomerId: "cus_123",
+        stripeSubscriptionId: "sub_123",
+        subscriptionActivatedAt: activatedAt,
+        refundWindowExpiresAt: expiresAt,
+        lastPaymentIntentId: "pi_test_456",
+        lastInvoiceId: "in_test_789",
+        refundStatus: "eligible",
+        refundIssuedAt: null,
+      };
+
+      vi.mocked(mockJobsRepo.getUserById).mockResolvedValue(mockUser);
+      vi.mocked(mockPaymentProvider.cancelSubscriptionNow).mockResolvedValue();
+      vi.mocked(mockPaymentProvider.issueRefund).mockResolvedValue({
+        refundId: "re_test_123",
+        status: "succeeded",
+      });
+      // First call (optimistic lock "requested") succeeds
+      // Second call (final DB update with tier/status) fails
+      vi.mocked(mockJobsRepo.updateUserSubscription)
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error("DB write failed"))
+        // Third call (recovery to "issued") should succeed
+        .mockResolvedValueOnce(undefined);
+
+      await expect(
+        manager.requestRefund({ userId: "user_123", reason: "Not satisfied" }),
+      ).rejects.toThrow("DB write failed");
+
+      // Verify 3 DB calls: "requested", failed final update, recovery "issued"
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenCalledTimes(3);
+
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(1, "user_123", {
+        refundStatus: "requested",
+      });
+
+      // Third call: recovery - set to "issued" to prevent double-refund
+      expect(mockJobsRepo.updateUserSubscription).toHaveBeenNthCalledWith(3, "user_123", {
+        refundStatus: "issued",
       });
     });
 
