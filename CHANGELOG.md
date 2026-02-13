@@ -1,3 +1,13 @@
+## [1.23.1](https://github.com/weskerllc/cronicorn/compare/v1.23.0...v1.23.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* AI token limit for pro plan ([#135](https://github.com/weskerllc/cronicorn/issues/135)) ([8943e3c](https://github.com/weskerllc/cronicorn/commit/8943e3c4a99b927830b90b819594ea2d3aac0316))
+* Increase token limit for pro plan ([#133](https://github.com/weskerllc/cronicorn/issues/133)) ([afd7118](https://github.com/weskerllc/cronicorn/commit/afd711877883713b1e36fabd9475c25a38012f44))
+* Planner prompt and docs page error ([#134](https://github.com/weskerllc/cronicorn/issues/134)) ([b5141cd](https://github.com/weskerllc/cronicorn/commit/b5141cd1aca17f9c58b1fe8d0798d3a11b36b13b))
+* Relax security on api playground ([c5de7cc](https://github.com/weskerllc/cronicorn/commit/c5de7ccfc0e424fbdfcd9061424c951bbe96f65f))
+
 # [1.23.0](https://github.com/weskerllc/cronicorn/compare/v1.22.4...v1.23.0) (2026-02-12)
 
 
