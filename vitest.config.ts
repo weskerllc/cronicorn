@@ -29,6 +29,10 @@ export default defineConfig({
         "**/ports/**", // Pure interfaces/types — no runtime logic
         "**/fixtures/**", // Test infrastructure (factories, in-memory fakes)
         "**/testing/**", // Shared contract test suites consumed by adapters
+        "apps/web/**", // Frontend UI — covered by Playwright E2E, not Vitest
+        "packages/ui-library", // ShadCN components
+        "apps/docs/**", // Static documentation site
+        "apps/e2e/**", // E2E test runner
       ],
     },
   },
